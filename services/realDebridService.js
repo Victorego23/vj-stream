@@ -37,13 +37,26 @@ class RealDebridService {
   }
 
   /**
-   * Verifica si un archivo o nombre de torrent es una grabación CAM/TS no apta para VJ STREAM.
+   * Verifica de forma estricta e infalible si un archivo, torrent o tag es una grabación CAM/TS de cine.
    * @param {string} filename 
    * @returns {boolean}
    */
   isCamOrLowQuality(filename) {
     if (!filename) return false;
-    return CAM_REGEX.test(filename);
+    const text = String(filename).toLowerCase();
+    
+    // Lista exhaustiva de marcadores de grabación de sala de cine (CAM, TS, Telesync, Screener)
+    const patterns = [
+      /\b(cam|camrip|cam-rip|hdcam|hd-cam|hqcam|newcam|cleancam|clean-cam|camv2|camv3)\b/i,
+      /\b(ts|hdts|hd-ts|telesync|tele-sync|pdvd|predvd|tc|telecine|cine-ts)\b/i,
+      /\b(scr|screener|dvdscr|bdscr|workprint|sample)\b/i,
+      /\b(cine|grabado\s*en\s*cine|cinema|cinerip|multiplex)\b/i,
+      /\b(1xbet|line\s*audio|clean\s*audio|mic\s*audio|vostfr\s*cam)\b/i,
+      /cam[._-]?h264|cam[._-]?xvid|cam[._-]?ac3|cam[._-]?lat/i,
+      /hd-?cam|hd-?ts|tele-?sync/i
+    ];
+
+    return patterns.some(pattern => pattern.test(text));
   }
 
   /**

@@ -28,21 +28,33 @@ class StreamResolverService {
 
   /**
    * Obtiene candidatos de torrents directamente a través de Torrentio usando el IMDb ID.
+   * Aplica filtro estricto Anti-CAM para descartar grabaciones de sala de cine.
    * @private
    */
-  async searchTorrentio(imdbId, mediaType = 'movie') {
+  async searchTorrentio(imdbId, mediaType = 'movie', season = 1, episode = 1) {
     if (!imdbId) return [];
     const magnets = [];
     try {
       const url = mediaType === 'tv'
-        ? `https://torrentio.strem.fun/stream/series/${imdbId}:1:1.json`
+        ? `https://torrentio.strem.fun/stream/series/${imdbId}:${season}:${episode}.json`
         : `https://torrentio.strem.fun/stream/movie/${imdbId}.json`;
       
-      const res = await axios.get(url, { timeout: 3800 }).catch(() => null);
+      const res = await axios.get(url, { timeout: 4500 }).catch(() => null);
       if (res?.data?.streams) {
         for (const st of res.data.streams) {
           if (st.infoHash) {
-            const filename = st.behaviorHints?.filename || st.title || 'VJ-STREAM';
+            const rawTitle = st.title || '';
+            const rawName = st.name || '';
+            const filename = st.behaviorHints?.filename || rawTitle.split('\n')[0] || 'VJ-STREAM';
+
+            // FILTRADO ESTRICTO ANTI-CAM: Descartar si el título, nombre o archivo contiene marcas de grabación de cine
+            if (realDebridService.isCamOrLowQuality(rawTitle) || 
+                realDebridService.isCamOrLowQuality(rawName) || 
+                realDebridService.isCamOrLowQuality(filename)) {
+              console.log(`[VJ STREAM Anti-CAM] 🚫 Grabación de cine descartada: "${filename}"`);
+              continue;
+            }
+
             const magnet = `magnet:?xt=urn:btih:${st.infoHash}&dn=${encodeURIComponent(filename)}&tr=udp://open.demonii.com:1337/announce&tr=udp://tracker.openbittorrent.com:80`;
             magnets.push({
               magnet,
@@ -98,8 +110,8 @@ class StreamResolverService {
    * @param {Object} mediaInfo
    */
   async resolveBestStream(mediaInfo) {
-    const { title, originalTitle, year, mediaType = 'movie', id } = mediaInfo;
-    console.log(`[VJ STREAM Auto-Resolver] 🔍 Buscando transmisión automática para: "${title}" (ID: ${id || 'N/A'})`);
+    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1 } = mediaInfo;
+    console.log(`[VJ STREAM Auto-Resolver] 🔍 Buscando transmisión automática para: "${title}" (ID: ${id || 'N/A'}${mediaType === 'tv' ? ` S${season}E${episode}` : ''})`);
 
     let bestCandidates = [];
 
@@ -113,20 +125,20 @@ class StreamResolverService {
       } catch (_) {}
     }
 
-    // 2. Si tenemos IMDb ID, consultar Torrentio (Catálogo masivo universal de torrents limpios)
+    // 2. Si tenemos IMDb ID, consultar Torrentio (Catálogo masivo universal de torrents limpios con filtro Anti-CAM)
     if (imdbId) {
-      const torrentioResults = await this.searchTorrentio(imdbId, mediaType);
+      const torrentioResults = await this.searchTorrentio(imdbId, mediaType, season, episode);
       bestCandidates.push(...torrentioResults);
     }
 
-    // 3. Respaldo YTS: Buscar con título en inglés / original
-    if (bestCandidates.length === 0 && originalTitle && originalTitle !== title) {
+    // 3. Respaldo YTS: Buscar con título en inglés / original (solo películas comerciales limpias)
+    if (bestCandidates.length === 0 && mediaType !== 'tv' && originalTitle && originalTitle !== title) {
       const resultsOriginal = await this.searchPublicTrackers(originalTitle, year);
       bestCandidates.push(...resultsOriginal);
     }
 
     // 4. Respaldo YTS: Buscar con título en español
-    if (bestCandidates.length === 0 && title) {
+    if (bestCandidates.length === 0 && mediaType !== 'tv' && title) {
       const resultsSpanish = await this.searchPublicTrackers(title, year);
       bestCandidates.push(...resultsSpanish);
     }
@@ -172,16 +184,12 @@ class StreamResolverService {
       }
     }
 
-    // 5. Si los indexadores públicos no respondieron a tiempo, usar el stream certificado garantizado de alta velocidad
-    console.log(`[VJ STREAM Auto-Resolver] 🚀 Entregando transmisión directa de alta fidelidad para "${title}".`);
+    // 8. Si no hay versión digital limpia en 1080p/4K, BLOQUEAR grabaciones de cine
+    console.log(`[VJ STREAM Anti-CAM] 🛡️ Calidad comercial protegida: Sin versión digital para "${title}".`);
     return {
-      success: true,
-      streamUrl: this.emergencyFallbackStream,
-      qualityLabel: '4K UHD HDR',
-      audioLanguage: 'Español Latino (Dual)',
-      isSpanishAudio: true,
-      filename: `${this.sanitizeTitle(title)} (2024) [4K UHD BluRay Latino].mp4`,
-      title: title
+      success: false,
+      isCinemaOnly: true,
+      message: `"${title}" está actualmente en salas de cine. VJ STREAM protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.`
     };
   }
 }

@@ -114,6 +114,24 @@ router.get('/media/:type/:id', async (req, res, next) => {
 });
 
 /**
+ * @route   GET /api/streaming/tv/:id/season/:season_number
+ * @desc    Obtiene la lista de episodios de una temporada de una serie
+ */
+router.get('/tv/:id/season/:season_number', async (req, res, next) => {
+  try {
+    const { id, season_number } = req.params;
+    const episodes = await tmdbService.getTvSeasonEpisodes(id, parseInt(season_number, 10) || 1);
+    return res.json({
+      success: true,
+      episodes
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+/**
  * ====================================================================
  * RUTAS DE DESBRIDADO Y GESTIÓN DE TORRENTS (REAL-DEBRID)
  * ====================================================================
@@ -273,7 +291,7 @@ router.post('/resolve-stream', async (req, res, next) => {
  */
 router.post('/auto-resolve', async (req, res, next) => {
   try {
-    const { title, originalTitle, year, mediaType = 'movie', id } = req.body;
+    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1 } = req.body;
 
     if (!title) {
       return res.status(400).json({
@@ -287,7 +305,9 @@ router.post('/auto-resolve', async (req, res, next) => {
       originalTitle,
       year,
       mediaType,
-      id
+      id,
+      season: parseInt(season, 10) || 1,
+      episode: parseInt(episode, 10) || 1
     });
 
     return res.json({

@@ -219,10 +219,41 @@ class TmdbService {
           name: actor.name,
           character: actor.character,
           profileImage: this.buildImageUrl(actor.profile_path, 'w185')
-        }))
+        })),
+        trailer: (data.videos?.results || []).find(v => v.site === 'YouTube' && v.type === 'Trailer')?.key
+          ? `https://www.youtube.com/watch?v=${(data.videos?.results || []).find(v => v.site === 'YouTube' && v.type === 'Trailer').key}`
+          : null
       };
     } catch (error) {
       this.handleError(`getTvShowDetails (id: ${tvId})`, error);
+    }
+  }
+
+  /**
+   * Obtiene los episodios detallados de una temporada específica de una serie en español.
+   * @param {string|number} tvId 
+   * @param {number} seasonNumber 
+   */
+  async getTvSeasonEpisodes(tvId, seasonNumber = 1) {
+    try {
+      const client = this.getAxiosClient();
+      const response = await client.get(`/tv/${tvId}/season/${seasonNumber}`, {
+        params: { language: 'es-ES' }
+      });
+      const data = response.data;
+      return (data.episodes || []).map(ep => ({
+        id: ep.id,
+        episodeNumber: ep.episode_number,
+        seasonNumber: ep.season_number,
+        name: ep.name || `Episodio ${ep.episode_number}`,
+        overview: ep.overview || 'Sin descripción disponible.',
+        runtime: ep.runtime || 45,
+        stillUrl: this.buildImageUrl(ep.still_path, 'w500'),
+        voteAverage: ep.vote_average || 0
+      }));
+    } catch (error) {
+      console.warn(`[TmdbService] Error en getTvSeasonEpisodes (${tvId} S${seasonNumber}):`, error.message);
+      return [];
     }
   }
 
