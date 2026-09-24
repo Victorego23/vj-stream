@@ -338,17 +338,17 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.3.0',
-    versionCode: 6,
+    latestVersion: '2.4.0',
+    versionCode: 7,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-24',
     releaseNotes: [
-      '🛡️ Filtro Anti-CAM Estricto: Bloqueo garantizado de grabaciones de cine',
+      '🔑 Nuevo Sistema de Activación por Código de Pantalla para Smart TV y Móvil',
+      '🛡️ Panel de Administración Web y control total de licencias',
+      '🚫 Filtro Anti-CAM Estricto: Cero grabaciones de cine',
       '⏱️ Continuar Viendo: Barra de progreso y reanudación automática',
-      '🍿 Series Completas: Selector de temporadas y lista de episodios',
-      '⭐ Mi Lista: Guarda tus películas y series favoritas',
-      '🎬 Tráiler Oficial: Botón de vista previa directa en el reproductor',
-      '🏷️ Pestañas Rápidas: Filtros instantáneos (Películas, Series, Mi Lista)'
+      '🍿 Series Completas con selector de temporadas y episodios',
+      '⭐ Mi Lista de Favoritos y Tráilers Oficiales'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
