@@ -359,10 +359,11 @@ router.get('/download-apk', (req, res) => {
   const path = require('path');
   const fs = require('fs');
 
+  const releasePath = path.resolve(__dirname, '..', 'VJ-STREAM-release.apk');
   const apkPath = path.resolve(__dirname, '..', 'VJ-STREAM-debug.apk');
-  const fallbackPath = path.resolve(__dirname, '..', 'build', 'app', 'outputs', 'flutter-apk', 'app-debug.apk');
+  const fallbackPath = path.resolve(__dirname, '..', 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
 
-  const fileToSend = fs.existsSync(apkPath) ? apkPath : fallbackPath;
+  const fileToSend = fs.existsSync(releasePath) ? releasePath : (fs.existsSync(apkPath) ? apkPath : fallbackPath);
 
   if (!fs.existsSync(fileToSend)) {
     return res.status(404).json({

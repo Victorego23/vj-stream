@@ -10,6 +10,7 @@ build/
 .flutter-plugins-dependencies
 .packages
 *.apk
+!VJ-STREAM-release.apk
 VJ-STREAM-debug.apk
 android/.gradle/
 android/app/build/
