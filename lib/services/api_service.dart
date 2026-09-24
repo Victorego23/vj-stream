@@ -383,9 +383,12 @@ class ApiService {
   }
 
 
-  /// Resolución 100% automática para VJ STREAM:
-  /// El backend busca el torrent óptimo, filtra Anti-CAM, prioriza español y desbrida en Real-Debrid.
-  Future<Map<String, dynamic>?> autoResolveStream(MediaItem item) async {
+  /// Resolución 100% automática para VJ STREAM con filtro estricto Anti-CAM y soporte para episodios:
+  Future<Map<String, dynamic>?> autoResolveStream(
+    MediaItem item, {
+    int season = 1,
+    int episode = 1,
+  }) async {
     try {
       final uri = Uri.parse('$baseUrl/auto-resolve');
       final response = await http.post(
@@ -397,11 +400,13 @@ class ApiService {
           'year': item.releaseYear,
           'mediaType': item.mediaType,
           'id': item.id,
+          'season': season,
+          'episode': episode,
         }),
       ).timeout(const Duration(seconds: 35));
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> body = json.decode(response.body);
+        final Map<String, dynamic> body = json.decode(utf8.decode(response.bodyBytes));
         if (body['success'] == true && body['data'] != null) {
           return body['data'] as Map<String, dynamic>;
         }
@@ -409,6 +414,23 @@ class ApiService {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Obtiene los episodios detallados de una temporada para series
+  Future<List<Map<String, dynamic>>> fetchTvSeasonEpisodes(dynamic tvId, int seasonNumber) async {
+    try {
+      final uri = Uri.parse('$baseUrl/tv/$tvId/season/$seasonNumber');
+      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = json.decode(utf8.decode(response.bodyBytes));
+        if (body['success'] == true && body['episodes'] is List) {
+          return List<Map<String, dynamic>>.from(body['episodes']);
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
     }
   }
 

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/media_item.dart';
 import '../services/api_service.dart';
+import '../services/playback_history_service.dart';
 import 'video_player_view.dart';
 
 /// Pantalla de Detalles de Película / Serie (DetailView) para VJ STREAM.
 /// Reproducción 100% automática, sin pantallas técnicas ni diálogos de magnets.
+
 class DetailView extends StatefulWidget {
   final MediaItem item;
 
@@ -19,10 +21,18 @@ class _DetailViewState extends State<DetailView> {
   final ApiService _apiService = ApiService();
   final FocusNode _playButtonFocus = FocusNode();
   bool _isPreparing = false;
+  bool _isFavorite = false;
+  int _selectedSeason = 1;
+  List<Map<String, dynamic>> _episodes = [];
+  bool _isLoadingEpisodes = false;
 
   @override
   void initState() {
     super.initState();
+    _checkFavorite();
+    if (widget.item.mediaType == 'tv') {
+      _loadEpisodes(1);
+    }
     // Autoenfocar el botón de reproducir en Smart TV
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playButtonFocus.requestFocus();
@@ -35,11 +45,51 @@ class _DetailViewState extends State<DetailView> {
     super.dispose();
   }
 
-  /// Inicia el flujo de reproducción 100% automático y transparente
-  Future<void> _startPlayback() async {
+  Future<void> _checkFavorite() async {
+    final fav = await PlaybackHistoryService.isFavorite(widget.item.id);
+    if (mounted) setState(() => _isFavorite = fav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    final newFav = await PlaybackHistoryService.toggleFavorite(widget.item);
+    if (mounted) {
+      setState(() => _isFavorite = newFav);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(newFav ? '⭐ Agregado a Mi Lista' : 'Eliminado de Mi Lista'),
+          backgroundColor: newFav ? const Color(0xFF22C55E) : const Color(0xFFE50914),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadEpisodes(int season) async {
+    setState(() {
+      _selectedSeason = season;
+      _isLoadingEpisodes = true;
+    });
+    try {
+      final eps = await _apiService.fetchTvSeasonEpisodes(widget.item.id, season);
+      if (mounted) {
+        setState(() {
+          _episodes = eps;
+          _isLoadingEpisodes = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingEpisodes = false);
+    }
+  }
+
+  /// Inicia el flujo de reproducción con filtro estricto Anti-CAM y soporte de episodios
+  Future<void> _startPlayback({int season = 1, int episode = 1, String? episodeTitle}) async {
     if (_isPreparing) return;
 
     setState(() => _isPreparing = true);
+
+    final displayTitle = episodeTitle != null ? '${widget.item.title}: $episodeTitle' : widget.item.title;
 
     // Diálogo minimalista de carga estilo Netflix / VJ STREAM
     showDialog(
@@ -81,7 +131,7 @@ class _DetailViewState extends State<DetailView> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.item.title,
+                  displayTitle,
                   style: const TextStyle(
                     color: Colors.white38,
                     fontSize: 12,
@@ -99,12 +149,53 @@ class _DetailViewState extends State<DetailView> {
     );
 
     try {
-      final streamInfo = await _apiService.autoResolveStream(widget.item);
+      final streamInfo = await _apiService.autoResolveStream(
+        widget.item,
+        season: season,
+        episode: episode,
+      );
 
       if (!mounted) return;
       // Cerrar diálogo de carga
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
+
+      // Si el servidor detectó que la película solo existe en grabación de cine pirata
+      if (streamInfo?['isCinemaOnly'] == true) {
+        showDialog(
+          context: context,
+          builder: (dContext) => AlertDialog(
+            backgroundColor: const Color(0xFF141414),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: const BorderSide(color: Color(0x33E50914)),
+            ),
+            title: const Row(
+              children: [
+                Icon(Icons.verified_user_rounded, color: Colors.amber, size: 22),
+                SizedBox(width: 8),
+                Text(
+                  'Filtro Anti-CAM Activo',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            content: Text(
+              streamInfo?['message'] ??
+                  'Esta película solo cuenta actualmente con grabaciones de sala de cine. VJ STREAM protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.',
+              style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE50914)),
+                onPressed: () => Navigator.pop(dContext),
+                child: const Text('Entendido', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
 
       final streamUrl = streamInfo?['streamUrl'] as String?;
       if (streamUrl != null && streamUrl.isNotEmpty) {
@@ -113,7 +204,13 @@ class _DetailViewState extends State<DetailView> {
           MaterialPageRoute(
             builder: (context) => VideoPlayerView(
               videoUrl: streamUrl,
-              title: widget.item.title,
+              title: displayTitle,
+              mediaId: widget.item.id,
+              posterUrl: widget.item.bestPosterUrl,
+              backdropUrl: widget.item.bestBackdropUrl,
+              mediaType: widget.item.mediaType,
+              season: season,
+              episode: episode,
             ),
           ),
         );
@@ -121,7 +218,7 @@ class _DetailViewState extends State<DetailView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'No se encontró una transmisión activa para "${widget.item.title}". Intenta nuevamente.',
+              'No se encontró una transmisión digital activa para "$displayTitle". Intenta nuevamente.',
             ),
             backgroundColor: const Color(0xFFE50914),
             behavior: SnackBarBehavior.floating,
@@ -136,7 +233,7 @@ class _DetailViewState extends State<DetailView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Error al conectar con la transmisión de "${widget.item.title}". Verifica tu red.',
+            'Error al conectar con la transmisión de "$displayTitle". Verifica tu red.',
           ),
           backgroundColor: const Color(0xFFE50914),
           behavior: SnackBarBehavior.floating,
@@ -296,7 +393,11 @@ class _DetailViewState extends State<DetailView> {
 
                   // Botón principal de reproducción automática con D-Pad focus
                   _buildAutoPlayButton(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 12),
+
+                  // Botones secundarios: Mi Lista y Ver Tráiler
+                  _buildSecondaryActions(),
+                  const SizedBox(height: 20),
 
                   // Géneros
                   if (widget.item.genres.isNotEmpty)
@@ -332,6 +433,12 @@ class _DetailViewState extends State<DetailView> {
                     ),
                   ),
                   const SizedBox(height: 24),
+
+                  // Selector de Temporadas y Capítulos (Solo para Series de TV)
+                  if (widget.item.mediaType == 'tv') ...[
+                    _buildEpisodesSection(),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Características de transmisión VJ STREAM
                   Container(
@@ -430,6 +537,284 @@ class _DetailViewState extends State<DetailView> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSecondaryActions() {
+    return Row(
+      children: [
+        // Botón Mi Lista
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: _toggleFavorite,
+            icon: Icon(
+              _isFavorite ? Icons.check_circle_rounded : Icons.add_rounded,
+              color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
+              size: 20,
+            ),
+            label: Text(
+              _isFavorite ? 'En Mi Lista' : 'Mi Lista',
+              style: TextStyle(
+                color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(
+                color: _isFavorite ? const Color(0xFF22C55E) : const Color(0xFF333333),
+                width: 1.5,
+              ),
+              backgroundColor: const Color(0xFF141414),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        // Botón Ver Tráiler Oficial
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              if (widget.item.trailerUrl != null && widget.item.trailerUrl!.isNotEmpty) {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => VideoPlayerView(
+                      videoUrl: widget.item.trailerUrl!,
+                      title: 'Tráiler: ${widget.item.title}',
+                    ),
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Tráiler oficial no disponible para este título.'),
+                    backgroundColor: Color(0xFF333333),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              }
+            },
+            icon: const Icon(Icons.movie_creation_outlined, color: Colors.white, size: 20),
+            label: const Text(
+              'Tráiler',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: const BorderSide(color: Color(0xFF333333), width: 1.5),
+              backgroundColor: const Color(0xFF141414),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEpisodesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.tv_rounded, color: Color(0xFFE50914), size: 22),
+            SizedBox(width: 8),
+            Text(
+              'Temporadas y Episodios',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Selector horizontal de temporadas (Temporada 1 a 6)
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: 6,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final seasonNum = index + 1;
+              final isSelected = _selectedSeason == seasonNum;
+              return ChoiceChip(
+                label: Text('Temporada $seasonNum'),
+                selected: isSelected,
+                selectedColor: const Color(0xFFE50914),
+                backgroundColor: const Color(0xFF181818),
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white70,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: isSelected ? const Color(0xFFE50914) : const Color(0xFF333333),
+                  ),
+                ),
+                onSelected: (selected) {
+                  if (selected) {
+                    _loadEpisodes(seasonNum);
+                  }
+                },
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Lista de episodios
+        if (_isLoadingEpisodes)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 30),
+              child: CircularProgressIndicator(color: Color(0xFFE50914)),
+            ),
+          )
+        else if (_episodes.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF141414),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF222222)),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.white54, size: 20),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'No hay capítulos registrados para esta temporada o se cargarán al reproducir.',
+                    style: TextStyle(color: Colors.white54, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _episodes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              final ep = _episodes[index];
+              final epNum = ep['episode_number'] ?? (index + 1);
+              final epName = ep['name'] ?? 'Episodio $epNum';
+              final overview = ep['overview'] ?? '';
+              final stillPath = ep['still_path'];
+              final runtime = ep['runtime'];
+              final stillUrl = stillPath != null ? 'https://image.tmdb.org/t/p/w300$stillPath' : null;
+
+              return InkWell(
+                onTap: () {
+                  _startPlayback(
+                    season: _selectedSeason,
+                    episode: epNum,
+                    episodeTitle: 'T$_selectedSeason:E$epNum - $epName',
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF141414),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF222222)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Miniatura del episodio
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          width: 110,
+                          height: 65,
+                          color: const Color(0xFF222222),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              if (stillUrl != null)
+                                Image.network(
+                                  stillUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => const Center(
+                                    child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
+                                  ),
+                                )
+                              else
+                                const Center(
+                                  child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
+                                ),
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Datos del episodio
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$epNum. $epName',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (runtime != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  '$runtime min',
+                                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                ),
+                              ),
+                            if (overview.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  overview,
+                                  style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 12,
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+      ],
     );
   }
 

@@ -3,16 +3,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
+import '../services/playback_history_service.dart';
+
 /// Reproductor de Video optimizado para Streaming directo (Real-Debrid CDN).
 /// Soporta aceleración por hardware, controles Smart TV con D-Pad, tolerancia a códecs y reconexión automática.
 class VideoPlayerView extends StatefulWidget {
   final String videoUrl;
   final String title;
+  final dynamic mediaId;
+  final String? posterUrl;
+  final String? backdropUrl;
+  final String? mediaType;
+  final int? startPositionSeconds;
+  final int? season;
+  final int? episode;
 
   const VideoPlayerView({
     super.key,
     required this.videoUrl,
     required this.title,
+    this.mediaId,
+    this.posterUrl,
+    this.backdropUrl,
+    this.mediaType,
+    this.startPositionSeconds,
+    this.season,
+    this.episode,
   });
 
   @override
@@ -34,6 +50,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
 
   bool _showControls = true;
   Timer? _hideControlsTimer;
+  Timer? _progressSaveTimer;
 
   // Indicador visual de salto en pantalla (+10s o -10s)
   String? _seekIndicatorText;
@@ -100,6 +117,11 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       await controller.initialize();
       controller.addListener(_videoListener);
 
+      // Si se reanuda desde "Continuar Viendo", saltar al segundo exacto
+      if (widget.startPositionSeconds != null && widget.startPositionSeconds! > 0) {
+        await controller.seekTo(Duration(seconds: widget.startPositionSeconds!));
+      }
+
       // Reproducción inmediata
       await controller.play();
 
@@ -113,6 +135,12 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
 
         _startHideTimer();
         _tvFocusNode.requestFocus();
+
+        // Iniciar guardado automático de progreso cada 5 segundos
+        _progressSaveTimer?.cancel();
+        _progressSaveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+          _saveCurrentProgress();
+        });
       }
     } catch (e) {
       // Intento de reconexión automática si el CDN tarda en responder en el primer handshake
@@ -236,8 +264,32 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     return '$minutes:$seconds';
   }
 
+  void _saveCurrentProgress() {
+    if (_controller == null || !_isInitialized || widget.mediaId == null) return;
+    try {
+      final pos = _controller!.value.position.inSeconds;
+      final dur = _controller!.value.duration.inSeconds;
+      if (dur > 0) {
+        PlaybackHistoryService.saveProgress(
+          id: widget.mediaId,
+          title: widget.title,
+          posterUrl: widget.posterUrl ?? '',
+          backdropUrl: widget.backdropUrl ?? '',
+          mediaType: widget.mediaType ?? 'movie',
+          positionSeconds: pos,
+          durationSeconds: dur,
+          season: widget.season,
+          episode: widget.episode,
+        );
+      }
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
+    _progressSaveTimer?.cancel();
+    _saveCurrentProgress();
+
     _hideControlsTimer?.cancel();
     _seekIndicatorTimer?.cancel();
     _tvFocusNode.dispose();
