@@ -211,6 +211,8 @@ class _DetailViewState extends State<DetailView> {
               mediaType: widget.item.mediaType,
               season: season,
               episode: episode,
+              audioLanguage: streamInfo?['audioLanguage'] as String?,
+              qualityLabel: streamInfo?['qualityLabel'] as String?,
             ),
           ),
         );

@@ -17,6 +17,8 @@ class VideoPlayerView extends StatefulWidget {
   final int? startPositionSeconds;
   final int? season;
   final int? episode;
+  final String? audioLanguage;
+  final String? qualityLabel;
 
   const VideoPlayerView({
     super.key,
@@ -29,6 +31,8 @@ class VideoPlayerView extends StatefulWidget {
     this.startPositionSeconds,
     this.season,
     this.episode,
+    this.audioLanguage,
+    this.qualityLabel,
   });
 
   @override
@@ -615,31 +619,38 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                       ),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
-                      'VJ STREAM 4K',
-                      style: TextStyle(
+                    child: Text(
+                      widget.qualityLabel ?? '1080p FHD',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 1.0,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1B5E20),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: Colors.greenAccent, width: 0.8),
                     ),
-                    child: const Text(
-                      'AUDIO ESP',
-                      style: TextStyle(
-                        color: Colors.greenAccent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.volume_up_rounded, color: Colors.greenAccent, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.audioLanguage ?? 'Español',
+                          style: const TextStyle(
+                            color: Colors.greenAccent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -287,6 +287,8 @@ class _HomeViewState extends State<HomeView> {
           posterUrl: item.bestPosterUrl,
           backdropUrl: item.bestBackdropUrl,
           mediaType: item.mediaType,
+          audioLanguage: streamInfo?['audioLanguage'] as String?,
+          qualityLabel: streamInfo?['qualityLabel'] as String?,
         ),
       ),
     ).then((_) => _loadHistoryAndFavorites());
@@ -398,6 +400,8 @@ class _HomeViewState extends State<HomeView> {
           season: historyItem.season,
           episode: historyItem.episode,
           startPositionSeconds: historyItem.positionSeconds,
+          audioLanguage: streamInfo?['audioLanguage'] as String?,
+          qualityLabel: streamInfo?['qualityLabel'] as String?,
         ),
       ),
     ).then((_) => _loadHistoryAndFavorites());

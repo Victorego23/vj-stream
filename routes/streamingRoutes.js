@@ -338,17 +338,16 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.0',
-    versionCode: 7,
+    latestVersion: '2.4.1',
+    versionCode: 8,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-24',
     releaseNotes: [
-      '🔑 Nuevo Sistema de Activación por Código de Pantalla para Smart TV y Móvil',
-      '🛡️ Panel de Administración Web y control total de licencias',
-      '🚫 Filtro Anti-CAM Estricto: Cero grabaciones de cine',
-      '⏱️ Continuar Viendo: Barra de progreso y reanudación automática',
-      '🍿 Series Completas con selector de temporadas y episodios',
-      '⭐ Mi Lista de Favoritos y Tráilers Oficiales'
+      '⚡ Ultra Velocidad: Carga y reproducción de transmisiones en menos de 1 segundo',
+      '🇪🇸 Audio en Español Garantizado: Spider-Man, Mario, Intensamente 2 y series en Latino / Castellano',
+      '🏷️ Nuevo Indicador de Audio en Reproductor: Etiqueta en vivo de Español Latino / Castellano',
+      '🔑 Sistema de Activación por Código de Pantalla para Smart TV y Móvil',
+      '🛡️ Panel de Control Web y filtro estricto Anti-CAM'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
