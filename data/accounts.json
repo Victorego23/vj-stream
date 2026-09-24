@@ -1,0 +1,11 @@
+{
+  "admin": {
+    "password": "admin1234"
+  },
+  "settings": {
+    "whatsappNumber": "+51999999999",
+    "whatsappMessage": "Hola, mi código de activación de VJ STREAM es {code}"
+  },
+  "clients": [],
+  "pendingActivations": []
+}

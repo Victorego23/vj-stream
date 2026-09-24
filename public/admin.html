@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VJ STREAM - Panel de Administrador</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #E50914;
+      --primary-dark: #990000;
+      --bg-dark: #0A0A0A;
+      --card-bg: #141414;
+      --card-border: #242424;
+      --text-main: #FFFFFF;
+      --text-muted: #8E8E93;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; }
+
+    /* Login Screen */
+    #login-view {
+      display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;
+      background: radial-gradient(circle at center, #1C0506 0%, #0A0A0A 80%);
+    }
+    .login-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 36px; width: 100%; max-width: 420px; text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+    }
+    .brand-badge {
+      display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      padding: 6px 14px; border-radius: 8px; font-weight: 900; font-size: 20px; letter-spacing: 2px;
+      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(229,9,20,0.4);
+    }
+    .form-group { margin-bottom: 20px; text-align: left; }
+    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+    .form-control {
+      width: 100%; background: #000; border: 1px solid #333; border-radius: 8px;
+      padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    .form-control:focus { border-color: var(--primary); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 14px;
+      cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; width: 100%; }
+    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(229,9,20,0.4); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+    .btn-success { background: #15803D; color: #fff; }
+    .btn-warning { background: #B45309; color: #fff; }
+    .btn-secondary { background: #27272A; color: #fff; }
+    .btn-danger { background: #991B1B; color: #fff; }
+
+    /* Dashboard Layout */
+    #dashboard-view { display: none; }
+    .navbar {
+      background: #111; border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+      padding: 18px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .stat-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 28px; font-weight: 800; color: #fff; }
+
+    /* Section Cards */
+    .section-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 14px; margin-bottom: 24px; overflow: hidden;
+    }
+    .section-header {
+      padding: 18px 22px; border-bottom: 1px solid var(--card-border);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+    .section-title { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    }
+    .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
+    .badge-active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid var(--success); }
+    .badge-expired { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
+    .badge-suspended { background: rgba(142, 142, 147, 0.15); color: var(--text-muted); border: 1px solid var(--text-muted); }
+
+    /* Pending Grid */
+    .pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 20px; }
+    .pending-item {
+      background: #000; border: 1px solid #333; border-radius: 10px; padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .code-display {
+      font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--primary);
+      background: #1A0D0D; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed var(--primary);
+    }
+
+    /* Table */
+    .table-container { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 14px 20px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; background: #0F0F0F; border-bottom: 1px solid var(--card-border); font-weight: 700; }
+    td { padding: 14px 20px; border-bottom: 1px solid #1C1C1C; font-size: 13px; }
+    tr:hover td { background: #171717; }
+    .client-name { font-weight: 700; color: #fff; font-size: 14px; }
+    .client-user { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* Modal */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 200; padding: 20px;
+    }
+    .modal-content {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 14px; width: 100%; max-width: 480px; padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.9);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+  </style>
+</head>
+<body>
+
+  <!-- PANTALLA DE LOGIN -->
+  <div id="login-view">
+    <div class="login-card">
+      <div class="brand-badge">VJ STREAM</div>
+      <h2 style="margin-bottom: 6px; font-weight: 800;">Panel de Administrador</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Control de Licencias y Activación de Pantallas</p>
+
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label>Contraseña Maestra:</label>
+          <input type="password" id="admin-pass-input" class="form-control" placeholder="••••••••" required autofocus>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn">Acceder al Panel</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PRINCIPAL -->
+  <div id="dashboard-view">
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="nav-brand">
+        <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 10px;">VJ</div>
+        <span style="font-weight: 800; font-size: 16px; letter-spacing: 1px;">STREAM ADMIN</span>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">🔄 Actualizar</button>
+        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">⚙️ Ajustes</button>
+        <button class="btn btn-danger btn-sm" onclick="handleLogout()">Salir</button>
+      </div>
+    </nav>
+
+    <div class="container">
+      <!-- Estadísticas KPI -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-title">Total Clientes</span>
+          <span class="stat-value" id="stat-total">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">🟢 Activos</span>
+          <span class="stat-value" style="color: var(--success);" id="stat-active">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">🟡 Por Vencer (3d)</span>
+          <span class="stat-value" style="color: var(--warning);" id="stat-expiring">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">🔴 Vencidos</span>
+          <span class="stat-value" style="color: var(--danger);" id="stat-expired">0</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-title">📺 Pantallas Esperando</span>
+          <span class="stat-value" style="color: var(--primary);" id="stat-pending">0</span>
+        </div>
+      </div>
+
+      <!-- Pantallas Pendientes de Activación -->
+      <div class="section-card" id="pending-section" style="border-color: rgba(229,9,20,0.4);">
+        <div class="section-header" style="background: rgba(229,9,20,0.06);">
+          <div class="section-title">
+            <span class="pulse">🔴</span> Pantallas Esperando Activación
+            <span class="badge badge-pending" id="pending-badge">0 pendientes</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">Refrescar Códigos</button>
+        </div>
+        <div id="pending-container" class="pending-grid">
+          <!-- Items inyectados dinámicamente -->
+        </div>
+      </div>
+
+      <!-- Directorio de Clientes -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-title">👥 Directorio de Clientes y Suscripciones</div>
+          <div style="display: flex; gap: 10px;">
+            <input type="text" id="search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar cliente..." onkeyup="filterClients()">
+            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Crear Cliente</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Código TV</th>
+                <th>Estado</th>
+                <th>Vencimiento</th>
+                <th>Pantallas</th>
+                <th>Acciones Rápidas</th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody">
+              <!-- Filas inyectadas dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ACTIVAR CÓDIGO PENDIENTE -->
+  <div class="modal" id="modal-activate">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">⚡ Activar Pantalla de Cliente</h3>
+        <button class="close-btn" onclick="closeModal('modal-activate')">&times;</button>
+      </div>
+      <form id="activate-form" onsubmit="submitActivation(event)">
+        <div class="form-group">
+          <label>Código de Pantalla:</label>
+          <input type="text" id="act-code" class="form-control" readonly style="font-weight: 900; letter-spacing: 2px; color: var(--primary);">
+        </div>
+        <div class="form-group">
+          <label>Nombre del Cliente:</label>
+          <input type="text" id="act-name" class="form-control" placeholder="Ej: Carlos Gómez" required autofocus>
+        </div>
+        <div class="form-group">
+          <label>Plan de Servicio:</label>
+          <select id="act-plan" class="form-control">
+            <option value="30">1 Mes (30 días)</option>
+            <option value="60">2 Meses (60 días)</option>
+            <option value="90">3 Meses (90 días)</option>
+            <option value="365">1 Año (365 días)</option>
+            <option value="7">Demo 7 Días</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Límite de Pantallas Permitidas:</label>
+          <select id="act-devices" class="form-control">
+            <option value="1">1 Dispositivo (Estándar)</option>
+            <option value="2">2 Dispositivos</option>
+            <option value="3">3 Dispositivos</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">¡Confirmar y Desbloquear Pantalla!</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: CREAR CLIENTE MANUAL -->
+  <div class="modal" id="modal-create">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">+ Crear Cliente Manual</h3>
+        <button class="close-btn" onclick="closeModal('modal-create')">&times;</button>
+      </div>
+      <form id="create-form" onsubmit="submitCreateClient(event)">
+        <div class="form-group">
+          <label>Nombre Completo:</label>
+          <input type="text" id="new-name" class="form-control" placeholder="Ej: Andrea Salazar" required>
+        </div>
+        <div class="form-group">
+          <label>Plan de Servicio:</label>
+          <select id="new-plan" class="form-control">
+            <option value="30">1 Mes (30 días)</option>
+            <option value="60">2 Meses (60 días)</option>
+            <option value="90">3 Meses (90 días)</option>
+            <option value="365">1 Año (365 días)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pantallas:</label>
+          <select id="new-devices" class="form-control">
+            <option value="1">1 Pantalla</option>
+            <option value="2">2 Pantallas</option>
+            <option value="3">3 Pantallas</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Guardar Cliente</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: AJUSTES -->
+  <div class="modal" id="modal-settings">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">⚙️ Configuración del Negocio</h3>
+        <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
+      </div>
+      <form id="settings-form" onsubmit="submitSettings(event)">
+        <div class="form-group">
+          <label>Cambiar Contraseña de Administrador:</label>
+          <input type="password" id="set-pass" class="form-control" placeholder="Dejar en blanco para no cambiar">
+        </div>
+        <div class="form-group">
+          <label>Tu WhatsApp para que te contacten los clientes:</label>
+          <input type="text" id="set-whatsapp" class="form-control" placeholder="Ej: +51999999999">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Guardar Cambios</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = localStorage.getItem('vj_admin_token') || '';
+    let allClients = [];
+
+    // Inicialización
+    window.addEventListener('DOMContentLoaded', () => {
+      if (adminToken) {
+        testTokenAndLoad();
+      }
+    });
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const pass = document.getElementById('admin-pass-input').value.trim();
+      const btn = document.getElementById('login-btn');
+      btn.textContent = 'Verificando...';
+
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
+        });
+        const data = await res.json();
+        if (data.success) {
+          adminToken = pass;
+          localStorage.setItem('vj_admin_token', adminToken);
+          showDashboard();
+        } else {
+          alert('Contraseña incorrecta.');
+          btn.textContent = 'Acceder al Panel';
+        }
+      } catch (err) {
+        alert('Error al conectar con el servidor.');
+        btn.textContent = 'Acceder al Panel';
+      }
+    }
+
+    async function testTokenAndLoad() {
+      try {
+        const res = await fetch('/api/admin/overview', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        if (res.status === 200) {
+          showDashboard();
+        } else {
+          handleLogout();
+        }
+      } catch (_) {
+        handleLogout();
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('dashboard-view').style.display = 'block';
+      fetchOverview();
+      // Auto-refrescar cada 10 segundos para ver pantallas nuevas
+      setInterval(fetchOverview, 10000);
+    }
+
+    function handleLogout() {
+      adminToken = '';
+      localStorage.removeItem('vj_admin_token');
+      document.getElementById('login-view').style.display = 'flex';
+      document.getElementById('dashboard-view').style.display = 'none';
+    }
+
+    async function fetchOverview() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/overview', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          updateStats(data.stats);
+          renderPending(data.pending);
+          allClients = data.clients || [];
+          renderClients(allClients);
+
+          if (data.settings && document.getElementById('set-whatsapp')) {
+            document.getElementById('set-whatsapp').value = data.settings.whatsappNumber || '';
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching overview:', e);
+      }
+    }
+
+    function updateStats(stats) {
+      document.getElementById('stat-total').textContent = stats.totalClients || 0;
+      document.getElementById('stat-active').textContent = stats.activeClients || 0;
+      document.getElementById('stat-expiring').textContent = stats.expiringSoon || 0;
+      document.getElementById('stat-expired').textContent = stats.expiredClients || 0;
+      document.getElementById('stat-pending').textContent = stats.pendingCount || 0;
+      document.getElementById('pending-badge').textContent = `${stats.pendingCount || 0} pendientes`;
+
+      const pendingSection = document.getElementById('pending-section');
+      if (stats.pendingCount > 0) {
+        pendingSection.style.display = 'block';
+      } else {
+        pendingSection.style.display = 'none';
+      }
+    }
+
+    function renderPending(pendingList) {
+      const container = document.getElementById('pending-container');
+      if (!pendingList || pendingList.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No hay pantallas esperando activación.</p>';
+        return;
+      }
+
+      container.innerHTML = pendingList.map(item => `
+        <div class="pending-item">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: var(--text-muted);">📺 ${item.deviceModel}</span>
+            <span style="font-size: 11px; color: var(--warning);">${item.minutesAgo}</span>
+          </div>
+          <div class="code-display">${item.code}</div>
+          <button class="btn btn-primary btn-sm" onclick="openActivateModal('${item.code}')">⚡ Activar Pantalla</button>
+        </div>
+      `).join('');
+    }
+
+    function renderClients(clients) {
+      const tbody = document.getElementById('clients-tbody');
+      if (!clients || clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No tienes clientes registrados aún. Presiona "+ Crear Cliente".</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = clients.map(c => {
+        let badgeClass = 'badge-active';
+        let statusText = `Activo (${c.daysRemaining}d)`;
+        if (c.status === 'suspended') {
+          badgeClass = 'badge-suspended';
+          statusText = 'Suspendido';
+        } else if (c.status === 'expired') {
+          badgeClass = 'badge-expired';
+          statusText = 'Vencido';
+        } else if (c.daysRemaining <= 3) {
+          badgeClass = 'badge-pending';
+          statusText = `Vence en ${c.daysRemaining}d`;
+        }
+
+        const expDate = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        return `
+          <tr>
+            <td>
+              <div class="client-name">${c.name}</div>
+              <div class="client-user">Usuario: ${c.username}</div>
+            </td>
+            <td>
+              <span style="font-family: monospace; font-weight: 700; color: #fff; background: #222; padding: 3px 8px; border-radius: 4px;">${c.code}</span>
+            </td>
+            <td><span class="badge ${badgeClass}">${statusText}</span></td>
+            <td>${expDate}</td>
+            <td>${c.deviceCount} / ${c.maxDevices}</td>
+            <td>
+              <div class="actions-cell">
+                <button class="btn btn-success btn-sm" title="Renovar +30 Días" onclick="renewClient('${c.id}', 30)">+30d</button>
+                <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
+                <button class="btn btn-secondary btn-sm" title="Limpiar dispositivos si cambió de TV" onclick="resetDevices('${c.id}')">📺</button>
+                <button class="btn btn-danger btn-sm" title="Eliminar cliente" onclick="deleteClient('${c.id}')">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function filterClients() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const filtered = allClients.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.username.toLowerCase().includes(q));
+      renderClients(filtered);
+    }
+
+    // Acciones de Clientes
+    async function renewClient(id, days) {
+      if (!confirm(`¿Renovar suscripción por ${days} días adicionales?`)) return;
+      await fetch('/api/admin/renew', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ clientId: id, days })
+      });
+      fetchOverview();
+    }
+
+    async function toggleStatus(id) {
+      await fetch('/api/admin/toggle-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ clientId: id })
+      });
+      fetchOverview();
+    }
+
+    async function resetDevices(id) {
+      if (!confirm('¿Desvincular los dispositivos de este cliente para que pueda registrar una TV nueva?')) return;
+      await fetch('/api/admin/reset-devices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ clientId: id })
+      });
+      fetchOverview();
+    }
+
+    async function deleteClient(id) {
+      if (!confirm('¿Seguro que deseas eliminar definitivamente a este cliente?')) return;
+      await fetch(`/api/admin/clients/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': adminToken }
+      });
+      fetchOverview();
+    }
+
+    // Modales
+    function openActivateModal(code) {
+      document.getElementById('act-code').value = code;
+      document.getElementById('act-name').value = '';
+      document.getElementById('modal-activate').style.display = 'flex';
+      document.getElementById('act-name').focus();
+    }
+
+    function openCreateModal() {
+      document.getElementById('new-name').value = '';
+      document.getElementById('modal-create').style.display = 'flex';
+      document.getElementById('new-name').focus();
+    }
+
+    function openSettingsModal() {
+      document.getElementById('modal-settings').style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    async function submitActivation(e) {
+      e.preventDefault();
+      const code = document.getElementById('act-code').value;
+      const name = document.getElementById('act-name').value;
+      const planDays = document.getElementById('act-plan').value;
+      const maxDevices = document.getElementById('act-devices').value;
+
+      const res = await fetch('/api/admin/activate-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ code, name, planDays, maxDevices })
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeModal('modal-activate');
+        alert(`¡Pantalla de ${name} activada con éxito!`);
+        fetchOverview();
+      } else {
+        alert(data.error || 'Error al activar.');
+      }
+    }
+
+    async function submitCreateClient(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-name').value;
+      const planDays = document.getElementById('new-plan').value;
+      const maxDevices = document.getElementById('new-devices').value;
+
+      const res = await fetch('/api/admin/create-client', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ name, planDays, maxDevices })
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeModal('modal-create');
+        alert(`Cliente ${name} creado con éxito. Código generado: ${data.client.code}`);
+        fetchOverview();
+      } else {
+        alert(data.error || 'Error al crear.');
+      }
+    }
+
+    async function submitSettings(e) {
+      e.preventDefault();
+      const adminPassword = document.getElementById('set-pass').value;
+      const whatsappNumber = document.getElementById('set-whatsapp').value;
+
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ adminPassword, whatsappNumber })
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (adminPassword) {
+          adminToken = adminPassword;
+          localStorage.setItem('vj_admin_token', adminToken);
+        }
+        closeModal('modal-settings');
+        alert('Ajustes guardados con éxito.');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,7 +1,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const streamingRoutes = require('./routes/streamingRoutes');
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -63,6 +66,17 @@ app.get('/download-apk', (req, res) => {
 app.get('/api/download-apk', (req, res) => {
   res.redirect('/api/streaming/download-apk');
 });
+
+// Servir el Panel de Administrador Web
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// Rutas de autenticación de dispositivos y licencias
+app.use('/api/auth', authRoutes);
+
+// Rutas del Panel de Administrador
+app.use('/api/admin', adminRoutes);
 
 // Montaje de las rutas modulares de streaming con soporte dual (/api y /api/streaming)
 app.use('/api/streaming', streamingRoutes);
