@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: vj-stream-backend
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TMDB_LANGUAGE
+        value: es-ES
+      - key: TMDB_API_KEY
+        value: d143e75a335a089c1704a6a34577e49f
+      - key: REALDEBRID_API_KEY
+        value: GID5UI3YLCUL6WNPUVPPLY6TKDGCQLE56YZXMVZIP4PGTKSWZYOA

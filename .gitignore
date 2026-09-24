@@ -1,0 +1,19 @@
+node_modules/
+.env
+npm-debug.log*
+.DS_Store
+
+# Flutter & Android
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.apk
+VJ-STREAM-debug.apk
+android/.gradle/
+android/app/build/
+android/local.properties
+ios/.symlinks/
+*.lock
+
