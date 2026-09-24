@@ -334,15 +334,17 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.2.6',
-    versionCode: 5,
+    latestVersion: '2.3.0',
+    versionCode: 6,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-23',
+    releaseDate: '2026-09-24',
     releaseNotes: [
-      '⚙️ Nuevo panel de información de versión en menú de Ajustes',
-      '🔄 Botón interactivo de búsqueda manual de actualizaciones OTA',
-      '🚀 Motor de reproducción optimizado para Real-Debrid y Smart TV',
-      '⚡ Interfaz OLED de alto rendimiento y soporte D-Pad mejorado'
+      '🛡️ Filtro Anti-CAM Estricto: Bloqueo garantizado de grabaciones de cine',
+      '⏱️ Continuar Viendo: Barra de progreso y reanudación automática',
+      '🍿 Series Completas: Selector de temporadas y lista de episodios',
+      '⭐ Mi Lista: Guarda tus películas y series favoritas',
+      '🎬 Tráiler Oficial: Botón de vista previa directa en el reproductor',
+      '🏷️ Pestañas Rápidas: Filtros instantáneos (Películas, Series, Mi Lista)'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
