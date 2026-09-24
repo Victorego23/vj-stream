@@ -3,6 +3,10 @@ const router = express.Router();
 const realDebridService = require('../services/realDebridService');
 const tmdbService = require('../services/tmdbService');
 const streamResolverService = require('../services/streamResolverService');
+const hmacSecurityMiddleware = require('../middlewares/hmacSecurityMiddleware');
+
+// Blindaje de seguridad: Solo la app oficial VJ STREAM puede acceder a los servicios
+router.use(hmacSecurityMiddleware);
 
 /**
  * ====================================================================

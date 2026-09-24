@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/media_item.dart';
 import '../models/stream_link.dart';
+import 'security_service.dart';
 
 /// Servicio HTTP para comunicar la app Flutter con el backend de Node.js / Express.
 class ApiService {
@@ -12,6 +13,15 @@ class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
   ApiService._internal();
+
+  /// Cabeceras con firma criptográfica HMAC-SHA256 para proteger el backend y Real-Debrid
+  Map<String, String> _getHeaders(String url, {Map<String, String>? extra}) {
+    final headers = SecurityService.getSecurityHeaders(url);
+    if (extra != null) {
+      headers.addAll(extra);
+    }
+    return headers;
+  }
 
   static const String _prefKey = 'vj_stream_backend_url';
 
@@ -238,7 +248,9 @@ class ApiService {
         'page': page.toString(),
       });
 
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -258,7 +270,9 @@ class ApiService {
   Future<MediaItem?> getMediaDetails(String type, dynamic id) async {
     try {
       final uri = Uri.parse('$baseUrl/media/$type/$id');
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -278,7 +292,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/resolve-stream');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: _getHeaders(uri.toString()),
         body: json.encode({
           'magnet': magnet,
           'files': files,
@@ -303,7 +317,9 @@ class ApiService {
   Future<Map<String, List<MediaItem>>> fetchFullCatalog() async {
     try {
       final uri = Uri.parse('$baseUrl/catalog');
-      final response = await http.get(uri).timeout(const Duration(seconds: 12));
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
@@ -349,7 +365,9 @@ class ApiService {
   Future<List<Map<String, dynamic>>> fetchInfiniteCategories(int page) async {
     try {
       final uri = Uri.parse('$baseUrl/catalog/infinite?page=$page');
-      final response = await http.get(uri).timeout(const Duration(seconds: 12));
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
@@ -393,7 +411,7 @@ class ApiService {
       final uri = Uri.parse('$baseUrl/auto-resolve');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: _getHeaders(uri.toString()),
         body: json.encode({
           'title': item.title,
           'originalTitle': item.originalTitle,
@@ -421,7 +439,9 @@ class ApiService {
   Future<List<Map<String, dynamic>>> fetchTvSeasonEpisodes(dynamic tvId, int seasonNumber) async {
     try {
       final uri = Uri.parse('$baseUrl/tv/$tvId/season/$seasonNumber');
-      final response = await http.get(uri).timeout(const Duration(seconds: 15));
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = json.decode(utf8.decode(response.bodyBytes));
         if (body['success'] == true && body['episodes'] is List) {
