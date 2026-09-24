@@ -15,15 +15,18 @@ class ApiService {
 
   static const String _prefKey = 'vj_stream_backend_url';
 
+  /// URL oficial fija del servidor VJ STREAM en la nube (activo 24/7 sin IPs)
+  static const String defaultCloudUrl = 'https://vj-stream-m9sa.onrender.com/api/streaming';
+
   /// URL base por defecto del backend.
-  String baseUrl = 'http://localhost:3000/api/streaming';
+  String baseUrl = defaultCloudUrl;
 
   /// Normaliza cualquier formato de URL ingresado por el usuario o descubierto
   static String normalizeBaseUrl(String input) {
     var url = input.trim();
-    if (url.isEmpty) return 'http://localhost:3000/api/streaming';
+    if (url.isEmpty) return defaultCloudUrl;
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'http://$url';
+      url = 'https://$url';
     }
     while (url.endsWith('/')) {
       url = url.substring(0, url.length - 1);
@@ -63,7 +66,7 @@ class ApiService {
     } catch (_) {}
   }
 
-  /// Inicializa la URL del backend validando persistencia o descubriendo en LAN
+  /// Inicializa la URL del backend conectando directo a la nube 24/7 o descubriendo en LAN
   Future<bool> initBaseUrl() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -78,7 +81,14 @@ class ApiService {
       }
     } catch (_) {}
 
-    // Si la IP guardada no responde o no existe, sondeo automático en segundo plano
+    // 1. Probar conexión inmediata con el servidor oficial en la nube 24/7
+    if (await checkHealth(defaultCloudUrl)) {
+      baseUrl = defaultCloudUrl;
+      await saveBaseUrl(defaultCloudUrl);
+      return true;
+    }
+
+    // 2. Si no hay conexión a internet o está en red local privada, sondeo en LAN
     return await discoverBackend();
   }
 
@@ -87,7 +97,7 @@ class ApiService {
     try {
       final cleanUrl = normalizeBaseUrl(url);
       final uri = Uri.parse('$cleanUrl/version');
-      final res = await http.get(uri).timeout(const Duration(milliseconds: 850));
+      final res = await http.get(uri).timeout(const Duration(milliseconds: 3000));
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
         if (body['app'] == 'VJ STREAM' || body['success'] == true) {

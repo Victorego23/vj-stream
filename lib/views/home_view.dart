@@ -392,39 +392,104 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 const SizedBox(height: 16),
 
-                // Sección Servidor y Backend
-                const Text(
-                  'Servidor Backend (Node.js)',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                // Sección Servidor y Backend en la Nube
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0x1A22C55E),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0x4D22C55E)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.cloud_done_rounded, color: Color(0xFF22C55E), size: 18),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Servidor en la Nube 24/7',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0x3322C55E),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'EN LÍNEA',
+                              style: TextStyle(color: Color(0xFF22C55E), fontSize: 9, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Conectado a Render Cloud sin necesidad de ingresar IPs ni encender la PC.',
+                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        _apiService.baseUrl,
+                        style: const TextStyle(color: Colors.white38, fontSize: 10, fontFamily: 'monospace'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  '• Emulador Android: http://10.0.2.2:3000/api/streaming\n• Smart TV (LAN): http://IP_DE_TU_PC:3000/api/streaming\n• Web / PC: http://localhost:3000/api/streaming',
-                  style: TextStyle(color: Colors.white54, fontSize: 11, height: 1.3),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: controller,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.dns_rounded, color: Colors.white54, size: 18),
-                    filled: true,
-                    fillColor: const Color(0xFF0F0F0F),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Colors.white24),
+                const SizedBox(height: 12),
+
+                // Opciones avanzadas de red (opcional)
+                Theme(
+                  data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    dense: true,
+                    title: const Text(
+                      'Opciones avanzadas de servidor',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: Color(0xFFE50914), width: 1.5),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    labelText: 'Base URL',
-                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
+                    children: [
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: controller,
+                        style: const TextStyle(color: Colors.white, fontSize: 13),
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(Icons.dns_rounded, color: Colors.white54, size: 18),
+                          filled: true,
+                          fillColor: const Color(0xFF0F0F0F),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Colors.white24),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE50914), width: 1.5),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          labelText: 'URL personalizada del Backend',
+                          labelStyle: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.restore_rounded, size: 14, color: Colors.white70),
+                          label: const Text('Restablecer a Nube 24/7', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          onPressed: () {
+                            controller.text = ApiService.defaultCloudUrl;
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
