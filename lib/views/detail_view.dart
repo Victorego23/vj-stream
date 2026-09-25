@@ -160,8 +160,9 @@ class _DetailViewState extends State<DetailView> {
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
 
-      // Si el servidor detectó que la película solo existe en grabación de cine pirata
-      if (streamInfo?['isCinemaOnly'] == true) {
+      // Si el servidor detectó que la película solo existe en grabación de cine pirata o no tiene audio español
+      if (streamInfo?['isCinemaOnly'] == true || streamInfo?['hasNoSpanishAudio'] == true) {
+        final bool isNoSpanish = streamInfo?['hasNoSpanishAudio'] == true;
         showDialog(
           context: context,
           builder: (dContext) => AlertDialog(
@@ -170,26 +171,33 @@ class _DetailViewState extends State<DetailView> {
               borderRadius: BorderRadius.circular(14),
               side: const BorderSide(color: Color(0x33E50914)),
             ),
-            title: const Row(
+            title: Row(
               children: [
-                Icon(Icons.verified_user_rounded, color: Colors.amber, size: 22),
-                SizedBox(width: 8),
+                Icon(
+                  isNoSpanish ? Icons.language_rounded : Icons.verified_user_rounded,
+                  color: isNoSpanish ? const Color(0xFFE50914) : Colors.amber,
+                  size: 22,
+                ),
+                const SizedBox(width: 8),
                 Text(
-                  'Filtro Anti-CAM Activo',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  isNoSpanish ? 'Solo Contenido en Español' : 'Filtro Anti-CAM Activo',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             content: Text(
               streamInfo?['message'] ??
-                  'Esta película solo cuenta actualmente con grabaciones de sala de cine. VJ STREAM protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.',
+                  'Esta película no cuenta actualmente con audio en español disponible. VJ STREAM solo reproduce contenido en español.',
               style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
             ),
             actions: [
               ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE50914)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE50914),
+                  foregroundColor: Colors.white,
+                ),
                 onPressed: () => Navigator.pop(dContext),
-                child: const Text('Entendido', style: TextStyle(color: Colors.white)),
+                child: const Text('Entendido'),
               ),
             ],
           ),

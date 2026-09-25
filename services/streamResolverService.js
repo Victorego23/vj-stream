@@ -47,63 +47,88 @@ class StreamResolverService {
    * @private
    */
   scoreStream(stream) {
-    const title = (stream.title || '').toLowerCase();
+    const rawTitle = stream.title || '';
     const name = (stream.name || '').toLowerCase();
+    const titleLines = rawTitle.split('\n');
+    const firstLine = (titleLines[0] || '').toLowerCase();
+    const metaLine = (titleLines[1] || '').toLowerCase();
+    const langLine = (titleLines[2] || '').toLowerCase();
     const filename = (stream.behaviorHints?.filename || '').toLowerCase();
-    const fullText = `${title} ${name} ${filename}`;
+    const fullText = `${rawTitle.toLowerCase()} ${name} ${filename}`;
 
     // 1. FILTRO ANTI-CAM ESTRICTO: Descartar de inmediato grabaciones de cine
     if (realDebridService.isCamOrLowQuality(fullText)) {
       return { stream, score: -999999, audioLanguage: 'CAM', isSpanishAudio: false };
     }
 
+    // 2. DETECCIÓN DE PROVEEDORES 100% EN ESPAÑOL
+    const isCinecalidad = metaLine.includes('cinecalidad') || firstLine.includes('cinecalidad') || filename.includes('cinecalidad');
+    const isMejorTorrent = metaLine.includes('mejortorrent') || firstLine.includes('mejortorrent') || filename.includes('mejortorrent');
+    const isWolfmax4k = metaLine.includes('wolfmax4k') || firstLine.includes('wolfmax4k') || filename.includes('wolfmax4k');
+
+    // 3. DETECCIÓN EN NOMBRE DEL ARCHIVO / TÍTULO DEL TORRENT (Línea 1)
+    const hasLatinoExplicit = /latino|audio[\s.-]*latino|dual[\s.-]*lat|lat[\s.-]*cinecalidad|\b(lat)\b/i.test(firstLine) || /latino|dual[\s.-]*lat/i.test(filename);
+    const hasCastellanoExplicit = /castellano|doblaje[\s.-]*castellano|audio[\s.-]*castellano|\b(cast)\b/i.test(firstLine) || /castellano/i.test(filename);
+    const hasSpanishExplicit = /español|spanish/i.test(firstLine) || /español|spanish/i.test(filename);
+
+    // 4. DETECCIÓN EN LÍNEA DE IDIOMAS DE TORRENTIO (Línea 3)
+    const isTorrentioLatino = langLine.includes('dual audio / 🇲🇽') || langLine.includes('🇲🇽') || (langLine.includes('latino') && !langLine.includes('subtitle'));
+    const isTorrentioCastellano = langLine.includes('🇪🇸') && !langLine.includes('🇬🇧') && !langLine.includes('🇺🇸');
+
+    // 5. FILTRO DE FALSOS POSITIVOS DE SUBTÍTULOS (Tigole, QxR, PSA, YTS, Rutracker con 5+ banderas que solo son subtítulos)
+    const isSubtitleSpam = (langLine.split('/').length > 4);
+
     let score = 0;
     let audioLanguage = 'Audio Original';
     let isSpanishAudio = false;
 
-    // 2. DETECCIÓN ESTRICTA DE ESPAÑOL LATINO (MÁXIMA PRIORIDAD PARA CLIENTES)
-    // Cinecalidad, banderas de México, tags explícitos latino, dual-lat, etc.
-    const isLatino = /cinecalidad|🇲🇽|latino|\blat\b|dual-lat|audio\s*latino|audio-lat|lat-cinecalidad/i.test(fullText);
-    const isCastellano = /mejortorrent|wolfmax4k|🇪🇸|castellano|\bcast\b|\besp\b|\bspa\b|spanish|español/i.test(fullText);
-    const isDualOrMulti = /dual|multi/i.test(fullText);
-
-    if (isLatino) {
-      score += 2600;
+    if (isCinecalidad || hasLatinoExplicit || isTorrentioLatino) {
+      isSpanishAudio = true;
       audioLanguage = 'Español Latino';
+      score += 3500;
+      if (isCinecalidad) score += 500; // Cinecalidad es la fuente de máxima pureza en Latino
+      // Si el archivo pone en primer lugar el inglés (eng-lat), preferir los que tienen latino puro o primero
+      if (/eng[-_.]*lat|eng[-_.]*spa/i.test(firstLine)) {
+        score -= 200;
+      }
+    } else if (isMejorTorrent || isWolfmax4k || hasCastellanoExplicit || isTorrentioCastellano) {
       isSpanishAudio = true;
-    } else if (isCastellano) {
-      score += 1900;
       audioLanguage = 'Castellano';
+      score += 2800;
+    } else if (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub')) {
       isSpanishAudio = true;
-    } else if (isDualOrMulti && (isLatino || isCastellano || /esp|spa|lat/i.test(fullText))) {
-      score += 1200;
+      audioLanguage = 'Español';
+      score += 2000;
+    } else if (langLine.includes('dual audio') && (langLine.includes('🇲🇽') || langLine.includes('🇪🇸'))) {
+      isSpanishAudio = true;
       audioLanguage = 'Dual (Español)';
-      isSpanishAudio = true;
-    } else if (isDualOrMulti) {
-      // Dual o Multi genérico (posible multi-audio europeo o asiático)
-      score += 200;
-      audioLanguage = 'Multi Audio';
+      score += 2200;
     } else {
-      // Versión puramente en inglés u otro idioma extranjero: penalización severa
-      score -= 800;
+      // ESTRICTO: Si no tiene audio en español confirmado, queda descartado al 100%
+      return {
+        stream,
+        score: -999999,
+        audioLanguage: 'Inglés / Original',
+        isSpanishAudio: false,
+        qualityLabel: 'N/A',
+        filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
+      };
     }
 
-    // 3. CALIDAD DE VIDEO Y RESOLUCIÓN ÓPTIMA PARA SMART TV Y MÓVIL
+    // Calidad de video
     if (/1080p|1080i|fhd/i.test(fullText)) {
-      score += 200; // Máxima fluidez y estabilidad sin trabas
+      score += 200;
     } else if (/4k|2160p|uhd/i.test(fullText)) {
       score += 130;
     } else if (/720p|hd/i.test(fullText)) {
       score += 50;
     }
 
-    // 4. FORMATO DE CONTENEDOR (MP4 vs MKV)
-    // Los MP4 inician instantáneamente en ExoPlayer de Android TV y permiten saltos rápidos
+    // Formato de contenedor (MP4 arranca veloz y con soporte directo)
     if (fullText.includes('.mp4') || filename.endsWith('.mp4')) {
       score += 120;
     }
 
-    // 5. Detectar etiqueta visual
     let qualityLabel = '1080p FHD';
     if (/4k|2160p|uhd/i.test(fullText)) qualityLabel = '4K UHD';
     else if (/720p/i.test(fullText)) qualityLabel = '720p HD';
@@ -112,7 +137,7 @@ class StreamResolverService {
       stream,
       score,
       audioLanguage,
-      isSpanishAudio,
+      isSpanishAudio: true,
       qualityLabel,
       filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
     };
@@ -245,7 +270,7 @@ class StreamResolverService {
 
       const scored = res.data.streams
         .map(s => this.scoreStream(s))
-        .filter(x => x.score > -10000); // Excluir CAM descartados
+        .filter(x => x.isSpanishAudio === true && x.score > 0); // ESTRICTO: Solo fuentes en Español confirmadas
 
       // Ordenar por puntuación descendente (Español Latino al frente absoluto)
       scored.sort((a, b) => b.score - a.score);
@@ -421,7 +446,13 @@ class StreamResolverService {
       }
     }
 
-    // Ordenar magnets de respaldo priorizando español
+    // Filtrar estrictamente magnets de respaldo que contengan audio en español
+    fallbackMagnets = fallbackMagnets.filter(m => {
+      const mName = (m.name || '').toLowerCase();
+      return /cinecalidad|latino|dual[\s.-]*lat|mejortorrent|wolfmax4k|castellano|español|\b(lat|cast)\b/i.test(mName);
+    });
+
+    // Ordenar magnets de respaldo priorizando español latino sobre castellano
     fallbackMagnets.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
       const bName = (b.name || '').toLowerCase();
@@ -430,8 +461,8 @@ class StreamResolverService {
       if (aLat && !bLat) return -1;
       if (!aLat && bLat) return 1;
 
-      const aEsp = /castellano|spanish|español|dual/i.test(aName);
-      const bEsp = /castellano|spanish|español|dual/i.test(bName);
+      const aEsp = /castellano|español|\bcast\b/i.test(aName);
+      const bEsp = /castellano|español|\bcast\b/i.test(bName);
       if (aEsp && !bEsp) return -1;
       if (!aEsp && bEsp) return 1;
       return 0;
@@ -460,7 +491,7 @@ class StreamResolverService {
               streamUrl: streamOption.streamUrl,
               qualityLabel: streamOption.qualityLabel,
               audioLanguage: streamOption.audioLanguage,
-              isSpanishAudio: streamOption.isSpanishAudio,
+              isSpanishAudio: true,
               filename: streamOption.filename,
               title: title
             };
@@ -472,12 +503,16 @@ class StreamResolverService {
       } catch (_) {}
     }
 
-    // 4. PASO 3: BLOQUEO ANTI-CAM (Si no hay versión digital disponible)
-    console.log(`[VJ STREAM Anti-CAM] 🛡️ Calidad comercial protegida: Sin versión digital para "${title}".`);
+    // 4. PASO 3: SI NO HAY VERSIÓN EN ESPAÑOL DISPONIBLE
+    console.log(`[VJ STREAM Auto-Resolver] 🚫 Sin versión en español verificada para "${title}".`);
+    const isRecentCinema = year && (new Date().getFullYear() - parseInt(year, 10) <= 0);
     return {
       success: false,
-      isCinemaOnly: true,
-      message: `"${title}" está actualmente en salas de cine. VJ STREAM protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.`
+      isCinemaOnly: Boolean(isRecentCinema),
+      hasNoSpanishAudio: true,
+      message: isRecentCinema
+        ? `"${title}" está actualmente en salas de cine o sin lanzamiento oficial en español. VJ STREAM protege la calidad de tus clientes evitando grabaciones piratas de sala.`
+        : `"${title}" no cuenta actualmente con una versión en audio español (Latino o Castellano) verificada en los servidores. VJ STREAM solo reproduce contenido en español.`
     };
   }
 }

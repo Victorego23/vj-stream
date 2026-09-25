@@ -340,15 +340,15 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.2',
-    versionCode: 9,
+    latestVersion: '2.4.3',
+    versionCode: 10,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-25',
     releaseNotes: [
-      '🔋 Pantalla Siempre Encendida: Evita que el celular o Smart TV se apague o suspenda durante la reproducción',
-      '⏩ Saltos Fluidos (+10s/-10s): Navegación rápida con buffering suave sin congelamiento ni cuelgues',
-      '🛡️ Fallback Automático Anti-DMCA: Omisión silenciosa de enlaces eliminados sin mostrar cuadros de error',
-      '🔐 Sesión Estable: Corrección del panel de control para no pedir re-activación de código en bucle'
+      '🇪🇸 Audio en Español Estricto y Garantizado: Eliminación total de enlaces en inglés, priorizando siempre Latino / Castellano',
+      '🚫 Filtro Anti-Subtítulos Falsos: Detección inteligente que descarta archivos en inglés con subtítulos',
+      '🔋 Pantalla Siempre Encendida: Evita que el celular o Smart TV se apague durante la película',
+      '⏩ Saltos Fluidos (+10s/-10s): Navegación rápida con buffering suave sin congelamientos'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

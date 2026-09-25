@@ -353,7 +353,8 @@ class _HomeViewState extends State<HomeView> {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
 
-    if (streamInfo?['isCinemaOnly'] == true) {
+    if (streamInfo?['isCinemaOnly'] == true || streamInfo?['hasNoSpanishAudio'] == true) {
+      final bool isNoSpanish = streamInfo?['hasNoSpanishAudio'] == true;
       showDialog(
         context: context,
         builder: (dContext) => AlertDialog(
@@ -362,13 +363,30 @@ class _HomeViewState extends State<HomeView> {
             borderRadius: BorderRadius.circular(14),
             side: const BorderSide(color: Color(0x33E50914)),
           ),
-          title: const Text('Filtro Anti-CAM Activo', style: TextStyle(color: Colors.white)),
+          title: Row(
+            children: [
+              Icon(
+                isNoSpanish ? Icons.language_rounded : Icons.verified_user_rounded,
+                color: isNoSpanish ? const Color(0xFFE50914) : Colors.amber,
+                size: 22,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                isNoSpanish ? 'Solo Contenido en Español' : 'Filtro Anti-CAM Activo',
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
           content: Text(
-            streamInfo?['message'] ?? 'Película bloqueada por ser grabación de sala.',
-            style: const TextStyle(color: Colors.white70),
+            streamInfo?['message'] ?? 'Película bloqueada: solo se permite contenido en español.',
+            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
           ),
           actions: [
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE50914),
+                foregroundColor: Colors.white,
+              ),
               onPressed: () => Navigator.pop(dContext),
               child: const Text('Entendido'),
             ),

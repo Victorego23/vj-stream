@@ -15,6 +15,19 @@ class MainActivity : FlutterActivity() {
     private val APK_CHANNEL = "com.vjstream.vj_stream/apk_installer"
     private val SCREEN_CHANNEL = "com.vjstream.vj_stream/screen_manager"
 
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        super.onCreate(savedInstanceState)
+        try {
+            val spanishLocale = java.util.Locale("es", "ES")
+            java.util.Locale.setDefault(spanishLocale)
+            val config = resources.configuration
+            config.setLocale(spanishLocale)
+            resources.updateConfiguration(config, resources.displayMetrics)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
 
