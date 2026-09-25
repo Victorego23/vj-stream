@@ -40,6 +40,7 @@ class VideoPlayerView extends StatefulWidget {
   final MediaItem? mediaItem;
   final List<Map<String, dynamic>>? availableStreams;
   final List<Map<String, dynamic>>? subtitles;
+  final bool isLive;
 
   const VideoPlayerView({
     super.key,
@@ -57,6 +58,7 @@ class VideoPlayerView extends StatefulWidget {
     this.mediaItem,
     this.availableStreams,
     this.subtitles,
+    this.isLive = false,
   });
 
   @override
@@ -1263,7 +1265,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                 ),
 
               // Botón flotante 'Siguiente Episodio' cuando queda poco tiempo en la serie
-              if (_shouldShowNextEpisodeButton)
+              if (!widget.isLive && _shouldShowNextEpisodeButton)
                 Positioned(
                   bottom: _showControls ? 95 : 24,
                   right: 20,
@@ -1557,6 +1559,35 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (widget.isLive) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE50914),
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: const [
+                          BoxShadow(color: Color(0x88E50914), blurRadius: 8, spreadRadius: 1),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.fiber_manual_record, color: Colors.white, size: 8),
+                          SizedBox(width: 4),
+                          Text(
+                            'EN VIVO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
@@ -1599,24 +1630,26 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       ],
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    icon: Icon(
-                      _subtitlesEnabled ? Icons.closed_caption_rounded : Icons.closed_caption_disabled_outlined,
-                      color: _subtitlesEnabled ? Colors.amber : Colors.white70,
-                      size: 24,
+                  if (!widget.isLive) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: Icon(
+                        _subtitlesEnabled ? Icons.closed_caption_rounded : Icons.closed_caption_disabled_outlined,
+                        color: _subtitlesEnabled ? Colors.amber : Colors.white70,
+                        size: 24,
+                      ),
+                      tooltip: 'Subtítulos',
+                      onPressed: () {
+                        setState(() {
+                          _subtitlesEnabled = !_subtitlesEnabled;
+                          if (_subtitlesEnabled && _parsedSubtitles.isEmpty && _subtitles.isNotEmpty) {
+                            _loadSubtitle(_subtitles.first);
+                          }
+                        });
+                        _showFeedbackIndicator(_subtitlesEnabled ? 'Subtítulos Activados' : 'Subtítulos Desactivados');
+                      },
                     ),
-                    tooltip: 'Subtítulos',
-                    onPressed: () {
-                      setState(() {
-                        _subtitlesEnabled = !_subtitlesEnabled;
-                        if (_subtitlesEnabled && _parsedSubtitles.isEmpty && _subtitles.isNotEmpty) {
-                          _loadSubtitle(_subtitles.first);
-                        }
-                      });
-                      _showFeedbackIndicator(_subtitlesEnabled ? 'Subtítulos Activados' : 'Subtítulos Desactivados');
-                    },
-                  ),
+                  ],
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 24),
@@ -1627,100 +1660,187 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               ),
             ),
 
-            // Controles centrales (Retroceder 10s, Play/Pause, Avanzar 10s)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton(
-                  iconSize: 42,
-                  icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
-                  onPressed: () => _seekRelative(-10),
-                ),
-                const SizedBox(width: 24),
-                IconButton(
-                  iconSize: 64,
-                  icon: Icon(
-                    isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
-                    color: const Color(0xFFE50914),
-                  ),
-                  onPressed: _togglePlayPause,
-                ),
-                const SizedBox(width: 24),
-                IconButton(
-                  iconSize: 42,
-                  icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
-                  onPressed: () => _seekRelative(10),
-                ),
-              ],
-            ),
-
-            // Barra inferior (Timeline y Tiempos)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            // Controles centrales
+            if (widget.isLive)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: const Color(0xFFE50914),
-                      inactiveTrackColor: Colors.white24,
-                      thumbColor: const Color(0xFFE50914),
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                      overlayColor: const Color(0x33E50914),
-                      trackHeight: 3.5,
-                    ),
-                    child: Slider(
-                      value: position.inMilliseconds
-                          .toDouble()
-                          .clamp(0.0, duration.inMilliseconds.toDouble()),
-                      min: 0.0,
-                      max: duration.inMilliseconds.toDouble() > 0
-                          ? duration.inMilliseconds.toDouble()
-                          : 1.0,
-                      onChanged: (val) {
-                        setState(() {
-                          _dragPosition = Duration(milliseconds: val.toInt());
-                        });
-                        _startHideTimer();
-                      },
-                      onChangeEnd: (val) async {
-                        final dest = Duration(milliseconds: val.toInt());
-                        setState(() {
-                          _dragPosition = null;
-                          _isSeeking = true;
-                        });
-                        try {
-                          await _controller?.seekTo(dest);
-                          if (mounted && !_controller!.value.isPlaying) {
-                            await _controller?.play();
-                          }
-                        } catch (_) {}
-                        if (mounted) {
-                          setState(() {
-                            _isSeeking = false;
-                          });
-                          _resetBufferingWatchdog();
-                        }
-                      },
-                    ),
+                  IconButton(
+                    iconSize: 42,
+                    tooltip: 'Recargar Señal en Vivo',
+                    icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                    onPressed: () => _initializePlayer(isUserRetry: true),
                   ),
-
-                  // Tiempos
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        _formatDuration(position),
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                      Text(
-                        _formatDuration(duration),
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                    ],
+                  const SizedBox(width: 28),
+                  IconButton(
+                    iconSize: 64,
+                    icon: Icon(
+                      isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                      color: const Color(0xFFE50914),
+                    ),
+                    onPressed: _togglePlayPause,
+                  ),
+                  const SizedBox(width: 28),
+                  IconButton(
+                    iconSize: 42,
+                    tooltip: 'Ajuste de Pantalla',
+                    icon: const Icon(Icons.aspect_ratio_rounded, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        if (_videoFit == BoxFit.contain) {
+                          _videoFit = BoxFit.cover;
+                          _showFeedbackIndicator('Pantalla: Zoom');
+                        } else if (_videoFit == BoxFit.cover) {
+                          _videoFit = BoxFit.fill;
+                          _showFeedbackIndicator('Pantalla: Estirar');
+                        } else {
+                          _videoFit = BoxFit.contain;
+                          _showFeedbackIndicator('Pantalla: Original (16:9)');
+                        }
+                      });
+                    },
+                  ),
+                ],
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    iconSize: 42,
+                    icon: const Icon(Icons.replay_10_rounded, color: Colors.white),
+                    onPressed: () => _seekRelative(-10),
+                  ),
+                  const SizedBox(width: 24),
+                  IconButton(
+                    iconSize: 64,
+                    icon: Icon(
+                      isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_fill_rounded,
+                      color: const Color(0xFFE50914),
+                    ),
+                    onPressed: _togglePlayPause,
+                  ),
+                  const SizedBox(width: 24),
+                  IconButton(
+                    iconSize: 42,
+                    icon: const Icon(Icons.forward_10_rounded, color: Colors.white),
+                    onPressed: () => _seekRelative(10),
                   ),
                 ],
               ),
+
+            // Barra inferior (Timeline y Tiempos o Directo)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: widget.isLive
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 10,
+                            height: 10,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE50914),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(color: Color(0xAAE50914), blurRadius: 6, spreadRadius: 1),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'SEÑAL DIRECTA EN VIVO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const Spacer(),
+                          const Icon(Icons.access_time_rounded, color: Colors.white54, size: 14),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Sintonizado: ${_formatDuration(position)}',
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: const Color(0xFFE50914),
+                            inactiveTrackColor: Colors.white24,
+                            thumbColor: const Color(0xFFE50914),
+                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                            overlayColor: const Color(0x33E50914),
+                            trackHeight: 3.5,
+                          ),
+                          child: Slider(
+                            value: position.inMilliseconds
+                                .toDouble()
+                                .clamp(0.0, duration.inMilliseconds.toDouble()),
+                            min: 0.0,
+                            max: duration.inMilliseconds.toDouble() > 0
+                                ? duration.inMilliseconds.toDouble()
+                                : 1.0,
+                            onChanged: (val) {
+                              setState(() {
+                                _dragPosition = Duration(milliseconds: val.toInt());
+                              });
+                              _startHideTimer();
+                            },
+                            onChangeEnd: (val) async {
+                              final dest = Duration(milliseconds: val.toInt());
+                              setState(() {
+                                _dragPosition = null;
+                                _isSeeking = true;
+                              });
+                              try {
+                                await _controller?.seekTo(dest);
+                                if (mounted && !_controller!.value.isPlaying) {
+                                  await _controller?.play();
+                                }
+                              } catch (_) {}
+                              if (mounted) {
+                                setState(() {
+                                  _isSeeking = false;
+                                });
+                                _resetBufferingWatchdog();
+                              }
+                            },
+                          ),
+                        ),
+
+                        // Tiempos
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatDuration(position),
+                              style: const TextStyle(color: Colors.white70, fontSize: 13),
+                            ),
+                            Text(
+                              _formatDuration(duration),
+                              style: const TextStyle(color: Colors.white70, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
             ),
           ],
         ),

@@ -10,6 +10,7 @@ import '../widgets/tv_focusable_card.dart';
 import 'detail_view.dart';
 import 'search_view.dart';
 import 'video_player_view.dart';
+import 'live_tv_view.dart';
 
 /// Pantalla Principal (HomeView) estilo Netflix para VJ STREAM.
 /// Soporta Smart TV (Android TV D-Pad) y dispositivos móviles.
@@ -839,8 +840,14 @@ class _HomeViewState extends State<HomeView> {
                     child: _buildTabBar(isTv),
                   ),
 
+                  // Vista cuando la pestaña activa es "TV en Vivo"
+                  if (_activeTab == 'TV en Vivo')
+                    const SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: LiveTvView(),
+                    )
                   // Vista cuando la pestaña activa es "Mi Lista"
-                  if (_activeTab == 'Mi Lista')
+                  else if (_activeTab == 'Mi Lista')
                     SliverToBoxAdapter(
                       child: _buildMyListTab(isTv),
                     )
@@ -1035,6 +1042,7 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildTabBar(bool isTv) {
     final tabs = [
       {'id': 'Todos', 'label': 'Todos', 'icon': Icons.grid_view_rounded},
+      {'id': 'TV en Vivo', 'label': 'TV en Vivo', 'icon': Icons.live_tv_rounded},
       {'id': 'Películas', 'label': 'Películas', 'icon': Icons.movie_rounded},
       {'id': 'Series', 'label': 'Series', 'icon': Icons.tv_rounded},
       {'id': 'Mi Lista', 'label': 'Mi Lista', 'icon': Icons.star_rounded},

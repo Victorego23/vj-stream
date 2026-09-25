@@ -1,0 +1,262 @@
+[
+  {
+    "id": "dep-espn",
+    "name": "ESPN Deportes",
+    "category": "Deportes",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/ESPN_wordmark.svg/800px-ESPN_wordmark.svg.png",
+    "streamUrl": "https://tvpass.org/live/espn.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "id": "dep-teledeporte",
+    "name": "Teledeporte (TDP)",
+    "category": "Deportes",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Teledeporte_logo_2008.svg/640px-Teledeporte_logo_2008.svg.png",
+    "streamUrl": "https://rtvelivestream.akamaized.net/rtvesec/tdp/tdp_main.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 2
+  },
+  {
+    "id": "dep-golplay",
+    "name": "Gol Play Fútbol",
+    "category": "Deportes",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Gol_Play_logo.svg/640px-Gol_Play_logo.svg.png",
+    "streamUrl": "https://live-golplay.mediapro.tv/golplay_hls/live.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 3
+  },
+  {
+    "id": "dep-tyc",
+    "name": "TyC Sports",
+    "category": "Deportes",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/TyC_Sports_Logo_2020.svg/640px-TyC_Sports_Logo_2020.svg.png",
+    "streamUrl": "https://tvpass.org/live/tyc.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 4
+  },
+  {
+    "id": "dep-redbull",
+    "name": "Red Bull TV Deportes Extremos",
+    "category": "Deportes",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/en/thumb/9/94/Red_Bull_TV_logo.svg/640px-Red_Bull_TV_logo.svg.png",
+    "streamUrl": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 5
+  },
+  {
+    "id": "cine-pluto-estelares",
+    "name": "Pluto TV Cine Estelar",
+    "category": "Cine & Series",
+    "logoUrl": "https://images.pluto.tv/channels/5de57ee45f1b130009695627/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de57ee45f1b130009695627/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj1&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 6
+  },
+  {
+    "id": "cine-pluto-accion",
+    "name": "Pluto TV Cine Acción",
+    "category": "Cine & Series",
+    "logoUrl": "https://images.pluto.tv/channels/5de58097d740c8000994f31c/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de58097d740c8000994f31c/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj2&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 7
+  },
+  {
+    "id": "cine-pluto-series",
+    "name": "Pluto TV Series Retro",
+    "category": "Cine & Series",
+    "logoUrl": "https://images.pluto.tv/channels/5de5877c5f1b130009695628/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de5877c5f1b130009695628/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj3&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 8
+  },
+  {
+    "id": "cine-pluto-terror",
+    "name": "Pluto TV Cine Terror",
+    "category": "Cine & Series",
+    "logoUrl": "https://images.pluto.tv/channels/5de581335f1b130009695626/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de581335f1b130009695626/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj4&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 9
+  },
+  {
+    "id": "cine-hbo",
+    "name": "HBO Latino 24/7",
+    "category": "Cine & Series",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/HBO_logo.svg/640px-HBO_logo.svg.png",
+    "streamUrl": "https://tvpass.org/live/hbo.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 10
+  },
+  {
+    "id": "cine-warnertv",
+    "name": "Warner TV",
+    "category": "Cine & Series",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Warner_TV_2021.svg/640px-Warner_TV_2021.svg.png",
+    "streamUrl": "https://tvpass.org/live/warner.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 11
+  },
+  {
+    "id": "cine-star-channel",
+    "name": "Star Channel",
+    "category": "Cine & Series",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Star_Channel_2021.svg/640px-Star_Channel_2021.svg.png",
+    "streamUrl": "https://tvpass.org/live/starchannel.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 12
+  },
+  {
+    "id": "inf-nick",
+    "name": "Nickelodeon Latino",
+    "category": "Infantil",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Nickelodeon_2023.svg/640px-Nickelodeon_2023.svg.png",
+    "streamUrl": "https://tvpass.org/live/nickelodeon.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 13
+  },
+  {
+    "id": "inf-cartoon-net",
+    "name": "Cartoon Network",
+    "category": "Infantil",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/Cartoon_Network_2010_logo.svg/640px-Cartoon_Network_2010_logo.svg.png",
+    "streamUrl": "https://tvpass.org/live/cartoonnetwork.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 14
+  },
+  {
+    "id": "inf-pluto-kids",
+    "name": "Pluto TV Kids & Animación",
+    "category": "Infantil",
+    "logoUrl": "https://images.pluto.tv/channels/5de588b5d740c8000994f31f/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de588b5d740c8000994f31f/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj5&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 15
+  },
+  {
+    "id": "inf-pluto-anime",
+    "name": "Pluto TV Anime Latino",
+    "category": "Infantil",
+    "logoUrl": "https://images.pluto.tv/channels/5de588665f1b130009695629/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de588665f1b130009695629/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj6&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 16
+  },
+  {
+    "id": "ent-pluto-nature",
+    "name": "Pluto TV Naturaleza & Documentales",
+    "category": "Entretenimiento",
+    "logoUrl": "https://images.pluto.tv/channels/5de58371d740c8000994f31d/featuredImage.jpg",
+    "streamUrl": "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de58371d740c8000994f31d/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj7&targetparams=none",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 17
+  },
+  {
+    "id": "ent-history",
+    "name": "History Channel",
+    "category": "Entretenimiento",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/History_Logo.svg/640px-History_Logo.svg.png",
+    "streamUrl": "https://tvpass.org/live/history.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 18
+  },
+  {
+    "id": "ent-discovery",
+    "name": "Discovery Channel",
+    "category": "Entretenimiento",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Discovery_Channel_2019.svg/640px-Discovery_Channel_2019.svg.png",
+    "streamUrl": "https://tvpass.org/live/discovery.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 19
+  },
+  {
+    "id": "nac-rtve1",
+    "name": "RTVE La 1 HD (España)",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/La_1_logo_2008.svg/640px-La_1_logo_2008.svg.png",
+    "streamUrl": "https://rtvelivestream.akamaized.net/rtvesec/la1/la1_main.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 20
+  },
+  {
+    "id": "nac-rtve24h",
+    "name": "RTVE 24 Horas Noticias",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Canal_24_Horas_logo_2008.svg/640px-Canal_24_Horas_logo_2008.svg.png",
+    "streamUrl": "https://rtvelivestream.akamaized.net/rtvesec/24h/24h_main.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 21
+  },
+  {
+    "id": "nac-dw-espanol",
+    "name": "DW Español Noticias",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_logo.svg/640px-Deutsche_Welle_logo.svg.png",
+    "streamUrl": "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 22
+  },
+  {
+    "id": "nac-france24",
+    "name": "France 24 en Español",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/France_24_logo.svg/640px-France_24_logo.svg.png",
+    "streamUrl": "https://f24hls-i.akamaihd.net/hls/live/221193/F24_ES_LO_HLS/master.m3u8",
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 23
+  },
+  {
+    "id": "nac-telefe",
+    "name": "Telefe Noticias (Argentina)",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Telefe_logo_2018.svg/640px-Telefe_logo_2018.svg.png",
+    "streamUrl": "https://tvpass.org/live/telefe.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 24
+  },
+  {
+    "id": "nac-azteca7",
+    "name": "Azteca 7 (México)",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Azteca_7_logo_2019.svg/640px-Azteca_7_logo_2019.svg.png",
+    "streamUrl": "https://tvpass.org/live/azteca7.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 25
+  },
+  {
+    "id": "nac-caracol",
+    "name": "Caracol TV Ahora (Colombia)",
+    "category": "Nacionales",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Caracol_Television_logo.svg/640px-Caracol_Television_logo.svg.png",
+    "streamUrl": "https://tvpass.org/live/caracol.m3u8",
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 26
+  }
+]

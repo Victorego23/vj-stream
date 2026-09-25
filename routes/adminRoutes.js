@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const accountService = require('../services/accountService');
+const channelService = require('../services/channelService');
 
 // Middleware para verificar la contraseña del Administrador
 function adminAuth(req, res, next) {
@@ -182,6 +183,102 @@ router.post('/settings', (req, res) => {
   });
 
   return res.json({ success: true, settings: updated, message: 'Ajustes guardados correctamente.' });
+});
+
+/**
+ * ====================================================================
+ * GESTIÓN DE CANALES DE TV EN VIVO (ADMIN)
+ * ====================================================================
+ */
+
+/**
+ * @route   GET /api/admin/channels
+ * @desc    Obtiene todos los canales de TV (activos e inactivos)
+ */
+router.get('/channels', (req, res) => {
+  try {
+    const channels = channelService.getAllForAdmin();
+    const categories = channelService.getCategories();
+    return res.json({
+      success: true,
+      channels,
+      categories
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/channels
+ * @desc    Añade un nuevo canal de TV en vivo
+ */
+router.post('/channels', (req, res) => {
+  try {
+    const { name, category, logoUrl, streamUrl, quality, isActive } = req.body;
+    if (!name || !streamUrl) {
+      return res.status(400).json({ success: false, error: 'Nombre y URL de stream requeridos.' });
+    }
+    const channel = channelService.addChannel({
+      name,
+      category,
+      logoUrl,
+      streamUrl,
+      quality,
+      isActive: isActive !== false
+    });
+    return res.json({ success: true, channel, message: 'Canal añadido con éxito.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   PUT /api/admin/channels/:id
+ * @desc    Actualiza los datos de un canal de TV
+ */
+router.put('/channels/:id', (req, res) => {
+  try {
+    const updated = channelService.updateChannel(req.params.id, req.body);
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Canal no encontrado.' });
+    }
+    return res.json({ success: true, channel: updated, message: 'Canal actualizado.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/channels/:id/toggle
+ * @desc    Activa o desactiva un canal
+ */
+router.post('/channels/:id/toggle', (req, res) => {
+  try {
+    const updated = channelService.toggleChannel(req.params.id);
+    if (!updated) {
+      return res.status(404).json({ success: false, error: 'Canal no encontrado.' });
+    }
+    return res.json({ success: true, channel: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/admin/channels/:id
+ * @desc    Elimina un canal de TV
+ */
+router.delete('/channels/:id', (req, res) => {
+  try {
+    const deleted = channelService.deleteChannel(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'Canal no encontrado.' });
+    }
+    return res.json({ success: true, message: 'Canal eliminado correctamente.' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 module.exports = router;

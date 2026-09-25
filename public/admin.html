@@ -3,87 +3,131 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VJ STREAM - Panel de Administrador</title>
+  <title>VJ STREAM - Panel de Control & TV en Vivo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <style>
     :root {
       --primary: #E50914;
       --primary-dark: #990000;
-      --bg-dark: #0A0A0A;
-      --card-bg: #141414;
-      --card-border: #242424;
+      --primary-glow: rgba(229, 9, 20, 0.35);
+      --bg-dark: #0A0A0C;
+      --bg-surface: #121318;
+      --card-bg: #16171F;
+      --card-border: #232532;
       --text-main: #FFFFFF;
       --text-muted: #8E8E93;
       --success: #22C55E;
       --warning: #F59E0B;
       --danger: #EF4444;
+      --accent: #3B82F6;
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
-    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; }
+    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
     /* Login Screen */
     #login-view {
       display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;
-      background: radial-gradient(circle at center, #1C0506 0%, #0A0A0A 80%);
+      background: radial-gradient(circle at center, #1F0708 0%, #0A0A0C 75%);
     }
     .login-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 36px; width: 100%; max-width: 420px; text-align: center;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+      border-radius: 20px; padding: 40px; width: 100%; max-width: 440px; text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px var(--primary-glow);
     }
     .brand-badge {
       display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      padding: 6px 14px; border-radius: 8px; font-weight: 900; font-size: 20px; letter-spacing: 2px;
-      margin-bottom: 20px; box-shadow: 0 4px 15px rgba(229,9,20,0.4);
+      padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 22px; letter-spacing: 2px;
+      margin-bottom: 20px; box-shadow: 0 4px 15px var(--primary-glow);
     }
-    .form-group { margin-bottom: 20px; text-align: left; }
+    .form-group { margin-bottom: 18px; text-align: left; }
     .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
     .form-control {
-      width: 100%; background: #000; border: 1px solid #333; border-radius: 8px;
-      padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: border-color 0.2s;
+      width: 100%; background: #0D0E12; border: 1px solid var(--card-border); border-radius: 10px;
+      padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s;
     }
-    .form-control:focus { border-color: var(--primary); }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+    select.form-control { cursor: pointer; }
+
+    /* Buttons */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 12px 20px; border-radius: 8px; font-weight: 700; font-size: 14px;
+      padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
       cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
     }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; width: 100%; }
-    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(229,9,20,0.4); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 6px; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
+    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 4px 14px var(--primary-glow); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
     .btn-success { background: #15803D; color: #fff; }
+    .btn-success:hover { background: #16A34A; }
+    .btn-whatsapp { background: #128C7E; color: #fff; }
+    .btn-whatsapp:hover { background: #25D366; }
     .btn-warning { background: #B45309; color: #fff; }
-    .btn-secondary { background: #27272A; color: #fff; }
+    .btn-warning:hover { background: #D97706; }
+    .btn-secondary { background: #232532; color: #E2E8F0; }
+    .btn-secondary:hover { background: #323546; }
     .btn-danger { background: #991B1B; color: #fff; }
+    .btn-danger:hover { background: #DC2626; }
 
     /* Dashboard Layout */
     #dashboard-view { display: none; }
     .navbar {
-      background: #111; border-bottom: 1px solid var(--card-border);
-      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
+      background: rgba(18, 19, 24, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 100;
     }
-    .nav-brand { display: flex; align-items: center; gap: 12px; }
+    .nav-brand { display: flex; align-items: center; gap: 14px; }
+    .status-pill {
+      font-size: 11px; font-weight: 700; color: #22C55E; background: rgba(34, 197, 94, 0.12);
+      padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; gap: 6px;
+    }
     .nav-actions { display: flex; align-items: center; gap: 10px; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+    .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    /* Tabs Bar */
+    .tabs-bar {
+      display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      background: transparent; color: var(--text-muted); border: 1px solid transparent;
+      padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap;
+    }
+    .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
+    .tab-btn.active {
+      color: #fff; background: var(--card-bg); border-color: var(--card-border);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .tab-btn.active span.tab-icon { transform: scale(1.15); }
 
     /* Stats Grid */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .stat-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
-      padding: 18px; display: flex; flex-direction: column; gap: 6px;
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
+      padding: 18px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s;
     }
-    .stat-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 28px; font-weight: 800; color: #fff; }
+    .stat-card:hover { transform: translateY(-2px); border-color: rgba(229,9,20,0.3); }
+    .stat-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 28px; font-weight: 900; color: #fff; }
+
+    /* Filter Chips */
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .chip {
+      background: #111218; border: 1px solid var(--card-border); color: var(--text-muted);
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+    }
+    .chip:hover { color: #fff; border-color: #444; }
+    .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
     /* Section Cards */
     .section-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 14px; margin-bottom: 24px; overflow: hidden;
+      border-radius: 16px; margin-bottom: 24px; overflow: hidden;
     }
     .section-header {
       padding: 18px 22px; border-bottom: 1px solid var(--card-border);
@@ -97,42 +141,76 @@
     .badge-active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid var(--success); }
     .badge-expired { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
     .badge-suspended { background: rgba(142, 142, 147, 0.15); color: var(--text-muted); border: 1px solid var(--text-muted); }
+    .badge-category { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.4); }
 
     /* Pending Grid */
     .pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 20px; }
     .pending-item {
-      background: #000; border: 1px solid #333; border-radius: 10px; padding: 16px;
-      display: flex; flex-direction: column; gap: 10px;
+      background: #0D0E12; border: 1px solid var(--card-border); border-radius: 12px; padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
     }
     .code-display {
       font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--primary);
-      background: #1A0D0D; padding: 8px; border-radius: 6px; text-align: center; border: 1px dashed var(--primary);
+      background: #190B0C; padding: 10px; border-radius: 8px; text-align: center; border: 1px dashed var(--primary);
     }
 
     /* Table */
     .table-container { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { padding: 14px 20px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; background: #0F0F0F; border-bottom: 1px solid var(--card-border); font-weight: 700; }
-    td { padding: 14px 20px; border-bottom: 1px solid #1C1C1C; font-size: 13px; }
-    tr:hover td { background: #171717; }
+    th { padding: 14px 20px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; background: #0E0F14; border-bottom: 1px solid var(--card-border); font-weight: 700; }
+    td { padding: 14px 20px; border-bottom: 1px solid #1C1E28; font-size: 13px; }
+    tr:hover td { background: #1A1C26; }
     .client-name { font-weight: 700; color: #fff; font-size: 14px; }
     .client-user { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 
-    /* Modal */
+    /* TV Channels Grid */
+    .channels-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 20px;
+    }
+    .channel-card {
+      background: #0E0F14; border: 1px solid var(--card-border); border-radius: 14px;
+      padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: all 0.2s; position: relative;
+    }
+    .channel-card:hover { border-color: rgba(229,9,20,0.4); transform: translateY(-2px); }
+    .channel-card.inactive { opacity: 0.55; }
+    .channel-top { display: flex; align-items: center; gap: 14px; }
+    .channel-logo {
+      width: 56px; height: 56px; border-radius: 12px; background: #1C1E28; display: flex; align-items: center;
+      justify-content: center; overflow: hidden; flex-shrink: 0; padding: 6px; border: 1px solid rgba(255,255,255,0.06);
+    }
+    .channel-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .channel-meta { flex: 1; min-width: 0; }
+    .channel-title { font-weight: 800; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .channel-sub { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
+    .channel-stream-url {
+      font-size: 11px; color: var(--text-muted); font-family: monospace; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; background: #07080B; padding: 6px 10px; border-radius: 6px; border: 1px solid #1C1E28;
+    }
+    .channel-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+
+    /* Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--success); }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Modals */
     .modal {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 200; padding: 20px;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 200; padding: 20px;
     }
     .modal-content {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 14px; width: 100%; max-width: 480px; padding: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.9);
+      border-radius: 18px; width: 100%; max-width: 500px; padding: 26px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto;
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
     .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -141,15 +219,15 @@
   <div id="login-view">
     <div class="login-card">
       <div class="brand-badge">VJ STREAM</div>
-      <h2 style="margin-bottom: 6px; font-weight: 800;">Panel de Administrador</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Control de Licencias y Activación de Pantallas</p>
+      <h2 style="margin-bottom: 8px; font-weight: 900; font-size: 22px;">Panel de Control Master</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Gestión de Clientes, Licencias y TV en Vivo</p>
 
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label>Contraseña Maestra:</label>
           <input type="password" id="admin-pass-input" class="form-control" placeholder="••••••••" required autofocus>
         </div>
-        <button type="submit" class="btn btn-primary" id="login-btn">Acceder al Panel</button>
+        <button type="submit" class="btn btn-primary" id="login-btn" style="width: 100%; padding: 12px;">Acceder al Panel</button>
       </form>
     </div>
   </div>
@@ -159,83 +237,168 @@
     <!-- Navbar -->
     <nav class="navbar">
       <div class="nav-brand">
-        <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 10px;">VJ</div>
-        <span style="font-weight: 800; font-size: 16px; letter-spacing: 1px;">STREAM ADMIN</span>
+        <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 12px;">VJ STREAM</div>
+        <div class="status-pill"><span>●</span> En Línea</div>
       </div>
       <div class="nav-actions">
-        <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">🔄 Actualizar</button>
-        <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()">⚙️ Ajustes</button>
+        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 APK v2.4.6</a>
+        <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">🔄 Refrescar</button>
         <button class="btn btn-danger btn-sm" onclick="handleLogout()">Salir</button>
       </div>
     </nav>
 
     <div class="container">
-      <!-- Estadísticas KPI -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-title">Total Clientes</span>
-          <span class="stat-value" id="stat-total">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-title">🟢 Activos</span>
-          <span class="stat-value" style="color: var(--success);" id="stat-active">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-title">🟡 Por Vencer (3d)</span>
-          <span class="stat-value" style="color: var(--warning);" id="stat-expiring">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-title">🔴 Vencidos</span>
-          <span class="stat-value" style="color: var(--danger);" id="stat-expired">0</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-title">📺 Pantallas Esperando</span>
-          <span class="stat-value" style="color: var(--primary);" id="stat-pending">0</span>
-        </div>
+      <!-- Navegación por Pestañas -->
+      <div class="tabs-bar">
+        <button class="tab-btn active" id="tab-clients-btn" onclick="switchTab('clients')">
+          <span class="tab-icon">👥</span> Clientes y Pantallas
+        </button>
+        <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
+          <span class="tab-icon">📺</span> Canales TV en Vivo
+        </button>
+        <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
+          <span class="tab-icon">⚙️</span> Ajustes & WhatsApp
+        </button>
       </div>
 
-      <!-- Pantallas Pendientes de Activación -->
-      <div class="section-card" id="pending-section" style="border-color: rgba(229,9,20,0.4);">
-        <div class="section-header" style="background: rgba(229,9,20,0.06);">
-          <div class="section-title">
-            <span class="pulse">🔴</span> Pantallas Esperando Activación
-            <span class="badge badge-pending" id="pending-badge">0 pendientes</span>
+      <!-- VISTA 1: CLIENTES Y PANTALLAS -->
+      <div id="view-clients">
+        <!-- Estadísticas KPI -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-title">Total Clientes</span>
+            <span class="stat-value" id="stat-total">0</span>
           </div>
-          <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">Refrescar Códigos</button>
-        </div>
-        <div id="pending-container" class="pending-grid">
-          <!-- Items inyectados dinámicamente -->
-        </div>
-      </div>
-
-      <!-- Directorio de Clientes -->
-      <div class="section-card">
-        <div class="section-header">
-          <div class="section-title">👥 Directorio de Clientes y Suscripciones</div>
-          <div style="display: flex; gap: 10px;">
-            <input type="text" id="search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar cliente..." onkeyup="filterClients()">
-            <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Crear Cliente</button>
+          <div class="stat-card">
+            <span class="stat-title">🟢 Activos</span>
+            <span class="stat-value" style="color: var(--success);" id="stat-active">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">🟡 Por Vencer (≤3d)</span>
+            <span class="stat-value" style="color: var(--warning);" id="stat-expiring">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">🔴 Vencidos</span>
+            <span class="stat-value" style="color: var(--danger);" id="stat-expired">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">📺 TV Esperando</span>
+            <span class="stat-value" style="color: var(--primary);" id="stat-pending">0</span>
           </div>
         </div>
 
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Código TV</th>
-                <th>Estado</th>
-                <th>Vencimiento</th>
-                <th>Pantallas</th>
-                <th>Acciones Rápidas</th>
-              </tr>
-            </thead>
-            <tbody id="clients-tbody">
-              <!-- Filas inyectadas dinámicamente -->
-            </tbody>
-          </table>
+        <!-- Pantallas Pendientes de Activación -->
+        <div class="section-card" id="pending-section" style="border-color: rgba(229,9,20,0.5);">
+          <div class="section-header" style="background: rgba(229,9,20,0.08);">
+            <div class="section-title">
+              <span class="pulse">🔴</span> Pantallas Esperando Activación
+              <span class="badge badge-pending" id="pending-badge">0 pendientes</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">Refrescar</button>
+          </div>
+          <div id="pending-container" class="pending-grid"></div>
+        </div>
+
+        <!-- Directorio de Clientes -->
+        <div class="section-card">
+          <div class="section-header">
+            <div class="section-title">👥 Directorio de Clientes y Licencias</div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <input type="text" id="search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar cliente..." onkeyup="filterClients()">
+              <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Crear Cliente</button>
+            </div>
+          </div>
+
+          <!-- Filtros de Estado -->
+          <div style="padding: 12px 20px 0;">
+            <div class="filter-chips">
+              <div class="chip active" onclick="setClientFilter('all', this)">Todos</div>
+              <div class="chip" onclick="setClientFilter('active', this)">🟢 Activos</div>
+              <div class="chip" onclick="setClientFilter('expiring', this)">🟡 Por Vencer</div>
+              <div class="chip" onclick="setClientFilter('expired', this)">🔴 Vencidos</div>
+              <div class="chip" onclick="setClientFilter('suspended', this)">⏸️ Suspendidos</div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Código TV</th>
+                  <th>Estado</th>
+                  <th>Vencimiento</th>
+                  <th>Pantallas</th>
+                  <th>Acciones Rápidas & WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="clients-tbody"></tbody>
+            </table>
+          </div>
         </div>
       </div>
+
+      <!-- VISTA 2: CANALES TV EN VIVO -->
+      <div id="view-channels" style="display: none;">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">📺 Canales de TV en Vivo Transmitiendo</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transmisiones HLS (.m3u8) reproducidas directamente en la app VJ STREAM</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <input type="text" id="channel-search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar canal..." onkeyup="filterChannels()">
+              <button class="btn btn-primary btn-sm" onclick="openChannelModal()">+ Nuevo Canal</button>
+            </div>
+          </div>
+
+          <!-- Filtro de Categorías de Canales -->
+          <div style="padding: 16px 20px 0;">
+            <div class="filter-chips" id="channel-category-chips">
+              <div class="chip active" onclick="setChannelCategoryFilter('Todos', this)">Todos</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Deportes', this)">⚽ Deportes</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Cine & Series', this)">🎬 Cine & Series</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Infantil', this)">👶 Infantil</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Entretenimiento', this)">🌍 Entretenimiento</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Nacionales', this)">🌎 Nacionales</div>
+            </div>
+          </div>
+
+          <div class="channels-grid" id="channels-container"></div>
+        </div>
+      </div>
+
+      <!-- VISTA 3: AJUSTES & WHATSAPP -->
+      <div id="view-settings" style="display: none;">
+        <div class="section-card" style="max-width: 680px; margin: 0 auto;">
+          <div class="section-header">
+            <div class="section-title">⚙️ Configuración del Negocio & Contacto</div>
+          </div>
+          <div style="padding: 24px;">
+            <form id="settings-tab-form" onsubmit="submitSettings(event)">
+              <div class="form-group">
+                <label>Número de WhatsApp para Recordatorios y Soporte:</label>
+                <input type="text" id="tab-whatsapp-number" class="form-control" placeholder="Ej: +51999999999">
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Incluye el código de país (ej: +51 para Perú, +52 para México, +57 para Colombia).</small>
+              </div>
+
+              <div class="form-group">
+                <label>Plantilla de Recordatorio de Pago / Renovación:</label>
+                <textarea id="tab-whatsapp-msg" class="form-control" rows="3" placeholder="Hola {nombre}, te recordamos que tu suscripción VJ STREAM vence en {dias} días ({fecha}). Para renovar responde a este mensaje."></textarea>
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Variables disponibles: {nombre}, {dias}, {fecha}, {codigo}.</small>
+              </div>
+
+              <div class="form-group" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--card-border);">
+                <label>Cambiar Contraseña de Administrador:</label>
+                <input type="password" id="tab-admin-pass" class="form-control" placeholder="Dejar en blanco para conservar la actual">
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="margin-top: 10px;">💾 Guardar Ajustes</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -273,7 +436,7 @@
             <option value="3">3 Dispositivos</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">¡Confirmar y Desbloquear Pantalla!</button>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">¡Confirmar y Desbloquear Pantalla!</button>
       </form>
     </div>
   </div>
@@ -307,35 +470,82 @@
             <option value="3">3 Pantallas</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Guardar Cliente</button>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">Guardar Cliente</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: AJUSTES -->
-  <div class="modal" id="modal-settings">
+  <!-- MODAL: GESTIONAR CANAL DE TV (CREAR / EDITAR) -->
+  <div class="modal" id="modal-channel">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">⚙️ Configuración del Negocio</h3>
-        <button class="close-btn" onclick="closeModal('modal-settings')">&times;</button>
+        <h3 style="font-weight: 800;" id="channel-modal-title">📺 Añadir Canal de TV en Vivo</h3>
+        <button class="close-btn" onclick="closeModal('modal-channel')">&times;</button>
       </div>
-      <form id="settings-form" onsubmit="submitSettings(event)">
+      <form id="channel-form" onsubmit="submitChannel(event)">
+        <input type="hidden" id="ch-edit-id">
         <div class="form-group">
-          <label>Cambiar Contraseña de Administrador:</label>
-          <input type="password" id="set-pass" class="form-control" placeholder="Dejar en blanco para no cambiar">
+          <label>Nombre del Canal:</label>
+          <input type="text" id="ch-name" class="form-control" placeholder="Ej: ESPN Deportes HD" required>
         </div>
         <div class="form-group">
-          <label>Tu WhatsApp para que te contacten los clientes:</label>
-          <input type="text" id="set-whatsapp" class="form-control" placeholder="Ej: +51999999999">
+          <label>Categoría:</label>
+          <select id="ch-category" class="form-control">
+            <option value="Deportes">⚽ Deportes</option>
+            <option value="Cine & Series">🎬 Cine & Series</option>
+            <option value="Infantil">👶 Infantil</option>
+            <option value="Entretenimiento">🌍 Entretenimiento</option>
+            <option value="Nacionales">🌎 Nacionales</option>
+          </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Guardar Cambios</button>
+        <div class="form-group">
+          <label>URL del Logo (Icono PNG / SVG / JPG):</label>
+          <input type="url" id="ch-logo" class="form-control" placeholder="https://ejemplo.com/logo.png">
+        </div>
+        <div class="form-group">
+          <label>URL de Transmisión (.m3u8 HLS):</label>
+          <input type="url" id="ch-stream" class="form-control" placeholder="https://servidor.com/live/canal.m3u8" required>
+        </div>
+        <div class="form-group">
+          <label>Calidad:</label>
+          <select id="ch-quality" class="form-control">
+            <option value="1080p HD">1080p HD</option>
+            <option value="720p HD">720p HD</option>
+            <option value="4K UHD">4K UHD</option>
+            <option value="SD">SD</option>
+          </select>
+        </div>
+        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+          <input type="checkbox" id="ch-active" checked style="width: 18px; height: 18px;">
+          <label for="ch-active" style="margin: 0; cursor: pointer;">Canal activo y visible en la App</label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">Guardar Canal</button>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: REPRODUCTOR DE PRUEBA HLS -->
+  <div class="modal" id="modal-player">
+    <div class="modal-content" style="max-width: 640px; padding: 20px;">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;" id="player-title">📺 Vista Previa de Canal</h3>
+        <button class="close-btn" onclick="closePlayerModal()">&times;</button>
+      </div>
+      <div style="position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden;">
+        <video id="preview-video" controls autoplay playsinline style="position: absolute; top:0; left:0; width:100%; height:100%;"></video>
+      </div>
+      <p id="player-status" style="font-size: 12px; color: var(--text-muted); margin-top: 10px; font-family: monospace;"></p>
     </div>
   </div>
 
   <script>
     let adminToken = localStorage.getItem('vj_admin_token') || '';
     let allClients = [];
+    let currentClientFilter = 'all';
+    let allChannels = [];
+    let currentChannelCategory = 'Todos';
+    let appSettings = {};
+    let hlsInstance = null;
 
     // Inicialización
     window.addEventListener('DOMContentLoaded', () => {
@@ -343,6 +553,19 @@
         testTokenAndLoad();
       }
     });
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${tab}-btn`).classList.add('active');
+
+      document.getElementById('view-clients').style.display = tab === 'clients' ? 'block' : 'none';
+      document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
+      document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
+
+      if (tab === 'channels') {
+        fetchChannels();
+      }
+    }
 
     async function handleLogin(e) {
       e.preventDefault();
@@ -390,7 +613,7 @@
       document.getElementById('login-view').style.display = 'none';
       document.getElementById('dashboard-view').style.display = 'block';
       fetchOverview();
-      // Auto-refrescar cada 10 segundos para ver pantallas nuevas
+      fetchChannels();
       setInterval(fetchOverview, 10000);
     }
 
@@ -412,10 +635,16 @@
           updateStats(data.stats);
           renderPending(data.pending);
           allClients = data.clients || [];
-          renderClients(allClients);
+          renderClients(filterClientsList());
 
-          if (data.settings && document.getElementById('set-whatsapp')) {
-            document.getElementById('set-whatsapp').value = data.settings.whatsappNumber || '';
+          if (data.settings) {
+            appSettings = data.settings;
+            if (document.getElementById('tab-whatsapp-number')) {
+              document.getElementById('tab-whatsapp-number').value = data.settings.whatsappNumber || '';
+            }
+            if (document.getElementById('tab-whatsapp-msg')) {
+              document.getElementById('tab-whatsapp-msg').value = data.settings.whatsappMessage || '';
+            }
           }
         }
       } catch (e) {
@@ -458,10 +687,35 @@
       `).join('');
     }
 
+    function setClientFilter(filter, el) {
+      currentClientFilter = filter;
+      el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderClients(filterClientsList());
+    }
+
+    function filterClientsList() {
+      const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+      return allClients.filter(c => {
+        const matchesQuery = c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.username.toLowerCase().includes(q);
+        if (!matchesQuery) return false;
+
+        if (currentClientFilter === 'active') return c.status === 'active';
+        if (currentClientFilter === 'expiring') return c.status === 'active' && c.daysRemaining <= 3;
+        if (currentClientFilter === 'expired') return c.status === 'expired' || c.daysRemaining <= 0;
+        if (currentClientFilter === 'suspended') return c.status === 'suspended';
+        return true;
+      });
+    }
+
+    function filterClients() {
+      renderClients(filterClientsList());
+    }
+
     function renderClients(clients) {
       const tbody = document.getElementById('clients-tbody');
       if (!clients || clients.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No tienes clientes registrados aún. Presiona "+ Crear Cliente".</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No se encontraron clientes en este filtro.</td></tr>';
         return;
       }
 
@@ -471,7 +725,7 @@
         if (c.status === 'suspended') {
           badgeClass = 'badge-suspended';
           statusText = 'Suspendido';
-        } else if (c.status === 'expired') {
+        } else if (c.status === 'expired' || c.daysRemaining <= 0) {
           badgeClass = 'badge-expired';
           statusText = 'Vencido';
         } else if (c.daysRemaining <= 3) {
@@ -488,13 +742,14 @@
               <div class="client-user">Usuario: ${c.username}</div>
             </td>
             <td>
-              <span style="font-family: monospace; font-weight: 700; color: #fff; background: #222; padding: 3px 8px; border-radius: 4px;">${c.code}</span>
+              <span style="font-family: monospace; font-weight: 700; color: #fff; background: #07080B; border: 1px solid #232532; padding: 4px 8px; border-radius: 6px;">${c.code}</span>
             </td>
             <td><span class="badge ${badgeClass}">${statusText}</span></td>
             <td>${expDate}</td>
             <td>${c.deviceCount} / ${c.maxDevices}</td>
             <td>
               <div class="actions-cell">
+                <button class="btn btn-whatsapp btn-sm" title="Enviar recordatorio por WhatsApp" onclick="sendWhatsAppReminder('${c.id}')">💬 WhatsApp</button>
                 <button class="btn btn-success btn-sm" title="Renovar +30 Días" onclick="renewClient('${c.id}', 30)">+30d</button>
                 <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
                 <button class="btn btn-secondary btn-sm" title="Limpiar dispositivos si cambió de TV" onclick="resetDevices('${c.id}')">📺</button>
@@ -506,10 +761,24 @@
       }).join('');
     }
 
-    function filterClients() {
-      const q = document.getElementById('search-input').value.toLowerCase();
-      const filtered = allClients.filter(c => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.username.toLowerCase().includes(q));
-      renderClients(filtered);
+    function sendWhatsAppReminder(clientId) {
+      const client = allClients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+      let message = `Hola ${client.name}! `;
+
+      if (client.daysRemaining <= 0 || client.status === 'expired') {
+        message += `Tu suscripción a VJ STREAM ha vencido el ${expDate}. Para renovar tu acceso y seguir disfrutando del catálogo y TV en Vivo sin interrupciones, responde a este mensaje para confirmar tu pago.`;
+      } else if (client.daysRemaining <= 3) {
+        message += `Te recordamos que a tu cuenta de VJ STREAM le quedan ${client.daysRemaining} días de servicio (vence el ${expDate}). Puedes renovar hoy mismo para no perder el servicio.`;
+      } else {
+        message += `Tu cuenta de VJ STREAM está activa con ${client.daysRemaining} días restantes (vence el ${expDate}). ¡Gracias por preferir VJ STREAM!`;
+      }
+
+      const encoded = encodeURIComponent(message);
+      const url = `https://wa.me/?text=${encoded}`;
+      window.open(url, '_blank');
     }
 
     // Acciones de Clientes
@@ -551,7 +820,208 @@
       fetchOverview();
     }
 
-    // Modales
+    // CANALES DE TV EN VIVO
+    async function fetchChannels() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/channels', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          allChannels = data.channels || [];
+          renderChannels(filterChannelsList());
+        }
+      } catch (e) {
+        console.error('Error fetching channels:', e);
+      }
+    }
+
+    function setChannelCategoryFilter(category, el) {
+      currentChannelCategory = category;
+      el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderChannels(filterChannelsList());
+    }
+
+    function filterChannelsList() {
+      const q = (document.getElementById('channel-search-input')?.value || '').toLowerCase();
+      return allChannels.filter(c => {
+        const matchesQuery = c.name.toLowerCase().includes(q) || (c.category && c.category.toLowerCase().includes(q));
+        if (!matchesQuery) return false;
+        if (currentChannelCategory !== 'Todos') {
+          return c.category && c.category.toLowerCase() === currentChannelCategory.toLowerCase();
+        }
+        return true;
+      });
+    }
+
+    function filterChannels() {
+      renderChannels(filterChannelsList());
+    }
+
+    function renderChannels(channels) {
+      const container = document.getElementById('channels-container');
+      if (!channels || channels.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No se encontraron canales en este filtro. Presiona "+ Nuevo Canal" para agregar uno.</div>';
+        return;
+      }
+
+      container.innerHTML = channels.map(c => `
+        <div class="channel-card ${!c.isActive ? 'inactive' : ''}" id="card-${c.id}">
+          <div class="channel-top">
+            <div class="channel-logo">
+              ${c.logoUrl ? `<img src="${c.logoUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='https://placehold.co/100x100/16171F/FFF?text=TV'">` : '📺'}
+            </div>
+            <div class="channel-meta">
+              <div class="channel-title" title="${c.name}">${c.name}</div>
+              <div class="channel-sub">
+                <span class="badge badge-category">${c.category || 'General'}</span>
+                <span class="badge" style="background: rgba(255,255,255,0.08); color: #fff;">${c.quality || '1080p HD'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="channel-stream-url" title="${c.streamUrl}">${c.streamUrl}</div>
+
+          <div class="channel-footer">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch" title="Activar / Desactivar canal">
+                <input type="checkbox" ${c.isActive ? 'checked' : ''} onchange="toggleChannel('${c.id}')">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 11px; color: ${c.isActive ? 'var(--success)' : 'var(--text-muted)'}; font-weight: 700;">
+                ${c.isActive ? 'ACTIVO' : 'INACTIVO'}
+              </span>
+            </div>
+
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm" onclick="previewChannelStream('${c.name}', '${c.streamUrl}')" title="Probar transmisión en vivo">▶️ Probar</button>
+              <button class="btn btn-secondary btn-sm" onclick="editChannelModal('${c.id}')" title="Editar">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteChannel('${c.id}')" title="Eliminar">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function toggleChannel(id) {
+      await fetch(`/api/admin/channels/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'x-admin-password': adminToken }
+      });
+      fetchChannels();
+    }
+
+    async function deleteChannel(id) {
+      if (!confirm('¿Eliminar este canal de TV en vivo?')) return;
+      await fetch(`/api/admin/channels/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-password': adminToken }
+      });
+      fetchChannels();
+    }
+
+    function openChannelModal() {
+      document.getElementById('channel-modal-title').textContent = '📺 Añadir Canal de TV en Vivo';
+      document.getElementById('ch-edit-id').value = '';
+      document.getElementById('ch-name').value = '';
+      document.getElementById('ch-category').value = 'Deportes';
+      document.getElementById('ch-logo').value = '';
+      document.getElementById('ch-stream').value = '';
+      document.getElementById('ch-quality').value = '1080p HD';
+      document.getElementById('ch-active').checked = true;
+      document.getElementById('modal-channel').style.display = 'flex';
+      document.getElementById('ch-name').focus();
+    }
+
+    function editChannelModal(id) {
+      const c = allChannels.find(ch => ch.id === id);
+      if (!c) return;
+      document.getElementById('channel-modal-title').textContent = '✏️ Editar Canal de TV';
+      document.getElementById('ch-edit-id').value = c.id;
+      document.getElementById('ch-name').value = c.name;
+      document.getElementById('ch-category').value = c.category || 'Deportes';
+      document.getElementById('ch-logo').value = c.logoUrl || '';
+      document.getElementById('ch-stream').value = c.streamUrl || '';
+      document.getElementById('ch-quality').value = c.quality || '1080p HD';
+      document.getElementById('ch-active').checked = c.isActive !== false;
+      document.getElementById('modal-channel').style.display = 'flex';
+    }
+
+    async function submitChannel(e) {
+      e.preventDefault();
+      const id = document.getElementById('ch-edit-id').value;
+      const payload = {
+        name: document.getElementById('ch-name').value.trim(),
+        category: document.getElementById('ch-category').value,
+        logoUrl: document.getElementById('ch-logo').value.trim(),
+        streamUrl: document.getElementById('ch-stream').value.trim(),
+        quality: document.getElementById('ch-quality').value,
+        isActive: document.getElementById('ch-active').checked
+      };
+
+      const url = id ? `/api/admin/channels/${id}` : '/api/admin/channels';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        closeModal('modal-channel');
+        fetchChannels();
+      } else {
+        alert(data.error || 'Error al guardar canal.');
+      }
+    }
+
+    // Reproductor de prueba HLS en navegador
+    function previewChannelStream(name, url) {
+      document.getElementById('player-title').textContent = '📺 En Vivo: ' + name;
+      document.getElementById('player-status').textContent = 'Cargando stream: ' + url;
+      const video = document.getElementById('preview-video');
+      document.getElementById('modal-player').style.display = 'flex';
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      if (Hls.isSupported() && url.includes('.m3u8')) {
+        hlsInstance = new Hls({ enableWorker: true });
+        hlsInstance.loadSource(url);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          document.getElementById('player-status').textContent = '🟢 Reproduciendo HLS con éxito';
+          video.play().catch(() => {});
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            document.getElementById('player-status').textContent = '⚠️ Error al cargar stream HLS: ' + data.type;
+          }
+        });
+      } else {
+        video.src = url;
+        video.play().catch(() => {});
+        document.getElementById('player-status').textContent = 'Reproduciendo directo en el navegador';
+      }
+    }
+
+    function closePlayerModal() {
+      const video = document.getElementById('preview-video');
+      video.pause();
+      video.src = '';
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      closeModal('modal-player');
+    }
+
+    // Modales de Clientes
     function openActivateModal(code) {
       document.getElementById('act-code').value = code;
       document.getElementById('act-name').value = '';
@@ -563,10 +1033,6 @@
       document.getElementById('new-name').value = '';
       document.getElementById('modal-create').style.display = 'flex';
       document.getElementById('new-name').focus();
-    }
-
-    function openSettingsModal() {
-      document.getElementById('modal-settings').style.display = 'flex';
     }
 
     function closeModal(id) {
@@ -618,13 +1084,19 @@
 
     async function submitSettings(e) {
       e.preventDefault();
-      const adminPassword = document.getElementById('set-pass').value;
-      const whatsappNumber = document.getElementById('set-whatsapp').value;
+      const adminPassword = document.getElementById('tab-admin-pass').value.trim();
+      const whatsappNumber = document.getElementById('tab-whatsapp-number').value.trim();
+      const whatsappMessage = document.getElementById('tab-whatsapp-msg').value.trim();
+
+      const body = { whatsappNumber, whatsappMessage };
+      if (adminPassword) {
+        body.adminPassword = adminPassword;
+      }
 
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ adminPassword, whatsappNumber })
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (data.success) {
@@ -632,7 +1104,6 @@
           adminToken = adminPassword;
           localStorage.setItem('vj_admin_token', adminToken);
         }
-        closeModal('modal-settings');
         alert('Ajustes guardados con éxito.');
       }
     }

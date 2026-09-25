@@ -3,6 +3,7 @@ const router = express.Router();
 const realDebridService = require('../services/realDebridService');
 const tmdbService = require('../services/tmdbService');
 const streamResolverService = require('../services/streamResolverService');
+const channelService = require('../services/channelService');
 const hmacSecurityMiddleware = require('../middlewares/hmacSecurityMiddleware');
 
 // Blindaje de seguridad: Solo la app oficial VJ STREAM puede acceder a los servicios
@@ -333,6 +334,32 @@ router.post('/auto-resolve', async (req, res, next) => {
  */
 
 /**
+ * @route   GET /api/streaming/live-channels
+ * @desc    Obtiene la lista de canales de TV en vivo organizados por categorías
+ * @query   category {string} - Filtro opcional por categoría
+ */
+router.get('/live-channels', (req, res) => {
+  try {
+    const { category } = req.query;
+    const channels = channelService.getChannels(category);
+    const categories = channelService.getCategories();
+
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      total: channels.length,
+      categories: ['Todos', ...categories],
+      channels
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: 'Error al obtener canales en vivo: ' + err.message
+    });
+  }
+});
+
+/**
  * @route   GET /api/streaming/version
  * @desc    Devuelve los metadatos de la última versión y notas de la versión para OTA
  */
@@ -340,16 +367,17 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.5',
-    versionCode: 12,
+    latestVersion: '2.4.6',
+    versionCode: 13,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-25',
     releaseNotes: [
-      '💬 Subtítulos en Español Integrados: Subtítulos automáticos sincronizados (Latino y Castellano) con botón [CC] y selector en ajustes',
-      '📥 Descarga y Caché en la Nube de Real-Debrid: Garantiza la obtención de audio en español incluso si requiere procesamiento en la nube',
-      '⚙️ Engranaje de Ajustes en Vivo: Cambia de audio (Latino 🇲🇽, Castellano 🇪🇸, Original 🇺🇸) y servidor alternativo al instante',
+      '📺 Nuevo Módulo TV en Vivo: Canales de deportes, cine 24/7, infantil, cultura y noticias nacionales',
+      '💬 Subtítulos en Español Integrados: Subtítulos automáticos sincronizados (Latino y Castellano) con botón [CC]',
+      '📥 Caché en la Nube de Real-Debrid: Garantiza la obtención de audio en español',
+      '⚙️ Engranaje de Ajustes en Vivo: Cambia de audio (Latino 🇲🇽, Castellano 🇪🇸, Original 🇺🇸) y servidor al instante',
       '📺 Ajuste de Pantalla: Elige entre Original (16:9), Pantalla Completa sin barras (Zoom) y Estirar',
-      '⏭️ Siguiente Episodio Automático: Botón flotante para continuar series sin volver al menú'
+      '⏭️ Siguiente Episodio Automático para series'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

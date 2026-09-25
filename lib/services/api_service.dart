@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/media_item.dart';
 import '../models/stream_link.dart';
+import '../models/live_channel.dart';
 import 'security_service.dart';
 
 /// Servicio HTTP para comunicar la app Flutter con el backend de Node.js / Express.
@@ -539,5 +540,38 @@ class ApiService {
       'scifi': mockMovies.where((m) => m.genres.contains('Ciencia Ficción')).toList(),
       'series': mockSeries,
     };
+  }
+
+  /// Obtiene los canales de TV en vivo organizados opcionalmente por categoría
+  Future<Map<String, dynamic>> fetchLiveChannels({String? category}) async {
+    try {
+      var url = '$baseUrl/live-channels';
+      if (category != null && category.isNotEmpty && category != 'Todos') {
+        url += '?category=${Uri.encodeComponent(category)}';
+      }
+      final uri = Uri.parse(url);
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['channels'] != null) {
+          final channelsRaw = data['channels'] as List<dynamic>;
+          final channels = channelsRaw.map((c) => LiveChannel.fromJson(c)).toList();
+          final categoriesRaw = data['categories'] as List<dynamic>?;
+          final categories = categoriesRaw != null
+              ? categoriesRaw.map((e) => e.toString()).toList()
+              : <String>[];
+          return {
+            'channels': channels,
+            'categories': categories,
+          };
+        }
+      }
+      return {'channels': <LiveChannel>[], 'categories': <String>[]};
+    } catch (e) {
+      return {'channels': <LiveChannel>[], 'categories': <String>[]};
+    }
   }
 }
