@@ -279,6 +279,10 @@ class _HomeViewState extends State<HomeView> {
       return;
     }
 
+    final available = (streamInfo?['availableStreams'] as List?)
+        ?.map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => VideoPlayerView(
@@ -291,6 +295,7 @@ class _HomeViewState extends State<HomeView> {
           audioLanguage: streamInfo?['audioLanguage'] as String?,
           qualityLabel: streamInfo?['qualityLabel'] as String?,
           mediaItem: item,
+          availableStreams: available,
         ),
       ),
     ).then((_) => _loadHistoryAndFavorites());
@@ -353,8 +358,41 @@ class _HomeViewState extends State<HomeView> {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
 
-    if (streamInfo?['isCinemaOnly'] == true || streamInfo?['hasNoSpanishAudio'] == true) {
-      final bool isNoSpanish = streamInfo?['hasNoSpanishAudio'] == true;
+    final streamUrl = streamInfo?['streamUrl'] as String?;
+    if (streamUrl != null && streamUrl.isNotEmpty) {
+      final available = (streamInfo?['availableStreams'] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => VideoPlayerView(
+            videoUrl: streamUrl,
+            title: historyItem.title,
+            mediaId: historyItem.id,
+            posterUrl: historyItem.posterUrl,
+            backdropUrl: historyItem.backdropUrl,
+            mediaType: historyItem.mediaType,
+            season: historyItem.season,
+            episode: historyItem.episode,
+            startPositionSeconds: historyItem.positionSeconds,
+            audioLanguage: streamInfo?['audioLanguage'] as String?,
+            qualityLabel: streamInfo?['qualityLabel'] as String?,
+            mediaItem: MediaItem(
+              id: historyItem.id,
+              title: historyItem.title,
+              mediaType: historyItem.mediaType,
+              posterMedium: historyItem.posterUrl,
+              backdropLarge: historyItem.backdropUrl,
+            ),
+            availableStreams: available,
+          ),
+        ),
+      ).then((_) => _loadHistoryAndFavorites());
+      return;
+    }
+
+    if (streamInfo?['isCinemaOnly'] == true) {
       showDialog(
         context: context,
         builder: (dContext) => AlertDialog(
@@ -363,22 +401,18 @@ class _HomeViewState extends State<HomeView> {
             borderRadius: BorderRadius.circular(14),
             side: const BorderSide(color: Color(0x33E50914)),
           ),
-          title: Row(
+          title: const Row(
             children: [
-              Icon(
-                isNoSpanish ? Icons.language_rounded : Icons.verified_user_rounded,
-                color: isNoSpanish ? const Color(0xFFE50914) : Colors.amber,
-                size: 22,
-              ),
-              const SizedBox(width: 8),
+              Icon(Icons.verified_user_rounded, color: Colors.amber, size: 22),
+              SizedBox(width: 8),
               Text(
-                isNoSpanish ? 'Solo Contenido en Español' : 'Filtro Anti-CAM Activo',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                'Filtro Anti-CAM Activo',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
           content: Text(
-            streamInfo?['message'] ?? 'Película bloqueada: solo se permite contenido en español.',
+            streamInfo?['message'] ?? 'Película disponible solo en grabación de cine.',
             style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
           ),
           actions: [
@@ -396,42 +430,13 @@ class _HomeViewState extends State<HomeView> {
       return;
     }
 
-    final streamUrl = streamInfo?['streamUrl'] as String?;
-    if (streamUrl == null || streamUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo reanudar "${historyItem.title}". Intenta nuevamente.'),
-          backgroundColor: const Color(0xFFE50914),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => VideoPlayerView(
-          videoUrl: streamUrl,
-          title: historyItem.title,
-          mediaId: historyItem.id,
-          posterUrl: historyItem.posterUrl,
-          backdropUrl: historyItem.backdropUrl,
-          mediaType: historyItem.mediaType,
-          season: historyItem.season,
-          episode: historyItem.episode,
-          startPositionSeconds: historyItem.positionSeconds,
-          audioLanguage: streamInfo?['audioLanguage'] as String?,
-          qualityLabel: streamInfo?['qualityLabel'] as String?,
-          mediaItem: MediaItem(
-            id: historyItem.id,
-            title: historyItem.title,
-            mediaType: historyItem.mediaType,
-            posterMedium: historyItem.posterUrl,
-            backdropLarge: historyItem.backdropUrl,
-          ),
-        ),
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('No se pudo reanudar "${historyItem.title}". Intenta nuevamente.'),
+        backgroundColor: const Color(0xFFE50914),
+        behavior: SnackBarBehavior.floating,
       ),
-    ).then((_) => _loadHistoryAndFavorites());
+    );
   }
 
   void _openSearch() {

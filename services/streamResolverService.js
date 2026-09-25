@@ -104,15 +104,9 @@ class StreamResolverService {
       audioLanguage = 'Dual (Español)';
       score += 2200;
     } else {
-      // ESTRICTO: Si no tiene audio en español confirmado, queda descartado al 100%
-      return {
-        stream,
-        score: -999999,
-        audioLanguage: 'Inglés / Original',
-        isSpanishAudio: false,
-        qualityLabel: 'N/A',
-        filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
-      };
+      isSpanishAudio = false;
+      audioLanguage = 'Inglés / Original';
+      score = 400;
     }
 
     // Calidad de video
@@ -137,7 +131,7 @@ class StreamResolverService {
       stream,
       score,
       audioLanguage,
-      isSpanishAudio: true,
+      isSpanishAudio,
       qualityLabel,
       filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
     };
@@ -258,7 +252,7 @@ class StreamResolverService {
    */
   async _searchInstantCachedStreams(imdbId, mediaType = 'movie', season = 1, episode = 1) {
     const apiKey = process.env.REALDEBRID_API_KEY;
-    if (!apiKey || !imdbId) return [];
+    if (!apiKey || !imdbId) return { latino: [], castellano: [], original: [] };
 
     try {
       const target = mediaType === 'tv' ? `${imdbId}:${season}:${episode}` : imdbId;
@@ -266,58 +260,42 @@ class StreamResolverService {
       const url = `https://torrentio.strem.fun/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`;
 
       const res = await axios.get(url, { timeout: 6000 }).catch(() => null);
-      if (!res?.data?.streams) return [];
+      if (!res?.data?.streams) return { latino: [], castellano: [], original: [] };
 
       const scored = res.data.streams
         .map(s => this.scoreStream(s))
-        .filter(x => x.isSpanishAudio === true && x.score > 0); // ESTRICTO: Solo fuentes en Español confirmadas
+        .filter(x => x.score > 0);
 
-      // Ordenar por puntuación descendente (Español Latino al frente absoluto)
-      scored.sort((a, b) => b.score - a.score);
-      return scored;
+      const latino = scored
+        .filter(x => x.isSpanishAudio && (x.audioLanguage === 'Español Latino' || x.audioLanguage === 'Dual (Español)'))
+        .sort((a, b) => b.score - a.score);
+
+      const castellano = scored
+        .filter(x => x.isSpanishAudio && (x.audioLanguage === 'Castellano' || x.audioLanguage === 'Español'))
+        .sort((a, b) => b.score - a.score);
+
+      const original = scored
+        .filter(x => !x.isSpanishAudio)
+        .sort((a, b) => b.score - a.score);
+
+      return { latino, castellano, original };
     } catch (_) {
-      return [];
+      return { latino: [], castellano: [], original: [] };
     }
   }
 
   /**
-   * Respaldo: Busca magnets en APIs públicas de torrents comerciales (YTS, Torrentio sin auth).
+   * Respaldo: Busca magnets en APIs públicas de torrents comerciales.
    * @private
    */
   async searchPublicTrackers(query, year) {
-    const magnets = [];
-    const sanitized = this.sanitizeTitle(query);
-
-    try {
-      const ytsUrl = `https://yts.mx/api/v2/list_movies.json?query_term=${encodeURIComponent(sanitized)}&limit=5`;
-      const ytsRes = await axios.get(ytsUrl, { timeout: 3500 }).catch(() => null);
-
-      if (ytsRes?.data?.data?.movies) {
-        for (const movie of ytsRes.data.data.movies) {
-          if (movie.torrents && movie.torrents.length > 0) {
-            for (const t of movie.torrents) {
-              const hash = t.hash;
-              const quality = t.quality || '1080p';
-              const type = t.type || 'bluray';
-              const name = `${movie.title} (${movie.year}) [${quality}] [${type}] [VJ STREAM]`;
-
-              const magnet = `magnet:?xt=urn:btih:${hash}&dn=${encodeURIComponent(name)}&tr=udp://open.demonii.com:1337/announce&tr=udp://tracker.openbittorrent.com:80`;
-              magnets.push({
-                magnet,
-                name,
-                quality: `${quality} ${type}`
-              });
-            }
-          }
-        }
-      }
-    } catch (_) {}
-
-    return magnets;
+    return [];
   }
 
   /**
    * Resuelve automáticamente el mejor stream priorizando Español (Latino / Castellano) y alta velocidad.
+   * Genera además una lista de fuentes alternativas organizadas por idioma (Latino, Castellano, Original, Servidor 2)
+   * para el engranaje de configuración dentro del reproductor.
    * @param {Object} mediaInfo
    */
   async resolveBestStream(mediaInfo) {
@@ -357,51 +335,115 @@ class StreamResolverService {
     }
 
     // 2. PASO 1: BÚSQUEDA INSTANTÁNEA EN CACHÉ DE REAL-DEBRID (TORRENTIO RD)
-    // Permite reproducción inmediata en menos de 0.5 segundos con audio en Español garantizado
+    // Clasifica fuentes en Latino, Castellano, Original y prepara opciones para el selector
     if (imdbId) {
-      const instantStreams = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode);
+      const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode);
+      const totalCandidates = instant.latino.length + instant.castellano.length + instant.original.length;
 
-      if (instantStreams.length > 0) {
-        console.log(`[VJ STREAM Auto-Resolver] 📋 Evaluando ${instantStreams.length} fuentes instantáneas cacheadas para "${title}"...`);
+      if (totalCandidates > 0) {
+        console.log(`[VJ STREAM Auto-Resolver] 📋 Evaluando fuentes instantáneas: ${instant.latino.length} Latino, ${instant.castellano.length} Castellano, ${instant.original.length} Original para "${title}"...`);
 
-        // Probar candidatos de mayor a menor puntuación hasta encontrar uno 100% libre de errores y sin copyright
-        const maxCandidatesToTest = Math.min(instantStreams.length, 10);
-        for (let i = 0; i < maxCandidatesToTest; i++) {
-          const candidate = instantStreams[i];
-          if (!candidate.stream || !candidate.stream.url) continue;
+        const verifyCandidate = async (candidate) => {
+          if (!candidate || !candidate.stream || !candidate.stream.url) return null;
+          if (excludeUrls.includes(candidate.stream.url)) return null;
 
-          // Si el usuario reportó esta URL como errónea, saltarla de inmediato
-          if (excludeUrls.includes(candidate.stream.url)) {
-            continue;
-          }
-
-          console.log(`[VJ STREAM Auto-Resolver] 🎯 Probando fuente [${i + 1}/${maxCandidatesToTest}] (${candidate.audioLanguage} - ${candidate.score} pts): "${candidate.filename}"`);
           const directCdnUrl = await this._resolveDirectCdnUrl(candidate.stream.url);
+          if (!directCdnUrl || excludeUrls.includes(directCdnUrl)) return null;
 
-          if (!directCdnUrl || excludeUrls.includes(directCdnUrl)) {
-            console.warn(`[VJ STREAM Auto-Resolver] ⚠️ Fuente [${i + 1}] no resolvió enlace directo o fue descartada. Pasando a siguiente fuente...`);
-            continue;
-          }
-
-          // Comprobar activamente que el CDN entrega un video real y NO la pantalla naranja de copyright
           const playable = await this.isStreamPlayable(directCdnUrl);
-          if (!playable) {
-            console.warn(`[VJ STREAM Auto-Resolver] 🛡️ Fallback Automático: Fuente [${i + 1}] detectada con advertencia de copyright o stream dañado ("File was removed due to copyright"). Saltando a otra fuente sin error al usuario...`);
-            continue;
-          }
+          if (!playable) return null;
 
-          console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión verificada y 100% limpia: "${candidate.filename}"`);
-          const result = {
-            success: true,
+          return {
             streamUrl: directCdnUrl,
             qualityLabel: candidate.qualityLabel,
             audioLanguage: candidate.audioLanguage,
             isSpanishAudio: candidate.isSpanishAudio,
-            filename: candidate.filename,
-            title: title
+            filename: candidate.filename
+          };
+        };
+
+        const availableStreams = [];
+        let primaryStream = null;
+
+        // 1. Probar y resolver el mejor Latino (y un servidor de respaldo)
+        for (const cand of instant.latino.slice(0, 4)) {
+          const verified = await verifyCandidate(cand);
+          if (verified) {
+            if (!primaryStream) {
+              primaryStream = verified;
+              availableStreams.push({
+                id: 'latino',
+                label: 'Español Latino (🇲🇽)',
+                language: 'Español Latino',
+                streamUrl: verified.streamUrl,
+                qualityLabel: verified.qualityLabel,
+                filename: verified.filename,
+                isBackup: false
+              });
+            } else if (availableStreams.filter(s => s.id.startsWith('latino')).length < 2) {
+              availableStreams.push({
+                id: 'latino_backup',
+                label: 'Español Latino - Servidor 2 (🇲🇽)',
+                language: 'Español Latino (Servidor 2)',
+                streamUrl: verified.streamUrl,
+                qualityLabel: verified.qualityLabel,
+                filename: verified.filename,
+                isBackup: true
+              });
+              break;
+            }
+          }
+        }
+
+        // 2. Probar y resolver el mejor Castellano
+        for (const cand of instant.castellano.slice(0, 4)) {
+          const verified = await verifyCandidate(cand);
+          if (verified) {
+            if (!primaryStream) primaryStream = verified;
+            availableStreams.push({
+              id: 'castellano',
+              label: 'Castellano (🇪🇸)',
+              language: 'Castellano',
+              streamUrl: verified.streamUrl,
+              qualityLabel: verified.qualityLabel,
+              filename: verified.filename,
+              isBackup: false
+            });
+            break;
+          }
+        }
+
+        // 3. Probar y resolver el mejor Audio Original / Inglés (como opción o respaldo)
+        for (const cand of instant.original.slice(0, 3)) {
+          const verified = await verifyCandidate(cand);
+          if (verified) {
+            if (!primaryStream) primaryStream = verified;
+            availableStreams.push({
+              id: 'original',
+              label: 'Inglés / Audio Original (🇺🇸)',
+              language: 'Audio Original',
+              streamUrl: verified.streamUrl,
+              qualityLabel: verified.qualityLabel,
+              filename: verified.filename,
+              isBackup: false
+            });
+            break;
+          }
+        }
+
+        if (primaryStream) {
+          console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión seleccionada: [${primaryStream.audioLanguage}] "${primaryStream.filename}" con ${availableStreams.length} opciones en engranaje`);
+          const result = {
+            success: true,
+            streamUrl: primaryStream.streamUrl,
+            qualityLabel: primaryStream.qualityLabel,
+            audioLanguage: primaryStream.audioLanguage,
+            isSpanishAudio: primaryStream.isSpanishAudio,
+            filename: primaryStream.filename,
+            title: title,
+            availableStreams: availableStreams
           };
 
-          // Guardar en caché para próximas reproducciones instantáneas
           this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
           return result;
         }
@@ -493,7 +535,18 @@ class StreamResolverService {
               audioLanguage: streamOption.audioLanguage,
               isSpanishAudio: true,
               filename: streamOption.filename,
-              title: title
+              title: title,
+              availableStreams: [
+                {
+                  id: 'latino',
+                  label: streamOption.audioLanguage || 'Español Latino (🇲🇽)',
+                  language: streamOption.audioLanguage || 'Español Latino',
+                  streamUrl: streamOption.streamUrl,
+                  qualityLabel: streamOption.qualityLabel,
+                  filename: streamOption.filename,
+                  isBackup: false
+                }
+              ]
             };
 
             this.cache.set(cacheKey, { timestamp: Date.now(), data: streamData });

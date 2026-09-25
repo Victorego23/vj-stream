@@ -160,9 +160,37 @@ class _DetailViewState extends State<DetailView> {
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
 
-      // Si el servidor detectó que la película solo existe en grabación de cine pirata o no tiene audio español
-      if (streamInfo?['isCinemaOnly'] == true || streamInfo?['hasNoSpanishAudio'] == true) {
-        final bool isNoSpanish = streamInfo?['hasNoSpanishAudio'] == true;
+      // Si hay una transmisión resuelta, reproducir directamente sin diálogos molestos
+      final streamUrl = streamInfo?['streamUrl'] as String?;
+      if (streamUrl != null && streamUrl.isNotEmpty) {
+        final available = (streamInfo?['availableStreams'] as List?)
+            ?.map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+
+        // Abrir inmediatamente el reproductor multimedia con la transmisión y opciones multicanal
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerView(
+              videoUrl: streamUrl,
+              title: displayTitle,
+              mediaId: widget.item.id,
+              posterUrl: widget.item.bestPosterUrl,
+              backdropUrl: widget.item.bestBackdropUrl,
+              mediaType: widget.item.mediaType,
+              season: season,
+              episode: episode,
+              audioLanguage: streamInfo?['audioLanguage'] as String?,
+              qualityLabel: streamInfo?['qualityLabel'] as String?,
+              mediaItem: widget.item,
+              availableStreams: available,
+            ),
+          ),
+        );
+        return;
+      }
+
+      // Si el servidor detectó que la película solo existe en grabación de cine pirata de sala
+      if (streamInfo?['isCinemaOnly'] == true) {
         showDialog(
           context: context,
           builder: (dContext) => AlertDialog(
@@ -171,23 +199,19 @@ class _DetailViewState extends State<DetailView> {
               borderRadius: BorderRadius.circular(14),
               side: const BorderSide(color: Color(0x33E50914)),
             ),
-            title: Row(
+            title: const Row(
               children: [
-                Icon(
-                  isNoSpanish ? Icons.language_rounded : Icons.verified_user_rounded,
-                  color: isNoSpanish ? const Color(0xFFE50914) : Colors.amber,
-                  size: 22,
-                ),
-                const SizedBox(width: 8),
+                Icon(Icons.verified_user_rounded, color: Colors.amber, size: 22),
+                SizedBox(width: 8),
                 Text(
-                  isNoSpanish ? 'Solo Contenido en Español' : 'Filtro Anti-CAM Activo',
-                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  'Filtro Anti-CAM Activo',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             content: Text(
               streamInfo?['message'] ??
-                  'Esta película no cuenta actualmente con audio en español disponible. VJ STREAM solo reproduce contenido en español.',
+                  'Esta película solo cuenta actualmente con grabaciones de sala de cine. VJ STREAM protege la calidad evitando grabaciones de baja calidad.',
               style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
             ),
             actions: [
@@ -205,37 +229,15 @@ class _DetailViewState extends State<DetailView> {
         return;
       }
 
-      final streamUrl = streamInfo?['streamUrl'] as String?;
-      if (streamUrl != null && streamUrl.isNotEmpty) {
-        // Abrir inmediatamente el reproductor multimedia con la transmisión real
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => VideoPlayerView(
-              videoUrl: streamUrl,
-              title: displayTitle,
-              mediaId: widget.item.id,
-              posterUrl: widget.item.bestPosterUrl,
-              backdropUrl: widget.item.bestBackdropUrl,
-              mediaType: widget.item.mediaType,
-              season: season,
-              episode: episode,
-              audioLanguage: streamInfo?['audioLanguage'] as String?,
-              qualityLabel: streamInfo?['qualityLabel'] as String?,
-              mediaItem: widget.item,
-            ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'No se encontró una transmisión digital activa para "$displayTitle". Intenta nuevamente.',
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'No se encontró una transmisión digital activa para "$displayTitle". Intenta nuevamente.',
-            ),
-            backgroundColor: const Color(0xFFE50914),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+          backgroundColor: const Color(0xFFE50914),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();

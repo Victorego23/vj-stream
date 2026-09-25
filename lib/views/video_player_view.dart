@@ -24,6 +24,7 @@ class VideoPlayerView extends StatefulWidget {
   final String? audioLanguage;
   final String? qualityLabel;
   final MediaItem? mediaItem;
+  final List<Map<String, dynamic>>? availableStreams;
 
   const VideoPlayerView({
     super.key,
@@ -39,6 +40,7 @@ class VideoPlayerView extends StatefulWidget {
     this.audioLanguage,
     this.qualityLabel,
     this.mediaItem,
+    this.availableStreams,
   });
 
   @override
@@ -54,6 +56,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   late String _currentVideoUrl;
   String? _currentQualityLabel;
   String? _currentAudioLanguage;
+  String? _currentStreamId;
+  List<Map<String, dynamic>> _availableStreams = [];
+  BoxFit _videoFit = BoxFit.contain;
+  bool _isLoadingNextEpisode = false;
 
   bool _isInitialized = false;
   bool _hasError = false;
@@ -92,6 +98,27 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     _currentVideoUrl = widget.videoUrl;
     _currentQualityLabel = widget.qualityLabel;
     _currentAudioLanguage = widget.audioLanguage;
+
+    if (widget.availableStreams != null && widget.availableStreams!.isNotEmpty) {
+      _availableStreams = List<Map<String, dynamic>>.from(widget.availableStreams!);
+      final matching = _availableStreams.firstWhere(
+        (s) => s['streamUrl'] == _currentVideoUrl,
+        orElse: () => _availableStreams.first,
+      );
+      _currentStreamId = matching['id'] as String?;
+    } else {
+      _availableStreams = [
+        {
+          'id': 'latino',
+          'label': _currentAudioLanguage ?? 'Español Latino (🇲🇽)',
+          'language': _currentAudioLanguage ?? 'Español Latino',
+          'streamUrl': _currentVideoUrl,
+          'qualityLabel': _currentQualityLabel ?? '1080p FHD',
+          'isBackup': false,
+        }
+      ];
+      _currentStreamId = 'latino';
+    }
 
     // Registrar observador del ciclo de vida de la aplicación
     WidgetsBinding.instance.addObserver(this);
@@ -281,7 +308,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   /// Fallback automático transparente: busca la siguiente fuente disponible en el backend
   /// y la reproduce inmediatamente sin mostrar el cuadro naranja de error al usuario.
   Future<bool> _triggerAutoFallback() async {
-    if (_isFallingBack || widget.mediaItem == null) return false;
+    if (_isFallingBack) return false;
 
     _failedUrls.add(_currentVideoUrl);
     setState(() {
@@ -289,6 +316,27 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     });
 
     final currentPos = _controller?.value.position ?? Duration.zero;
+
+    // 1. Intentar conmutar inmediatamente a un servidor de respaldo ya precargado
+    final backup = _availableStreams.firstWhere(
+      (s) =>
+          (s['streamUrl'] as String?) != null &&
+          s['streamUrl'] != _currentVideoUrl &&
+          !_failedUrls.contains(s['streamUrl']),
+      orElse: () => <String, dynamic>{},
+    );
+    if (backup.isNotEmpty) {
+      debugPrint('[VideoPlayerView] 🔄 Usando servidor de respaldo pre-verificado...');
+      _showFeedbackIndicator('Conectando a servidor alternativo...');
+      await _switchStream(backup);
+      if (mounted) setState(() => _isFallingBack = false);
+      return true;
+    }
+
+    if (widget.mediaItem == null) {
+      if (mounted) setState(() => _isFallingBack = false);
+      return false;
+    }
 
     try {
       debugPrint('[VideoPlayerView] 🔄 Solicitando fuente alternativa limpia para "${widget.title}"...');
@@ -307,6 +355,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         _currentQualityLabel = fallbackStream?['qualityLabel'] as String? ?? _currentQualityLabel;
         _currentAudioLanguage = fallbackStream?['audioLanguage'] as String? ?? _currentAudioLanguage;
 
+        // Actualizar lista de streams disponibles si vinieron nuevos
+        if (fallbackStream?['availableStreams'] is List) {
+          _availableStreams = (fallbackStream!['availableStreams'] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
+
         _showFeedbackIndicator('Optimizando fuente...');
         await _initializePlayer(resumeAt: currentPos);
         return true;
@@ -321,6 +376,396 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
       });
     }
     return false;
+  }
+
+  Future<void> _switchStream(Map<String, dynamic> stream) async {
+    final newUrl = stream['streamUrl'] as String?;
+    if (newUrl == null || newUrl.isEmpty || newUrl == _currentVideoUrl) return;
+
+    final currentPos = _controller?.value.position ?? Duration.zero;
+
+    setState(() {
+      _currentVideoUrl = newUrl;
+      _currentAudioLanguage = stream['language'] as String? ?? stream['label'] as String?;
+      _currentQualityLabel = stream['qualityLabel'] as String? ?? _currentQualityLabel;
+      _currentStreamId = stream['id'] as String?;
+      _isInitialized = false;
+      _seekIndicatorText = 'Cambiando a ${_currentAudioLanguage ?? "fuente seleccionada"}...';
+    });
+
+    _seekIndicatorTimer?.cancel();
+    _seekIndicatorTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) setState(() => _seekIndicatorText = null);
+    });
+
+    await _initializePlayer(resumeAt: currentPos);
+  }
+
+  bool get _hasNextEpisode =>
+      widget.mediaType == 'tv' &&
+      widget.season != null &&
+      widget.episode != null &&
+      widget.mediaItem != null;
+
+  bool get _shouldShowNextEpisodeButton {
+    if (!_hasNextEpisode || _controller == null || !_isInitialized) return false;
+    final dur = _controller!.value.duration;
+    final pos = _controller!.value.position;
+    if (dur <= Duration.zero) return false;
+    final remaining = (dur - pos).inSeconds;
+    return remaining <= 90 && remaining > 0;
+  }
+
+  Future<void> _playNextEpisode() async {
+    if (!_hasNextEpisode || _isLoadingNextEpisode) return;
+
+    final nextEp = (widget.episode ?? 1) + 1;
+    final season = widget.season ?? 1;
+
+    setState(() {
+      _isLoadingNextEpisode = true;
+      _seekIndicatorText = 'Cargando Temporada $season, Ep. $nextEp...';
+    });
+
+    try {
+      final streamInfo = await _apiService.autoResolveStream(
+        widget.mediaItem!,
+        season: season,
+        episode: nextEp,
+      );
+
+      final nextUrl = streamInfo?['streamUrl'] as String?;
+      if (nextUrl != null && nextUrl.isNotEmpty && mounted) {
+        final available = (streamInfo?['availableStreams'] as List?)
+            ?.map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerView(
+              videoUrl: nextUrl,
+              title: '${widget.mediaItem!.title} T$season:E$nextEp',
+              mediaId: widget.mediaItem!.id,
+              posterUrl: widget.mediaItem!.bestPosterUrl,
+              backdropUrl: widget.mediaItem!.bestBackdropUrl,
+              mediaType: 'tv',
+              season: season,
+              episode: nextEp,
+              audioLanguage: streamInfo?['audioLanguage'] as String?,
+              qualityLabel: streamInfo?['qualityLabel'] as String?,
+              mediaItem: widget.mediaItem,
+              availableStreams: available,
+            ),
+          ),
+        );
+        return;
+      }
+    } catch (_) {}
+
+    if (mounted) {
+      setState(() {
+        _isLoadingNextEpisode = false;
+        _seekIndicatorText = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No hay más episodios disponibles para la Temporada $season.'),
+          backgroundColor: const Color(0xFFE50914),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _showSettingsModal() {
+    _hideControlsTimer?.cancel();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF141414),
+      barrierColor: Colors.black54,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: Color(0x33E50914), width: 1),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            final audioStreams = _availableStreams.where((s) => s['isBackup'] != true).toList();
+            final serverStreams = _availableStreams;
+
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.white24,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.tune_rounded, color: Color(0xFFE50914), size: 22),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Ajustes de Reproducción',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // SECCIÓN 1: IDIOMA Y DOBLAJE
+                    const Row(
+                      children: [
+                        Icon(Icons.record_voice_over_rounded, color: Colors.amber, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Idioma de Audio y Doblaje',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    if (audioStreams.isNotEmpty)
+                      ...audioStreams.map((st) {
+                        final isSelected = (st['id'] == _currentStreamId) || (st['streamUrl'] == _currentVideoUrl);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0x22E50914) : const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected ? const Color(0xFFE50914) : Colors.transparent,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(
+                              Icons.volume_up_rounded,
+                              color: isSelected ? const Color(0xFFE50914) : Colors.white60,
+                            ),
+                            title: Text(
+                              st['label'] ?? st['language'] ?? 'Audio',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              st['qualityLabel'] ?? 'Calidad HD',
+                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                                : null,
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              _switchStream(st);
+                            },
+                          ),
+                        );
+                      })
+                    else
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'Audio en español latino activo por defecto.',
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                      ),
+
+                    const SizedBox(height: 14),
+
+                    // SECCIÓN 2: SERVIDOR / FUENTE
+                    if (serverStreams.length > 1) ...[
+                      const Row(
+                        children: [
+                          Icon(Icons.dns_rounded, color: Colors.cyanAccent, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Servidor de Transmisión',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ...serverStreams.map((st) {
+                        final isSelected = st['streamUrl'] == _currentVideoUrl;
+                        final isBackup = st['isBackup'] == true;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0x2200E5FF) : const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected ? Colors.cyanAccent : Colors.transparent,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(
+                              isBackup ? Icons.cloud_queue_rounded : Icons.cloud_done_rounded,
+                              color: isSelected ? Colors.cyanAccent : Colors.white60,
+                            ),
+                            title: Text(
+                              isBackup ? 'Servidor 2 (Alternativo / Respaldo)' : 'Servidor 1 (Alta Velocidad Principal)',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${st['language'] ?? 'Español'} • ${st['qualityLabel'] ?? 'HD'}',
+                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(Icons.check_circle_rounded, color: Colors.cyanAccent, size: 20)
+                                : null,
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              _switchStream(st);
+                            },
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // SECCIÓN 3: FORMATO DE PANTALLA (ASPECT RATIO)
+                    const Row(
+                      children: [
+                        Icon(Icons.aspect_ratio_rounded, color: Colors.greenAccent, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Ajuste de Pantalla (Zoom y Proporción)',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildAspectOption(
+                      title: 'Original (16:9)',
+                      subtitle: 'Formato cinematográfico con barras negras naturales',
+                      fit: BoxFit.contain,
+                      icon: Icons.fit_screen_rounded,
+                      onSelect: () {
+                        setState(() => _videoFit = BoxFit.contain);
+                        setSheetState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    _buildAspectOption(
+                      title: 'Ajustar a Pantalla (Sin Barras)',
+                      subtitle: 'Zoom inteligente para cubrir toda la pantalla del móvil',
+                      fit: BoxFit.cover,
+                      icon: Icons.crop_free_rounded,
+                      onSelect: () {
+                        setState(() => _videoFit = BoxFit.cover);
+                        setSheetState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 6),
+                    _buildAspectOption(
+                      title: 'Estirar Pantalla Completa',
+                      subtitle: 'Estira la imagen para ocupar el 100% de la pantalla',
+                      fit: BoxFit.fill,
+                      icon: Icons.fullscreen_rounded,
+                      onSelect: () {
+                        setState(() => _videoFit = BoxFit.fill);
+                        setSheetState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    ).whenComplete(() {
+      if (mounted) _startHideTimer();
+    });
+  }
+
+  Widget _buildAspectOption({
+    required String title,
+    required String subtitle,
+    required BoxFit fit,
+    required IconData icon,
+    required VoidCallback onSelect,
+  }) {
+    final isSelected = _videoFit == fit;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0x2200E676) : const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isSelected ? Colors.greenAccent : Colors.transparent,
+          width: 1.2,
+        ),
+      ),
+      child: ListTile(
+        dense: true,
+        leading: Icon(
+          icon,
+          color: isSelected ? Colors.greenAccent : Colors.white60,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontSize: 14,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: Colors.white38, fontSize: 11),
+        ),
+        trailing: isSelected
+            ? const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 20)
+            : null,
+        onTap: onSelect,
+      ),
+    );
   }
 
   void _startHideTimer() {
@@ -579,6 +1024,29 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   ),
                 ),
 
+              // Botón flotante 'Siguiente Episodio' cuando queda poco tiempo en la serie
+              if (_shouldShowNextEpisodeButton)
+                Positioned(
+                  bottom: _showControls ? 95 : 24,
+                  right: 20,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE50914),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                      elevation: 6,
+                      shadowColor: const Color(0xFFE50914).withValues(alpha: 0.5),
+                    ),
+                    onPressed: _playNextEpisode,
+                    icon: const Icon(Icons.skip_next_rounded, size: 22),
+                    label: Text(
+                      'Siguiente Ep. ${(widget.episode ?? 0) + 1}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ),
+
               // Capa de controles (OSD) estilo Netflix
               AnimatedOpacity(
                 opacity: _showControls ? 1.0 : 0.0,
@@ -703,15 +1171,46 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
       );
     }
 
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Center(
-          child: AspectRatio(
-            aspectRatio: _controller!.value.aspectRatio > 0 ? _controller!.value.aspectRatio : 16 / 9,
+    final double videoAspect =
+        _controller!.value.aspectRatio > 0 ? _controller!.value.aspectRatio : 16 / 9;
+
+    Widget videoWidget;
+    if (_videoFit == BoxFit.contain) {
+      videoWidget = Center(
+        child: AspectRatio(
+          aspectRatio: videoAspect,
+          child: VideoPlayer(_controller!),
+        ),
+      );
+    } else if (_videoFit == BoxFit.cover) {
+      videoWidget = SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          clipBehavior: Clip.hardEdge,
+          child: SizedBox(
+            width: _controller!.value.size.width > 0 ? _controller!.value.size.width : 1920,
+            height: _controller!.value.size.height > 0 ? _controller!.value.size.height : 1080,
             child: VideoPlayer(_controller!),
           ),
         ),
+      );
+    } else {
+      videoWidget = SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.fill,
+          child: SizedBox(
+            width: _controller!.value.size.width > 0 ? _controller!.value.size.width : 1920,
+            height: _controller!.value.size.height > 0 ? _controller!.value.size.height : 1080,
+            child: VideoPlayer(_controller!),
+          ),
+        ),
+      );
+    }
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        videoWidget,
 
         // Pantalla limpia y fluida de buffering (sin textos técnicos ni bloqueos)
         if (_isBuffering || _isSeeking)
@@ -831,6 +1330,12 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 24),
+                    tooltip: 'Ajustes de Audio y Pantalla',
+                    onPressed: _showSettingsModal,
                   ),
                 ],
               ),
