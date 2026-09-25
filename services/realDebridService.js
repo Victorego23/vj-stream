@@ -277,14 +277,22 @@ class RealDebridService {
         console.warn(`[VJ STREAM Anti-CAM] Advertencia: Torrent "${torrentInfo.filename}" detectado como posible CAM/TS.`);
       }
 
-      // Si aún no está en caché o descargado en Real-Debrid, retornamos el estado para polling
+      // Si aún no está en caché o descargado en Real-Debrid, esperar brevemente a que el cloud de Real-Debrid procese o descargue
+      let attempts = 0;
+      while ((!torrentInfo.links || torrentInfo.links.length === 0) && attempts < 3 && torrentInfo.status !== 'magnet_error' && torrentInfo.status !== 'error') {
+        attempts++;
+        console.log(`[RealDebridService] ⏳ Esperando procesamiento/descarga en la nube para "${torrentInfo.filename}" (intento ${attempts}/3)...`);
+        await new Promise(r => setTimeout(r, 2000));
+        torrentInfo = await this.getTorrentInfo(torrentId);
+      }
+
       if (!torrentInfo.links || torrentInfo.links.length === 0) {
         return {
           success: true,
           torrentId,
           status: torrentInfo.status,
           progress: torrentInfo.progress,
-          message: 'El torrent ha sido añadido pero los enlaces aún se están procesando o descargando.',
+          message: 'El torrent ha sido añadido a tu nube de Real-Debrid para descarga.',
           streams: []
         };
       }

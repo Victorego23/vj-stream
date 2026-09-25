@@ -183,6 +183,9 @@ class _DetailViewState extends State<DetailView> {
               qualityLabel: streamInfo?['qualityLabel'] as String?,
               mediaItem: widget.item,
               availableStreams: available,
+              subtitles: (streamInfo?['subtitles'] as List?)
+                  ?.map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList(),
             ),
           ),
         );

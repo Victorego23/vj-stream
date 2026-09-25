@@ -1,12 +1,26 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:video_player/video_player.dart';
 
 import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
 import '../services/screen_service.dart';
+
+/// Elemento individual de subtítulo sincronizado
+class _SubtitleItem {
+  final Duration start;
+  final Duration end;
+  final String text;
+
+  const _SubtitleItem({
+    required this.start,
+    required this.end,
+    required this.text,
+  });
+}
 
 /// Reproductor de Video optimizado para Streaming directo con aceleración por hardware.
 /// Soporta controles Smart TV con D-Pad, prevención de apagado de pantalla (WakeLock nativo),
@@ -25,6 +39,7 @@ class VideoPlayerView extends StatefulWidget {
   final String? qualityLabel;
   final MediaItem? mediaItem;
   final List<Map<String, dynamic>>? availableStreams;
+  final List<Map<String, dynamic>>? subtitles;
 
   const VideoPlayerView({
     super.key,
@@ -41,6 +56,7 @@ class VideoPlayerView extends StatefulWidget {
     this.qualityLabel,
     this.mediaItem,
     this.availableStreams,
+    this.subtitles,
   });
 
   @override
@@ -60,6 +76,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   List<Map<String, dynamic>> _availableStreams = [];
   BoxFit _videoFit = BoxFit.contain;
   bool _isLoadingNextEpisode = false;
+
+  // Subtítulos
+  List<Map<String, dynamic>> _subtitles = [];
+  bool _subtitlesEnabled = false;
+  String? _currentSubtitleUrl;
+  List<_SubtitleItem> _parsedSubtitles = [];
+  String? _activeSubtitleText;
 
   bool _isInitialized = false;
   bool _hasError = false;
@@ -118,6 +141,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         }
       ];
       _currentStreamId = 'latino';
+    }
+
+    if (widget.subtitles != null && widget.subtitles!.isNotEmpty) {
+      _subtitles = List<Map<String, dynamic>>.from(widget.subtitles!);
+      // Si el audio predeterminado no es español, activar subtítulos automáticamente
+      final isOriginalOrEnglish = (_currentAudioLanguage ?? '').toLowerCase().contains('ing') ||
+          (_currentAudioLanguage ?? '').toLowerCase().contains('orig') ||
+          _currentStreamId == 'original';
+      if (isOriginalOrEnglish) {
+        _subtitlesEnabled = true;
+        _loadSubtitle(_subtitles.first);
+      }
     }
 
     // Registrar observador del ciclo de vida de la aplicación
@@ -283,6 +318,27 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         _isBuffering = buffering;
       });
       _resetBufferingWatchdog();
+    }
+
+    // Actualizar subtítulo activo según la posición de reproducción
+    if (_subtitlesEnabled && _parsedSubtitles.isNotEmpty) {
+      final pos = _controller!.value.position;
+      String? foundText;
+      for (final sub in _parsedSubtitles) {
+        if (pos >= sub.start && pos <= sub.end) {
+          foundText = sub.text;
+          break;
+        }
+      }
+      if (foundText != _activeSubtitleText) {
+        setState(() {
+          _activeSubtitleText = foundText;
+        });
+      }
+    } else if (_activeSubtitleText != null) {
+      setState(() {
+        _activeSubtitleText = null;
+      });
     } else {
       setState(() {});
     }
@@ -401,6 +457,76 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     await _initializePlayer(resumeAt: currentPos);
   }
 
+  /// Descarga y parsea el archivo de subtítulos (.srt / .vtt)
+  Future<void> _loadSubtitle(Map<String, dynamic> sub) async {
+    final url = sub['url'] as String?;
+    if (url == null || url.isEmpty) return;
+
+    _currentSubtitleUrl = url;
+    try {
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 6));
+      if (response.statusCode == 200) {
+        final parsed = _parseSubtitles(response.body);
+        if (mounted) {
+          setState(() {
+            _parsedSubtitles = parsed;
+            _subtitlesEnabled = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('[VideoPlayerView] Error al cargar subtítulos: $e');
+    }
+  }
+
+  /// Parsea archivos SRT a una lista estructurada con tiempos de inicio y fin
+  List<_SubtitleItem> _parseSubtitles(String raw) {
+    final items = <_SubtitleItem>[];
+    final blocks = raw.replaceAll('\r\n', '\n').replaceAll('\r', '\n').split('\n\n');
+    for (final block in blocks) {
+      final lines = block.trim().split('\n');
+      if (lines.length < 2) continue;
+      final timeLine = lines.length >= 2 && lines[1].contains('-->')
+          ? lines[1]
+          : (lines[0].contains('-->') ? lines[0] : null);
+      if (timeLine == null) continue;
+
+      final parts = timeLine.split('-->');
+      if (parts.length != 2) continue;
+
+      final start = _parseTimestamp(parts[0].trim());
+      final end = _parseTimestamp(parts[1].trim());
+      if (start == null || end == null) continue;
+
+      final textIndex = lines.indexOf(timeLine) + 1;
+      final textLines = lines.sublist(textIndex).join('\n');
+      final cleanText = textLines.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+      if (cleanText.isNotEmpty) {
+        items.add(_SubtitleItem(start: start, end: end, text: cleanText));
+      }
+    }
+    return items;
+  }
+
+  /// Convierte el formato 00:01:23,456 a Duration
+  Duration? _parseTimestamp(String time) {
+    try {
+      final clean = time.replaceAll(',', '.');
+      final parts = clean.split(':');
+      if (parts.length == 3) {
+        final hours = int.parse(parts[0]);
+        final minutes = int.parse(parts[1]);
+        final secParts = parts[2].split('.');
+        final seconds = int.parse(secParts[0]);
+        final millis = secParts.length > 1
+            ? int.parse(secParts[1].padRight(3, '0').substring(0, 3))
+            : 0;
+        return Duration(hours: hours, minutes: minutes, seconds: seconds, milliseconds: millis);
+      }
+    } catch (_) {}
+    return null;
+  }
+
   bool get _hasNextEpisode =>
       widget.mediaType == 'tv' &&
       widget.season != null &&
@@ -455,6 +581,9 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               qualityLabel: streamInfo?['qualityLabel'] as String?,
               mediaItem: widget.mediaItem,
               availableStreams: available,
+              subtitles: (streamInfo?['subtitles'] as List?)
+                  ?.map((e) => Map<String, dynamic>.from(e as Map))
+                  .toList(),
             ),
           ),
         );
@@ -712,6 +841,115 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                         setSheetState(() {});
                       },
                     ),
+                    const SizedBox(height: 12),
+
+                    // SECCIÓN 4: SUBTÍTULOS EN ESPAÑOL
+                    const Row(
+                      children: [
+                        Icon(Icons.subtitles_rounded, color: Colors.amber, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Subtítulos en Español',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Opción: Desactivar Subtítulos
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: !_subtitlesEnabled ? const Color(0x22E50914) : const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: !_subtitlesEnabled ? const Color(0xFFE50914) : Colors.transparent,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: ListTile(
+                        dense: true,
+                        leading: Icon(
+                          Icons.subtitles_off_rounded,
+                          color: !_subtitlesEnabled ? const Color(0xFFE50914) : Colors.white60,
+                        ),
+                        title: const Text(
+                          'Desactivar Subtítulos',
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                        trailing: !_subtitlesEnabled
+                            ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                            : null,
+                        onTap: () {
+                          setState(() {
+                            _subtitlesEnabled = false;
+                            _activeSubtitleText = null;
+                          });
+                          setSheetState(() {});
+                          Navigator.pop(sheetContext);
+                        },
+                      ),
+                    ),
+
+                    if (_subtitles.isNotEmpty)
+                      ..._subtitles.map((sub) {
+                        final isSelected = _subtitlesEnabled && (_currentSubtitleUrl == sub['url']);
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0x22FFC107) : const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected ? Colors.amber : Colors.transparent,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(
+                              Icons.closed_caption_rounded,
+                              color: isSelected ? Colors.amber : Colors.white60,
+                            ),
+                            title: Text(
+                              sub['label'] ?? 'Español',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              sub['fileName'] ?? 'Sincronizado',
+                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: isSelected
+                                ? const Icon(Icons.check_circle_rounded, color: Colors.amber, size: 20)
+                                : null,
+                            onTap: () {
+                              _loadSubtitle(sub);
+                              setState(() {
+                                _subtitlesEnabled = true;
+                              });
+                              setSheetState(() {});
+                              Navigator.pop(sheetContext);
+                            },
+                          ),
+                        );
+                      })
+                    else
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'Sin subtítulos adicionales para este contenido.',
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                      ),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -1238,6 +1476,36 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               ),
             ),
           ),
+
+        // Subtítulos flotantes estilo Netflix (centrados, con fondo oscuro legible y sombras)
+        if (_subtitlesEnabled && _activeSubtitleText != null && _activeSubtitleText!.isNotEmpty)
+          Positioned(
+            bottom: _showControls ? 95 : 38,
+            left: 28,
+            right: 28,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _activeSubtitleText!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                    shadows: [
+                      Shadow(blurRadius: 3, color: Colors.black, offset: Offset(1, 1)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -1330,6 +1598,24 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(
+                      _subtitlesEnabled ? Icons.closed_caption_rounded : Icons.closed_caption_disabled_outlined,
+                      color: _subtitlesEnabled ? Colors.amber : Colors.white70,
+                      size: 24,
+                    ),
+                    tooltip: 'Subtítulos',
+                    onPressed: () {
+                      setState(() {
+                        _subtitlesEnabled = !_subtitlesEnabled;
+                        if (_subtitlesEnabled && _parsedSubtitles.isEmpty && _subtitles.isNotEmpty) {
+                          _loadSubtitle(_subtitles.first);
+                        }
+                      });
+                      _showFeedbackIndicator(_subtitlesEnabled ? 'Subtítulos Activados' : 'Subtítulos Desactivados');
+                    },
                   ),
                   const SizedBox(width: 4),
                   IconButton(

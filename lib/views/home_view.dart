@@ -296,6 +296,9 @@ class _HomeViewState extends State<HomeView> {
           qualityLabel: streamInfo?['qualityLabel'] as String?,
           mediaItem: item,
           availableStreams: available,
+          subtitles: (streamInfo?['subtitles'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList(),
         ),
       ),
     ).then((_) => _loadHistoryAndFavorites());
@@ -386,6 +389,9 @@ class _HomeViewState extends State<HomeView> {
               backdropLarge: historyItem.backdropUrl,
             ),
             availableStreams: available,
+            subtitles: (streamInfo?['subtitles'] as List?)
+                ?.map((e) => Map<String, dynamic>.from(e as Map))
+                .toList(),
           ),
         ),
       ).then((_) => _loadHistoryAndFavorites());

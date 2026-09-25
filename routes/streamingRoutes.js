@@ -340,16 +340,16 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.4',
-    versionCode: 11,
+    latestVersion: '2.4.5',
+    versionCode: 12,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-25',
     releaseNotes: [
+      '💬 Subtítulos en Español Integrados: Subtítulos automáticos sincronizados (Latino y Castellano) con botón [CC] y selector en ajustes',
+      '📥 Descarga y Caché en la Nube de Real-Debrid: Garantiza la obtención de audio en español incluso si requiere procesamiento en la nube',
       '⚙️ Engranaje de Ajustes en Vivo: Cambia de audio (Latino 🇲🇽, Castellano 🇪🇸, Original 🇺🇸) y servidor alternativo al instante',
       '📺 Ajuste de Pantalla: Elige entre Original (16:9), Pantalla Completa sin barras (Zoom) y Estirar',
-      '⏭️ Siguiente Episodio Automático: Botón flotante para continuar series sin volver al menú',
-      '🛡️ Reproducción Fluida sin Bloqueos: Sin pantallas molestas de advertencia',
-      '⚡ Multi-Servidor Inteligente: Conexión simultánea a múltiples servidores CDN de alta velocidad'
+      '⏭️ Siguiente Episodio Automático: Botón flotante para continuar series sin volver al menú'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

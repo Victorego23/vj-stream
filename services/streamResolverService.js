@@ -285,6 +285,41 @@ class StreamResolverService {
   }
 
   /**
+   * Obtiene subtítulos limpios y sincronizados en español (Latino y Castellano) para la película o episodio.
+   * @param {string} imdbId
+   * @param {string} mediaType
+   * @param {number} season
+   * @param {number} episode
+   * @returns {Promise<Array<{id: string, lang: string, label: string, url: string, fileName: string}>>}
+   */
+  async fetchSubtitles(imdbId, mediaType = 'movie', season = 1, episode = 1) {
+    if (!imdbId) return [];
+    try {
+      const url = mediaType === 'tv'
+        ? `https://opensubtitles-v3.strem.io/subtitles/series/${imdbId}:${season}:${episode}.json`
+        : `https://opensubtitles-v3.strem.io/subtitles/movie/${imdbId}.json`;
+      const res = await axios.get(url, { timeout: 3500 });
+      const rawSubs = res.data?.subtitles || [];
+      const spanishSubs = rawSubs.filter(s => {
+        const lang = (s.lang || '').toLowerCase();
+        return lang === 'spa' || lang === 'es' || lang === 'spl';
+      });
+
+      return spanishSubs.slice(0, 6).map((s, idx) => ({
+        id: s.id || `sub_${idx + 1}`,
+        lang: s.lang || 'es',
+        label: s.lang === 'spl' || (s.subtitleFileName || '').toLowerCase().includes('lat')
+          ? 'Español Latino (🇲🇽)'
+          : 'Español / Castellano (🇪🇸)',
+        url: s.url,
+        fileName: s.subtitleFileName || `Subtítulo ${idx + 1}`
+      }));
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /**
    * Respaldo: Busca magnets en APIs públicas de torrents comerciales.
    * @private
    */
@@ -433,6 +468,7 @@ class StreamResolverService {
 
         if (primaryStream) {
           console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión seleccionada: [${primaryStream.audioLanguage}] "${primaryStream.filename}" con ${availableStreams.length} opciones en engranaje`);
+          const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
           const result = {
             success: true,
             streamUrl: primaryStream.streamUrl,
@@ -441,7 +477,8 @@ class StreamResolverService {
             isSpanishAudio: primaryStream.isSpanishAudio,
             filename: primaryStream.filename,
             title: title,
-            availableStreams: availableStreams
+            availableStreams: availableStreams,
+            subtitles: subtitles
           };
 
           this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
@@ -528,6 +565,7 @@ class StreamResolverService {
             }
 
             console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión de respaldo verificada: "${streamOption.filename}"`);
+            const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
             const streamData = {
               success: true,
               streamUrl: streamOption.streamUrl,
@@ -546,7 +584,8 @@ class StreamResolverService {
                   filename: streamOption.filename,
                   isBackup: false
                 }
-              ]
+              ],
+              subtitles: subtitles
             };
 
             this.cache.set(cacheKey, { timestamp: Date.now(), data: streamData });
