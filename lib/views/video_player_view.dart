@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 
+import '../models/media_item.dart';
+import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
+import '../services/screen_service.dart';
 
-/// Reproductor de Video optimizado para Streaming directo (Real-Debrid CDN).
-/// Soporta aceleración por hardware, controles Smart TV con D-Pad, tolerancia a códecs y reconexión automática.
+/// Reproductor de Video optimizado para Streaming directo con aceleración por hardware.
+/// Soporta controles Smart TV con D-Pad, prevención de apagado de pantalla (WakeLock nativo),
+/// saltos de tiempo fluidos sin congelamientos y fallback automático transparente ante bloqueos de copyright.
 class VideoPlayerView extends StatefulWidget {
   final String videoUrl;
   final String title;
@@ -19,6 +23,7 @@ class VideoPlayerView extends StatefulWidget {
   final int? episode;
   final String? audioLanguage;
   final String? qualityLabel;
+  final MediaItem? mediaItem;
 
   const VideoPlayerView({
     super.key,
@@ -33,30 +38,50 @@ class VideoPlayerView extends StatefulWidget {
     this.episode,
     this.audioLanguage,
     this.qualityLabel,
+    this.mediaItem,
   });
 
   @override
   State<VideoPlayerView> createState() => _VideoPlayerViewState();
 }
 
-class _VideoPlayerViewState extends State<VideoPlayerView> {
+class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingObserver {
+  final ApiService _apiService = ApiService();
   VideoPlayerController? _controller;
   late FocusNode _tvFocusNode;
   final FocusNode _retryFocusNode = FocusNode();
 
+  late String _currentVideoUrl;
+  String? _currentQualityLabel;
+  String? _currentAudioLanguage;
+
   bool _isInitialized = false;
   bool _hasError = false;
   bool _isBuffering = false;
+  bool _isSeeking = false;
+  bool _isFallingBack = false;
   String? _errorMessage;
 
   int _retryCount = 0;
   static const int _maxRetries = 2;
 
+  // Lista de URLs fallidas durante esta sesión para evitar reincidir en ellas
+  final List<String> _failedUrls = [];
+
   bool _showControls = true;
   Timer? _hideControlsTimer;
   Timer? _progressSaveTimer;
 
-  // Indicador visual de salto en pantalla (+10s o -10s)
+  // Salto acumulativo y debouncing para adelantar/retroceder sin congelar la app
+  int _accumulatedSeekSeconds = 0;
+  Duration? _pendingSeekPosition;
+  Timer? _seekDebounceTimer;
+  Timer? _bufferingWatchdogTimer;
+
+  // Arrastre manual en slider de tiempo
+  Duration? _dragPosition;
+
+  // Indicador visual de salto en pantalla (+10s, -10s, etc.)
   String? _seekIndicatorText;
   Timer? _seekIndicatorTimer;
 
@@ -64,6 +89,15 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   void initState() {
     super.initState();
     _tvFocusNode = FocusNode();
+    _currentVideoUrl = widget.videoUrl;
+    _currentQualityLabel = widget.qualityLabel;
+    _currentAudioLanguage = widget.audioLanguage;
+
+    // Registrar observador del ciclo de vida de la aplicación
+    WidgetsBinding.instance.addObserver(this);
+
+    // Activar pantalla encendida permanente (FLAG_KEEP_SCREEN_ON) para que el celular no se apague
+    ScreenService.keepScreenOn(true);
 
     // Habilitar pantalla completa inmersiva para streaming
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -71,7 +105,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     _initializePlayer();
   }
 
-  Future<void> _initializePlayer({bool isUserRetry = false}) async {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Re-asegurar encendido de pantalla al volver al primer plano
+      ScreenService.keepScreenOn(true);
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      // Liberar permanencia al pasar a segundo plano para ahorrar batería
+      ScreenService.keepScreenOn(false);
+    }
+  }
+
+  Future<void> _initializePlayer({bool isUserRetry = false, Duration? resumeAt}) async {
     if (isUserRetry) {
       _retryCount = 0;
       setState(() {
@@ -82,14 +127,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     }
 
     try {
-      // Limpiar controlador anterior si existiese
       if (_controller != null) {
         _controller!.removeListener(_videoListener);
         await _controller!.dispose();
         _controller = null;
       }
 
-      final trimmedUrl = widget.videoUrl.trim();
+      final trimmedUrl = _currentVideoUrl.trim();
       final uri = Uri.parse(trimmedUrl);
 
       // Detección tolerante de formato para CDN
@@ -103,12 +147,11 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
         formatHint = VideoFormat.other;
       }
 
-      // Cabeceras de red estándar compatibles con streaming de alta velocidad y ExoPlayer
       final controller = VideoPlayerController.networkUrl(
         uri,
         formatHint: formatHint,
         httpHeaders: const {
-          'User-Agent': 'VJ-STREAM/2.2.6 (Linux; Android; ExoPlayer)',
+          'User-Agent': 'VJ-STREAM/2.4.1 (Linux; Android; ExoPlayer)',
         },
         videoPlayerOptions: VideoPlayerOptions(
           mixWithOthers: false,
@@ -121,12 +164,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       await controller.initialize();
       controller.addListener(_videoListener);
 
-      // Si se reanuda desde "Continuar Viendo", saltar al segundo exacto
-      if (widget.startPositionSeconds != null && widget.startPositionSeconds! > 0) {
+      // Reanudar en la posición solicitada o en la guardada
+      if (resumeAt != null && resumeAt > Duration.zero) {
+        await controller.seekTo(resumeAt);
+      } else if (widget.startPositionSeconds != null && widget.startPositionSeconds! > 0) {
         await controller.seekTo(Duration(seconds: widget.startPositionSeconds!));
       }
 
-      // Reproducción inmediata
       await controller.play();
 
       if (mounted) {
@@ -135,24 +179,30 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
           _hasError = false;
           _errorMessage = null;
           _retryCount = 0;
+          _isFallingBack = false;
         });
 
         _startHideTimer();
         _tvFocusNode.requestFocus();
 
-        // Iniciar guardado automático de progreso cada 5 segundos
         _progressSaveTimer?.cancel();
         _progressSaveTimer = Timer.periodic(const Duration(seconds: 5), (_) {
           _saveCurrentProgress();
         });
       }
     } catch (e) {
-      // Intento de reconexión automática si el CDN tarda en responder en el primer handshake
+      // Si la URL actual falló, intentar fallback automático a otra fuente antes de alarmar al usuario
+      if (widget.mediaItem != null && !_isFallingBack && _retryCount < 2) {
+        _retryCount++;
+        final handled = await _triggerAutoFallback();
+        if (handled) return;
+      }
+
       if (_retryCount < _maxRetries && mounted) {
         _retryCount++;
         await Future.delayed(const Duration(milliseconds: 650));
         if (mounted) {
-          return _initializePlayer();
+          return _initializePlayer(resumeAt: resumeAt);
         }
       }
 
@@ -161,7 +211,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
           _hasError = true;
           _isInitialized = false;
           _errorMessage =
-              'No fue posible inicializar el flujo multimedia para "${widget.title}".\n'
+              'No fue posible reproducir la transmisión para "${widget.title}".\n'
               'Verifica tu conexión a internet o pulsa Reintentar.';
         });
         _retryFocusNode.requestFocus();
@@ -172,12 +222,29 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   void _videoListener() {
     if (!mounted || _controller == null) return;
 
-    // Detectar fallos de decodificación o interrupción de códec en tiempo de ejecución
-    if (_controller!.value.hasError && !_hasError) {
+    // Detectar si el reproductor cargó un video estático de advertencia de error o DMCA
+    // Los videos de advertencia de copyright de Debrid duran menos de 20 segundos
+    if (_isInitialized && !_isFallingBack) {
+      final totalDuration = _controller!.value.duration;
+      final isMovieOrTv = (widget.mediaType == 'movie' || widget.mediaType == 'tv' || widget.mediaItem != null);
+      if (isMovieOrTv && totalDuration > Duration.zero && totalDuration < const Duration(seconds: 22)) {
+        debugPrint('[VideoPlayerView] 🛡️ Detectado clip de advertencia/error de Debrid (${totalDuration.inSeconds}s). Activando fallback transparente...');
+        _triggerAutoFallback();
+        return;
+      }
+    }
+
+    // Detectar fallos de decodificación o caída del stream en vivo
+    if (_controller!.value.hasError && !_hasError && !_isFallingBack) {
+      // Intentar fallback automático antes de mostrar error al usuario
+      if (widget.mediaItem != null) {
+        _triggerAutoFallback();
+        return;
+      }
+
       setState(() {
         _hasError = true;
-        _errorMessage = _controller!.value.errorDescription ??
-            'Error al decodificar el flujo de video en Real-Debrid CDN.\nPor favor reintenta la conexión.';
+        _errorMessage = 'Se interrumpió el flujo de video.\nPor favor reintenta la conexión.';
       });
       _retryFocusNode.requestFocus();
       return;
@@ -188,15 +255,78 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       setState(() {
         _isBuffering = buffering;
       });
+      _resetBufferingWatchdog();
     } else {
       setState(() {});
     }
   }
 
+  /// Watchdog para evitar que el reproductor quede congelado en buffering indefinidamente
+  void _resetBufferingWatchdog() {
+    _bufferingWatchdogTimer?.cancel();
+    if (_isBuffering || _isSeeking) {
+      _bufferingWatchdogTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted && (_isBuffering || _isSeeking) && _controller != null) {
+          debugPrint('[VideoPlayerView] 🔄 Watchdog activado: destrabando reproducción en búfer...');
+          _controller!.play();
+          setState(() {
+            _isBuffering = false;
+            _isSeeking = false;
+          });
+        }
+      });
+    }
+  }
+
+  /// Fallback automático transparente: busca la siguiente fuente disponible en el backend
+  /// y la reproduce inmediatamente sin mostrar el cuadro naranja de error al usuario.
+  Future<bool> _triggerAutoFallback() async {
+    if (_isFallingBack || widget.mediaItem == null) return false;
+
+    _failedUrls.add(_currentVideoUrl);
+    setState(() {
+      _isFallingBack = true;
+    });
+
+    final currentPos = _controller?.value.position ?? Duration.zero;
+
+    try {
+      debugPrint('[VideoPlayerView] 🔄 Solicitando fuente alternativa limpia para "${widget.title}"...');
+      final fallbackStream = await _apiService.autoResolveStream(
+        widget.mediaItem!,
+        season: widget.season ?? 1,
+        episode: widget.episode ?? 1,
+        bypassCache: true,
+        excludeUrls: _failedUrls,
+      );
+
+      final newUrl = fallbackStream?['streamUrl'] as String?;
+      if (newUrl != null && newUrl.isNotEmpty && newUrl != _currentVideoUrl) {
+        debugPrint('[VideoPlayerView] ✅ Fuente alternativa obtenida: $newUrl');
+        _currentVideoUrl = newUrl;
+        _currentQualityLabel = fallbackStream?['qualityLabel'] as String? ?? _currentQualityLabel;
+        _currentAudioLanguage = fallbackStream?['audioLanguage'] as String? ?? _currentAudioLanguage;
+
+        _showFeedbackIndicator('Optimizando fuente...');
+        await _initializePlayer(resumeAt: currentPos);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('[VideoPlayerView] Error durante auto-fallback: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _isFallingBack = false;
+      });
+    }
+    return false;
+  }
+
   void _startHideTimer() {
     _hideControlsTimer?.cancel();
     _hideControlsTimer = Timer(const Duration(milliseconds: 3500), () {
-      if (mounted && _controller != null && _controller!.value.isPlaying) {
+      if (mounted && _controller != null && _controller!.value.isPlaying && !_isSeeking) {
         setState(() => _showControls = false);
       }
     });
@@ -225,25 +355,64 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     _showFeedbackIndicator(_controller!.value.isPlaying ? '▶' : '⏸');
   }
 
+  /// Salto relativo acumulativo con debouncing inteligente.
+  /// Permite presionar repetidamente (+10s, +20s, -10s) sin congelar la app ni saturar ExoPlayer.
   void _seekRelative(int seconds) {
     if (!_isInitialized || _controller == null) return;
 
     final currentPosition = _controller!.value.position;
-    final targetPosition = currentPosition + Duration(seconds: seconds);
     final totalDuration = _controller!.value.duration;
 
-    Duration finalDuration;
-    if (targetPosition < Duration.zero) {
-      finalDuration = Duration.zero;
-    } else if (targetPosition > totalDuration) {
-      finalDuration = totalDuration;
+    if (_seekDebounceTimer?.isActive == true && _pendingSeekPosition != null) {
+      _accumulatedSeekSeconds += seconds;
+      _pendingSeekPosition = _pendingSeekPosition! + Duration(seconds: seconds);
     } else {
-      finalDuration = targetPosition;
+      _accumulatedSeekSeconds = seconds;
+      _pendingSeekPosition = currentPosition + Duration(seconds: seconds);
     }
 
-    _controller!.seekTo(finalDuration);
-    _showFeedbackIndicator(seconds > 0 ? '+$seconds s' : '$seconds s');
+    if (_pendingSeekPosition! < Duration.zero) {
+      _pendingSeekPosition = Duration.zero;
+    } else if (_pendingSeekPosition! > totalDuration) {
+      _pendingSeekPosition = totalDuration;
+    }
+
+    // Mostrar feedback instantáneo al usuario (+10 s, +20 s, -10 s)
+    _showFeedbackIndicator(
+      _accumulatedSeekSeconds > 0
+          ? '+$_accumulatedSeekSeconds s'
+          : '$_accumulatedSeekSeconds s',
+    );
+
     _startHideTimer();
+    setState(() {}); // Actualiza de inmediato el slider visual
+
+    // Debounce de 320ms: Solo ejecuta un único salto real cuando el usuario deja de presionar
+    _seekDebounceTimer?.cancel();
+    _seekDebounceTimer = Timer(const Duration(milliseconds: 320), () async {
+      final target = _pendingSeekPosition;
+      if (target == null || _controller == null || !mounted) return;
+
+      setState(() {
+        _isSeeking = true;
+      });
+
+      try {
+        await _controller!.seekTo(target);
+        if (mounted && !_controller!.value.isPlaying) {
+          await _controller!.play();
+        }
+      } catch (_) {}
+
+      if (mounted) {
+        setState(() {
+          _isSeeking = false;
+          _pendingSeekPosition = null;
+          _accumulatedSeekSeconds = 0;
+        });
+        _resetBufferingWatchdog();
+      }
+    });
   }
 
   void _showFeedbackIndicator(String text) {
@@ -291,9 +460,15 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Liberar permanencia de pantalla al salir del reproductor
+    ScreenService.keepScreenOn(false);
+
     _progressSaveTimer?.cancel();
     _saveCurrentProgress();
 
+    _seekDebounceTimer?.cancel();
+    _bufferingWatchdogTimer?.cancel();
     _hideControlsTimer?.cancel();
     _seekIndicatorTimer?.cancel();
     _tvFocusNode.dispose();
@@ -316,7 +491,6 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
       autofocus: true,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
-          // Si hay error, permitir interacción con los botones
           if (_hasError) {
             if (event.logicalKey == LogicalKeyboardKey.escape) {
               Navigator.of(context).pop();
@@ -325,7 +499,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
             return KeyEventResult.ignored;
           }
 
-          // Controles de Smart TV D-Pad
+          // Controles Smart TV D-Pad
           if (event.logicalKey == LogicalKeyboardKey.select ||
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space ||
@@ -374,7 +548,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // Área principal del video
+              // Superficie principal de video
               _buildVideoSurface(),
 
               // Indicador flotante en el centro (+10s, -10s, play/pausa)
@@ -383,9 +557,16 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.75),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.black.withValues(alpha: 0.78),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFFE50914), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFE50914).withValues(alpha: 0.35),
+                          blurRadius: 18,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
                     child: Text(
                       _seekIndicatorText!,
@@ -434,7 +615,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                   const Icon(Icons.error_outline_rounded, color: Color(0xFFE50914), size: 56),
                   const SizedBox(height: 16),
                   const Text(
-                    'Problema de Transmisión CDN',
+                    'Problema de Transmisión',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -500,11 +681,11 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                 ),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Conectando con CDN de Real-Debrid...',
-                style: TextStyle(
+              Text(
+                _isFallingBack ? 'Optimizando fuente alternativa limpia...' : 'Cargando reproducción...',
+                style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
                 ),
@@ -513,7 +694,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
               Text(
                 _retryCount > 0
                     ? 'Reintentando conexión automática ($_retryCount/$_maxRetries)...'
-                    : 'Aceleración por hardware y optimización Smart TV activa',
+                    : 'Aceleración por hardware y optimización activa',
                 style: const TextStyle(color: Colors.white54, fontSize: 12),
               ),
             ],
@@ -531,32 +712,30 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
             child: VideoPlayer(_controller!),
           ),
         ),
-        if (_isBuffering)
+
+        // Pantalla limpia y fluida de buffering (sin textos técnicos ni bloqueos)
+        if (_isBuffering || _isSeeking)
           Center(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF2A2A2A)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFE50914),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                  SizedBox(width: 14),
-                  Text(
-                    'Cargando stream CDN...',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                color: Colors.black.withValues(alpha: 0.65),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFE50914).withValues(alpha: 0.35),
+                    blurRadius: 22,
+                    spreadRadius: 2,
                   ),
                 ],
+              ),
+              child: const SizedBox(
+                width: 42,
+                height: 42,
+                child: CircularProgressIndicator(
+                  color: Color(0xFFE50914),
+                  strokeWidth: 3.0,
+                ),
               ),
             ),
           ),
@@ -567,7 +746,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
   Widget _buildControlsOverlay() {
     if (!_isInitialized || _controller == null) return const SizedBox.shrink();
 
-    final position = _controller!.value.position;
+    final position = _dragPosition ?? _pendingSeekPosition ?? _controller!.value.position;
     final duration = _controller!.value.duration;
     final isPlaying = _controller!.value.isPlaying;
 
@@ -620,7 +799,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
-                      widget.qualityLabel ?? '1080p FHD',
+                      _currentQualityLabel ?? '1080p FHD',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -643,7 +822,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                         const Icon(Icons.volume_up_rounded, color: Colors.greenAccent, size: 12),
                         const SizedBox(width: 4),
                         Text(
-                          widget.audioLanguage ?? 'Español',
+                          _currentAudioLanguage ?? 'Español',
                           style: const TextStyle(
                             color: Colors.greenAccent,
                             fontSize: 10,
@@ -690,7 +869,6 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Slider de progreso
                   SliderTheme(
                     data: SliderTheme.of(context).copyWith(
                       activeTrackColor: const Color(0xFFE50914),
@@ -709,8 +887,29 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                           ? duration.inMilliseconds.toDouble()
                           : 1.0,
                       onChanged: (val) {
-                        _controller?.seekTo(Duration(milliseconds: val.toInt()));
+                        setState(() {
+                          _dragPosition = Duration(milliseconds: val.toInt());
+                        });
                         _startHideTimer();
+                      },
+                      onChangeEnd: (val) async {
+                        final dest = Duration(milliseconds: val.toInt());
+                        setState(() {
+                          _dragPosition = null;
+                          _isSeeking = true;
+                        });
+                        try {
+                          await _controller?.seekTo(dest);
+                          if (mounted && !_controller!.value.isPlaying) {
+                            await _controller?.play();
+                          }
+                        } catch (_) {}
+                        if (mounted) {
+                          setState(() {
+                            _isSeeking = false;
+                          });
+                          _resetBufferingWatchdog();
+                        }
                       },
                     ),
                   ),

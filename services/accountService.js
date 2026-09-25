@@ -200,13 +200,17 @@ class AccountService {
    * Registra un dispositivo solicitante. Si ya pertenece a un cliente activo,
    * le concede acceso inmediatamente. Si no, le genera un código de 6 dígitos.
    */
-  requestDeviceActivation(deviceId, deviceModel = 'Smart TV') {
+  requestDeviceActivation(deviceId, deviceModel = 'Smart TV', { token, code } = {}) {
     const db = this._readDb();
     const now = new Date();
 
-    // 1. Verificar si este dispositivo ya está vinculado a un cliente existente
+    const normalize = (val) => (val || '').toString().trim();
+    const cleanDeviceId = normalize(deviceId);
+    const cleanCode = normalize(code).toUpperCase();
+
+    // 1. Verificar si este dispositivo ya está vinculado a un cliente existente por deviceId
     for (const client of db.clients) {
-      const matchDevice = client.devices && client.devices.find(d => d.deviceId === deviceId);
+      const matchDevice = client.devices && client.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
       if (matchDevice) {
         matchDevice.lastSeen = now.toISOString();
         matchDevice.deviceModel = deviceModel;
@@ -226,7 +230,7 @@ class AccountService {
           this._writeDb(db);
           return {
             status: 'expired',
-            client: { name: client.name, expiresAt: client.expiresAt },
+            client: { name: client.name, expiresAt: client.expiresAt, code: client.code },
             message: 'Tu membresía ha vencido. Contacta a tu proveedor para renovar.'
           };
         }
@@ -238,29 +242,129 @@ class AccountService {
             id: client.id,
             name: client.name,
             username: client.username,
+            code: client.code,
             expiresAt: client.expiresAt,
             maxDevices: client.maxDevices
           },
-          token: this._generateClientToken(client.id, deviceId)
+          token: this._generateClientToken(client.id, cleanDeviceId)
         };
       }
     }
 
-    // 2. Si es un dispositivo nuevo, buscar si ya tiene un código pendiente de activación activo
+    // 2. Si no se encontró por deviceId pero la app conservó su código o token de sesión previo:
+    if (cleanCode || token) {
+      for (const client of db.clients) {
+        const matchesCode = cleanCode && (normalize(client.code) === cleanCode);
+        let matchesToken = false;
+        if (token && client.id) {
+          const expectedToken = this._generateClientToken(client.id, cleanDeviceId);
+          matchesToken = (token === expectedToken);
+        }
+
+        if (matchesCode || matchesToken) {
+          const expiresAt = new Date(client.expiresAt);
+          const isExpired = expiresAt < now;
+
+          if (client.status === 'suspended') {
+            return {
+              status: 'suspended',
+              message: 'Tu cuenta ha sido suspendida temporalmente. Contacta a tu proveedor.'
+            };
+          }
+
+          if (isExpired) {
+            return {
+              status: 'expired',
+              client: { name: client.name, expiresAt: client.expiresAt, code: client.code },
+              message: 'Tu membresía ha vencido. Contacta a tu proveedor para renovar.'
+            };
+          }
+
+          // Vincular de forma permanente este dispositivo al cliente
+          if (!client.devices) client.devices = [];
+          const existingDev = client.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
+          if (!existingDev) {
+            client.devices.push({
+              deviceId: cleanDeviceId,
+              deviceModel,
+              lastSeen: now.toISOString()
+            });
+          } else {
+            existingDev.lastSeen = now.toISOString();
+            existingDev.deviceModel = deviceModel;
+          }
+
+          // Eliminar cualquier código pendiente huérfano de este dispositivo para que el panel no lo muestre
+          db.pendingActivations = db.pendingActivations.filter(p => normalize(p.deviceId) !== cleanDeviceId);
+          this._writeDb(db);
+
+          return {
+            status: 'active',
+            client: {
+              id: client.id,
+              name: client.name,
+              username: client.username,
+              code: client.code,
+              expiresAt: client.expiresAt,
+              maxDevices: client.maxDevices
+            },
+            token: this._generateClientToken(client.id, cleanDeviceId)
+          };
+        }
+      }
+    }
+
+    // 3. Verificar si el dispositivo ya fue activado previamente en pendingActivations
+    const alreadyActivated = db.pendingActivations.find(p =>
+      (normalize(p.deviceId) === cleanDeviceId || (cleanCode && normalize(p.code) === cleanCode)) &&
+      p.status === 'activated' &&
+      p.clientId
+    );
+
+    if (alreadyActivated) {
+      const client = db.clients.find(c => c.id === alreadyActivated.clientId);
+      if (client) {
+        if (!client.devices) client.devices = [];
+        const existingDev = client.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
+        if (!existingDev) {
+          client.devices.push({
+            deviceId: cleanDeviceId,
+            deviceModel,
+            lastSeen: now.toISOString()
+          });
+        }
+        this._writeDb(db);
+
+        return {
+          status: 'active',
+          client: {
+            id: client.id,
+            name: client.name,
+            username: client.username,
+            code: client.code,
+            expiresAt: client.expiresAt,
+            maxDevices: client.maxDevices
+          },
+          token: this._generateClientToken(client.id, cleanDeviceId)
+        };
+      }
+    }
+
+    // 4. Si es un dispositivo nuevo sin activar, buscar si ya tiene un código pendiente ACTIVO
     // Limpiar códigos pendientes con más de 24 horas de antigüedad
     db.pendingActivations = db.pendingActivations.filter(p => {
       const age = now - new Date(p.createdAt);
       return age < 24 * 60 * 60 * 1000;
     });
 
-    let pending = db.pendingActivations.find(p => p.deviceId === deviceId && p.status === 'pending');
+    let pending = db.pendingActivations.find(p => normalize(p.deviceId) === cleanDeviceId && p.status === 'pending');
 
     if (!pending) {
       // Generar código fácil de leer (ej: VJ-7429)
       const randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
       pending = {
         code: randomCode,
-        deviceId,
+        deviceId: cleanDeviceId,
         deviceModel,
         createdAt: now.toISOString(),
         status: 'pending',
@@ -275,7 +379,7 @@ class AccountService {
       code: pending.code,
       deviceModel: pending.deviceModel,
       whatsappNumber: db.settings.whatsappNumber,
-      whatsappMessage: db.settings.whatsappMessage.replace('{code}', pending.code)
+      whatsappMessage: (db.settings.whatsappMessage || '').replace('{code}', pending.code)
     };
   }
 
@@ -299,6 +403,7 @@ class AccountService {
             id: client.id,
             name: client.name,
             username: client.username,
+            code: client.code,
             expiresAt: client.expiresAt,
             maxDevices: client.maxDevices
           },

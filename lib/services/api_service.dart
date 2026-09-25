@@ -406,6 +406,8 @@ class ApiService {
     MediaItem item, {
     int season = 1,
     int episode = 1,
+    bool bypassCache = false,
+    List<String>? excludeUrls,
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/auto-resolve');
@@ -420,6 +422,8 @@ class ApiService {
           'id': item.id,
           'season': season,
           'episode': episode,
+          'bypassCache': bypassCache,
+          'excludeUrls': excludeUrls ?? [],
         }),
       ).timeout(const Duration(seconds: 35));
 

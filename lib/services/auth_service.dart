@@ -34,6 +34,7 @@ class DeviceAuthInfo {
 class AuthService {
   static const String _prefDeviceIdKey = 'vj_stream_device_id';
   static const String _prefSessionTokenKey = 'vj_stream_session_token';
+  static const String _prefClientCodeKey = 'vj_stream_client_code';
   static const String _prefClientNameKey = 'vj_stream_client_name';
   static const String _prefExpiresAtKey = 'vj_stream_expires_at';
 
@@ -57,6 +58,10 @@ class AuthService {
   static Future<DeviceAuthInfo> registerOrCheckDevice() async {
     try {
       final deviceId = await getDeviceId();
+      final prefs = await SharedPreferences.getInstance();
+      final savedToken = prefs.getString(_prefSessionTokenKey);
+      final savedCode = prefs.getString(_prefClientCodeKey);
+
       final origin = ApiService().serverOrigin;
       final uri = Uri.parse('$origin/api/auth/register-device');
 
@@ -65,6 +70,8 @@ class AuthService {
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'deviceId': deviceId,
+          'token': savedToken,
+          'code': savedCode,
           'deviceModel': defaultTargetPlatform == TargetPlatform.android
               ? 'Android TV / Móvil'
               : 'Dispositivo VJ STREAM',
@@ -78,13 +85,18 @@ class AuthService {
 
           if (status == 'active') {
             final client = data['client'] as Map<String, dynamic>?;
-            final prefs = await SharedPreferences.getInstance();
             if (client != null) {
               await prefs.setString(_prefClientNameKey, client['name'] ?? '');
               await prefs.setString(_prefExpiresAtKey, client['expiresAt'] ?? '');
+              if (client['code'] != null && client['code'].toString().isNotEmpty) {
+                await prefs.setString(_prefClientCodeKey, client['code'].toString());
+              }
             }
-            if (data['token'] != null) {
-              await prefs.setString(_prefSessionTokenKey, data['token']);
+            if (data['code'] != null && data['code'].toString().isNotEmpty) {
+              await prefs.setString(_prefClientCodeKey, data['code'].toString());
+            }
+            if (data['token'] != null && data['token'].toString().isNotEmpty) {
+              await prefs.setString(_prefSessionTokenKey, data['token'].toString());
             }
 
             return DeviceAuthInfo(
@@ -126,12 +138,16 @@ class AuthService {
           if (status == 'active') {
             final client = data['client'] as Map<String, dynamic>?;
             final prefs = await SharedPreferences.getInstance();
+            await prefs.setString(_prefClientCodeKey, code);
             if (client != null) {
               await prefs.setString(_prefClientNameKey, client['name'] ?? '');
               await prefs.setString(_prefExpiresAtKey, client['expiresAt'] ?? '');
+              if (client['code'] != null && client['code'].toString().isNotEmpty) {
+                await prefs.setString(_prefClientCodeKey, client['code'].toString());
+              }
             }
-            if (data['token'] != null) {
-              await prefs.setString(_prefSessionTokenKey, data['token']);
+            if (data['token'] != null && data['token'].toString().isNotEmpty) {
+              await prefs.setString(_prefSessionTokenKey, data['token'].toString());
             }
 
             return DeviceAuthInfo(
@@ -194,6 +210,7 @@ class AuthService {
   static Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefSessionTokenKey);
+    await prefs.remove(_prefClientCodeKey);
     await prefs.remove(_prefClientNameKey);
     await prefs.remove(_prefExpiresAtKey);
   }

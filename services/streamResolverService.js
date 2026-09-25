@@ -119,7 +119,85 @@ class StreamResolverService {
   }
 
   /**
-   * Resuelve el enlace directo al CDN de Real-Debrid siguiendo la redirección HTTP 302.
+   * Detecta si una URL corresponde a un video estático de error o advertencia de Torrentio / Real-Debrid
+   * (como la advertencia naranja de 'File was removed from debrid service due to copyright infringement').
+   * @param {string} url
+   * @returns {boolean}
+   */
+  isErrorVideoUrl(url) {
+    if (!url || typeof url !== 'string') return true;
+    const lower = url.toLowerCase();
+    return (
+      lower.includes('torrentio.strem.fun/videos') ||
+      lower.includes('/videos/failed_') ||
+      lower.includes('failed_unexpected') ||
+      lower.includes('infringing') ||
+      lower.includes('file_removed') ||
+      lower.includes('copyright_infringement') ||
+      lower.includes('dmca') ||
+      lower.includes('error.mp4')
+    );
+  }
+
+  /**
+   * Verifica de forma proactiva si la URL de streaming es válida, accesible y reproduce un video real.
+   * Descarta de inmediato pantallas de error de derechos de autor (HTTP 451, 403, páginas HTML o clips diminutos).
+   * @param {string} url
+   * @returns {Promise<boolean>}
+   */
+  async isStreamPlayable(url) {
+    if (!url || typeof url !== 'string') return false;
+    if (this.isErrorVideoUrl(url)) return false;
+
+    try {
+      const headRes = await axios.head(url, {
+        timeout: 3800,
+        maxRedirects: 2,
+        validateStatus: status => status >= 200 && status < 400
+      });
+
+      const contentType = (headRes.headers['content-type'] || '').toLowerCase();
+      const contentLength = parseInt(headRes.headers['content-length'], 10);
+
+      // Si responde con HTML en lugar de video, es una página de error o bloqueo
+      if (contentType.includes('text/html')) {
+        return false;
+      }
+
+      // Los videos de advertencia de error/copyright pesan menos de 2 MB (ej: ~136 KB).
+      // Un stream multimedia real de película o serie supera holgadamente los 5 MB.
+      if (!isNaN(contentLength) && contentLength < 5 * 1024 * 1024) {
+        console.warn(`[VJ STREAM Auto-Resolver] 🚫 Stream descartado: tamaño sospechoso (${contentLength} bytes, posible clip de advertencia de error).`);
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      if (e.response && (e.response.status === 403 || e.response.status === 451 || e.response.status === 404)) {
+        return false;
+      }
+      // Si el servidor CDN no admite HEAD (405 Method Not Allowed), probar con un GET de rango mínimo (1 KB)
+      if (e.response && e.response.status === 405) {
+        try {
+          const rangeRes = await axios.get(url, {
+            headers: { 'Range': 'bytes=0-1024' },
+            timeout: 3500,
+            validateStatus: status => status === 200 || status === 206
+          });
+          const ct = (rangeRes.headers['content-type'] || '').toLowerCase();
+          return !ct.includes('text/html');
+        } catch (_) {
+          return false;
+        }
+      }
+      // Si falla por timeout pero apunta a un CDN genuino de Real-Debrid (.cloud o .com) y no es video de error
+      return (url.toLowerCase().includes('real-debrid') && !this.isErrorVideoUrl(url));
+    }
+  }
+
+  /**
+   * Resuelve el enlace directo al CDN de Real-Debrid siguiendo la redirección HTTP 302
+   * y descarta enlaces que redirijan a videos de advertencia por copyright.
    * @private
    */
   async _resolveDirectCdnUrl(resolveUrl) {
@@ -128,14 +206,24 @@ class StreamResolverService {
       const response = await axios.get(resolveUrl, {
         maxRedirects: 0,
         validateStatus: status => status >= 200 && status < 400,
-        timeout: 4500
+        timeout: 4800
       });
-      return response.headers.location || resolveUrl;
+      const location = response.headers.location;
+      if (!location) return resolveUrl;
+
+      if (this.isErrorVideoUrl(location)) {
+        console.warn(`[VJ STREAM Auto-Resolver] 🚫 Redirección detectada a advertencia de error de debrid: ${location}`);
+        return null;
+      }
+
+      return location;
     } catch (e) {
       if (e.response && e.response.headers && e.response.headers.location) {
-        return e.response.headers.location;
+        const location = e.response.headers.location;
+        if (this.isErrorVideoUrl(location)) return null;
+        return location;
       }
-      return resolveUrl;
+      return null;
     }
   }
 
@@ -208,14 +296,27 @@ class StreamResolverService {
    * @param {Object} mediaInfo
    */
   async resolveBestStream(mediaInfo) {
-    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1 } = mediaInfo;
+    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1, bypassCache = false, excludeUrls = [] } = mediaInfo;
     const cacheKey = this._getCacheKey(mediaInfo);
 
     // 0. VERIFICAR CACHÉ EN MEMORIA (Tiempo de respuesta: ~1ms)
-    const cached = this.cache.get(cacheKey);
-    if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL_MS)) {
-      console.log(`[VJ STREAM Auto-Resolver] ⚡ Transmisión servida desde CACHÉ ULTRA-RÁPIDO para: "${title}"`);
-      return cached.data;
+    if (!bypassCache) {
+      const cached = this.cache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL_MS)) {
+        // Verificar que la URL en caché no esté en las excluidas ni sea un video de error
+        const isExcluded = excludeUrls.length > 0 && excludeUrls.includes(cached.data?.streamUrl);
+        const isErrorVideo = this.isErrorVideoUrl(cached.data?.streamUrl);
+
+        if (!isExcluded && !isErrorVideo) {
+          console.log(`[VJ STREAM Auto-Resolver] ⚡ Transmisión servida desde CACHÉ ULTRA-RÁPIDO para: "${title}"`);
+          return cached.data;
+        } else {
+          console.log(`[VJ STREAM Auto-Resolver] 🔄 Entrada en caché descartada (excluida o error anterior). Re-resolviendo...`);
+          this.cache.delete(cacheKey);
+        }
+      }
+    } else {
+      this.cache.delete(cacheKey);
     }
 
     console.log(`[VJ STREAM Auto-Resolver] 🔍 Buscando transmisión automática en ESPAÑOL para: "${title}" (ID: ${id || 'N/A'}${mediaType === 'tv' ? ` S${season}E${episode}` : ''})`);
@@ -235,22 +336,43 @@ class StreamResolverService {
     if (imdbId) {
       const instantStreams = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode);
 
-      // Si tenemos candidatos cacheados
       if (instantStreams.length > 0) {
-        // Tomar el mejor candidato (si tiene puntuación positiva, significa que tiene español o es el más limpio disponible)
-        const topCandidate = instantStreams[0];
+        console.log(`[VJ STREAM Auto-Resolver] 📋 Evaluando ${instantStreams.length} fuentes instantáneas cacheadas para "${title}"...`);
 
-        if (topCandidate.stream && topCandidate.stream.url) {
-          console.log(`[VJ STREAM Auto-Resolver] 🎯 Candidato seleccionado (${topCandidate.audioLanguage} - ${topCandidate.score} pts): "${topCandidate.filename}"`);
-          const directCdnUrl = await this._resolveDirectCdnUrl(topCandidate.stream.url);
+        // Probar candidatos de mayor a menor puntuación hasta encontrar uno 100% libre de errores y sin copyright
+        const maxCandidatesToTest = Math.min(instantStreams.length, 10);
+        for (let i = 0; i < maxCandidatesToTest; i++) {
+          const candidate = instantStreams[i];
+          if (!candidate.stream || !candidate.stream.url) continue;
 
+          // Si el usuario reportó esta URL como errónea, saltarla de inmediato
+          if (excludeUrls.includes(candidate.stream.url)) {
+            continue;
+          }
+
+          console.log(`[VJ STREAM Auto-Resolver] 🎯 Probando fuente [${i + 1}/${maxCandidatesToTest}] (${candidate.audioLanguage} - ${candidate.score} pts): "${candidate.filename}"`);
+          const directCdnUrl = await this._resolveDirectCdnUrl(candidate.stream.url);
+
+          if (!directCdnUrl || excludeUrls.includes(directCdnUrl)) {
+            console.warn(`[VJ STREAM Auto-Resolver] ⚠️ Fuente [${i + 1}] no resolvió enlace directo o fue descartada. Pasando a siguiente fuente...`);
+            continue;
+          }
+
+          // Comprobar activamente que el CDN entrega un video real y NO la pantalla naranja de copyright
+          const playable = await this.isStreamPlayable(directCdnUrl);
+          if (!playable) {
+            console.warn(`[VJ STREAM Auto-Resolver] 🛡️ Fallback Automático: Fuente [${i + 1}] detectada con advertencia de copyright o stream dañado ("File was removed due to copyright"). Saltando a otra fuente sin error al usuario...`);
+            continue;
+          }
+
+          console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión verificada y 100% limpia: "${candidate.filename}"`);
           const result = {
             success: true,
             streamUrl: directCdnUrl,
-            qualityLabel: topCandidate.qualityLabel,
-            audioLanguage: topCandidate.audioLanguage,
-            isSpanishAudio: topCandidate.isSpanishAudio,
-            filename: topCandidate.filename,
+            qualityLabel: candidate.qualityLabel,
+            audioLanguage: candidate.audioLanguage,
+            isSpanishAudio: candidate.isSpanishAudio,
+            filename: candidate.filename,
             title: title
           };
 
@@ -315,7 +437,7 @@ class StreamResolverService {
       return 0;
     });
 
-    for (const candidate of fallbackMagnets.slice(0, 4)) {
+    for (const candidate of fallbackMagnets.slice(0, 5)) {
       try {
         const result = await realDebridService.resolveMagnetToStream(candidate.magnet, {
           files: 'all',
@@ -323,19 +445,29 @@ class StreamResolverService {
         });
 
         if (result && result.streams && result.streams.length > 0) {
-          const topStream = result.streams[0];
-          const streamData = {
-            success: true,
-            streamUrl: topStream.streamUrl,
-            qualityLabel: topStream.qualityLabel,
-            audioLanguage: topStream.audioLanguage,
-            isSpanishAudio: topStream.isSpanishAudio,
-            filename: topStream.filename,
-            title: title
-          };
+          for (const streamOption of result.streams) {
+            if (excludeUrls.includes(streamOption.streamUrl)) continue;
 
-          this.cache.set(cacheKey, { timestamp: Date.now(), data: streamData });
-          return streamData;
+            const isClean = await this.isStreamPlayable(streamOption.streamUrl);
+            if (!isClean) {
+              console.warn(`[VJ STREAM Auto-Resolver] ⚠️ Enlace de magnet respaldo bloqueado o de advertencia: "${streamOption.filename}". Probando siguiente...`);
+              continue;
+            }
+
+            console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión de respaldo verificada: "${streamOption.filename}"`);
+            const streamData = {
+              success: true,
+              streamUrl: streamOption.streamUrl,
+              qualityLabel: streamOption.qualityLabel,
+              audioLanguage: streamOption.audioLanguage,
+              isSpanishAudio: streamOption.isSpanishAudio,
+              filename: streamOption.filename,
+              title: title
+            };
+
+            this.cache.set(cacheKey, { timestamp: Date.now(), data: streamData });
+            return streamData;
+          }
         }
       } catch (_) {}
     }

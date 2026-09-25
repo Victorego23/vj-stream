@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
@@ -289,6 +290,7 @@ class _HomeViewState extends State<HomeView> {
           mediaType: item.mediaType,
           audioLanguage: streamInfo?['audioLanguage'] as String?,
           qualityLabel: streamInfo?['qualityLabel'] as String?,
+          mediaItem: item,
         ),
       ),
     ).then((_) => _loadHistoryAndFavorites());
@@ -402,6 +404,13 @@ class _HomeViewState extends State<HomeView> {
           startPositionSeconds: historyItem.positionSeconds,
           audioLanguage: streamInfo?['audioLanguage'] as String?,
           qualityLabel: streamInfo?['qualityLabel'] as String?,
+          mediaItem: MediaItem(
+            id: historyItem.id,
+            title: historyItem.title,
+            mediaType: historyItem.mediaType,
+            posterMedium: historyItem.posterUrl,
+            backdropLarge: historyItem.backdropUrl,
+          ),
         ),
       ),
     ).then((_) => _loadHistoryAndFavorites());
@@ -705,7 +714,16 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     final isTv = MediaQuery.of(context).size.width > 700;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showExitConfirmDialog();
+        if (shouldExit == true) {
+          await SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFF000000), // Negro absoluto OLED
       body: _isLoading
           ? const Center(
@@ -919,6 +937,56 @@ class _HomeViewState extends State<HomeView> {
                 ],
               ),
             ),
+      ),
+    );
+  }
+
+  Future<bool?> _showExitConfirmDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (dContext) => AlertDialog(
+        backgroundColor: const Color(0xFF141414),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0x22FFFFFF)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: Color(0x26E50914),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.exit_to_app_rounded, color: Color(0xFFE50914), size: 20),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              '¿Salir de VJ STREAM?',
+              style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: const Text(
+          '¿Estás seguro de que deseas salir de la aplicación?',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dContext, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE50914),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(dContext, true),
+            child: const Text('Salir', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

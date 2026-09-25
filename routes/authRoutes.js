@@ -7,13 +7,13 @@ const accountService = require('../services/accountService');
  * @desc    Registra un dispositivo (Smart TV / Móvil). Devuelve sesión activa o código de activación
  */
 router.post('/register-device', (req, res) => {
-  const { deviceId, deviceModel } = req.body;
+  const { deviceId, deviceModel, token, code } = req.body;
 
   if (!deviceId) {
     return res.status(400).json({ success: false, error: 'deviceId es requerido.' });
   }
 
-  const result = accountService.requestDeviceActivation(deviceId, deviceModel || 'Android Device');
+  const result = accountService.requestDeviceActivation(deviceId, deviceModel || 'Android Device', { token, code });
   return res.json({ success: true, ...result });
 });
 

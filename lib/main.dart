@@ -116,7 +116,15 @@ class _AuthGateState extends State<AuthGate> {
     if (_isAuthorized) {
       return const HomeView();
     } else {
-      return const ActivationView();
+      return ActivationView(
+        onActivated: () {
+          if (mounted) {
+            setState(() {
+              _isAuthorized = true;
+            });
+          }
+        },
+      );
     }
   }
 }

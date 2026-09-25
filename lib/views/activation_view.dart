@@ -9,8 +9,9 @@ import 'home_view.dart';
 /// hasta que el Administrador lo aprueba desde su Panel Web.
 class ActivationView extends StatefulWidget {
   final bool isExpired;
+  final VoidCallback? onActivated;
 
-  const ActivationView({super.key, this.isExpired = false});
+  const ActivationView({super.key, this.isExpired = false, this.onActivated});
 
   @override
   State<ActivationView> createState() => _ActivationViewState();
@@ -93,9 +94,13 @@ class _ActivationViewState extends State<ActivationView> {
   }
 
   void _navigateToHome() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeView()),
-    );
+    if (widget.onActivated != null) {
+      widget.onActivated!();
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeView()),
+      );
+    }
   }
 
   @override
