@@ -16,7 +16,7 @@ function hmacSecurityMiddleware(req, res, next) {
 
   // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, health check)
   const path = req.path || '';
-  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels'];
+  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels'];
   const isPublic = publicEndpoints.some(p => path.endsWith(p));
 
   if (isPublic) {

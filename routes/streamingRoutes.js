@@ -334,11 +334,13 @@ router.post('/auto-resolve', async (req, res, next) => {
  */
 
 /**
+ * @route   GET /api/streaming/channels
  * @route   GET /api/streaming/live-channels
- * @desc    Obtiene la lista de canales de TV en vivo organizados por categorías
+ * @route   GET /api/channels
+ * @desc    Obtiene la lista de canales de TV en vivo organizados por categorías con soporte Failover
  * @query   category {string} - Filtro opcional por categoría
  */
-router.get('/live-channels', (req, res) => {
+const getChannelsHandler = (req, res) => {
   try {
     const { category } = req.query;
     const channels = channelService.getChannels(category);
@@ -357,7 +359,10 @@ router.get('/live-channels', (req, res) => {
       error: 'Error al obtener canales en vivo: ' + err.message
     });
   }
-});
+};
+
+router.get('/channels', getChannelsHandler);
+router.get('/live-channels', getChannelsHandler);
 
 /**
  * @route   GET /api/streaming/version
@@ -367,17 +372,19 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.6',
-    versionCode: 13,
+    latestVersion: '2.4.7',
+    versionCode: 14,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-25',
+    releaseDate: '2026-09-26',
     releaseNotes: [
+      '📡 Parrilla de Canales IPTV-ORG: Más de 2,200 canales de televisión en español organizados por categorías',
+      '🛡️ Failover Automático Inteligente: Si una señal falla o se queda sin búfer por más de 3 segundos, salta automáticamente a fuentes de respaldo',
+      '⚡ Selector de Fuentes Múltiples: Indicador visual en vivo de señales alternativas disponibles por canal',
       '📺 Nuevo Módulo TV en Vivo: Canales de deportes, cine 24/7, infantil, cultura y noticias nacionales',
       '💬 Subtítulos en Español Integrados: Subtítulos automáticos sincronizados (Latino y Castellano) con botón [CC]',
       '📥 Caché en la Nube de Real-Debrid: Garantiza la obtención de audio en español',
-      '⚙️ Engranaje de Ajustes en Vivo: Cambia de audio (Latino 🇲🇽, Castellano 🇪🇸, Original 🇺🇸) y servidor al instante',
-      '📺 Ajuste de Pantalla: Elige entre Original (16:9), Pantalla Completa sin barras (Zoom) y Estirar',
-      '⏭️ Siguiente Episodio Automático para series'
+      '⚙️ Engranaje de Ajustes en Vivo: Cambia de audio y servidor al instante',
+      '📺 Ajuste de Pantalla: Elige entre Original (16:9), Pantalla Completa sin barras (Zoom) y Estirar'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

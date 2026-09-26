@@ -544,34 +544,42 @@ class ApiService {
 
   /// Obtiene los canales de TV en vivo organizados opcionalmente por categoría
   Future<Map<String, dynamic>> fetchLiveChannels({String? category}) async {
-    try {
-      var url = '$baseUrl/live-channels';
-      if (category != null && category.isNotEmpty && category != 'Todos') {
-        url += '?category=${Uri.encodeComponent(category)}';
-      }
-      final uri = Uri.parse(url);
-      final response = await http
-          .get(uri, headers: _getHeaders(uri.toString()))
-          .timeout(const Duration(seconds: 12));
+    final candidateEndpoints = [
+      '$baseUrl/channels',
+      '$baseUrl/live-channels',
+      '$serverOrigin/api/channels',
+    ];
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
-        if (data['success'] == true && data['channels'] != null) {
-          final channelsRaw = data['channels'] as List<dynamic>;
-          final channels = channelsRaw.map((c) => LiveChannel.fromJson(c)).toList();
-          final categoriesRaw = data['categories'] as List<dynamic>?;
-          final categories = categoriesRaw != null
-              ? categoriesRaw.map((e) => e.toString()).toList()
-              : <String>[];
-          return {
-            'channels': channels,
-            'categories': categories,
-          };
+    for (final endpoint in candidateEndpoints) {
+      try {
+        var url = endpoint;
+        if (category != null && category.isNotEmpty && category != 'Todos') {
+          url += '?category=${Uri.encodeComponent(category)}';
         }
+        final uri = Uri.parse(url);
+        final response = await http
+            .get(uri, headers: _getHeaders(uri.toString()))
+            .timeout(const Duration(seconds: 12));
+
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+          if (data['success'] == true && data['channels'] != null) {
+            final channelsRaw = data['channels'] as List<dynamic>;
+            final channels = channelsRaw.map((c) => LiveChannel.fromJson(c)).toList();
+            final categoriesRaw = data['categories'] as List<dynamic>?;
+            final categories = categoriesRaw != null
+                ? categoriesRaw.map((e) => e.toString()).toList()
+                : <String>[];
+            return {
+              'channels': channels,
+              'categories': categories,
+            };
+          }
+        }
+      } catch (_) {
+        // Continuar con el siguiente endpoint candidato
       }
-      return {'channels': <LiveChannel>[], 'categories': <String>[]};
-    } catch (e) {
-      return {'channels': <LiveChannel>[], 'categories': <String>[]};
     }
+    return {'channels': <LiveChannel>[], 'categories': <String>[]};
   }
 }

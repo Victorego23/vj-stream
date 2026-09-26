@@ -281,4 +281,21 @@ router.delete('/channels/:id', (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/admin/channels/sync-iptv
+ * @desc    Sincroniza y descarga canales en vivo de iptv-org automáticamente
+ */
+router.post('/channels/sync-iptv', async (req, res) => {
+  try {
+    const result = await channelService.syncFromIptvOrg();
+    return res.json({
+      success: true,
+      message: 'Sincronización con iptv-org completada con éxito.',
+      result
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

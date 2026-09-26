@@ -13,7 +13,20 @@ class ChannelService {
     try {
       if (fs.existsSync(CHANNELS_FILE)) {
         const raw = fs.readFileSync(CHANNELS_FILE, 'utf-8');
-        this._channels = JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        // Normalizar estructura de fuentes para Failover
+        this._channels = (Array.isArray(parsed) ? parsed : []).map((c, idx) => {
+          const sources = Array.isArray(c.sources) && c.sources.length > 0
+            ? c.sources.filter(s => typeof s === 'string' && s.trim().length > 0)
+            : (c.streamUrl ? [c.streamUrl.trim()] : []);
+
+          return {
+            ...c,
+            streamUrl: sources[0] || c.streamUrl || '',
+            sources,
+            order: typeof c.order === 'number' ? c.order : idx + 1
+          };
+        });
       } else {
         this._channels = [];
         this._save();
@@ -22,6 +35,11 @@ class ChannelService {
       console.error('[ChannelService] Error al leer channels.json:', err.message);
       this._channels = [];
     }
+  }
+
+  reload() {
+    this._load();
+    return this._channels.length;
   }
 
   _save() {
@@ -68,12 +86,16 @@ class ChannelService {
   }
 
   /**
-   * Añade un nuevo canal de TV en vivo
+   * Añade un nuevo canal de TV en vivo con soporte para múltiples fuentes (Failover)
    */
-  addChannel({ name, category, logoUrl, streamUrl, quality = '1080p HD', isActive = true }) {
-    if (!name || !streamUrl) {
-      throw new Error('Nombre y URL de transmisión son obligatorios');
+  addChannel({ name, category, logoUrl, streamUrl, sources = [], quality = '1080p HD', isActive = true }) {
+    if (!name || (!streamUrl && (!Array.isArray(sources) || sources.length === 0))) {
+      throw new Error('Nombre y al menos una URL de transmisión son obligatorios');
     }
+
+    const cleanSources = Array.isArray(sources) && sources.length > 0
+      ? sources.map(s => s.trim()).filter(Boolean)
+      : [streamUrl.trim()];
 
     const id = 'ch_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 4);
     const newChannel = {
@@ -81,7 +103,8 @@ class ChannelService {
       name: name.trim(),
       category: category ? category.trim() : 'Entretenimiento',
       logoUrl: logoUrl ? logoUrl.trim() : '',
-      streamUrl: streamUrl.trim(),
+      streamUrl: cleanSources[0],
+      sources: cleanSources,
       quality: quality ? quality.trim() : '1080p HD',
       isActive: isActive !== false,
       order: this._channels.length + 1
@@ -99,9 +122,20 @@ class ChannelService {
     const idx = this._channels.findIndex(c => c.id === id);
     if (idx === -1) return null;
 
+    let updatedSources = this._channels[idx].sources || [];
+    if (Array.isArray(updates.sources)) {
+      updatedSources = updates.sources.map(s => s.trim()).filter(Boolean);
+    } else if (updates.streamUrl && !updates.sources) {
+      if (!updatedSources.includes(updates.streamUrl.trim())) {
+        updatedSources = [updates.streamUrl.trim(), ...updatedSources];
+      }
+    }
+
     this._channels[idx] = {
       ...this._channels[idx],
       ...updates,
+      sources: updatedSources.length > 0 ? updatedSources : [updates.streamUrl || this._channels[idx].streamUrl],
+      streamUrl: updatedSources[0] || updates.streamUrl || this._channels[idx].streamUrl,
       id // Garantizar inmutabilidad de id
     };
 
@@ -131,6 +165,16 @@ class ChannelService {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Ejecuta la sincronización con iptv-org y recarga los canales en memoria
+   */
+  async syncFromIptvOrg() {
+    const iptvSyncService = require('./iptvSyncService');
+    const result = await iptvSyncService.syncAndSave();
+    this._load();
+    return result;
   }
 }
 

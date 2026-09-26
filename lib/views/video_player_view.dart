@@ -40,6 +40,7 @@ class VideoPlayerView extends StatefulWidget {
   final MediaItem? mediaItem;
   final List<Map<String, dynamic>>? availableStreams;
   final List<Map<String, dynamic>>? subtitles;
+  final List<String>? liveSources;
   final bool isLive;
 
   const VideoPlayerView({
@@ -58,6 +59,7 @@ class VideoPlayerView extends StatefulWidget {
     this.mediaItem,
     this.availableStreams,
     this.subtitles,
+    this.liveSources,
     this.isLive = false,
   });
 
@@ -116,6 +118,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   String? _seekIndicatorText;
   Timer? _seekIndicatorTimer;
 
+  // Fuentes de respaldo para canales de TV en vivo (Failover)
+  List<String> _liveSources = [];
+  int _currentLiveSourceIndex = 0;
+
   @override
   void initState() {
     super.initState();
@@ -123,6 +129,17 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     _currentVideoUrl = widget.videoUrl;
     _currentQualityLabel = widget.qualityLabel;
     _currentAudioLanguage = widget.audioLanguage;
+
+    // Configurar fuentes de respaldo para streaming de TV en vivo
+    if (widget.isLive) {
+      if (widget.liveSources != null && widget.liveSources!.isNotEmpty) {
+        _liveSources = List<String>.from(widget.liveSources!);
+      } else {
+        _liveSources = [_currentVideoUrl];
+      }
+      final idx = _liveSources.indexOf(_currentVideoUrl);
+      _currentLiveSourceIndex = idx >= 0 ? idx : 0;
+    }
 
     if (widget.availableStreams != null && widget.availableStreams!.isNotEmpty) {
       _availableStreams = List<Map<String, dynamic>>.from(widget.availableStreams!);
@@ -255,6 +272,12 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         });
       }
     } catch (e) {
+      // Si es canal de TV en vivo y falló la señal, saltar a la siguiente fuente de respaldo (Failover)
+      if (widget.isLive && !_isFallingBack) {
+        final handled = await _failoverLiveSource(reason: 'Fallo al inicializar señal .m3u8');
+        if (handled) return;
+      }
+
       // Si la URL actual falló, intentar fallback automático a otra fuente antes de alarmar al usuario
       if (widget.mediaItem != null && !_isFallingBack && _retryCount < 2) {
         _retryCount++;
@@ -300,6 +323,12 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
 
     // Detectar fallos de decodificación o caída del stream en vivo
     if (_controller!.value.hasError && !_hasError && !_isFallingBack) {
+      // En canales de TV en vivo, cambiar a la fuente de respaldo antes de alertar
+      if (widget.isLive) {
+        _failoverLiveSource(reason: 'Caída de señal o error de red');
+        return;
+      }
+
       // Intentar fallback automático antes de mostrar error al usuario
       if (widget.mediaItem != null) {
         _triggerAutoFallback();
@@ -346,12 +375,22 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     }
   }
 
-  /// Watchdog para evitar que el reproductor quede congelado en buffering indefinidamente
+  /// Watchdog para evitar que el reproductor quede congelado en buffering indefinidamente.
+  /// En TV en vivo, si se queda sin búfer por más de 3 segundos, salta automáticamente al respaldo.
   void _resetBufferingWatchdog() {
     _bufferingWatchdogTimer?.cancel();
     if (_isBuffering || _isSeeking) {
-      _bufferingWatchdogTimer = Timer(const Duration(seconds: 5), () {
+      final watchdogDuration = widget.isLive
+          ? const Duration(seconds: 3)
+          : const Duration(seconds: 5);
+
+      _bufferingWatchdogTimer = Timer(watchdogDuration, () async {
         if (mounted && (_isBuffering || _isSeeking) && _controller != null) {
+          if (widget.isLive && _liveSources.length > 1) {
+            debugPrint('[VideoPlayerView] 🔄 Búfer congelado por más de 3 segundos en TV en vivo. Activando failover...');
+            final handled = await _failoverLiveSource(reason: 'Búfer agotado por más de 3 segundos');
+            if (handled) return;
+          }
           debugPrint('[VideoPlayerView] 🔄 Watchdog activado: destrabando reproducción en búfer...');
           _controller!.play();
           setState(() {
@@ -361,6 +400,51 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         }
       });
     }
+  }
+
+  /// Salta automáticamente a la siguiente fuente de respaldo disponible para TV en vivo
+  /// sin interrumpir bruscamente la experiencia del usuario.
+  Future<bool> _failoverLiveSource({String? reason}) async {
+    if (!widget.isLive || _liveSources.length <= 1) return false;
+    if (_isFallingBack) return false;
+
+    // Buscar una fuente de respaldo que aún no haya fallado
+    int nextIndex = -1;
+    for (int i = 0; i < _liveSources.length; i++) {
+      final candidate = _liveSources[i];
+      if (candidate != _currentVideoUrl && !_failedUrls.contains(candidate)) {
+        nextIndex = i;
+        break;
+      }
+    }
+
+    if (nextIndex == -1) {
+      debugPrint('[VideoPlayerView] ⚠️ Todas las fuentes de respaldo para "${widget.title}" fallaron');
+      return false;
+    }
+
+    _failedUrls.add(_currentVideoUrl);
+    _currentLiveSourceIndex = nextIndex;
+    final nextUrl = _liveSources[nextIndex];
+
+    debugPrint('[VideoPlayerView] 🔄 Failover TV en Vivo ($reason): saltando a señal ${nextIndex + 1}/${_liveSources.length} -> $nextUrl');
+
+    if (mounted) {
+      setState(() {
+        _isFallingBack = true;
+        _currentVideoUrl = nextUrl;
+        _hasError = false;
+        _errorMessage = null;
+        _isBuffering = true;
+      });
+      _showFeedbackIndicator('Cambiando a señal de respaldo (${nextIndex + 1}/${_liveSources.length})...');
+    }
+
+    await _initializePlayer();
+    if (mounted) {
+      setState(() => _isFallingBack = false);
+    }
+    return true;
   }
 
   /// Fallback automático transparente: busca la siguiente fuente disponible en el backend
@@ -1586,6 +1670,28 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                         ],
                       ),
                     ),
+                    if (_liveSources.length > 1) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF00E676).withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: const Color(0xFF00E676).withValues(alpha: 0.5),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Text(
+                          'SEÑAL ${_currentLiveSourceIndex + 1}/${_liveSources.length}',
+                          style: const TextStyle(
+                            color: Color(0xFF00E676),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(width: 6),
                   ],
                   Container(
