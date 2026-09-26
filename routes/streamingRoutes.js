@@ -377,14 +377,10 @@ router.get('/version', (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-26',
     releaseNotes: [
-      '⭐ Canales Favoritos Persistentes: Marca cualquier canal con la estrella (★) y accede rápidamente en la nueva pestaña ⭐ Favoritos',
-      '📺 Modo Zapping Inteligente: Cambia de canal con CH+/CH-, Flechas Arriba/Abajo del control remoto o botones táctiles en pantalla',
-      '🌎 Filtro por Países y Regiones: Filtra canales de Perú, México, Argentina, Colombia, Chile, España, USA, etc. con sus banderas',
-      '📑 Guía Rápida Lateral (Quick Channel Drawer): Navega y busca canales mientras reproduces video en pantalla completa con Flecha Izquierda',
-      '🔢 Sintonizador por Teclado Numérico Directo: Salta a cualquier canal digitando su número en el control remoto de tu Smart TV',
-      '📊 Panel de Telemetría y Diagnóstico de Señal: Revisa el estado de transmisión, resolución real, búfer y alterna fuentes al instante',
-      '🔲 Modo Picture-in-Picture (PiP): Continúa viendo la transmisión en ventana flotante mientras usas otras aplicaciones',
-      '📡 Parrilla IPTV con 2,249 canales optimizados y Failover automático continuo'
+      '⭐ Canales favoritos y modo zapping en TV',
+      '🌎 Filtro de canales por país con banderas',
+      '📑 Guía rápida lateral y ventana flotante (PiP)',
+      '⚡ Mayor velocidad y estabilidad de reproducción'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

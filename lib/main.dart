@@ -83,6 +83,19 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _checkAuthorization() async {
+    // Si ya existe una sesión guardada localmente válida, autorizamos de inmediato
+    final hasSession = await AuthService.hasValidSavedSession();
+    if (hasSession && mounted) {
+      setState(() {
+        _isAuthorized = true;
+        _isChecking = false;
+      });
+      // Sincronizar silenciosamente en segundo plano sin interrumpir la experiencia
+      AuthService.registerOrCheckDevice();
+      return;
+    }
+
+    // Si es una primera instalación sin sesión previa, registrar ante el servidor
     final info = await AuthService.registerOrCheckDevice();
     if (mounted) {
       setState(() {

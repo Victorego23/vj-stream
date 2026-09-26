@@ -251,14 +251,14 @@ class AccountService {
       }
     }
 
-    // 2. Si no se encontró por deviceId pero la app conservó su código o token de sesión previo:
+    // 2. Si no se encontró por deviceId pero la app o el usuario enviaron su código TV (ej: VJ-3166) o token de sesión:
     if (cleanCode || token) {
       for (const client of db.clients) {
         const matchesCode = cleanCode && (normalize(client.code) === cleanCode);
         let matchesToken = false;
         if (token && client.id) {
           const expectedToken = this._generateClientToken(client.id, cleanDeviceId);
-          matchesToken = (token === expectedToken);
+          matchesToken = (token === expectedToken) || (token.startsWith(client.id));
         }
 
         if (matchesCode || matchesToken) {
@@ -294,7 +294,7 @@ class AccountService {
             existingDev.deviceModel = deviceModel;
           }
 
-          // Eliminar cualquier código pendiente huérfano de este dispositivo para que el panel no lo muestre
+          // Eliminar cualquier código pendiente huérfano de este dispositivo
           db.pendingActivations = db.pendingActivations.filter(p => normalize(p.deviceId) !== cleanDeviceId);
           this._writeDb(db);
 
@@ -517,7 +517,7 @@ class AccountService {
   }
 
   _generateClientToken(clientId, deviceId) {
-    const data = `${clientId}:${deviceId}:${Date.now()}`;
+    const data = `${clientId}:${deviceId}`;
     return crypto.createHmac('sha256', DEFAULT_ADMIN_PASSWORD).update(data).digest('hex');
   }
 }

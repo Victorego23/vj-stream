@@ -55,12 +55,12 @@ class AuthService {
   }
 
   /// Registra el dispositivo ante el servidor y consulta si está activo o pendiente de activación
-  static Future<DeviceAuthInfo> registerOrCheckDevice() async {
+  static Future<DeviceAuthInfo> registerOrCheckDevice({String? customCode}) async {
     try {
       final deviceId = await getDeviceId();
       final prefs = await SharedPreferences.getInstance();
       final savedToken = prefs.getString(_prefSessionTokenKey);
-      final savedCode = prefs.getString(_prefClientCodeKey);
+      final savedCode = customCode ?? prefs.getString(_prefClientCodeKey);
 
       final origin = ApiService().serverOrigin;
       final uri = Uri.parse('$origin/api/auth/register-device');
@@ -197,9 +197,44 @@ class AuthService {
     return true; // Tolerancia si la red falla momentáneamente
   }
 
+  /// Comprueba si el dispositivo tiene una sesión activa válida guardada localmente
+  static Future<bool> hasValidSavedSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_prefSessionTokenKey);
+      final clientCode = prefs.getString(_prefClientCodeKey);
+      final exp = prefs.getString(_prefExpiresAtKey);
+
+      // Si tiene código o token registrado previamente
+      if ((token != null && token.isNotEmpty) || (clientCode != null && clientCode.isNotEmpty)) {
+        if (exp != null && exp.isNotEmpty) {
+          final expDate = DateTime.tryParse(exp);
+          if (expDate != null && expDate.isBefore(DateTime.now())) {
+            return false; // Vencida
+          }
+        }
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  /// Activa o vincula manualmente un código existente (ej: VJ-3166) ingresado por el usuario
+  static Future<DeviceAuthInfo> activateWithManualCode(String manualCode) async {
+    final cleanCode = manualCode.trim().toUpperCase();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefClientCodeKey, cleanCode);
+    return registerOrCheckDevice(customCode: cleanCode);
+  }
+
   static Future<String> getClientName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_prefClientNameKey) ?? 'Cliente VJ STREAM';
+  }
+
+  static Future<String?> getSavedClientCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefClientCodeKey);
   }
 
   static Future<String?> getExpiresAt() async {

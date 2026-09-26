@@ -103,6 +103,87 @@ class _ActivationViewState extends State<ActivationView> {
     }
   }
 
+  Future<void> _showManualCodeDialog() async {
+    final textController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF181818),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+            side: const BorderSide(color: Color(0xFF333333)),
+          ),
+          title: const Row(
+            children: [
+              Icon(Icons.tv_rounded, color: Color(0xFFE50914)),
+              SizedBox(width: 10),
+              Text('Ingresar Código TV', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Si tu suscripción ya fue creada o activada en el panel, escribe tu código aquí (ej: VJ-3166):',
+                style: TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: textController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.characters,
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
+                decoration: InputDecoration(
+                  hintText: 'VJ-XXXX',
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: const Color(0xFF0D0D0D),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF444444))),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE50914), width: 2)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE50914)),
+              onPressed: () async {
+                final code = textController.text.trim().toUpperCase();
+                if (code.isNotEmpty) {
+                  Navigator.of(dialogCtx).pop();
+                  setState(() => _isLoading = true);
+                  final res = await AuthService.activateWithManualCode(code);
+                  if (!mounted) return;
+                  if (res.isActive) {
+                    setState(() {
+                      _isSuccess = true;
+                      _clientName = res.clientName ?? 'Cliente';
+                      _isLoading = false;
+                    });
+                    await Future.delayed(const Duration(milliseconds: 1200));
+                    if (mounted) _navigateToHome();
+                  } else {
+                    setState(() {
+                      _isLoading = false;
+                      _errorMessage = res.message ?? 'El código no es válido o aún no ha sido activado.';
+                    });
+                  }
+                }
+              },
+              child: const Text('Vincular y Entrar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -337,6 +418,15 @@ class _ActivationViewState extends State<ActivationView> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton.icon(
+                      onPressed: _showManualCodeDialog,
+                      icon: const Icon(Icons.vpn_key_rounded, color: Colors.white70, size: 16),
+                      label: const Text(
+                        '¿Ya tienes un Código TV asignado? Ingresar Código',
+                        style: TextStyle(color: Colors.white70, fontSize: 12, decoration: TextDecoration.underline),
+                      ),
                     ),
 
                     if (_whatsappNumber != null && _whatsappNumber!.isNotEmpty) ...[

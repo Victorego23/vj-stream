@@ -6,6 +6,19 @@
     "whatsappNumber": "+51999999999",
     "whatsappMessage": "Hola, mi código de activación de VJ STREAM es {code}"
   },
-  "clients": [],
+  "clients": [
+    {
+      "id": "c1f7a089-victor-egocheaga-vj3166",
+      "name": "victor egocheaga",
+      "username": "victor_egocheaga_343",
+      "code": "VJ-3166",
+      "status": "active",
+      "planDays": 30,
+      "maxDevices": 5,
+      "createdAt": "2026-09-26T00:00:00.000Z",
+      "expiresAt": "2026-10-28T23:59:59.000Z",
+      "devices": []
+    }
+  ],
   "pendingActivations": []
 }
