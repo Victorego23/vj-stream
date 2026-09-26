@@ -591,6 +591,297 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* BOTÓN DE CUENTA / ACTIVACIÓN EN HEADER */
+    .account-btn {
+      background: rgba(229, 9, 20, 0.15);
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      color: #ff5252;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .account-btn.active {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: rgba(34, 197, 94, 0.4);
+      color: #4ade80;
+    }
+    .account-btn:hover {
+      transform: scale(1.03);
+    }
+
+    /* MODAL DE ACTIVACIÓN OLED */
+    .activation-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .activation-card {
+      background: linear-gradient(180deg, #181920 0%, #0D0E12 100%);
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      border-radius: 24px;
+      padding: 28px 22px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.95), 0 0 35px rgba(229, 9, 20, 0.25);
+      position: relative;
+      animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .act-brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(229, 9, 20, 0.15);
+      border: 1px solid rgba(229, 9, 20, 0.35);
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 900;
+      color: #ff5252;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+    .act-title {
+      font-size: 21px;
+      font-weight: 900;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+    }
+    .act-desc {
+      font-size: 13px;
+      color: #A3A3A3;
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+    .act-notice {
+      display: none;
+      background: rgba(229, 9, 20, 0.2);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      color: #ffb4b4;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+    .act-code-box {
+      background: #08080A;
+      border: 2px dashed rgba(229, 9, 20, 0.5);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .act-code-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #8E8E93;
+      font-weight: 700;
+    }
+    .act-code-value {
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #FFFFFF;
+      text-shadow: 0 0 15px rgba(229, 9, 20, 0.7);
+      font-family: 'Courier New', monospace;
+    }
+    .btn-copy-code {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #E2E8F0;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-copy-code:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+    .btn-whatsapp-act {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      background: #25D366;
+      color: #000;
+      font-weight: 800;
+      font-size: 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(37, 211, 102, 0.3);
+      margin-bottom: 14px;
+      transition: all 0.2s;
+    }
+    .btn-whatsapp-act:hover {
+      background: #20bd5a;
+      transform: translateY(-1px);
+    }
+    .act-waiting-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #A3A3A3;
+      margin-bottom: 20px;
+    }
+    .act-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #F59E0B;
+      box-shadow: 0 0 8px #F59E0B;
+      animation: pulseDot 1.4s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.4); opacity: 0.4; }
+    }
+    .act-manual-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 16px;
+      text-align: left;
+    }
+    .act-manual-label {
+      display: block;
+      font-size: 12px;
+      color: #A3A3A3;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .act-manual-row {
+      display: flex;
+      gap: 8px;
+    }
+    .act-manual-input {
+      flex: 1;
+      background: #0A0A0C;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      outline: none;
+    }
+    .act-manual-input:focus {
+      border-color: var(--primary);
+    }
+    .btn-submit-code {
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      padding: 0 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    .btn-submit-code:hover {
+      background: var(--primary-hover);
+    }
+    .btn-close-act-modal {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* MODAL DE INFORMACIÓN DE CUENTA (CUANDO ESTÁ ACTIVO) */
+    .account-info-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .account-info-card {
+      background: #14151B;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      position: relative;
+    }
+    .acc-detail-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 13px;
+    }
+    .acc-detail-item:last-child {
+      border-bottom: none;
+    }
+    .acc-detail-title {
+      color: #8E8E93;
+    }
+    .acc-detail-val {
+      font-weight: 700;
+      color: #fff;
+    }
+    .btn-logout-device {
+      margin-top: 16px;
+      width: 100%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 10px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -602,6 +893,9 @@
       <div class="brand-name">STREAM</div>
     </div>
     <div class="header-actions">
+      <button class="account-btn" id="accountHeaderBtn" onclick="handleAccountBtnClick()">
+        🔒 Activar
+      </button>
       <button class="search-btn" onclick="openSearchModal()">
         🔍 Buscar
       </button>
@@ -687,9 +981,272 @@
     <div class="grid-container" id="searchResults"></div>
   </div>
 
+  <!-- MODAL DE ACTIVACIÓN DE DISPOSITIVO (IPHONE / PWA / WEB) -->
+  <div class="activation-modal" id="activationModal">
+    <div class="activation-card">
+      <button class="btn-close-act-modal" onclick="closeActivationModal()" title="Cerrar ventana">✕</button>
+      <div class="act-brand-badge">⚡ VJ STREAM ACCESO</div>
+      <h2 class="act-title" id="actTitle">Activar Dispositivo</h2>
+      <p class="act-desc" id="actDesc">Para reproducir películas, series y canales en vivo en tu iPhone, necesitas autorizar este dispositivo.</p>
+      
+      <div class="act-notice" id="actNotice"></div>
+
+      <div class="act-code-box">
+        <span class="act-code-label">Tu Código de Activación:</span>
+        <span class="act-code-value" id="actCodeDisplay">...</span>
+        <button class="btn-copy-code" id="btnCopyCode" onclick="copyActivationCode()">📋 Copiar Código</button>
+      </div>
+
+      <a id="actWhatsappBtn" href="#" target="_blank" class="btn-whatsapp-act">
+        <span style="font-size: 18px;">📲</span> Solicitar Activación por WhatsApp
+      </a>
+
+      <div class="act-waiting-status">
+        <div class="act-pulse-dot"></div>
+        <span>Esperando aprobación del administrador...</span>
+      </div>
+
+      <div class="act-manual-section">
+        <label class="act-manual-label">¿Ya tienes un código de suscripción asignado?</label>
+        <div class="act-manual-row">
+          <input type="text" id="manualCodeInput" class="act-manual-input" placeholder="Ej: VJ-3166" maxlength="10">
+          <button class="btn-submit-code" onclick="submitManualCode()">Vincular</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE DETALLES DE CUENTA (CUANDO ESTÁ ACTIVO) -->
+  <div class="account-info-modal" id="accountModal">
+    <div class="account-info-card">
+      <button class="btn-close-act-modal" onclick="closeAccountModal()">✕</button>
+      <div style="font-size: 32px; margin-bottom: 8px;">👑</div>
+      <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Membresía Activa</h3>
+      <p style="font-size: 12px; color: #8E8E93; margin-bottom: 18px;">Dispositivo autorizado en VJ STREAM</p>
+
+      <div class="acc-detail-item">
+        <span class="acc-detail-title">Cliente:</span>
+        <span class="acc-detail-val" id="accClientName">-</span>
+      </div>
+      <div class="acc-detail-item">
+        <span class="acc-detail-title">Código VJ:</span>
+        <span class="acc-detail-val" id="accClientCode" style="color: #ff4d58;">-</span>
+      </div>
+      <div class="acc-detail-item">
+        <span class="acc-detail-title">Dispositivo:</span>
+        <span class="acc-detail-val" id="accClientDevice">Apple iPhone (Web PWA)</span>
+      </div>
+      <div class="acc-detail-item">
+        <span class="acc-detail-title">Vence el:</span>
+        <span class="acc-detail-val" id="accClientExp" style="color: #4ade80;">-</span>
+      </div>
+
+      <button class="btn-logout-device" onclick="logoutDevice()">Desvincular Dispositivo</button>
+    </div>
+  </div>
+
   <script>
-    // ESTADO DE LA APLICACIÓN
+    // ESTADO DE LA APLICACIÓN Y AUTENTICACIÓN
     const HMAC_SECRET = 'VJ_SECURE_STREAM_APP_SIG_KEY_2026_@#!';
+
+    let isDeviceActive = false;
+    let currentPendingCode = null;
+    let pollStatusInterval = null;
+    let currentClientData = null;
+
+    function getDeviceId() {
+      let devId = localStorage.getItem('vj_stream_device_id');
+      if (!devId) {
+        devId = 'WEB-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
+        localStorage.setItem('vj_stream_device_id', devId);
+      }
+      return devId;
+    }
+
+    function getDeviceModel() {
+      const ua = navigator.userAgent;
+      if (/iPhone/i.test(ua)) return 'Apple iPhone (Web PWA)';
+      if (/iPad/i.test(ua)) return 'Apple iPad (Web PWA)';
+      if (/Android/i.test(ua)) return 'Android Device (Web)';
+      return 'Navegador Web';
+    }
+
+    async function initDeviceAuth(manualCode = null) {
+      const deviceId = getDeviceId();
+      const deviceModel = getDeviceModel();
+      const savedToken = localStorage.getItem('vj_stream_session_token');
+      const savedCode = manualCode || localStorage.getItem('vj_stream_client_code');
+
+      try {
+        const res = await fetch('/api/auth/register-device', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            deviceId,
+            deviceModel,
+            token: savedToken,
+            code: savedCode
+          })
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+          console.warn('[Auth] Error registrando dispositivo:', data);
+          return;
+        }
+
+        handleAuthResponse(data);
+      } catch (err) {
+        console.error('[Auth] Error de conexión:', err);
+      }
+    }
+
+    function handleAuthResponse(data) {
+      const accountBtn = document.getElementById('accountHeaderBtn');
+
+      if (data.status === 'active') {
+        isDeviceActive = true;
+        currentClientData = data.client || {};
+        if (data.token) localStorage.setItem('vj_stream_session_token', data.token);
+        if (data.client?.code) localStorage.setItem('vj_stream_client_code', data.client.code);
+
+        stopPolling();
+        closeActivationModal();
+
+        accountBtn.className = 'account-btn active';
+        accountBtn.innerHTML = `✅ ${data.client?.code || 'Activo'}`;
+      } else if (data.status === 'pending') {
+        isDeviceActive = false;
+        currentPendingCode = data.code;
+        accountBtn.className = 'account-btn';
+        accountBtn.innerHTML = `🔒 Activar (${data.code})`;
+
+        displayActivationDetails(data);
+        startPolling(data.code);
+        // Abrir automáticamente el modal la primera vez para que vea su código
+        if (!sessionStorage.getItem('vj_auth_modal_shown')) {
+          sessionStorage.setItem('vj_auth_modal_shown', 'true');
+          openActivationModal();
+        }
+      } else if (data.status === 'expired' || data.status === 'suspended') {
+        isDeviceActive = false;
+        accountBtn.className = 'account-btn';
+        accountBtn.innerHTML = `⚠️ Vencido`;
+        displayExpiredDetails(data);
+      }
+    }
+
+    function displayActivationDetails(data) {
+      document.getElementById('actCodeDisplay').textContent = data.code;
+      const whatsappNum = (data.whatsappNumber || '+51999999999').replace(/[^0-9+]/g, '');
+      const rawMsg = data.whatsappMessage || 'Hola, mi código de activación de VJ STREAM es {code}';
+      const finalMsg = rawMsg.replace('{code}', data.code);
+      
+      const waBtn = document.getElementById('actWhatsappBtn');
+      waBtn.href = `https://wa.me/${whatsappNum}?text=${encodeURIComponent(finalMsg)}`;
+    }
+
+    function displayExpiredDetails(data) {
+      document.getElementById('actCodeDisplay').textContent = data.client?.code || 'VENCIDO';
+      document.getElementById('actTitle').textContent = '⚠️ Membresía Vencida';
+      document.getElementById('actDesc').textContent = data.message || 'Tu suscripción ha finalizado. Contacta a tu proveedor para renovar tu acceso.';
+      openActivationModal();
+    }
+
+    function startPolling(code) {
+      stopPolling();
+      const deviceId = getDeviceId();
+      pollStatusInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/auth/check-status/${code}?deviceId=${encodeURIComponent(deviceId)}`);
+          const data = await res.json();
+          if (data.success && data.status === 'active') {
+            handleAuthResponse(data);
+            alert('🎉 ¡Tu dispositivo ha sido activado con éxito por el administrador! Ya puedes disfrutar de todo el catálogo.');
+          }
+        } catch (_) {}
+      }, 3500);
+    }
+
+    function stopPolling() {
+      if (pollStatusInterval) {
+        clearInterval(pollStatusInterval);
+        pollStatusInterval = null;
+      }
+    }
+
+    function openActivationModal(alertMsg = null) {
+      if (alertMsg) {
+        const notice = document.getElementById('actNotice');
+        if (notice) {
+          notice.textContent = alertMsg;
+          notice.style.display = 'block';
+        }
+      }
+      document.getElementById('activationModal').style.display = 'flex';
+    }
+
+    function closeActivationModal() {
+      document.getElementById('activationModal').style.display = 'none';
+      const notice = document.getElementById('actNotice');
+      if (notice) notice.style.display = 'none';
+    }
+
+    function handleAccountBtnClick() {
+      if (isDeviceActive) {
+        showAccountModal();
+      } else {
+        openActivationModal();
+      }
+    }
+
+    function showAccountModal() {
+      const modal = document.getElementById('accountModal');
+      if (!currentClientData) return;
+      document.getElementById('accClientName').textContent = currentClientData.name || 'Cliente';
+      document.getElementById('accClientCode').textContent = currentClientData.code || 'VJ-XXXX';
+      document.getElementById('accClientDevice').textContent = getDeviceModel();
+      const expDate = currentClientData.expiresAt ? new Date(currentClientData.expiresAt).toLocaleDateString('es-ES') : 'Activo';
+      document.getElementById('accClientExp').textContent = expDate;
+      modal.style.display = 'flex';
+    }
+
+    function closeAccountModal() {
+      document.getElementById('accountModal').style.display = 'none';
+    }
+
+    function copyActivationCode() {
+      const code = document.getElementById('actCodeDisplay').textContent;
+      if (!code || code === '...') return;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btnCopyCode');
+        const old = btn.textContent;
+        btn.textContent = '✅ ¡Copiado!';
+        setTimeout(() => { btn.textContent = old; }, 2000);
+      }).catch(() => {
+        prompt('Copia tu código:', code);
+      });
+    }
+
+    async function submitManualCode() {
+      const input = document.getElementById('manualCodeInput');
+      const code = (input.value || '').trim().toUpperCase();
+      if (!code || code.length < 4) {
+        alert('Ingresa un código válido (ejemplo: VJ-3166)');
+        return;
+      }
+      await initDeviceAuth(code);
+      input.value = '';
+    }
+
+    function logoutDevice() {
+      if (confirm('¿Deseas desvincular este dispositivo? Necesitarás volver a activarlo para reproducir contenido.')) {
+        localStorage.removeItem('vj_stream_session_token');
+        localStorage.removeItem('vj_stream_client_code');
+        sessionStorage.removeItem('vj_auth_modal_shown');
+        location.reload();
+      }
+    }
 
     function getSecurityHeaders(path) {
       const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -914,10 +1471,19 @@
     }
 
     function playHeroMedia() {
+      if (!isDeviceActive) {
+        openActivationModal('🔒 Debes autorizar tu dispositivo para reproducir este contenido.');
+        return;
+      }
       if (heroItem) playMedia(heroItem);
     }
 
     async function playMedia(item) {
+      if (!isDeviceActive) {
+        openActivationModal('🔒 Debes autorizar tu dispositivo para reproducir películas y series.');
+        return;
+      }
+
       const modal = document.getElementById('playerModal');
       const titleEl = document.getElementById('playerTitle');
       const video = document.getElementById('videoPlayer');
@@ -937,7 +1503,8 @@
             title: item.title,
             originalTitle: item.originalTitle || item.title,
             year: year,
-            mediaType: item.mediaType || 'movie'
+            mediaType: item.mediaType || 'movie',
+            deviceId: getDeviceId()
           })
         });
 
@@ -962,6 +1529,11 @@
 
     // REPRODUCIR CANAL DE TV EN VIVO
     function playLiveChannel(ch) {
+      if (!isDeviceActive) {
+        openActivationModal('🔒 Debes autorizar tu dispositivo para ver los canales de TV en vivo.');
+        return;
+      }
+
       const modal = document.getElementById('playerModal');
       const titleEl = document.getElementById('playerTitle');
       titleEl.textContent = `EN VIVO: ${ch.name}`;
@@ -1118,6 +1690,7 @@
       loadCatalog();
       loadLiveChannels();
       checkIosDevice();
+      initDeviceAuth();
     });
   </script>
 </body>
