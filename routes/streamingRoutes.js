@@ -372,14 +372,14 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.8',
-    versionCode: 15,
+    latestVersion: '2.4.9',
+    versionCode: 16,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-26',
     releaseNotes: [
-      '⭐ Canales favoritos y modo zapping en TV',
-      '🌎 Filtro de canales por país con banderas',
-      '📑 Guía rápida lateral y ventana flotante (PiP)',
+      '⭐ Canales favoritos, modo zapping y ventana flotante (PiP)',
+      '🇵🇪 Canales peruanos optimizados con failover automático continuo',
+      '🔒 Sesión y activación permanente en TV y móviles sin desconexiones',
       '⚡ Mayor velocidad y estabilidad de reproducción'
     ],
     downloadUrl: '/api/streaming/download-apk',
