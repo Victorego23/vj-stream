@@ -401,6 +401,48 @@ class ApiService {
     }
   }
 
+  /// Obtiene la lista de años disponibles para explorar la cartelera (2026 hasta 2000)
+  Future<List<int>> fetchAvailableYears() async {
+    try {
+      final uri = Uri.parse('$baseUrl/movies/years');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 6));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['years'] is List) {
+          return (data['years'] as List).map((y) => int.parse(y.toString())).toList();
+        }
+      }
+    } catch (_) {}
+    // Respaldo local instantáneo (2026 a 2000)
+    return List.generate(27, (i) => 2026 - i);
+  }
+
+  /// Obtiene películas de un año específico (2000 a 2026) con paginación
+  Future<List<MediaItem>> fetchMoviesByYear(int year, {int page = 1}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/movies/by-year/$year?page=$page');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['movies'] is List) {
+          return (data['movies'] as List)
+              .map((item) => MediaItem.fromJson(item as Map<String, dynamic>))
+              .where((m) => m.bestPosterUrl.isNotEmpty)
+              .toList();
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
 
   /// Resolución 100% automática para VJ STREAM con filtro estricto Anti-CAM y soporte para episodios:
   Future<Map<String, dynamic>?> autoResolveStream(

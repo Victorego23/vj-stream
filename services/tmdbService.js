@@ -331,22 +331,84 @@ class TmdbService {
   }
 
   /**
+   * Obtiene películas por año de estreno específico (2000 a 2026) con paginación y ordenadas por popularidad.
+   * Auto-actualizado en tiempo real desde la base de datos de TMDB.
+   * @param {number|string} year - Año de estreno (ej: 2026, 2024, 2005)
+   * @param {number} [page=1] - Página de resultados
+   */
+  async getMoviesByYear(year, page = 1) {
+    try {
+      const client = this.getAxiosClient();
+      const numYear = parseInt(year, 10) || 2026;
+      const response = await client.get('/discover/movie', {
+        params: {
+          language: 'es-ES',
+          primary_release_year: numYear,
+          sort_by: 'popularity.desc',
+          include_adult: false,
+          'vote_count.gte': numYear >= 2025 ? 5 : 20,
+          page: page || 1
+        }
+      });
+      return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'movie' }));
+    } catch (error) {
+      console.warn(`[TmdbService] Error en getMoviesByYear (${year}):`, error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene películas dentro de un rango de años (ej: 2000 a 2009, 2010 a 2019) ordenadas por aclamación y popularidad.
+   */
+  async getMoviesByYearRange(startYear, endYear, page = 1) {
+    try {
+      const client = this.getAxiosClient();
+      const response = await client.get('/discover/movie', {
+        params: {
+          language: 'es-ES',
+          'primary_release_date.gte': `${startYear}-01-01`,
+          'primary_release_date.lte': `${endYear}-12-31`,
+          sort_by: 'popularity.desc',
+          include_adult: false,
+          'vote_count.gte': 50,
+          page: page || 1
+        }
+      });
+      return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'movie' }));
+    } catch (error) {
+      console.warn(`[TmdbService] Error en getMoviesByYearRange (${startYear}-${endYear}):`, error.message);
+      return [];
+    }
+  }
+
+  /**
    * Generador dinámico para Cartelera Infinita sin fin.
    * Por cada página solicitada, devuelve 3 filas temáticas completas.
+   * Integra años desde el 2000 al 2026 con actualización continua y automática.
    * @param {number} page
    */
   async getInfiniteCategories(page = 1) {
     const categories = [];
 
     const genrePacks = [
+      { title: '🍿 Estrenos y Cartelera 2026 (Auto-actualizado)', year: 2026 },
+      { title: '🔥 Grandes Éxitos del Cine 2025', year: 2025 },
+      { title: '⭐ Las Mejores Películas del 2024', year: 2024 },
+      { title: '🏆 Lo Más Visto del 2023', year: 2023 },
       { title: '🕵️ Thriller, Intriga y Suspenso', genreId: 53 },
       { title: '😂 Comedias y Risas Aseguradas', genreId: 35 },
+      { title: '🎞️ Películas Destacadas del 2022', year: 2022 },
+      { title: '🎞️ Éxitos del 2021', year: 2021 },
       { title: '👻 Terror, Horror y Sobrenatural', genreId: 27 },
       { title: '🎨 Animación y Éxitos Familiares', genreId: 16 },
+      { title: '🎞️ Cine del 2020', year: 2020 },
       { title: '🗺️ Aventuras Épicas y Fantásticas', genreId: 12 },
+      { title: '💎 Grandes Éxitos 2015 - 2019', yearRange: [2015, 2019] },
       { title: '🎭 Obras Maestras del Drama', genreId: 18 },
       { title: '🕶️ Crimen, Policías y Mafia', genreId: 80 },
+      { title: '👑 Clásicos Modernos 2010 - 2014', yearRange: [2010, 2014] },
       { title: '⭐ Películas Aclamadas por la Crítica', custom: 'top_rated' },
+      { title: '📽️ Cine de Culto e Inolvidables 2000 - 2009', yearRange: [2000, 2009] },
       { title: '🔮 Misterio, Enigmas y Secretos', genreId: 9648 },
       { title: '⚔️ Cine Bélico e Historia Militar', genreId: 10752 },
       { title: '🧙 Fantasía, Hechizos y Leyendas', genreId: 14 },
@@ -365,14 +427,19 @@ class TmdbService {
     for (const pack of selectedPacks) {
       try {
         let items = [];
-        if (pack.custom === 'top_rated') {
+        if (pack.year) {
+          items = await this.getMoviesByYear(pack.year, tmdbPage);
+        } else if (pack.yearRange) {
+          items = await this.getMoviesByYearRange(pack.yearRange[0], pack.yearRange[1], tmdbPage);
+        } else if (pack.custom === 'top_rated') {
           items = await this.getTopRatedMovies(tmdbPage);
-        } else {
+        } else if (pack.genreId) {
           items = await this.getMoviesByGenre(pack.genreId, tmdbPage);
         }
+
         if (items && items.length > 0) {
           categories.push({
-            title: `${pack.title} ${tmdbPage > 1 ? `(Colección ${tmdbPage})` : ''}`.trim(),
+            title: `${pack.title} ${tmdbPage > 1 ? `(Página ${tmdbPage})` : ''}`.trim(),
             items
           });
         }

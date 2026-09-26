@@ -51,6 +51,52 @@ router.get('/catalog/infinite', async (req, res, next) => {
   }
 });
 
+/**
+ * @route   GET /api/streaming/movies/years
+ * @desc    Devuelve el catálogo de años disponibles para explorar (2026 hasta 2000)
+ */
+router.get('/movies/years', (req, res) => {
+  const currentYear = new Date().getFullYear();
+  const maxYear = Math.max(currentYear, 2026);
+  const years = [];
+  for (let y = maxYear; y >= 2000; y--) {
+    years.push(y);
+  }
+  return res.json({
+    success: true,
+    years
+  });
+});
+
+/**
+ * @route   GET /api/streaming/movies/by-year/:year
+ * @desc    Obtiene las películas de un año específico (2000 a 2026) con paginación
+ * @param   year {number} - Año de estreno (2000-2026)
+ * @query   page {number} - Página actual (default 1)
+ */
+router.get('/movies/by-year/:year', async (req, res, next) => {
+  try {
+    const year = parseInt(req.params.year, 10);
+    const page = parseInt(req.query.page, 10) || 1;
+
+    if (isNaN(year) || year < 1950 || year > 2030) {
+      return res.status(400).json({
+        success: false,
+        error: 'El año proporcionado no es válido (rango admitido: 2000 - 2026).'
+      });
+    }
+
+    const movies = await tmdbService.getMoviesByYear(year, page);
+    return res.json({
+      success: true,
+      year,
+      page,
+      movies
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * @route   GET /api/streaming/search
@@ -372,15 +418,15 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.9',
-    versionCode: 16,
+    latestVersion: '2.5.0',
+    versionCode: 17,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-26',
     releaseNotes: [
-      '⭐ Canales favoritos, modo zapping y ventana flotante (PiP)',
-      '🇵🇪 Canales peruanos optimizados con failover automático continuo',
-      '🔒 Sesión y activación permanente en TV y móviles sin desconexiones',
-      '⚡ Mayor velocidad y estabilidad de reproducción'
+      '🎬 Cartelera expandida: Todas las películas del 2000 al 2026 con actualización automática',
+      '🎧 Sonido Español Estéreo 2.0 en películas y series: Diálogos nítidos y sin volumen bajo en TV',
+      '⭐ Explorador de colecciones por año con navegación fluida para Smart TV y móvil',
+      '🔒 Estabilidad y rendimiento optimizado en reproducción y failover de canales'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

@@ -75,7 +75,12 @@ class StreamResolverService {
     const isTorrentioLatino = langLine.includes('dual audio / 🇲🇽') || langLine.includes('🇲🇽') || (langLine.includes('latino') && !langLine.includes('subtitle'));
     const isTorrentioCastellano = langLine.includes('🇪🇸') && !langLine.includes('🇬🇧') && !langLine.includes('🇺🇸');
 
-    // 5. FILTRO DE FALSOS POSITIVOS DE SUBTÍTULOS (Tigole, QxR, PSA, YTS, Rutracker con 5+ banderas que solo son subtítulos)
+    // 5. DETECCIÓN DE CANALES DE AUDIO (Estéreo 2.0 vs 5.1 Surround)
+    const isStereo = /aac(?!\s*5\.1)|2\.0|stereo|est[eé]reo|2ch|mp3|dd2\.0|ddp2\.0|\b(2\.0)\b/i.test(fullText);
+    const isSurround = /5\.1|7\.1|ac3(?!\s*2\.0)|eac3(?!\s*2\.0)|dts|atmos|truehd/i.test(fullText);
+    const audioChannels = isStereo ? 'Estéreo 2.0' : (isSurround ? '5.1 Surround' : 'Estéreo 2.0');
+
+    // 6. FILTRO DE FALSOS POSITIVOS DE SUBTÍTULOS (Tigole, QxR, PSA, YTS, Rutracker con 5+ banderas que solo son subtítulos)
     const isSubtitleSpam = (langLine.split('/').length > 4);
 
     let score = 0;
@@ -84,7 +89,7 @@ class StreamResolverService {
 
     if (isCinecalidad || hasLatinoExplicit || isTorrentioLatino) {
       isSpanishAudio = true;
-      audioLanguage = 'Español Latino';
+      audioLanguage = isStereo ? 'Español Latino Estéreo' : 'Español Latino';
       score += 3500;
       if (isCinecalidad) score += 500; // Cinecalidad es la fuente de máxima pureza en Latino
       // Si el archivo pone en primer lugar el inglés (eng-lat), preferir los que tienen latino puro o primero
@@ -93,20 +98,25 @@ class StreamResolverService {
       }
     } else if (isMejorTorrent || isWolfmax4k || hasCastellanoExplicit || isTorrentioCastellano) {
       isSpanishAudio = true;
-      audioLanguage = 'Castellano';
+      audioLanguage = isStereo ? 'Castellano Estéreo' : 'Castellano';
       score += 2800;
     } else if (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub')) {
       isSpanishAudio = true;
-      audioLanguage = 'Español';
+      audioLanguage = isStereo ? 'Español Estéreo' : 'Español';
       score += 2000;
     } else if (langLine.includes('dual audio') && (langLine.includes('🇲🇽') || langLine.includes('🇪🇸'))) {
       isSpanishAudio = true;
-      audioLanguage = 'Dual (Español)';
+      audioLanguage = 'Dual (Español Estéreo)';
       score += 2200;
     } else {
       isSpanishAudio = false;
       audioLanguage = 'Inglés / Original';
       score = 400;
+    }
+
+    // Ventaja para pistas Estéreo 2.0: Diálogos nítidos y sin problemas de voces bajas en Smart TV sin soundbar
+    if (isStereo) {
+      score += 150;
     }
 
     // Calidad de video
@@ -132,6 +142,7 @@ class StreamResolverService {
       score,
       audioLanguage,
       isSpanishAudio,
+      audioChannels,
       qualityLabel,
       filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
     };
@@ -393,6 +404,7 @@ class StreamResolverService {
             qualityLabel: candidate.qualityLabel,
             audioLanguage: candidate.audioLanguage,
             isSpanishAudio: candidate.isSpanishAudio,
+            audioChannels: candidate.audioChannels || 'Estéreo 2.0',
             filename: candidate.filename
           };
         };
@@ -408,8 +420,9 @@ class StreamResolverService {
               primaryStream = verified;
               availableStreams.push({
                 id: 'latino',
-                label: 'Español Latino (🇲🇽)',
-                language: 'Español Latino',
+                label: `Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
+                language: 'Español Latino Estéreo',
+                audioChannels: verified.audioChannels || 'Estéreo 2.0',
                 streamUrl: verified.streamUrl,
                 qualityLabel: verified.qualityLabel,
                 filename: verified.filename,
@@ -418,8 +431,9 @@ class StreamResolverService {
             } else if (availableStreams.filter(s => s.id.startsWith('latino')).length < 2) {
               availableStreams.push({
                 id: 'latino_backup',
-                label: 'Español Latino - Servidor 2 (🇲🇽)',
+                label: `Español Latino - Servidor 2 (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
                 language: 'Español Latino (Servidor 2)',
+                audioChannels: verified.audioChannels || 'Estéreo 2.0',
                 streamUrl: verified.streamUrl,
                 qualityLabel: verified.qualityLabel,
                 filename: verified.filename,
@@ -437,8 +451,9 @@ class StreamResolverService {
             if (!primaryStream) primaryStream = verified;
             availableStreams.push({
               id: 'castellano',
-              label: 'Castellano (🇪🇸)',
-              language: 'Castellano',
+              label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
+              language: 'Castellano Estéreo',
+              audioChannels: verified.audioChannels || 'Estéreo 2.0',
               streamUrl: verified.streamUrl,
               qualityLabel: verified.qualityLabel,
               filename: verified.filename,
@@ -455,8 +470,9 @@ class StreamResolverService {
             if (!primaryStream) primaryStream = verified;
             availableStreams.push({
               id: 'original',
-              label: 'Inglés / Audio Original (🇺🇸)',
+              label: `Inglés / Audio Original (${verified.audioChannels || 'Estéreo'} 🇺🇸)`,
               language: 'Audio Original',
+              audioChannels: verified.audioChannels || 'Estéreo',
               streamUrl: verified.streamUrl,
               qualityLabel: verified.qualityLabel,
               filename: verified.filename,
@@ -577,8 +593,9 @@ class StreamResolverService {
               availableStreams: [
                 {
                   id: 'latino',
-                  label: streamOption.audioLanguage || 'Español Latino (🇲🇽)',
-                  language: streamOption.audioLanguage || 'Español Latino',
+                  label: 'Español Latino (Estéreo 2.0 🎧 🇲🇽)',
+                  language: 'Español Latino Estéreo',
+                  audioChannels: 'Estéreo 2.0',
                   streamUrl: streamOption.streamUrl,
                   qualityLabel: streamOption.qualityLabel,
                   filename: streamOption.filename,

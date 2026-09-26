@@ -1260,20 +1260,43 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                           child: ListTile(
                             dense: true,
                             leading: Icon(
-                              Icons.volume_up_rounded,
+                              (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
+                                  ? Icons.headphones_rounded
+                                  : Icons.volume_up_rounded,
                               color: isSelected ? const Color(0xFFE50914) : Colors.white60,
                             ),
-                            title: Text(
-                              st['label'] ?? st['language'] ?? 'Audio',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 14,
-                              ),
+                            title: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    st['label'] ?? st['language'] ?? 'Español Latino Estéreo',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                if (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0x3322C55E),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(color: const Color(0xFF22C55E), width: 0.8),
+                                    ),
+                                    child: const Text(
+                                      'ESTÉREO',
+                                      style: TextStyle(color: Color(0xFF22C55E), fontSize: 9, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                              ],
                             ),
                             subtitle: Text(
-                              st['qualityLabel'] ?? 'Calidad HD',
-                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                              (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
+                                  ? '🎧 Estéreo 2.0 balanceado · Diálogos nítidos sin volumen bajo · ${st['qualityLabel'] ?? 'HD'}'
+                                  : (st['qualityLabel'] ?? 'Calidad HD'),
+                              style: const TextStyle(color: Colors.white54, fontSize: 11),
                             ),
                             trailing: isSelected
                                 ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
@@ -1289,8 +1312,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: Text(
-                          'Audio en español latino activo por defecto.',
-                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                          '🎧 Audio en Español Latino (Estéreo 2.0) activo por defecto.',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ),
 

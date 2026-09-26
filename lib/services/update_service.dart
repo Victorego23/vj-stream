@@ -40,8 +40,8 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para VJ STREAM
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '2.4.9';
-  static const int currentVersionCode = 16;
+  static const String currentVersion = '2.5.0';
+  static const int currentVersionCode = 17;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;

@@ -44,6 +44,14 @@ class _HomeViewState extends State<HomeView> {
   bool _isLoadingMore = false;
   bool _hasMore = true;
 
+  // Explorador exhaustivo de Cartelera por Años (2000 a 2026) con actualización automática
+  int? _selectedMovieYear;
+  final List<MediaItem> _yearMovies = [];
+  bool _isLoadingYearMovies = false;
+  int _yearMoviesPage = 1;
+  bool _hasMoreYearMovies = true;
+  final List<int> _availableYears = List.generate(27, (i) => 2026 - i);
+
   @override
   void initState() {
     super.initState();
@@ -85,6 +93,56 @@ class _HomeViewState extends State<HomeView> {
     } catch (_) {
       if (mounted) {
         setState(() => _isLoadingMore = false);
+      }
+    }
+  }
+
+  Future<void> _loadMoviesByYear(int? year, {bool loadMore = false}) async {
+    if (year == null) {
+      setState(() {
+        _selectedMovieYear = null;
+        _yearMovies.clear();
+      });
+      return;
+    }
+
+    if (loadMore) {
+      if (_isLoadingYearMovies || !_hasMoreYearMovies) return;
+      setState(() => _isLoadingYearMovies = true);
+      try {
+        final nextMovies = await _apiService.fetchMoviesByYear(year, page: _yearMoviesPage + 1);
+        if (mounted) {
+          setState(() {
+            if (nextMovies.isNotEmpty) {
+              _yearMovies.addAll(nextMovies);
+              _yearMoviesPage++;
+            } else {
+              _hasMoreYearMovies = false;
+            }
+            _isLoadingYearMovies = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) setState(() => _isLoadingYearMovies = false);
+      }
+    } else {
+      setState(() {
+        _selectedMovieYear = year;
+        _yearMovies.clear();
+        _yearMoviesPage = 1;
+        _hasMoreYearMovies = true;
+        _isLoadingYearMovies = true;
+      });
+      try {
+        final movies = await _apiService.fetchMoviesByYear(year, page: 1);
+        if (mounted) {
+          setState(() {
+            _yearMovies.addAll(movies);
+            _isLoadingYearMovies = false;
+          });
+        }
+      } catch (_) {
+        if (mounted) setState(() => _isLoadingYearMovies = false);
       }
     }
   }
@@ -840,6 +898,12 @@ class _HomeViewState extends State<HomeView> {
                     child: _buildTabBar(isTv),
                   ),
 
+                  // Selector horizontal de Años 2000 - 2026 cuando está en la pestaña "Películas"
+                  if (_activeTab == 'Películas')
+                    SliverToBoxAdapter(
+                      child: _buildYearSelectorBar(isTv),
+                    ),
+
                   // Vista cuando la pestaña activa es "TV en Vivo"
                   if (_activeTab == 'TV en Vivo')
                     const SliverFillRemaining(
@@ -850,6 +914,11 @@ class _HomeViewState extends State<HomeView> {
                   else if (_activeTab == 'Mi Lista')
                     SliverToBoxAdapter(
                       child: _buildMyListTab(isTv),
+                    )
+                  // Vista cuando seleccionó un año específico en Películas (2000 - 2026)
+                  else if (_activeTab == 'Películas' && _selectedMovieYear != null)
+                    SliverToBoxAdapter(
+                      child: _buildYearMoviesGrid(isTv),
                     )
                   else ...[
                     // Hero Banner destacado superior
@@ -936,8 +1005,8 @@ class _HomeViewState extends State<HomeView> {
                         ),
                     ],
 
-                    // Filas dinámicas infinitas de Cartelera sin fin
-                    if (_activeTab == 'Todos')
+                    // Filas dinámicas infinitas de Cartelera sin fin (tanto para Todos como para Películas)
+                    if (_activeTab == 'Todos' || (_activeTab == 'Películas' && _selectedMovieYear == null))
                       for (final cat in _extraCategories)
                         SliverToBoxAdapter(
                           child: MediaRow(
@@ -948,7 +1017,7 @@ class _HomeViewState extends State<HomeView> {
                         ),
 
                     // Indicador de carga infinita al desplazarse al fondo
-                    if (_isLoadingMore && _activeTab == 'Todos')
+                    if (_isLoadingMore && (_activeTab == 'Todos' || _activeTab == 'Películas'))
                       const SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 24.0),
@@ -1355,6 +1424,183 @@ class _HomeViewState extends State<HomeView> {
               );
             }).toList(),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildYearSelectorBar(bool isTv) {
+    return Container(
+      height: 42,
+      margin: EdgeInsets.symmetric(
+        horizontal: isTv ? 48 : 16,
+        vertical: 6,
+      ),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _availableYears.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            final isSelected = _selectedMovieYear == null;
+            return ChoiceChip(
+              showCheckmark: false,
+              label: const Text('✨ Todas las Colecciones (2000 - 2026)'),
+              selected: isSelected,
+              selectedColor: const Color(0xFFE50914),
+              backgroundColor: const Color(0xFF141414),
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFFE50914) : const Color(0xFF333333),
+                  width: 1.1,
+                ),
+              ),
+              onSelected: (_) => _loadMoviesByYear(null),
+            );
+          }
+
+          final year = _availableYears[index - 1];
+          final isSelected = _selectedMovieYear == year;
+          final isNew = year >= 2025;
+
+          return ChoiceChip(
+            showCheckmark: false,
+            avatar: isNew ? const Icon(Icons.star_rounded, size: 16, color: Colors.amber) : null,
+            label: Text(year.toString()),
+            selected: isSelected,
+            selectedColor: const Color(0xFFE50914),
+            backgroundColor: const Color(0xFF141414),
+            labelStyle: TextStyle(
+              color: isSelected ? Colors.white : (isNew ? Colors.amber : Colors.white70),
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 12,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: isSelected ? const Color(0xFFE50914) : (isNew ? const Color(0x66FFC107) : const Color(0xFF262626)),
+                width: 1.1,
+              ),
+            ),
+            onSelected: (selected) {
+              if (selected) {
+                _loadMoviesByYear(year);
+              } else {
+                _loadMoviesByYear(null);
+              }
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildYearMoviesGrid(bool isTv) {
+    if (_isLoadingYearMovies && _yearMovies.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFFE50914)),
+        ),
+      );
+    }
+
+    if (_yearMovies.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Center(
+          child: Text(
+            'No se encontraron películas para el año $_selectedMovieYear.',
+            style: const TextStyle(color: Colors.white60, fontSize: 14),
+          ),
+        ),
+      );
+    }
+
+    final cardWidth = isTv ? 160.0 : 130.0;
+    final cardHeight = isTv ? 240.0 : 195.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isTv ? 48.0 : 16.0, vertical: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE50914),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  'AÑO $_selectedMovieYear',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                'Cartelera Completa de Películas ($_selectedMovieYear)',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '${_yearMovies.length} títulos',
+                style: const TextStyle(color: Colors.white38, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 16,
+            children: _yearMovies.map((movie) {
+              return TvFocusableCard(
+                item: movie,
+                width: cardWidth,
+                height: cardHeight,
+                onTap: () => _openDetail(movie),
+              );
+            }).toList(),
+          ),
+          if (_hasMoreYearMovies)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: _isLoadingYearMovies
+                    ? const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 2.5),
+                      )
+                    : ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E1E1E),
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Color(0xFF333333)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                        icon: const Icon(Icons.add_circle_outline_rounded, size: 18),
+                        label: Text('Cargar más películas de $_selectedMovieYear'),
+                        onPressed: () => _loadMoviesByYear(_selectedMovieYear, loadMore: true),
+                      ),
+              ),
+            ),
         ],
       ),
     );
