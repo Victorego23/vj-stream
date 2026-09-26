@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/live_channel.dart';
 import '../services/api_service.dart';
 import 'video_player_view.dart';
@@ -14,8 +15,11 @@ class _LiveTvViewState extends State<LiveTvView> {
   final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
 
+  static const String _favsKey = 'vj_stream_fav_channel_ids';
+  Set<String> _favoriteChannelIds = {};
+
   List<LiveChannel> _allChannels = [];
-  List<String> _categories = ['Todos'];
+  List<String> _categories = ['Favoritos', 'Todos'];
   String _selectedCategory = 'Todos';
   String _searchQuery = '';
   bool _isLoading = true;
@@ -24,6 +28,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   @override
   void initState() {
     super.initState();
+    _loadFavorites();
     _loadChannels();
   }
 
@@ -31,6 +36,32 @@ class _LiveTvViewState extends State<LiveTvView> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = prefs.getStringList(_favsKey) ?? [];
+      if (mounted) {
+        setState(() {
+          _favoriteChannelIds = list.toSet();
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavorite(LiveChannel channel) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        if (_favoriteChannelIds.contains(channel.id)) {
+          _favoriteChannelIds.remove(channel.id);
+        } else {
+          _favoriteChannelIds.add(channel.id);
+        }
+      });
+      await prefs.setStringList(_favsKey, _favoriteChannelIds.toList());
+    } catch (_) {}
   }
 
   Future<void> _loadChannels() async {
@@ -47,11 +78,8 @@ class _LiveTvViewState extends State<LiveTvView> {
       if (mounted) {
         setState(() {
           _allChannels = channels;
-          if (categories.isNotEmpty) {
-            _categories = categories;
-          } else {
-            _categories = ['Todos', 'Deportes', 'Cine & Series', 'Infantil', 'Entretenimiento', 'Nacionales'];
-          }
+          final cleanCats = categories.where((c) => c != 'Todos' && c != 'Favoritos').toList();
+          _categories = ['Favoritos', 'Todos', ...cleanCats];
           _isLoading = false;
         });
       }
@@ -68,7 +96,9 @@ class _LiveTvViewState extends State<LiveTvView> {
   List<LiveChannel> get _filteredChannels {
     return _allChannels.where((channel) {
       final matchesCategory = _selectedCategory == 'Todos' ||
-          channel.category.toLowerCase() == _selectedCategory.toLowerCase();
+          (_selectedCategory == 'Favoritos'
+              ? _favoriteChannelIds.contains(channel.id)
+              : channel.category.toLowerCase() == _selectedCategory.toLowerCase());
       final matchesSearch = _searchQuery.isEmpty ||
           channel.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           channel.category.toLowerCase().contains(_searchQuery.toLowerCase());
@@ -77,6 +107,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   String _getCategoryIcon(String cat) {
+    if (cat == 'Favoritos') return '⭐ ';
     final lower = cat.toLowerCase();
     if (lower.contains('depor')) return '⚽ ';
     if (lower.contains('cine') || lower.contains('series')) return '🎬 ';
@@ -87,6 +118,8 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   void _playChannel(LiveChannel channel) {
+    final currentList = _filteredChannels;
+    final initialIndex = currentList.indexWhere((c) => c.id == channel.id);
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => VideoPlayerView(
@@ -95,9 +128,14 @@ class _LiveTvViewState extends State<LiveTvView> {
           qualityLabel: channel.quality,
           liveSources: channel.sources,
           isLive: true,
+          liveChannel: channel,
+          liveChannelsList: currentList,
+          initialChannelIndex: initialIndex >= 0 ? initialIndex : 0,
         ),
       ),
-    );
+    ).then((_) {
+      _loadFavorites();
+    });
   }
 
   @override
@@ -151,7 +189,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                               ),
                             ),
                             Text(
-                              '${_allChannels.length} canales transmitiendo 24/7 sin cortes',
+                              '${_allChannels.length} canales transmitiendo 24/7 con zapping',
                               style: const TextStyle(
                                 color: Colors.white54,
                                 fontSize: 12,
@@ -218,6 +256,9 @@ class _LiveTvViewState extends State<LiveTvView> {
                     final cat = _categories[index];
                     final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
                     final icon = cat == 'Todos' ? '🌐 ' : _getCategoryIcon(cat);
+                    final badgeCount = cat == 'Favoritos' && _favoriteChannelIds.isNotEmpty
+                        ? ' (${_favoriteChannelIds.length})'
+                        : '';
 
                     return GestureDetector(
                       onTap: () {
@@ -250,7 +291,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                         ),
                         child: Center(
                           child: Text(
-                            '$icon$cat',
+                            '$icon$cat$badgeCount',
                             style: TextStyle(
                               color: isSelected ? Colors.white : Colors.white70,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
@@ -310,13 +351,25 @@ class _LiveTvViewState extends State<LiveTvView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.tv_off_rounded, color: Colors.white38, size: 48),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'No se encontraron canales en esta categoría',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      Icon(
+                        _selectedCategory == 'Favoritos'
+                            ? Icons.star_border_rounded
+                            : Icons.tv_off_rounded,
+                        color: _selectedCategory == 'Favoritos'
+                            ? Colors.amber.withValues(alpha: 0.6)
+                            : Colors.white38,
+                        size: 52,
                       ),
-                      if (_searchQuery.isNotEmpty)
+                      const SizedBox(height: 12),
+                      Text(
+                        _selectedCategory == 'Favoritos'
+                            ? 'Aún no tienes canales favoritos\nToca la estrella (★) en cualquier canal para tenerlo a mano'
+                            : 'No se encontraron canales en esta categoría',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+                      ),
+                      if (_searchQuery.isNotEmpty) ...[
+                        const SizedBox(height: 10),
                         TextButton(
                           onPressed: () {
                             _searchController.clear();
@@ -327,6 +380,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                           },
                           child: const Text('Limpiar búsqueda', style: TextStyle(color: Color(0xFFE50914))),
                         ),
+                      ],
                     ],
                   ),
                 ),
@@ -357,6 +411,8 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   Widget _buildChannelCard(LiveChannel channel) {
+    final isFav = _favoriteChannelIds.contains(channel.id);
+
     return InkWell(
       onTap: () => _playChannel(channel),
       borderRadius: BorderRadius.circular(16),
@@ -364,12 +420,15 @@ class _LiveTvViewState extends State<LiveTvView> {
         decoration: BoxDecoration(
           color: const Color(0xFF16171F),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFF232532), width: 1),
-          boxShadow: const [
+          border: Border.all(
+            color: isFav ? Colors.amber.withValues(alpha: 0.3) : const Color(0xFF232532),
+            width: isFav ? 1.2 : 1,
+          ),
+          boxShadow: [
             BoxShadow(
-              color: Colors.black45,
+              color: isFav ? Colors.amber.withValues(alpha: 0.08) : Colors.black45,
               blurRadius: 8,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -377,7 +436,7 @@ class _LiveTvViewState extends State<LiveTvView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabecera de la tarjeta: Badge EN VIVO + Calidad
+            // Cabecera: Badge EN VIVO + Fuentes + Estrella Favorito
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -416,7 +475,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                   children: [
                     if (channel.sources.length > 1) ...[
                       Container(
-                        margin: const EdgeInsets.only(right: 4),
+                        margin: const EdgeInsets.only(right: 5),
                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: const Color(0xFF00E676).withValues(alpha: 0.15),
@@ -427,28 +486,36 @@ class _LiveTvViewState extends State<LiveTvView> {
                           ),
                         ),
                         child: Text(
-                          '${channel.sources.length} FUENTES',
+                          '${channel.sources.length}x',
                           style: const TextStyle(
                             color: Color(0xFF00E676),
                             fontSize: 8.5,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 0.3,
                           ),
                         ),
                       ),
                     ],
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        channel.quality,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () => _toggleFavorite(channel),
+                      behavior: HitTestBehavior.opaque,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: isFav
+                              ? Colors.amber.withValues(alpha: 0.2)
+                              : Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isFav
+                                ? Colors.amber.withValues(alpha: 0.6)
+                                : Colors.transparent,
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Icon(
+                          isFav ? Icons.star_rounded : Icons.star_border_rounded,
+                          color: isFav ? Colors.amber : Colors.white54,
+                          size: 14,
                         ),
                       ),
                     ),
@@ -500,14 +567,28 @@ class _LiveTvViewState extends State<LiveTvView> {
               ),
             ),
             const SizedBox(height: 2),
-            Text(
-              channel.category,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 11,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    channel.category,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Colors.white38,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+                Text(
+                  channel.quality,
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

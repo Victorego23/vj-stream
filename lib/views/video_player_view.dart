@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 
+import '../models/live_channel.dart';
 import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
@@ -41,6 +43,9 @@ class VideoPlayerView extends StatefulWidget {
   final List<Map<String, dynamic>>? availableStreams;
   final List<Map<String, dynamic>>? subtitles;
   final List<String>? liveSources;
+  final LiveChannel? liveChannel;
+  final List<LiveChannel>? liveChannelsList;
+  final int? initialChannelIndex;
   final bool isLive;
 
   const VideoPlayerView({
@@ -60,6 +65,9 @@ class VideoPlayerView extends StatefulWidget {
     this.availableStreams,
     this.subtitles,
     this.liveSources,
+    this.liveChannel,
+    this.liveChannelsList,
+    this.initialChannelIndex,
     this.isLive = false,
   });
 
@@ -122,6 +130,17 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   List<String> _liveSources = [];
   int _currentLiveSourceIndex = 0;
 
+  // Gestión de Zapping y Canales de TV en Vivo
+  List<LiveChannel> _liveChannelsList = [];
+  int _currentChannelIndex = 0;
+  LiveChannel? _currentLiveChannel;
+  bool _isFavoriteChannel = false;
+  static const String _favsKey = 'vj_stream_fav_channel_ids';
+
+  // Banner OSD de Zapping estilo Smart TV
+  bool _showZappingOsd = false;
+  Timer? _zappingOsdTimer;
+
   @override
   void initState() {
     super.initState();
@@ -130,15 +149,33 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     _currentQualityLabel = widget.qualityLabel;
     _currentAudioLanguage = widget.audioLanguage;
 
-    // Configurar fuentes de respaldo para streaming de TV en vivo
+    // Configurar fuentes de respaldo y lista de canales para TV en vivo
     if (widget.isLive) {
+      if (widget.liveChannelsList != null && widget.liveChannelsList!.isNotEmpty) {
+        _liveChannelsList = List<LiveChannel>.from(widget.liveChannelsList!);
+        _currentChannelIndex = widget.initialChannelIndex ?? 0;
+        if (_currentChannelIndex < 0 || _currentChannelIndex >= _liveChannelsList.length) {
+          _currentChannelIndex = 0;
+        }
+        _currentLiveChannel = _liveChannelsList[_currentChannelIndex];
+      } else if (widget.liveChannel != null) {
+        _currentLiveChannel = widget.liveChannel;
+        _liveChannelsList = [widget.liveChannel!];
+        _currentChannelIndex = 0;
+      }
+
       if (widget.liveSources != null && widget.liveSources!.isNotEmpty) {
         _liveSources = List<String>.from(widget.liveSources!);
+      } else if (_currentLiveChannel != null && _currentLiveChannel!.sources.isNotEmpty) {
+        _liveSources = List<String>.from(_currentLiveChannel!.sources);
       } else {
         _liveSources = [_currentVideoUrl];
       }
       final idx = _liveSources.indexOf(_currentVideoUrl);
       _currentLiveSourceIndex = idx >= 0 ? idx : 0;
+
+      _checkIsFavorite();
+      _triggerZappingOsd();
     }
 
     if (widget.availableStreams != null && widget.availableStreams!.isNotEmpty) {
@@ -445,6 +482,88 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
       setState(() => _isFallingBack = false);
     }
     return true;
+  }
+
+  Future<void> _checkIsFavorite() async {
+    if (_currentLiveChannel == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final favs = prefs.getStringList(_favsKey) ?? [];
+      if (mounted) {
+        setState(() {
+          _isFavoriteChannel = favs.contains(_currentLiveChannel!.id);
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _toggleFavoriteLiveChannel() async {
+    if (_currentLiveChannel == null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final favs = (prefs.getStringList(_favsKey) ?? []).toSet();
+      final id = _currentLiveChannel!.id;
+      final wasFav = favs.contains(id);
+      if (wasFav) {
+        favs.remove(id);
+      } else {
+        favs.add(id);
+      }
+      await prefs.setStringList(_favsKey, favs.toList());
+      if (mounted) {
+        setState(() {
+          _isFavoriteChannel = !wasFav;
+        });
+        _showFeedbackIndicator(!wasFav ? '★ Añadido a Favoritos' : '☆ Quitado de Favoritos');
+      }
+    } catch (_) {}
+  }
+
+  void _triggerZappingOsd() {
+    _zappingOsdTimer?.cancel();
+    setState(() {
+      _showZappingOsd = true;
+    });
+    _zappingOsdTimer = Timer(const Duration(milliseconds: 3200), () {
+      if (mounted) {
+        setState(() {
+          _showZappingOsd = false;
+        });
+      }
+    });
+  }
+
+  Future<void> _switchChannel(int targetIndex) async {
+    if (!widget.isLive || _liveChannelsList.length <= 1) return;
+
+    int newIndex = targetIndex;
+    if (newIndex < 0) {
+      newIndex = _liveChannelsList.length - 1;
+    } else if (newIndex >= _liveChannelsList.length) {
+      newIndex = 0;
+    }
+
+    final newChannel = _liveChannelsList[newIndex];
+    debugPrint('[VideoPlayerView] 📺 Zapping a canal [${newIndex + 1}/${_liveChannelsList.length}]: ${newChannel.name}');
+
+    _currentChannelIndex = newIndex;
+    _currentLiveChannel = newChannel;
+    _currentVideoUrl = newChannel.streamUrl;
+    _currentQualityLabel = newChannel.quality;
+    _liveSources = List<String>.from(newChannel.sources.isNotEmpty ? newChannel.sources : [newChannel.streamUrl]);
+    _currentLiveSourceIndex = 0;
+    _failedUrls.clear();
+
+    _triggerZappingOsd();
+    _checkIsFavorite();
+
+    setState(() {
+      _isInitialized = false;
+      _hasError = false;
+      _errorMessage = null;
+    });
+
+    await _initializePlayer();
   }
 
   /// Fallback automático transparente: busca la siguiente fuente disponible en el backend
@@ -1236,6 +1355,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     _progressSaveTimer?.cancel();
     _saveCurrentProgress();
 
+    _zappingOsdTimer?.cancel();
     _seekDebounceTimer?.cancel();
     _bufferingWatchdogTimer?.cancel();
     _hideControlsTimer?.cancel();
@@ -1268,7 +1388,23 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
             return KeyEventResult.ignored;
           }
 
-          // Controles Smart TV D-Pad
+          // Modo Zapping en Smart TV / Teclado: Flechas Arriba/Abajo cambian de canal
+          if (widget.isLive && _liveChannelsList.length > 1) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+                event.logicalKey == LogicalKeyboardKey.channelUp ||
+                event.logicalKey == LogicalKeyboardKey.pageUp) {
+              _switchChannel(_currentChannelIndex + 1);
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+                event.logicalKey == LogicalKeyboardKey.channelDown ||
+                event.logicalKey == LogicalKeyboardKey.pageDown) {
+              _switchChannel(_currentChannelIndex - 1);
+              return KeyEventResult.handled;
+            }
+          }
+
+          // Controles Smart TV D-Pad estándar
           if (event.logicalKey == LogicalKeyboardKey.select ||
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space ||
@@ -1370,6 +1506,9 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     ),
                   ),
                 ),
+
+              // Banner flotante OSD de Zapping estilo Smart TV
+              if (widget.isLive) _buildZappingOsd(),
 
               // Capa de controles (OSD) estilo Netflix
               AnimatedOpacity(
@@ -1596,6 +1735,157 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     );
   }
 
+  Widget _buildZappingOsd() {
+    if (!_showZappingOsd || _currentLiveChannel == null) return const SizedBox.shrink();
+
+    final ch = _currentLiveChannel!;
+    return Positioned(
+      top: 36,
+      left: 36,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 250),
+        opacity: _showZappingOsd ? 1.0 : 0.0,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xEB111218),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFE50914).withValues(alpha: 0.65),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.75),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Número de Canal
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE50914),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'CH ${_currentChannelIndex + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Logo
+              if (ch.logoUrl.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    color: Colors.white.withValues(alpha: 0.08),
+                    child: Image.network(
+                      ch.logoUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.tv_rounded,
+                        color: Colors.white70,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
+              // Info Canal
+              Flexible(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            ch.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (_isFavoriteChannel) ...[
+                          const SizedBox(width: 6),
+                          const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          ch.category,
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            ch.quality,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        if (ch.sources.length > 1) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00E676).withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${ch.sources.length} Fuentes',
+                              style: const TextStyle(
+                                color: Color(0xFF00E676),
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildControlsOverlay() {
     if (!_isInitialized || _controller == null) return const SizedBox.shrink();
 
@@ -1633,7 +1923,9 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      widget.title,
+                      (widget.isLive && _currentLiveChannel != null)
+                          ? _currentLiveChannel!.name
+                          : widget.title,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -1736,6 +2028,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       ],
                     ),
                   ),
+                  if (widget.isLive) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: Icon(
+                        _isFavoriteChannel ? Icons.star_rounded : Icons.star_border_rounded,
+                        color: _isFavoriteChannel ? Colors.amber : Colors.white70,
+                        size: 26,
+                      ),
+                      tooltip: _isFavoriteChannel ? 'Quitar de Favoritos' : 'Añadir a Favoritos',
+                      onPressed: _toggleFavoriteLiveChannel,
+                    ),
+                  ],
                   if (!widget.isLive) ...[
                     const SizedBox(width: 4),
                     IconButton(
@@ -1771,13 +2075,22 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  if (_liveChannelsList.length > 1) ...[
+                    IconButton(
+                      iconSize: 42,
+                      tooltip: 'Canal Anterior (▼ / CH-)',
+                      icon: const Icon(Icons.skip_previous_rounded, color: Colors.white),
+                      onPressed: () => _switchChannel(_currentChannelIndex - 1),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
                   IconButton(
-                    iconSize: 42,
+                    iconSize: 40,
                     tooltip: 'Recargar Señal en Vivo',
                     icon: const Icon(Icons.refresh_rounded, color: Colors.white),
                     onPressed: () => _initializePlayer(isUserRetry: true),
                   ),
-                  const SizedBox(width: 28),
+                  const SizedBox(width: 24),
                   IconButton(
                     iconSize: 64,
                     icon: Icon(
@@ -1786,9 +2099,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     ),
                     onPressed: _togglePlayPause,
                   ),
-                  const SizedBox(width: 28),
+                  const SizedBox(width: 24),
+                  if (_liveChannelsList.length > 1) ...[
+                    IconButton(
+                      iconSize: 42,
+                      tooltip: 'Canal Siguiente (▲ / CH+)',
+                      icon: const Icon(Icons.skip_next_rounded, color: Colors.white),
+                      onPressed: () => _switchChannel(_currentChannelIndex + 1),
+                    ),
+                    const SizedBox(width: 16),
+                  ],
                   IconButton(
-                    iconSize: 42,
+                    iconSize: 40,
                     tooltip: 'Ajuste de Pantalla',
                     icon: const Icon(Icons.aspect_ratio_rounded, color: Colors.white),
                     onPressed: () {
@@ -1869,6 +2191,24 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                               letterSpacing: 0.5,
                             ),
                           ),
+                          if (_liveChannelsList.length > 1) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'CANAL ${_currentChannelIndex + 1} DE ${_liveChannelsList.length}',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                           const Spacer(),
                           const Icon(Icons.access_time_rounded, color: Colors.white54, size: 14),
                           const SizedBox(width: 6),
