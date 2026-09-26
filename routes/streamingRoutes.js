@@ -366,6 +366,7 @@ router.post('/auto-resolve', async (req, res, next) => {
     return res.json({
       success: true,
       app: 'VJ STREAM',
+      ...streamData,
       data: streamData
     });
   } catch (error) {

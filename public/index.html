@@ -689,6 +689,26 @@
 
   <script>
     // ESTADO DE LA APLICACIÓN
+    const HMAC_SECRET = 'VJ_SECURE_STREAM_APP_SIG_KEY_2026_@#!';
+
+    function getSecurityHeaders(path) {
+      const timestamp = Math.floor(Date.now() / 1000).toString();
+      const cleanPath = path.split('?')[0].toLowerCase();
+      const payload = `${timestamp}:${cleanPath}`;
+      let signature = '';
+      try {
+        if (window.CryptoJS) {
+          signature = CryptoJS.HmacSHA256(payload, HMAC_SECRET).toString(CryptoJS.enc.Hex);
+        }
+      } catch (_) {}
+      return {
+        'Content-Type': 'application/json',
+        'x-vj-timestamp': timestamp,
+        'x-vj-signature': signature,
+        'x-vj-client': 'VJ-STREAM-OFFICIAL-WEB'
+      };
+    }
+
     let currentTab = 'Todos';
     let selectedYear = null;
     let catalogData = null;
@@ -901,32 +921,37 @@
       const modal = document.getElementById('playerModal');
       const titleEl = document.getElementById('playerTitle');
       const video = document.getElementById('videoPlayer');
-      const audioBtn = document.querySelector('.audio-selector-btn');
 
       titleEl.textContent = `Buscando enlace en Español Estéreo para: ${item.title}...`;
       modal.style.display = 'flex';
       video.pause();
 
+      const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || null);
+
       try {
         const res = await fetch('/api/streaming/auto-resolve', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getSecurityHeaders('/api/streaming/auto-resolve'),
           body: JSON.stringify({
             id: item.id,
             title: item.title,
-            originalTitle: item.originalTitle,
+            originalTitle: item.originalTitle || item.title,
+            year: year,
             mediaType: item.mediaType || 'movie'
           })
         });
 
         const data = await res.json();
-        if (data.success && data.streamUrl) {
-          titleEl.textContent = `${item.title} (${data.qualityLabel || '1080p'})`;
-          currentStreams = data.availableStreams || [];
-          renderAudioDropdown(currentStreams, data.streamUrl);
-          startPlayback(data.streamUrl);
+        const resData = (data.data && data.data.streamUrl) ? data.data : data;
+
+        if (data.success && resData.streamUrl) {
+          titleEl.textContent = `${item.title} (${resData.qualityLabel || '1080p'})`;
+          currentStreams = resData.availableStreams || [];
+          renderAudioDropdown(currentStreams, resData.streamUrl);
+          startPlayback(resData.streamUrl);
         } else {
-          alert(data.message || 'No fue posible resolver la transmisión en este momento.');
+          const errMsg = data.error || data.message || resData.message || 'No fue posible resolver la transmisión en este momento.';
+          alert(errMsg);
           closePlayer();
         }
       } catch (e) {
