@@ -258,7 +258,8 @@ class AccountService {
         let matchesToken = false;
         if (token && client.id) {
           const expectedToken = this._generateClientToken(client.id, cleanDeviceId);
-          matchesToken = (token === expectedToken) || (token.startsWith(client.id));
+          const [tokenClientId] = token.split('.');
+          matchesToken = (token === expectedToken) || (tokenClientId === client.id) || token.startsWith(client.id);
         }
 
         if (matchesCode || matchesToken) {
@@ -518,7 +519,8 @@ class AccountService {
 
   _generateClientToken(clientId, deviceId) {
     const data = `${clientId}:${deviceId}`;
-    return crypto.createHmac('sha256', DEFAULT_ADMIN_PASSWORD).update(data).digest('hex');
+    const sig = crypto.createHmac('sha256', DEFAULT_ADMIN_PASSWORD).update(data).digest('hex');
+    return `${clientId}.${sig}`;
   }
 }
 

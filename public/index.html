@@ -1046,19 +1046,48 @@
   </div>
 
   <script>
-    // ESTADO DE LA APLICACIÓN Y AUTENTICACIÓN
+    // ESTADO DE LA APLICACIÓN Y AUTENTICACIÓN ULTRA-PERSISTENTE (LOCALSTORAGE + COOKIES)
     const HMAC_SECRET = 'VJ_SECURE_STREAM_APP_SIG_KEY_2026_@#!';
 
-    let isDeviceActive = false;
+    function setStorage(key, val) {
+      if (!val) return;
+      try { localStorage.setItem(key, val); } catch (_) {}
+      try {
+        const d = new Date();
+        d.setTime(d.getTime() + (365 * 24 * 60 * 60 * 1000));
+        document.cookie = `${key}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+      } catch (_) {}
+    }
+
+    function getStorage(key) {
+      let val = null;
+      try { val = localStorage.getItem(key); } catch (_) {}
+      if (!val) {
+        try {
+          const match = document.cookie.match(new RegExp('(^| )' + key + '=([^;]+)'));
+          if (match) val = decodeURIComponent(match[2]);
+        } catch (_) {}
+      }
+      return val;
+    }
+
+    function removeStorage(key) {
+      try { localStorage.removeItem(key); } catch (_) {}
+      try { document.cookie = `${key}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax`; } catch (_) {}
+    }
+
+    // Autorización optimista: si ya tiene credenciales guardadas, inicia activo de inmediato
+    let isDeviceActive = Boolean(getStorage('vj_stream_session_token') || getStorage('vj_stream_client_code'));
     let currentPendingCode = null;
     let pollStatusInterval = null;
     let currentClientData = null;
+    let authCheckingPromise = null;
 
     function getDeviceId() {
-      let devId = localStorage.getItem('vj_stream_device_id');
+      let devId = getStorage('vj_stream_device_id');
       if (!devId) {
         devId = 'WEB-' + Math.random().toString(36).substring(2, 8).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
-        localStorage.setItem('vj_stream_device_id', devId);
+        setStorage('vj_stream_device_id', devId);
       }
       return devId;
     }
@@ -1074,31 +1103,35 @@
     async function initDeviceAuth(manualCode = null) {
       const deviceId = getDeviceId();
       const deviceModel = getDeviceModel();
-      const savedToken = localStorage.getItem('vj_stream_session_token');
-      const savedCode = manualCode || localStorage.getItem('vj_stream_client_code');
+      const savedToken = getStorage('vj_stream_session_token');
+      const savedCode = manualCode || getStorage('vj_stream_client_code');
 
-      try {
-        const res = await fetch('/api/auth/register-device', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            deviceId,
-            deviceModel,
-            token: savedToken,
-            code: savedCode
-          })
-        });
+      authCheckingPromise = (async () => {
+        try {
+          const res = await fetch('/api/auth/register-device', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              deviceId,
+              deviceModel,
+              token: savedToken,
+              code: savedCode
+            })
+          });
 
-        const data = await res.json();
-        if (!data.success) {
-          console.warn('[Auth] Error registrando dispositivo:', data);
-          return;
+          const data = await res.json();
+          if (!data.success) {
+            console.warn('[Auth] Error registrando dispositivo:', data);
+            return;
+          }
+
+          handleAuthResponse(data);
+        } catch (err) {
+          console.error('[Auth] Error de conexión:', err);
         }
+      })();
 
-        handleAuthResponse(data);
-      } catch (err) {
-        console.error('[Auth] Error de conexión:', err);
-      }
+      return authCheckingPromise;
     }
 
     function handleAuthResponse(data) {
@@ -1107,8 +1140,8 @@
       if (data.status === 'active') {
         isDeviceActive = true;
         currentClientData = data.client || {};
-        if (data.token) localStorage.setItem('vj_stream_session_token', data.token);
-        if (data.client?.code) localStorage.setItem('vj_stream_client_code', data.client.code);
+        if (data.token) setStorage('vj_stream_session_token', data.token);
+        if (data.client?.code) setStorage('vj_stream_client_code', data.client.code);
 
         stopPolling();
         closeActivationModal();
@@ -1241,8 +1274,9 @@
 
     function logoutDevice() {
       if (confirm('¿Deseas desvincular este dispositivo? Necesitarás volver a activarlo para reproducir contenido.')) {
-        localStorage.removeItem('vj_stream_session_token');
-        localStorage.removeItem('vj_stream_client_code');
+        removeStorage('vj_stream_session_token');
+        removeStorage('vj_stream_client_code');
+        removeStorage('vj_stream_device_id');
         sessionStorage.removeItem('vj_auth_modal_shown');
         location.reload();
       }
@@ -1470,7 +1504,10 @@
       playMedia(item);
     }
 
-    function playHeroMedia() {
+    async function playHeroMedia() {
+      if (authCheckingPromise) {
+        try { await authCheckingPromise; } catch (_) {}
+      }
       if (!isDeviceActive) {
         openActivationModal('🔒 Debes autorizar tu dispositivo para reproducir este contenido.');
         return;
@@ -1479,6 +1516,9 @@
     }
 
     async function playMedia(item) {
+      if (authCheckingPromise) {
+        try { await authCheckingPromise; } catch (_) {}
+      }
       if (!isDeviceActive) {
         openActivationModal('🔒 Debes autorizar tu dispositivo para reproducir películas y series.');
         return;
@@ -1528,7 +1568,10 @@
     }
 
     // REPRODUCIR CANAL DE TV EN VIVO
-    function playLiveChannel(ch) {
+    async function playLiveChannel(ch) {
+      if (authCheckingPromise) {
+        try { await authCheckingPromise; } catch (_) {}
+      }
       if (!isDeviceActive) {
         openActivationModal('🔒 Debes autorizar tu dispositivo para ver los canales de TV en vivo.');
         return;
