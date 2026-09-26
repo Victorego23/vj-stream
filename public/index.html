@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>VJ STREAM - Películas, Series y TV en Vivo</title>
+
+  <!-- PWA & Apple iOS Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#E50914">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VJ STREAM">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%23E50914'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-family='Arial, sans-serif' font-weight='900' font-size='68' fill='white'%3EVJ%3C/text%3E%3C/svg%3E">
+
+  <!-- Tipografía Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- HLS.js para reproducción de TV en vivo y streams m3u8 -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <!-- CryptoJS para firma criptográfica HMAC-SHA256 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #E50914;
+      --primary-hover: #b80710;
+      --bg: #000000;
+      --surface: #101010;
+      --card: #181818;
+      --border: #222222;
+      --text: #FFFFFF;
+      --text-muted: #A3A3A3;
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+      padding-bottom: 80px;
+    }
+
+    /* HEADER */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .brand-logo {
+      background: linear-gradient(135deg, #E50914, #990000);
+      color: #fff;
+      font-weight: 900;
+      font-size: 16px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      box-shadow: 0 0 12px rgba(229, 9, 20, 0.5);
+    }
+
+    .brand-name {
+      font-weight: 900;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: #fff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search-btn, .install-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .search-btn:hover, .install-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* TABS */
+    .tabs-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      background: #000;
+    }
+
+    .tabs-bar::-webkit-scrollbar { display: none; }
+
+    .tab-item {
+      padding: 7px 14px;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab-item.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(229, 9, 20, 0.4);
+    }
+
+    /* BARRA DE AÑOS (2000-2026) */
+    .years-bar {
+      display: none;
+      gap: 6px;
+      padding: 6px 20px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .years-bar::-webkit-scrollbar { display: none; }
+
+    .year-chip {
+      padding: 5px 12px;
+      border-radius: 16px;
+      background: #141414;
+      border: 1px solid #282828;
+      color: #d1d1d1;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .year-chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* HERO BANNER */
+    .hero-banner {
+      position: relative;
+      width: 100%;
+      height: 380px;
+      background-size: cover;
+      background-position: center top;
+      display: flex;
+      align-items: flex-end;
+      padding: 24px 20px;
+      margin-bottom: 20px;
+    }
+
+    @media (min-width: 768px) {
+      .hero-banner { height: 460px; padding: 40px; }
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 60%, #000000 100%);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 600px;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(229, 9, 20, 0.9);
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .hero-title {
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      line-height: 1.15;
+    }
+
+    @media (min-width: 768px) { .hero-title { font-size: 38px; } }
+
+    .hero-synopsis {
+      font-size: 13px;
+      color: #d1d1d1;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-play {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4);
+    }
+
+    .btn-more {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    /* FILAS DE PELÍCULAS Y SERIES */
+    .section-title {
+      font-size: 17px;
+      font-weight: 800;
+      padding: 12px 20px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .media-scroll {
+      display: flex;
+      gap: 10px;
+      padding: 0 20px 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .media-scroll::-webkit-scrollbar { display: none; }
+
+    .media-card {
+      flex: 0 0 130px;
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: var(--card);
+    }
+
+    @media (min-width: 768px) { .media-card { flex: 0 0 160px; } }
+
+    .media-card:active, .media-card:hover {
+      transform: scale(1.04);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.8);
+      z-index: 5;
+    }
+
+    .media-poster {
+      width: 100%;
+      height: 195px;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (min-width: 768px) { .media-poster { height: 240px; } }
+
+    .media-rating {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.8);
+      color: #FFD700;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      backdrop-filter: blur(4px);
+    }
+
+    .media-info {
+      padding: 6px 8px;
+    }
+
+    .media-title {
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* GRID PARA VISTA DE AÑO O TV */
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 12px;
+      padding: 10px 20px 30px;
+    }
+
+    @media (min-width: 768px) {
+      .grid-container { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    }
+
+    /* CANALES DE TV EN VIVO */
+    .channel-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 10px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .channel-card:active, .channel-card:hover {
+      border-color: var(--primary);
+      background: #181818;
+      transform: translateY(-2px);
+    }
+
+    .channel-logo {
+      height: 48px;
+      max-width: 100px;
+      object-fit: contain;
+      margin: 0 auto 10px;
+      display: block;
+    }
+
+    .channel-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .channel-badge {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 800;
+      color: #22C55E;
+      background: rgba(34, 197, 94, 0.15);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    /* BANNER FLOTANTE IPHONE PWA */
+    .ios-install-banner {
+      display: none;
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      background: rgba(24, 24, 24, 0.96);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      border-radius: 12px;
+      padding: 12px 16px;
+      z-index: 999;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .ios-banner-text {
+      font-size: 12px;
+      line-height: 1.4;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .ios-banner-close {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 18px;
+      cursor: pointer;
+      margin-left: auto;
+      padding: 4px;
+    }
+
+    /* MODAL REPRODUCTOR DE VIDEO */
+    .player-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 2000;
+      flex-direction: column;
+    }
+
+    .player-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: linear-gradient(180deg, rgba(0,0,0,0.85) 0%, transparent 100%);
+    }
+
+    .player-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .btn-close-player {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .video-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      max-height: 100vh;
+      outline: none;
+    }
+
+    /* SELECTOR DE AUDIO EN REPRODUCTOR */
+    .audio-selector-btn {
+      background: rgba(229, 9, 20, 0.85);
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .audio-dropdown {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 20px;
+      background: #181818;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 8px;
+      z-index: 20;
+      min-width: 260px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.9);
+    }
+
+    .audio-option {
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .audio-option:hover, .audio-option.active {
+      background: rgba(229, 9, 20, 0.2);
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .audio-badge-stereo {
+      font-size: 9px;
+      font-weight: 800;
+      background: #22C55E;
+      color: #000;
+      padding: 2px 5px;
+      border-radius: 3px;
+    }
+
+    /* MODAL DE BÚSQUEDA */
+    .search-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 1500;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .search-input-box {
+      display: flex;
+      align-items: center;
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 8px 14px;
+      margin-bottom: 20px;
+    }
+
+    .search-input-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 0.8s ease-in-out infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand" onclick="switchTab('Todos')">
+      <div class="brand-logo">VJ</div>
+      <div class="brand-name">STREAM</div>
+    </div>
+    <div class="header-actions">
+      <button class="search-btn" onclick="openSearchModal()">
+        🔍 Buscar
+      </button>
+      <button class="install-btn" id="iosHelpBtn" onclick="showIosInstallModal()">
+        📱 Instalar en iPhone
+      </button>
+    </div>
+  </header>
+
+  <!-- BARRA DE PESTAÑAS -->
+  <div class="tabs-bar">
+    <div class="tab-item active" onclick="switchTab('Todos')">🌟 Todos</div>
+    <div class="tab-item" onclick="switchTab('Películas')">🎬 Películas (2000-2026)</div>
+    <div class="tab-item" onclick="switchTab('Series')">📺 Series</div>
+    <div class="tab-item" onclick="switchTab('TV en Vivo')">📡 TV en Vivo Perú</div>
+    <div class="tab-item" onclick="switchTab('Mi Lista')">⭐ Mi Lista</div>
+  </div>
+
+  <!-- BARRA SELECTORA DE AÑOS (2000 a 2026) -->
+  <div class="years-bar" id="yearsBar"></div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main id="mainContent">
+    <!-- HERO BANNER -->
+    <div class="hero-banner" id="heroBanner">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-badge">DESTACADO EN VJ STREAM</div>
+        <h1 class="hero-title" id="heroTitle">Cargando catálogo...</h1>
+        <p class="hero-synopsis" id="heroSynopsis">Conectando con el servidor en la nube de VJ STREAM...</p>
+        <div class="hero-buttons">
+          <button class="btn-play" id="heroPlayBtn" onclick="playHeroMedia()">▶ Reproducir Ahora</button>
+          <button class="btn-more" id="heroSaveBtn" onclick="toggleSaveHero()">+ Mi Lista</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIONES DE CONTENIDO -->
+    <div id="contentRows"></div>
+  </main>
+
+  <!-- BANNER INFORMATIVO PARA IPHONE -->
+  <div class="ios-install-banner" id="iosBanner">
+    <div class="ios-banner-text">
+      <span style="font-size: 22px;">📱</span>
+      <div>
+        <strong>Instala VJ STREAM en tu iPhone:</strong><br>
+        Toca el botón <strong>Compartir ⬆️</strong> abajo en Safari y luego <strong>"Añadir a pantalla de inicio"</strong>.
+      </div>
+      <button class="ios-banner-close" onclick="closeIosBanner()">✕</button>
+    </div>
+  </div>
+
+  <!-- MODAL REPRODUCTOR DE VIDEO HTML5 / HLS CON AUDIO ESTÉREO -->
+  <div class="player-modal" id="playerModal">
+    <div class="player-header">
+      <div class="player-title" id="playerTitle">Reproduciendo...</div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="audio-selector-btn" onclick="toggleAudioDropdown()">
+          🎧 Audio: <span id="currentAudioLabel">Español Estéreo</span> ▼
+        </button>
+        <button class="btn-close-player" onclick="closePlayer()">✕</button>
+      </div>
+    </div>
+
+    <!-- MENÚ DE OPCIONES DE AUDIO -->
+    <div class="audio-dropdown" id="audioDropdown"></div>
+
+    <div class="video-wrapper">
+      <video id="videoPlayer" controls playsinline webkit-playsinline></video>
+    </div>
+  </div>
+
+  <!-- MODAL DE BÚSQUEDA -->
+  <div class="search-modal" id="searchModal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="font-size: 18px; font-weight: 800;">Buscar en VJ STREAM</h2>
+      <button style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;" onclick="closeSearchModal()">✕</button>
+    </div>
+    <div class="search-input-box">
+      <input type="text" id="searchInput" placeholder="Escribe el nombre de una película o serie..." oninput="handleSearch(this.value)">
+    </div>
+    <div class="grid-container" id="searchResults"></div>
+  </div>
+
+  <script>
+    // ESTADO DE LA APLICACIÓN
+    let currentTab = 'Todos';
+    let selectedYear = null;
+    let catalogData = null;
+    let heroItem = null;
+    let liveChannels = [];
+    let currentStreams = [];
+    let hlsInstance = null;
+    let savedList = JSON.parse(localStorage.getItem('vj_my_list') || '[]');
+
+    // GENERADOR DE AÑOS 2026 A 2000
+    function initYearsBar() {
+      const bar = document.getElementById('yearsBar');
+      let html = `<div class="year-chip ${selectedYear === null ? 'active' : ''}" onclick="selectYear(null)">✨ Todos los Años</div>`;
+      for (let y = 2026; y >= 2000; y--) {
+        const isNew = y >= 2025;
+        html += `<div class="year-chip ${selectedYear === y ? 'active' : ''}" onclick="selectYear(${y})">${isNew ? '⭐ ' : ''}${y}</div>`;
+      }
+      bar.innerHTML = html;
+    }
+
+    // CARGAR CATÁLOGO PRINCIPAL
+    async function loadCatalog() {
+      try {
+        const res = await fetch('/api/streaming/catalog');
+        const data = await res.json();
+        if (data.success && data.data) {
+          catalogData = data.data;
+          renderCurrentTab();
+        }
+      } catch (e) {
+        console.error('Error al cargar catálogo:', e);
+      }
+    }
+
+    // CARGAR CANALES PERUANOS
+    async function loadLiveChannels() {
+      try {
+        const res = await fetch('/api/streaming/live-channels');
+        const data = await res.json();
+        if (data.success && data.channels) {
+          liveChannels = data.channels;
+        }
+      } catch (e) {
+        console.error('Error al cargar canales:', e);
+      }
+    }
+
+    // CAMBIAR PESTAÑA
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-item').forEach(el => {
+        el.classList.toggle('active', el.textContent.includes(tab));
+      });
+
+      const yearsBar = document.getElementById('yearsBar');
+      if (tab === 'Películas') {
+        yearsBar.style.display = 'flex';
+      } else {
+        yearsBar.style.display = 'none';
+        selectedYear = null;
+      }
+
+      renderCurrentTab();
+    }
+
+    // SELECCIONAR AÑO
+    async function selectYear(year) {
+      selectedYear = year;
+      initYearsBar();
+      const container = document.getElementById('contentRows');
+
+      if (!year) {
+        renderCurrentTab();
+        return;
+      }
+
+      container.innerHTML = `<div style="text-align: center; padding: 40px;"><div class="loader"></div><p style="margin-top: 10px; color: #888;">Cargando colección completa del año ${year}...</p></div>`;
+
+      try {
+        const res = await fetch(`/api/streaming/movies/by-year/${year}?page=1`);
+        const data = await res.json();
+        if (data.success && data.movies) {
+          let html = `<div class="section-title">🎬 Colección Oficial del Año ${year} (${data.movies.length} títulos)</div>`;
+          html += `<div class="grid-container">`;
+          data.movies.forEach(movie => {
+            html += renderCardHtml(movie);
+          });
+          html += `</div>`;
+          container.innerHTML = html;
+        }
+      } catch (e) {
+        container.innerHTML = `<p style="text-align:center; padding: 40px; color: #888;">No fue posible cargar las películas del año ${year}.</p>`;
+      }
+    }
+
+    // RENDERIZAR PESTAÑA ACTUAL
+    function renderCurrentTab() {
+      if (!catalogData) return;
+      const heroBanner = document.getElementById('heroBanner');
+      const rows = document.getElementById('contentRows');
+
+      if (currentTab === 'TV en Vivo') {
+        heroBanner.style.display = 'none';
+        let html = `<div class="section-title">📡 Canales Peruanos e Internacionales en Vivo (Optimizado para TV y Móvil)</div>`;
+        html += `<div class="grid-container">`;
+        liveChannels.forEach(ch => {
+          html += `
+            <div class="channel-card" onclick='playLiveChannel(${JSON.stringify(ch)})'>
+              <img class="channel-logo" src="${ch.logo}" alt="${ch.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 50\\'%3E%3Crect width=\\'100\\' height=\\'50\\' fill=\\'%23222\\'/ %3E%3Ctext x=\\'50%25\\' y=\\'60%25\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'white\\'%3ETV%3C/text%3E%3C/svg%3E'">
+              <div class="channel-name">${ch.name}</div>
+              <div class="channel-badge">● SEÑAL EN VIVO</div>
+            </div>
+          `;
+        });
+        html += `</div>`;
+        rows.innerHTML = html;
+        return;
+      }
+
+      heroBanner.style.display = 'flex';
+
+      // Configurar Hero Banner
+      let candidateHero = null;
+      if (currentTab === 'Series' && catalogData.series && catalogData.series.length > 0) {
+        candidateHero = catalogData.series[0];
+      } else if (catalogData.trending && catalogData.trending.length > 0) {
+        candidateHero = catalogData.trending[0];
+      }
+
+      if (candidateHero) {
+        heroItem = candidateHero;
+        document.getElementById('heroTitle').textContent = candidateHero.title;
+        document.getElementById('heroSynopsis').textContent = candidateHero.synopsis || 'Sin descripción disponible.';
+        if (candidateHero.backdrops?.original || candidateHero.posters?.original) {
+          heroBanner.style.backgroundImage = `url('${candidateHero.backdrops?.original || candidateHero.posters?.original}')`;
+        }
+      }
+
+      let contentHtml = '';
+
+      if (currentTab === 'Todos' || currentTab === 'Películas') {
+        if (catalogData.nowPlaying && catalogData.nowPlaying.length > 0) {
+          contentHtml += renderRow('🍿 Estrenos de Cine en Calidad Limpia', catalogData.nowPlaying);
+        }
+        if (catalogData.trending && catalogData.trending.length > 0) {
+          contentHtml += renderRow('🔥 Tendencias de la Semana', catalogData.trending.filter(m => currentTab === 'Películas' ? m.mediaType === 'movie' : true));
+        }
+        if (catalogData.action && catalogData.action.length > 0) {
+          contentHtml += renderRow('💥 Acción y Adrenalina', catalogData.action);
+        }
+        if (catalogData.scifi && catalogData.scifi.length > 0) {
+          contentHtml += renderRow('🚀 Ciencia Ficción y Fantasía', catalogData.scifi);
+        }
+      }
+
+      if (currentTab === 'Todos' || currentTab === 'Series') {
+        if (catalogData.series && catalogData.series.length > 0) {
+          contentHtml += renderRow('📺 Series Populares (Latino / Castellano)', catalogData.series);
+        }
+      }
+
+      if (currentTab === 'Mi Lista') {
+        heroBanner.style.display = 'none';
+        if (savedList.length === 0) {
+          contentHtml = `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 40px; margin-bottom: 10px;">⭐</div><h3>Tu lista está vacía</h3><p style="color:#888; font-size:13px; margin-top:6px;">Agrega películas o series para verlas cuando quieras.</p></div>`;
+        } else {
+          contentHtml = `<div class="section-title">⭐ Mi Lista Guardada (${savedList.length})</div><div class="grid-container">`;
+          savedList.forEach(m => { contentHtml += renderCardHtml(m); });
+          contentHtml += `</div>`;
+        }
+      }
+
+      rows.innerHTML = contentHtml;
+    }
+
+    function renderRow(title, items) {
+      if (!items || items.length === 0) return '';
+      let html = `<div class="section-title">${title}</div><div class="media-scroll">`;
+      items.forEach(item => { html += renderCardHtml(item); });
+      html += `</div>`;
+      return html;
+    }
+
+    function renderCardHtml(item) {
+      const poster = item.posters?.medium || item.posters?.thumbnail || item.posters?.original || '';
+      const rating = item.rating ? Number(item.rating).toFixed(1) : '7.5';
+      const safeItem = encodeURIComponent(JSON.stringify(item));
+      return `
+        <div class="media-card" onclick="openMediaDetail('${safeItem}')">
+          <img class="media-poster" src="${poster}" alt="${item.title}" loading="lazy">
+          <div class="media-rating">★ ${rating}</div>
+          <div class="media-info">
+            <div class="media-title">${item.title}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // REPRODUCCIÓN AUTOMÁTICA CON RESOLVER Y AUDIO ESTÉREO
+    async function openMediaDetail(safeItem) {
+      const item = JSON.parse(decodeURIComponent(safeItem));
+      playMedia(item);
+    }
+
+    function playHeroMedia() {
+      if (heroItem) playMedia(heroItem);
+    }
+
+    async function playMedia(item) {
+      const modal = document.getElementById('playerModal');
+      const titleEl = document.getElementById('playerTitle');
+      const video = document.getElementById('videoPlayer');
+      const audioBtn = document.querySelector('.audio-selector-btn');
+
+      titleEl.textContent = `Buscando enlace en Español Estéreo para: ${item.title}...`;
+      modal.style.display = 'flex';
+      video.pause();
+
+      try {
+        const res = await fetch('/api/streaming/auto-resolve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: item.id,
+            title: item.title,
+            originalTitle: item.originalTitle,
+            mediaType: item.mediaType || 'movie'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.streamUrl) {
+          titleEl.textContent = `${item.title} (${data.qualityLabel || '1080p'})`;
+          currentStreams = data.availableStreams || [];
+          renderAudioDropdown(currentStreams, data.streamUrl);
+          startPlayback(data.streamUrl);
+        } else {
+          alert(data.message || 'No fue posible resolver la transmisión en este momento.');
+          closePlayer();
+        }
+      } catch (e) {
+        alert('Error de conexión con el servidor de streaming.');
+        closePlayer();
+      }
+    }
+
+    // REPRODUCIR CANAL DE TV EN VIVO
+    function playLiveChannel(ch) {
+      const modal = document.getElementById('playerModal');
+      const titleEl = document.getElementById('playerTitle');
+      titleEl.textContent = `EN VIVO: ${ch.name}`;
+      modal.style.display = 'flex';
+
+      const sources = ch.sources || [ch.url];
+      currentStreams = sources.map((url, i) => ({
+        id: `src_${i}`,
+        label: `Señal ${i + 1} (${i === 0 ? 'Principal' : 'Respaldo'})`,
+        streamUrl: url,
+        audioChannels: 'Estéreo 2.0'
+      }));
+
+      renderAudioDropdown(currentStreams, sources[0]);
+      startPlayback(sources[0]);
+    }
+
+    // INICIAR REPRODUCTOR NATIVO CON SOPORTE HLS / MP4
+    function startPlayback(url) {
+      const video = document.getElementById('videoPlayer');
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      if (url.includes('.m3u8')) {
+        if (Hls.isSupported()) {
+          hlsInstance = new Hls({ enableWorker: true });
+          hlsInstance.loadSource(url);
+          hlsInstance.attachMedia(video);
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+            video.play().catch(() => {});
+          });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+          // Safari nativo en iPhone / iPad
+          video.src = url;
+          video.play().catch(() => {});
+        }
+      } else {
+        video.src = url;
+        video.play().catch(() => {});
+      }
+    }
+
+    // MENÚ DE AUDIO (ESPAÑOL ESTÉREO 2.0 / MULTI)
+    function renderAudioDropdown(streams, activeUrl) {
+      const dd = document.getElementById('audioDropdown');
+      const label = document.getElementById('currentAudioLabel');
+
+      if (!streams || streams.length === 0) {
+        dd.innerHTML = '<div style="padding:10px; color:#888;">Audio en Español Estéreo activo</div>';
+        label.textContent = 'Español Estéreo';
+        return;
+      }
+
+      let activeFound = streams.find(s => s.streamUrl === activeUrl) || streams[0];
+      label.textContent = activeFound.label ? activeFound.label.split('(')[0] : 'Español Estéreo';
+
+      let html = '<div style="font-size:11px; font-weight:700; color:#888; padding:6px 10px; border-bottom:1px solid #262626;">OPCIONES DE AUDIO Y DOBLAJE</div>';
+      streams.forEach(s => {
+        const isCurrent = s.streamUrl === activeUrl;
+        const isStereo = (s.audioChannels === 'Estéreo 2.0') || (s.label || '').includes('Estéreo');
+        html += `
+          <div class="audio-option ${isCurrent ? 'active' : ''}" onclick="switchAudioStream('${s.streamUrl}', '${s.label}')">
+            <span>${s.label || 'Audio'}</span>
+            ${isStereo ? '<span class="audio-badge-stereo">ESTÉREO 2.0</span>' : ''}
+          </div>
+        `;
+      });
+      dd.innerHTML = html;
+    }
+
+    function toggleAudioDropdown() {
+      const dd = document.getElementById('audioDropdown');
+      dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function switchAudioStream(url, lbl) {
+      toggleAudioDropdown();
+      document.getElementById('currentAudioLabel').textContent = lbl ? lbl.split('(')[0] : 'Audio';
+      startPlayback(url);
+    }
+
+    function closePlayer() {
+      const modal = document.getElementById('playerModal');
+      const video = document.getElementById('videoPlayer');
+      video.pause();
+      video.src = '';
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      modal.style.display = 'none';
+      document.getElementById('audioDropdown').style.display = 'none';
+    }
+
+    // BÚSQUEDA EN TIEMPO REAL
+    let searchTimeout = null;
+    function openSearchModal() {
+      document.getElementById('searchModal').style.display = 'block';
+      document.getElementById('searchInput').focus();
+    }
+    function closeSearchModal() {
+      document.getElementById('searchModal').style.display = 'none';
+    }
+
+    function handleSearch(query) {
+      clearTimeout(searchTimeout);
+      if (!query || query.trim().length < 2) {
+        document.getElementById('searchResults').innerHTML = '';
+        return;
+      }
+      searchTimeout = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/streaming/search?q=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          if (data.success && data.data?.results) {
+            let html = '';
+            data.data.results.forEach(m => { html += renderCardHtml(m); });
+            document.getElementById('searchResults').innerHTML = html;
+          }
+        } catch (_) {}
+      }, 350);
+    }
+
+    // DETECCIÓN Y BANNER PARA IPHONE
+    function checkIosDevice() {
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isStandalone = window.navigator.standalone === true;
+      if (isIos && !isStandalone) {
+        document.getElementById('iosBanner').style.display = 'block';
+      }
+    }
+
+    function closeIosBanner() {
+      document.getElementById('iosBanner').style.display = 'none';
+    }
+
+    function showIosInstallModal() {
+      alert("📱 PARA INSTALAR EN IPHONE:\n\n1. Toca el botón Compartir (el cuadrado con flecha ⬆️ abajo en Safari).\n2. Elige 'Añadir a pantalla de inicio'.\n3. ¡Listo! VJ STREAM se abrirá como app a pantalla completa.");
+    }
+
+    // REGISTRO DE SERVICE WORKER PARA PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    // INICIALIZACIÓN
+    window.addEventListener('DOMContentLoaded', () => {
+      initYearsBar();
+      loadCatalog();
+      loadLiveChannels();
+      checkIosDevice();
+    });
+  </script>
+</body>
+</html>

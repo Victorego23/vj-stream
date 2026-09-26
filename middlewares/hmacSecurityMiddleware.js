@@ -14,12 +14,21 @@ function hmacSecurityMiddleware(req, res, next) {
     return next();
   }
 
-  // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, health check)
+  // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, health check, etc.)
   const path = req.path || '';
-  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels'];
+  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels', '/movies/years'];
   const isPublic = publicEndpoints.some(p => path.endsWith(p));
 
   if (isPublic) {
+    return next();
+  }
+
+  // Permitir peticiones desde la Web App / PWA oficial de VJ STREAM en el mismo host
+  const host = req.get('host');
+  const origin = req.get('origin');
+  const referer = req.get('referer');
+  const isSameHost = (origin && host && origin.includes(host)) || (referer && host && referer.includes(host));
+  if (isSameHost) {
     return next();
   }
 

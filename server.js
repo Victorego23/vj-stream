@@ -67,6 +67,14 @@ app.get('/api/download-apk', (req, res) => {
   res.redirect('/api/streaming/download-apk');
 });
 
+// Servir archivos estáticos de la Web App / PWA pública
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Servir la Web App / PWA oficial de VJ STREAM en la raíz
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
 // Servir el Panel de Administrador Web
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
