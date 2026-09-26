@@ -40,14 +40,14 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para VJ STREAM
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '2.4.8';
-  static const int currentVersionCode = 15;
+  static const String currentVersion = '2.4.9';
+  static const int currentVersionCode = 16;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
 
-  /// Marca una versión como pospuesta para evitar bucles al reabrir la app
-  static Future<void> _markDismissed(int versionCode) async {
+  /// Marca una versión como gestionada/pospuesta con cooldown persistente de 24h
+  static Future<void> markDismissed(int versionCode) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('last_dismissed_update_code', versionCode);
@@ -57,7 +57,8 @@ class UpdateService {
 
   /// Consulta el endpoint de versión y si detecta una versión superior, despliega el diálogo OLED
   static Future<void> checkUpdate(BuildContext context, {bool silent = true}) async {
-    // Si es comprobación silenciosa y ya se comprobó en esta sesión, salir para evitar bucles
+    // Si ya está el diálogo en pantalla o ya se comprobó en esta sesión silenciosa, salir
+    if (_isDialogVisible) return;
     if (silent && _hasCheckedThisSession) return;
     _hasCheckedThisSession = true;
 
@@ -72,16 +73,30 @@ class UpdateService {
         if (data['success'] == true) {
           final updateInfo = AppUpdateInfo.fromJson(data);
 
+          // Si la versión instalada ya es igual o superior a la remota, no hacer nada
+          if (updateInfo.versionCode <= currentVersionCode) {
+            if (!silent && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: Color(0xFF1E1E1E),
+                  content: Text('Ya tienes la versión más reciente de VJ STREAM (v$currentVersion).'),
+                ),
+              );
+            }
+            return;
+          }
+
           // Si el código de versión remoto es estrictamente superior al actual
           if (updateInfo.versionCode > currentVersionCode) {
-            // Prevención de bucle: si ya se pospuso esta versión hace menos de 6 horas, no insistir en silencio
+            // Prevención estricta de bucle: si ya se gestionó esta versión en las últimas 24 horas, no insistir en silencio
             if (silent && !updateInfo.forceUpdate) {
               try {
                 final prefs = await SharedPreferences.getInstance();
                 final lastDismissedCode = prefs.getInt('last_dismissed_update_code') ?? 0;
                 final lastPromptTime = prefs.getInt('last_prompted_update_time') ?? 0;
                 final now = DateTime.now().millisecondsSinceEpoch;
-                if (lastDismissedCode == updateInfo.versionCode && (now - lastPromptTime) < 6 * 3600 * 1000) {
+                // Cooldown de 24 horas para evitar molestias continuas y bucles
+                if (lastDismissedCode >= updateInfo.versionCode && (now - lastPromptTime) < 24 * 3600 * 1000) {
                   return;
                 }
               } catch (_) {}
@@ -90,13 +105,6 @@ class UpdateService {
             if (context.mounted && !_isDialogVisible) {
               _showUpdateDialog(context, updateInfo);
             }
-          } else if (!silent && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                backgroundColor: Color(0xFF1E1E1E),
-                content: Text('Ya tienes la versión más reciente de VJ STREAM (v$currentVersion).'),
-              ),
-            );
           }
         }
       }
@@ -123,7 +131,7 @@ class UpdateService {
       builder: (dialogCtx) => _UpdateDialogWidget(updateInfo: info),
     ).then((_) {
       _isDialogVisible = false;
-      _markDismissed(info.versionCode);
+      markDismissed(info.versionCode);
     });
   }
 }
@@ -163,6 +171,9 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
   }
 
   Future<void> _launchInstaller(String filePath) async {
+    // Marcar como gestionado de inmediato para evitar que reaparezca en bucle
+    await UpdateService.markDismissed(widget.updateInfo.versionCode);
+
     if (!Platform.isAndroid) {
       if (mounted) {
         setState(() {
@@ -180,14 +191,20 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
       if (success == true) {
         if (mounted) {
           setState(() {
-            _downloadMessage = 'Iniciando instalación del sistema. Por favor confirma en la pantalla.';
+            _downloadMessage = 'Abriendo instalador del sistema Android... Por favor confirma en pantalla.';
+          });
+          // Cerrar diálogo tras breve espera para dar paso a la pantalla de instalación nativa
+          Future.delayed(const Duration(milliseconds: 1200), () {
+            if (mounted) {
+              Navigator.of(context).pop();
+            }
           });
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _downloadMessage = 'Archivo descargado en:\n$filePath\nPuedes abrirlo para instalarlo.';
+          _downloadMessage = 'Archivo descargado en:\n$filePath\nPuedes abrirlo con un explorador de archivos para instalarlo.';
         });
       }
     }
@@ -443,8 +460,16 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
                 children: [
                   if (!widget.updateInfo.forceUpdate && !_isDownloading)
                     TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Más Tarde', style: TextStyle(color: Colors.white54)),
+                      onPressed: () async {
+                        await UpdateService.markDismissed(widget.updateInfo.versionCode);
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Text(
+                        _downloadFinished ? 'Cerrar' : 'Más Tarde',
+                        style: const TextStyle(color: Colors.white54),
+                      ),
                     ),
                   const SizedBox(width: 12),
                   Focus(
