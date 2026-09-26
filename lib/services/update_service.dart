@@ -28,8 +28,8 @@ class AppUpdateInfo {
       notes = (json['releaseNotes'] as List).map((e) => e.toString()).toList();
     }
     return AppUpdateInfo(
-      latestVersion: json['latestVersion'] ?? '2.4.7',
-      versionCode: json['versionCode'] ?? 14,
+      latestVersion: json['latestVersion'] ?? '2.4.8',
+      versionCode: json['versionCode'] ?? 15,
       releaseNotes: notes,
       downloadUrl: json['downloadUrl'] ?? '/api/streaming/download-apk',
       forceUpdate: json['forceUpdate'] ?? false,
@@ -40,8 +40,8 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para VJ STREAM
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '2.4.7';
-  static const int currentVersionCode = 14;
+  static const String currentVersion = '2.4.8';
+  static const int currentVersionCode = 15;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;

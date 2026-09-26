@@ -372,19 +372,19 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.4.7',
-    versionCode: 14,
+    latestVersion: '2.4.8',
+    versionCode: 15,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-26',
     releaseNotes: [
-      '📡 Parrilla de Canales IPTV-ORG: Más de 2,200 canales de televisión en español organizados por categorías',
-      '🛡️ Failover Automático Inteligente: Si una señal falla o se queda sin búfer por más de 3 segundos, salta automáticamente a fuentes de respaldo',
-      '⚡ Selector de Fuentes Múltiples: Indicador visual en vivo de señales alternativas disponibles por canal',
-      '📺 Nuevo Módulo TV en Vivo: Canales de deportes, cine 24/7, infantil, cultura y noticias nacionales',
-      '💬 Subtítulos en Español Integrados: Subtítulos automáticos sincronizados (Latino y Castellano) con botón [CC]',
-      '📥 Caché en la Nube de Real-Debrid: Garantiza la obtención de audio en español',
-      '⚙️ Engranaje de Ajustes en Vivo: Cambia de audio y servidor al instante',
-      '📺 Ajuste de Pantalla: Elige entre Original (16:9), Pantalla Completa sin barras (Zoom) y Estirar'
+      '⭐ Canales Favoritos Persistentes: Marca cualquier canal con la estrella (★) y accede rápidamente en la nueva pestaña ⭐ Favoritos',
+      '📺 Modo Zapping Inteligente: Cambia de canal con CH+/CH-, Flechas Arriba/Abajo del control remoto o botones táctiles en pantalla',
+      '🌎 Filtro por Países y Regiones: Filtra canales de Perú, México, Argentina, Colombia, Chile, España, USA, etc. con sus banderas',
+      '📑 Guía Rápida Lateral (Quick Channel Drawer): Navega y busca canales mientras reproduces video en pantalla completa con Flecha Izquierda',
+      '🔢 Sintonizador por Teclado Numérico Directo: Salta a cualquier canal digitando su número en el control remoto de tu Smart TV',
+      '📊 Panel de Telemetría y Diagnóstico de Señal: Revisa el estado de transmisión, resolución real, búfer y alterna fuentes al instante',
+      '🔲 Modo Picture-in-Picture (PiP): Continúa viendo la transmisión en ventana flotante mientras usas otras aplicaciones',
+      '📡 Parrilla IPTV con 2,249 canales optimizados y Failover automático continuo'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false

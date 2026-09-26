@@ -1,7 +1,7 @@
 name: vj_stream
 description: "VJ STREAM - Plataforma de Streaming de Alta Calidad con Real-Debrid y TMDB"
 publish_to: 'none'
-version: 2.4.7+14
+version: 2.4.8+15
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
