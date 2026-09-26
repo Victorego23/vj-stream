@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
 /// Modelo con los metadatos de la actualización remota
@@ -27,8 +28,8 @@ class AppUpdateInfo {
       notes = (json['releaseNotes'] as List).map((e) => e.toString()).toList();
     }
     return AppUpdateInfo(
-      latestVersion: json['latestVersion'] ?? '2.2.6',
-      versionCode: json['versionCode'] ?? 5,
+      latestVersion: json['latestVersion'] ?? '2.4.7',
+      versionCode: json['versionCode'] ?? 14,
       releaseNotes: notes,
       downloadUrl: json['downloadUrl'] ?? '/api/streaming/download-apk',
       forceUpdate: json['forceUpdate'] ?? false,
@@ -38,14 +39,28 @@ class AppUpdateInfo {
 
 /// Servicio de actualización automática In-App (OTA) para VJ STREAM
 class UpdateService {
-  // Versión oficial instalada en la app
-  static const String currentVersion = '2.4.6';
-  static const int currentVersionCode = 13;
+  // Versión oficial instalada en la app sincronizada con pubspec.yaml
+  static const String currentVersion = '2.4.7';
+  static const int currentVersionCode = 14;
 
+  static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
+
+  /// Marca una versión como pospuesta para evitar bucles al reabrir la app
+  static Future<void> _markDismissed(int versionCode) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('last_dismissed_update_code', versionCode);
+      await prefs.setInt('last_prompted_update_time', DateTime.now().millisecondsSinceEpoch);
+    } catch (_) {}
+  }
 
   /// Consulta el endpoint de versión y si detecta una versión superior, despliega el diálogo OLED
   static Future<void> checkUpdate(BuildContext context, {bool silent = true}) async {
+    // Si es comprobación silenciosa y ya se comprobó en esta sesión, salir para evitar bucles
+    if (silent && _hasCheckedThisSession) return;
+    _hasCheckedThisSession = true;
+
     try {
       final baseUrl = ApiService().baseUrl;
       final cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
@@ -59,6 +74,19 @@ class UpdateService {
 
           // Si el código de versión remoto es estrictamente superior al actual
           if (updateInfo.versionCode > currentVersionCode) {
+            // Prevención de bucle: si ya se pospuso esta versión hace menos de 6 horas, no insistir en silencio
+            if (silent && !updateInfo.forceUpdate) {
+              try {
+                final prefs = await SharedPreferences.getInstance();
+                final lastDismissedCode = prefs.getInt('last_dismissed_update_code') ?? 0;
+                final lastPromptTime = prefs.getInt('last_prompted_update_time') ?? 0;
+                final now = DateTime.now().millisecondsSinceEpoch;
+                if (lastDismissedCode == updateInfo.versionCode && (now - lastPromptTime) < 6 * 3600 * 1000) {
+                  return;
+                }
+              } catch (_) {}
+            }
+
             if (context.mounted && !_isDialogVisible) {
               _showUpdateDialog(context, updateInfo);
             }
@@ -95,6 +123,7 @@ class UpdateService {
       builder: (dialogCtx) => _UpdateDialogWidget(updateInfo: info),
     ).then((_) {
       _isDialogVisible = false;
+      _markDismissed(info.versionCode);
     });
   }
 }
@@ -124,8 +153,6 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateButtonFocus.requestFocus();
-      // Descarga e instalación 100% automática sin fricción
-      _startDownload();
     });
   }
 
