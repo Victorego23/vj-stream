@@ -285,7 +285,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         uri,
         formatHint: formatHint,
         httpHeaders: const {
-          'User-Agent': 'VJ-STREAM/2.4.1 (Linux; Android; ExoPlayer)',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          'Accept': '*/*',
         },
         videoPlayerOptions: VideoPlayerOptions(
           mixWithOthers: false,
@@ -461,42 +462,43 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     if (!widget.isLive || _liveSources.length <= 1) return false;
     if (_isFallingBack) return false;
 
-    // Buscar una fuente de respaldo que aún no haya fallado
+    // Marcar la URL actual como fallida
+    _failedUrls.add(_currentVideoUrl);
+
+    // Buscar la siguiente fuente de respaldo que no haya fallado
     int nextIndex = -1;
     for (int i = 0; i < _liveSources.length; i++) {
       final candidate = _liveSources[i];
-      if (candidate != _currentVideoUrl && !_failedUrls.contains(candidate)) {
+      if (!_failedUrls.contains(candidate)) {
         nextIndex = i;
         break;
       }
     }
 
     if (nextIndex == -1) {
-      debugPrint('[VideoPlayerView] ⚠️ Todas las fuentes de respaldo para "${widget.title}" fallaron');
+      debugPrint('[VideoPlayerView] ⚠️ Todas las fuentes de respaldo (${_liveSources.length}) para "${widget.title}" fallaron');
       return false;
     }
 
-    _failedUrls.add(_currentVideoUrl);
     _currentLiveSourceIndex = nextIndex;
     final nextUrl = _liveSources[nextIndex];
 
     debugPrint('[VideoPlayerView] 🔄 Failover TV en Vivo ($reason): saltando a señal ${nextIndex + 1}/${_liveSources.length} -> $nextUrl');
 
+    _isFallingBack = true;
     if (mounted) {
       setState(() {
-        _isFallingBack = true;
         _currentVideoUrl = nextUrl;
         _hasError = false;
         _errorMessage = null;
         _isBuffering = true;
       });
-      _showFeedbackIndicator('Cambiando a señal de respaldo (${nextIndex + 1}/${_liveSources.length})...');
+      _showFeedbackIndicator('Cambiando a señal ${nextIndex + 1}/${_liveSources.length}...');
     }
 
+    // Permitir que si esta fuente falla, el catch de _initializePlayer pueda seguir con la siguiente
+    _isFallingBack = false;
     await _initializePlayer();
-    if (mounted) {
-      setState(() => _isFallingBack = false);
-    }
     return true;
   }
 
@@ -1154,22 +1156,93 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     ),
                     const SizedBox(height: 14),
 
-                    // SECCIÓN 1: IDIOMA Y DOBLAJE
-                    const Row(
-                      children: [
-                        Icon(Icons.record_voice_over_rounded, color: Colors.amber, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'Idioma de Audio y Doblaje',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                    // SECCIÓN TV EN VIVO: FUENTES Y SEÑALES ALTERNATIVAS
+                    if (widget.isLive && _liveSources.length > 1) ...[
+                      const Row(
+                        children: [
+                          Icon(Icons.satellite_alt_rounded, color: Colors.cyanAccent, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Señales y Fuentes de Transmisión (Failover)',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      ..._liveSources.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final url = entry.value;
+                        final isSelected = url == _currentVideoUrl;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 6),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0x2200E5FF) : const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected ? Colors.cyanAccent : Colors.transparent,
+                              width: 1.2,
+                            ),
+                          ),
+                          child: ListTile(
+                            dense: true,
+                            leading: Icon(
+                              isSelected ? Icons.check_circle_rounded : Icons.cell_tower_rounded,
+                              color: isSelected ? Colors.cyanAccent : Colors.white60,
+                            ),
+                            title: Text(
+                              'Señal ${index + 1}${index == 0 ? " (Principal)" : " (Respaldo $index)"}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontSize: 13,
+                              ),
+                            ),
+                            subtitle: Text(
+                              url.length > 50 ? '${url.substring(0, 48)}...' : url,
+                              style: const TextStyle(color: Colors.white38, fontSize: 11),
+                            ),
+                            trailing: isSelected
+                                ? const Text('EN VIVO', style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 11))
+                                : null,
+                            onTap: () {
+                              Navigator.pop(sheetContext);
+                              _currentLiveSourceIndex = index;
+                              setState(() {
+                                _currentVideoUrl = url;
+                                _isInitialized = false;
+                                _hasError = false;
+                                _errorMessage = null;
+                              });
+                              _initializePlayer();
+                            },
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // SECCIÓN 1: IDIOMA Y DOBLAJE (Para Películas y Series)
+                    if (!widget.isLive) ...[
+                      const Row(
+                        children: [
+                          Icon(Icons.record_voice_over_rounded, color: Colors.amber, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Idioma de Audio y Doblaje',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
 
                     if (audioStreams.isNotEmpty)
                       ...audioStreams.map((st) {
@@ -1223,8 +1296,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
 
                     const SizedBox(height: 14),
 
-                    // SECCIÓN 2: SERVIDOR / FUENTE
-                    if (serverStreams.length > 1) ...[
+                    // SECCIÓN 2: SERVIDOR / FUENTE (Para Películas y Series)
+                    if (!widget.isLive && serverStreams.length > 1) ...[
                       const Row(
                         children: [
                           Icon(Icons.dns_rounded, color: Colors.cyanAccent, size: 18),

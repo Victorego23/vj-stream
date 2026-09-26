@@ -1564,12 +1564,16 @@
   },
   {
     "id": "ch_americatelevision_pe",
-    "name": "America Television",
+    "name": "América Televisión",
     "category": "Entretenimiento",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Am%C3%A9rica_Televisi%C3%B3n.svg/500px-Am%C3%A9rica_Televisi%C3%B3n.svg.png",
-    "streamUrl": "http://45.171.108.253:8888/AMERICA/index.m3u8",
+    "streamUrl": "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8",
     "sources": [
-      "http://45.171.108.253:8888/AMERICA/index.m3u8"
+      "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8",
+      "http://190.93.224.42/AMERICA-TV/index.m3u8",
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/america.stream/playlist.m3u8",
+      "http://45.171.108.253:8888/AMERICA/index.m3u8",
+      "http://187.102.210.46/AMERICA/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -2162,12 +2166,15 @@
   },
   {
     "id": "ch_atv_pe",
-    "name": "ATV (Peru)",
+    "name": "ATV (Andina de Televisión)",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/eUzYZfg.png",
-    "streamUrl": "http://190.93.224.42/ATV/index.m3u8",
+    "streamUrl": "https://d19e55ehz2il4i.cloudfront.net/ts:abr.m3u8",
     "sources": [
-      "http://190.93.224.42/ATV/index.m3u8"
+      "https://d19e55ehz2il4i.cloudfront.net/ts:abr.m3u8",
+      "https://d2b5h5wyivfnfl.cloudfront.net/live/25046411-8673-4dec-8ae8-5b41984f34e1/ts:abr.m3u8",
+      "http://190.93.224.42/ATV/index.m3u8",
+      "http://187.102.210.46/ATV/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -2178,9 +2185,11 @@
     "name": "ATV Sur",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/LnyVa5H.png",
-    "streamUrl": "http://190.93.224.42/ATV-SUR/index.m3u8",
+    "streamUrl": "https://dnhmqt6n0lkaq.cloudfront.net/ts:abr.m3u8",
     "sources": [
-      "http://190.93.224.42/ATV-SUR/index.m3u8"
+      "https://dnhmqt6n0lkaq.cloudfront.net/ts:abr.m3u8",
+      "http://190.93.224.42/ATV-SUR/index.m3u8",
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvsur.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -2188,12 +2197,15 @@
   },
   {
     "id": "ch_atvplus_pe",
-    "name": "ATV+",
+    "name": "ATV+ Noticias",
     "category": "Noticias",
     "logoUrl": "https://i.imgur.com/fY9256H.png",
-    "streamUrl": "http://45.171.108.253:8888/ATV/index.m3u8",
+    "streamUrl": "https://d26l0c7cli5gzs.cloudfront.net/ts:abr.m3u8",
     "sources": [
-      "http://45.171.108.253:8888/ATV/index.m3u8"
+      "https://d26l0c7cli5gzs.cloudfront.net/ts:abr.m3u8",
+      "http://190.93.224.42/ATV-PLUS/index.m3u8",
+      "http://45.171.108.253:8888/ATV/index.m3u8",
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvplus.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -5630,7 +5642,8 @@
     "logoUrl": "https://i.imgur.com/Xytvw3J.png",
     "streamUrl": "http://190.108.91.206:9050/play/a0bd/index.m3u8",
     "sources": [
-      "http://190.108.91.206:9050/play/a0bd/index.m3u8"
+      "http://190.108.91.206:9050/play/a0bd/index.m3u8",
+      "http://45.70.201.81:8000/play/a010/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -10014,7 +10027,8 @@
     "logoUrl": "https://i.imgur.com/pu0BSB7.png",
     "streamUrl": "http://190.93.224.42/EXITOSA/index.m3u8",
     "sources": [
-      "http://190.93.224.42/EXITOSA/index.m3u8"
+      "http://190.93.224.42/EXITOSA/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/exitosatvSRT/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -13239,12 +13253,14 @@
   },
   {
     "id": "ch_latina_pe",
-    "name": "Latina",
+    "name": "Latina Televisión",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/MOsWriY.png",
-    "streamUrl": "http://190.93.224.42/LATINA/index.m3u8",
+    "streamUrl": "https://dai.google.com/linear/hls/event/oYQGDqEGTmGdHE_fz9oLlg/master.m3u8",
     "sources": [
-      "http://190.93.224.42/LATINA/index.m3u8"
+      "https://dai.google.com/linear/hls/event/oYQGDqEGTmGdHE_fz9oLlg/master.m3u8",
+      "http://190.93.224.42/LATINA/index.m3u8",
+      "http://45.171.108.253:8888/LATINA/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -16857,12 +16873,14 @@
   },
   {
     "id": "ch_panamericanatv_pe",
-    "name": "Panamericana TV",
+    "name": "Panamericana Televisión",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/uQhEDES.png",
-    "streamUrl": "http://45.171.108.253:8888/PANAMERICANA/index.m3u8",
+    "streamUrl": "http://190.93.224.42/PANAMERICANA/index.m3u8",
     "sources": [
-      "http://45.171.108.253:8888/PANAMERICANA/index.m3u8"
+      "http://190.93.224.42/PANAMERICANA/index.m3u8",
+      "http://45.171.108.253:8888/PANAMERICANA/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/panamericanaSRT/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -20763,12 +20781,13 @@
   },
   {
     "id": "ch_rpptv_pe",
-    "name": "RPP TV",
+    "name": "RPP Noticias TV",
     "category": "Noticias",
     "logoUrl": "https://i.imgur.com/oBz3CgE.png",
     "streamUrl": "http://190.93.224.42/RPP/index.m3u8",
     "sources": [
-      "http://190.93.224.42/RPP/index.m3u8"
+      "http://190.93.224.42/RPP/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/rpptvSRT/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -26241,12 +26260,14 @@
   },
   {
     "id": "ch_tvperu_pe",
-    "name": "TV Peru",
+    "name": "TV Perú",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/6io0IrX.png",
     "streamUrl": "http://190.93.224.42/TV-PERU/index.m3u8",
     "sources": [
-      "http://190.93.224.42/TV-PERU/index.m3u8"
+      "http://190.93.224.42/TV-PERU/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/tvperuSRT/playlist.m3u8",
+      "http://187.102.210.46/TVPERU/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -26254,12 +26275,13 @@
   },
   {
     "id": "ch_tvperunoticias_pe",
-    "name": "TV Peru Noticias",
+    "name": "TV Perú Noticias",
     "category": "Noticias",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/TV_Per%C3%BA_Noticias_-_2019_logo.png/960px-TV_Per%C3%BA_Noticias_-_2019_logo.png",
     "streamUrl": "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8",
     "sources": [
-      "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8"
+      "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/tvperunoticiasSRT/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
@@ -28627,12 +28649,14 @@
   },
   {
     "id": "ch_willaxtv_pe",
-    "name": "Willax TV",
+    "name": "Willax Televisión",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/bZnDDPH.png",
     "streamUrl": "http://190.93.224.42/WILLAX/index.m3u8",
     "sources": [
-      "http://190.93.224.42/WILLAX/index.m3u8"
+      "http://190.93.224.42/WILLAX/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/willaxSRT/playlist.m3u8",
+      "http://45.171.108.253:8888/WILLAX/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
