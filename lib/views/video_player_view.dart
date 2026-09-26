@@ -141,6 +141,21 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   bool _showZappingOsd = false;
   Timer? _zappingOsdTimer;
 
+  // Guía Rápida Lateral (Quick Channel Drawer)
+  bool _showChannelDrawer = false;
+  final TextEditingController _drawerSearchController = TextEditingController();
+  String _drawerSearchQuery = '';
+
+  // Sintonización Numérica Directa (Teclado Remoto 0-9)
+  String _numericInputBuffer = '';
+  Timer? _numericInputTimer;
+  bool _showNumericHud = false;
+
+  // Picture-in-Picture (PiP)
+  static const MethodChannel _pipChannel = MethodChannel('com.vjstream.vj_stream/pip_manager');
+  bool _isPipSupported = false;
+  bool _isInPipMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -220,6 +235,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     // Habilitar pantalla completa inmersiva para streaming
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
+    _initPipSupport();
     _initializePlayer();
   }
 
@@ -564,6 +580,276 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     });
 
     await _initializePlayer();
+  }
+
+  Future<void> _initPipSupport() async {
+    try {
+      final supported = await _pipChannel.invokeMethod<bool>('isPipSupported') ?? false;
+      if (mounted) {
+        setState(() => _isPipSupported = supported);
+      }
+      _pipChannel.setMethodCallHandler((call) async {
+        if (call.method == 'onPipModeChanged') {
+          final inPip = call.arguments as bool? ?? false;
+          if (mounted) {
+            setState(() {
+              _isInPipMode = inPip;
+              if (inPip) {
+                _showControls = false;
+                _showChannelDrawer = false;
+                _showZappingOsd = false;
+                _showNumericHud = false;
+              }
+            });
+          }
+        }
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _enterPictureInPicture() async {
+    try {
+      setState(() {
+        _showControls = false;
+        _showChannelDrawer = false;
+        _showZappingOsd = false;
+        _showNumericHud = false;
+      });
+      final entered = await _pipChannel.invokeMethod<bool>('enterPip') ?? false;
+      if (!entered && mounted) {
+        _showFeedbackIndicator('Ventana flotante no disponible');
+      }
+    } catch (_) {
+      if (mounted) {
+        _showFeedbackIndicator('No se pudo activar ventana flotante');
+      }
+    }
+  }
+
+  String? _getDigitFromKey(LogicalKeyboardKey key) {
+    if (key == LogicalKeyboardKey.digit0 || key == LogicalKeyboardKey.numpad0) return '0';
+    if (key == LogicalKeyboardKey.digit1 || key == LogicalKeyboardKey.numpad1) return '1';
+    if (key == LogicalKeyboardKey.digit2 || key == LogicalKeyboardKey.numpad2) return '2';
+    if (key == LogicalKeyboardKey.digit3 || key == LogicalKeyboardKey.numpad3) return '3';
+    if (key == LogicalKeyboardKey.digit4 || key == LogicalKeyboardKey.numpad4) return '4';
+    if (key == LogicalKeyboardKey.digit5 || key == LogicalKeyboardKey.numpad5) return '5';
+    if (key == LogicalKeyboardKey.digit6 || key == LogicalKeyboardKey.numpad6) return '6';
+    if (key == LogicalKeyboardKey.digit7 || key == LogicalKeyboardKey.numpad7) return '7';
+    if (key == LogicalKeyboardKey.digit8 || key == LogicalKeyboardKey.numpad8) return '8';
+    if (key == LogicalKeyboardKey.digit9 || key == LogicalKeyboardKey.numpad9) return '9';
+    return null;
+  }
+
+  void _handleNumericInput(String digit) {
+    if (!widget.isLive || _liveChannelsList.isEmpty) return;
+
+    _numericInputTimer?.cancel();
+    if (_numericInputBuffer.length >= 4) {
+      _numericInputBuffer = digit;
+    } else {
+      _numericInputBuffer += digit;
+    }
+
+    setState(() {
+      _showNumericHud = true;
+    });
+
+    _numericInputTimer = Timer(const Duration(milliseconds: 1800), () {
+      _executeNumericChannelJump();
+    });
+  }
+
+  void _executeNumericChannelJump() {
+    _numericInputTimer?.cancel();
+    if (_numericInputBuffer.isEmpty) {
+      setState(() => _showNumericHud = false);
+      return;
+    }
+
+    final channelNum = int.tryParse(_numericInputBuffer);
+    final buffer = _numericInputBuffer;
+    setState(() {
+      _numericInputBuffer = '';
+      _showNumericHud = false;
+    });
+
+    if (channelNum != null && channelNum >= 1 && channelNum <= _liveChannelsList.length) {
+      _switchChannel(channelNum - 1);
+    } else {
+      _showFeedbackIndicator('Canal $buffer no encontrado');
+    }
+  }
+
+  Future<void> _switchToLiveSource(int index) async {
+    if (index < 0 || index >= _liveSources.length) return;
+    _currentLiveSourceIndex = index;
+    _currentVideoUrl = _liveSources[index];
+    _showFeedbackIndicator('Cambiando a Señal ${index + 1}/${_liveSources.length}...');
+    setState(() {
+      _isInitialized = false;
+      _hasError = false;
+    });
+    await _initializePlayer();
+  }
+
+  void _showSignalHealthModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        final videoSize = _controller?.value.size;
+        final resText = videoSize != null && videoSize.width > 0
+            ? '${videoSize.width.toInt()}x${videoSize.height.toInt()} (${_currentQualityLabel ?? "HD"})'
+            : (_currentQualityLabel ?? '1080p FHD');
+        final aspectText = videoSize != null && videoSize.height > 0
+            ? (videoSize.width / videoSize.height).toStringAsFixed(2)
+            : '1.78';
+        final isBuffering = _controller?.value.isBuffering ?? false;
+
+        String hostDomain = 'Servidor CDN Oficial';
+        try {
+          final uri = Uri.parse(_currentVideoUrl);
+          if (uri.host.isNotEmpty) hostDomain = uri.host;
+        } catch (_) {}
+
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: const BoxDecoration(
+            color: Color(0xFF14151F),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(color: Colors.black87, blurRadius: 25, spreadRadius: 5),
+            ],
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00E676).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.analytics_rounded, color: Color(0xFF00E676), size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Estado y Diagnóstico de Señal',
+                            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Telemetría en tiempo real de la transmisión',
+                            style: TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B1C2A),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSignalRow(
+                        'Estado de Transmisión',
+                        isBuffering ? '🟡 Almacenando búfer...' : '🟢 En Vivo (Óptima)',
+                        isBuffering ? Colors.amber : const Color(0xFF00E676),
+                      ),
+                      const Divider(color: Colors.white10, height: 18),
+                      _buildSignalRow('Resolución de Salida', resText, Colors.white),
+                      const Divider(color: Colors.white10, height: 18),
+                      _buildSignalRow('Relación de Pantalla', '$aspectText (16:9 Nativo)', Colors.white70),
+                      const Divider(color: Colors.white10, height: 18),
+                      _buildSignalRow(
+                        'Señal Conectada',
+                        'Fuente ${_currentLiveSourceIndex + 1} de ${_liveSources.length}',
+                        const Color(0xFF00E676),
+                      ),
+                      const Divider(color: Colors.white10, height: 18),
+                      _buildSignalRow('Servidor de Entrega', hostDomain, Colors.white60),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    if (_liveSources.length > 1) ...[
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF00E676),
+                            side: const BorderSide(color: Color(0xFF00E676)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: () {
+                            Navigator.of(ctx).pop();
+                            final nextIdx = (_currentLiveSourceIndex + 1) % _liveSources.length;
+                            _switchToLiveSource(nextIdx);
+                          },
+                          icon: const Icon(Icons.swap_horiz_rounded),
+                          label: const Text('Alternar Fuente'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFE50914),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          _initializePlayer(isUserRetry: true);
+                        },
+                        icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                        label: const Text('Reiniciar Señal', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSignalRow(String label, String value, Color valueColor) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text(
+          value,
+          style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
   }
 
   /// Fallback automático transparente: busca la siguiente fuente disponible en el backend
@@ -1356,6 +1642,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     _saveCurrentProgress();
 
     _zappingOsdTimer?.cancel();
+    _numericInputTimer?.cancel();
+    _drawerSearchController.dispose();
     _seekDebounceTimer?.cancel();
     _bufferingWatchdogTimer?.cancel();
     _hideControlsTimer?.cancel();
@@ -1388,6 +1676,32 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
             return KeyEventResult.ignored;
           }
 
+          // Si la Guía Lateral de Canales está abierta
+          if (_showChannelDrawer) {
+            if (event.logicalKey == LogicalKeyboardKey.escape ||
+                event.logicalKey == LogicalKeyboardKey.arrowRight) {
+              setState(() => _showChannelDrawer = false);
+              return KeyEventResult.handled;
+            }
+          }
+
+          // Si el HUD numérico está visible y se presiona Enter o Select
+          if (_showNumericHud &&
+              (event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.select)) {
+            _executeNumericChannelJump();
+            return KeyEventResult.handled;
+          }
+
+          // Marcación numérica directa en TV en vivo (Teclas 0-9)
+          if (widget.isLive && _liveChannelsList.isNotEmpty) {
+            final digit = _getDigitFromKey(event.logicalKey);
+            if (digit != null) {
+              _handleNumericInput(digit);
+              return KeyEventResult.handled;
+            }
+          }
+
           // Modo Zapping en Smart TV / Teclado: Flechas Arriba/Abajo cambian de canal
           if (widget.isLive && _liveChannelsList.length > 1) {
             if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
@@ -1400,6 +1714,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                 event.logicalKey == LogicalKeyboardKey.channelDown ||
                 event.logicalKey == LogicalKeyboardKey.pageDown) {
               _switchChannel(_currentChannelIndex - 1);
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft && !_showChannelDrawer) {
+              setState(() => _showChannelDrawer = true);
               return KeyEventResult.handled;
             }
           }
@@ -1508,14 +1826,21 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                 ),
 
               // Banner flotante OSD de Zapping estilo Smart TV
-              if (widget.isLive) _buildZappingOsd(),
+              if (widget.isLive && !_isInPipMode) _buildZappingOsd(),
+
+              // HUD flotante de marcación numérica directa
+              if (widget.isLive && !_isInPipMode) _buildNumericHud(),
 
               // Capa de controles (OSD) estilo Netflix
-              AnimatedOpacity(
-                opacity: _showControls ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 250),
-                child: _showControls ? _buildControlsOverlay() : const SizedBox.shrink(),
-              ),
+              if (!_isInPipMode)
+                AnimatedOpacity(
+                  opacity: _showControls ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 250),
+                  child: _showControls ? _buildControlsOverlay() : const SizedBox.shrink(),
+                ),
+
+              // Guía rápida lateral de canales (Quick Channel Drawer)
+              if (widget.isLive && !_isInPipMode) _buildQuickChannelDrawer(),
             ],
           ),
         ),
@@ -1886,6 +2211,293 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     );
   }
 
+  Widget _buildNumericHud() {
+    if (!_showNumericHud || _numericInputBuffer.isEmpty) return const SizedBox.shrink();
+
+    return Positioned(
+      top: 36,
+      right: 36,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xF211121A),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE50914), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE50914).withValues(alpha: 0.35),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.dialpad_rounded, color: Color(0xFFE50914), size: 20),
+            const SizedBox(width: 10),
+            Text(
+              'CANAL $_numericInputBuffer',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickChannelDrawer() {
+    if (!_showChannelDrawer || !widget.isLive || _liveChannelsList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final query = _drawerSearchQuery.trim().toLowerCase();
+    final displayedChannels = query.isEmpty
+        ? _liveChannelsList
+        : _liveChannelsList.where((c) =>
+            c.name.toLowerCase().contains(query) ||
+            c.category.toLowerCase().contains(query)).toList();
+
+    return Positioned.fill(
+      child: Stack(
+        children: [
+          // Fondo oscuro translúcido para cerrar al hacer clic afuera
+          GestureDetector(
+            onTap: () {
+              setState(() => _showChannelDrawer = false);
+            },
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.45),
+            ),
+          ),
+          // Barra lateral de canales
+          Positioned(
+            top: 0,
+            bottom: 0,
+            left: 0,
+            width: 320,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xF20F1018),
+                border: Border(
+                  right: BorderSide(
+                    color: const Color(0xFFE50914).withValues(alpha: 0.5),
+                    width: 1.5,
+                  ),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.8),
+                    blurRadius: 24,
+                    offset: const Offset(4, 0),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Cabecera del Drawer
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 12, 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE50914),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.format_list_bulleted_rounded, color: Colors.white, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'GUÍA DE CANALES',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
+                                Text(
+                                  '${_liveChannelsList.length} Canales Disponibles',
+                                  style: const TextStyle(color: Colors.white54, fontSize: 10),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() => _showChannelDrawer = false);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Campo de búsqueda rápida dentro de la guía
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      child: Container(
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: TextField(
+                          controller: _drawerSearchController,
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          decoration: const InputDecoration(
+                            hintText: 'Filtrar canal...',
+                            hintStyle: TextStyle(color: Colors.white38, fontSize: 12),
+                            prefixIcon: Icon(Icons.search_rounded, color: Colors.white38, size: 18),
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(vertical: 8),
+                          ),
+                          onChanged: (val) {
+                            setState(() => _drawerSearchQuery = val);
+                          },
+                        ),
+                      ),
+                    ),
+                    const Divider(color: Colors.white10, height: 12),
+                    // Lista de canales
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        itemCount: displayedChannels.length,
+                        itemBuilder: (ctx, idx) {
+                          final ch = displayedChannels[idx];
+                          final realIndex = _liveChannelsList.indexOf(ch);
+                          final isCurrent = realIndex == _currentChannelIndex;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: InkWell(
+                              onTap: () {
+                                _switchChannel(realIndex);
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isCurrent
+                                      ? const Color(0xFFE50914).withValues(alpha: 0.22)
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: isCurrent
+                                        ? const Color(0xFFE50914)
+                                        : Colors.transparent,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    // CH Number
+                                    Container(
+                                      width: 28,
+                                      height: 22,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: isCurrent
+                                            ? const Color(0xFFE50914)
+                                            : Colors.white.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${realIndex + 1}',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: isCurrent ? FontWeight.w900 : FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Thumbnail Logo
+                                    if (ch.logoUrl.isNotEmpty) ...[
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Container(
+                                          width: 28,
+                                          height: 28,
+                                          color: Colors.white.withValues(alpha: 0.05),
+                                          child: Image.network(
+                                            ch.logoUrl,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => const Icon(
+                                              Icons.tv_rounded,
+                                              color: Colors.white38,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    // Info
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            ch.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: isCurrent ? Colors.white : Colors.white70,
+                                              fontSize: 12,
+                                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            ch.category,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(color: Colors.white38, fontSize: 10),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (isCurrent)
+                                      const Icon(
+                                        Icons.play_circle_fill_rounded,
+                                        color: Color(0xFFE50914),
+                                        size: 18,
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildControlsOverlay() {
     if (!_isInitialized || _controller == null) return const SizedBox.shrink();
 
@@ -2030,6 +2642,19 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   ),
                   if (widget.isLive) ...[
                     const SizedBox(width: 4),
+                    if (_liveChannelsList.length > 1)
+                      IconButton(
+                        icon: const Icon(Icons.format_list_bulleted_rounded, color: Colors.white, size: 24),
+                        tooltip: 'Guía de Canales (◀)',
+                        onPressed: () {
+                          setState(() => _showChannelDrawer = !_showChannelDrawer);
+                        },
+                      ),
+                    IconButton(
+                      icon: const Icon(Icons.analytics_outlined, color: Colors.white, size: 23),
+                      tooltip: 'Diagnóstico de Señal',
+                      onPressed: _showSignalHealthModal,
+                    ),
                     IconButton(
                       icon: Icon(
                         _isFavoriteChannel ? Icons.star_rounded : Icons.star_border_rounded,
@@ -2038,6 +2663,14 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       ),
                       tooltip: _isFavoriteChannel ? 'Quitar de Favoritos' : 'Añadir a Favoritos',
                       onPressed: _toggleFavoriteLiveChannel,
+                    ),
+                  ],
+                  if (_isPipSupported) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.picture_in_picture_alt_rounded, color: Colors.white, size: 23),
+                      tooltip: 'Ventana Flotante (PiP)',
+                      onPressed: _enterPictureInPicture,
                     ),
                   ],
                   if (!widget.isLive) ...[

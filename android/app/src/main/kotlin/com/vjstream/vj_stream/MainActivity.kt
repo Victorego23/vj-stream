@@ -14,6 +14,7 @@ import java.io.File
 class MainActivity : FlutterActivity() {
     private val APK_CHANNEL = "com.vjstream.vj_stream/apk_installer"
     private val SCREEN_CHANNEL = "com.vjstream.vj_stream/screen_manager"
+    private val PIP_CHANNEL = "com.vjstream.vj_stream/pip_manager"
 
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
@@ -108,6 +109,38 @@ class MainActivity : FlutterActivity() {
             } else {
                 result.notImplemented()
             }
+        }
+
+        // Control de Picture-in-Picture (PiP) para reproducción flotante
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, PIP_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "enterPip" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        try {
+                            val params = android.app.PictureInPictureParams.Builder().build()
+                            val entered = enterPictureInPictureMode(params)
+                            result.success(entered)
+                        } catch (e: Exception) {
+                            result.error("PIP_ERROR", e.message, null)
+                        }
+                    } else {
+                        result.success(false)
+                    }
+                }
+                "isPipSupported" -> {
+                    val supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                            packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE)
+                    result.success(supported)
+                }
+                else -> result.notImplemented()
+            }
+        }
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration?) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        flutterEngine?.dartExecutor?.binaryMessenger?.let { messenger ->
+            MethodChannel(messenger, PIP_CHANNEL).invokeMethod("onPipModeChanged", isInPictureInPictureMode)
         }
     }
 }
