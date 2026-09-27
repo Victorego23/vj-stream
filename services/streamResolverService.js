@@ -282,11 +282,11 @@ class StreamResolverService {
         .filter(x => x.score > 0);
 
       const latino = scored
-        .filter(x => x.isSpanishAudio && (x.audioLanguage === 'Español Latino' || x.audioLanguage === 'Dual (Español)'))
+        .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Latino') || x.audioLanguage.includes('Dual')))
         .sort((a, b) => b.score - a.score);
 
       const castellano = scored
-        .filter(x => x.isSpanishAudio && (x.audioLanguage === 'Castellano' || x.audioLanguage === 'Español'))
+        .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Castellano') || x.audioLanguage.includes('Español')))
         .sort((a, b) => b.score - a.score);
 
       const original = scored
