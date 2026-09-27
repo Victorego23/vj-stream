@@ -66,6 +66,12 @@ app.get('/download-apk', (req, res) => {
 app.get('/api/download-apk', (req, res) => {
   res.redirect('/api/streaming/download-apk');
 });
+app.get('/apk', (req, res) => {
+  res.redirect('/api/streaming/download-apk');
+});
+app.get('/tv', (req, res) => {
+  res.redirect('/api/streaming/download-apk');
+});
 
 // Servir archivos estáticos de la Web App / PWA pública
 app.use(express.static(path.join(__dirname, 'public')));
