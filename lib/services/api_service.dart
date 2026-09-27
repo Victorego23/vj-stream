@@ -337,15 +337,25 @@ class ApiService {
           final trending = parseList(catalogData['trending']);
           final nowPlaying = parseList(catalogData['nowPlaying']);
           final action = parseList(catalogData['action']);
+          final comedy = parseList(catalogData['comedy']);
+          final horror = parseList(catalogData['horror']);
+          final animation = parseList(catalogData['animation']);
           final scifi = parseList(catalogData['scifi']);
+          final adventure = parseList(catalogData['adventure']);
+          final classics = parseList(catalogData['classics']);
           final series = parseList(catalogData['series']);
 
           if (trending.isNotEmpty || nowPlaying.isNotEmpty || series.isNotEmpty) {
             return {
-              'trending': trending,
               'nowPlaying': nowPlaying,
+              'trending': trending,
               'action': action,
+              'comedy': comedy,
+              'horror': horror,
+              'animation': animation,
               'scifi': scifi,
+              'adventure': adventure,
+              'classics': classics,
               'series': series,
             };
           }

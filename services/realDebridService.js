@@ -272,27 +272,31 @@ class RealDebridService {
       // 3. Obtener información
       const torrentInfo = await this.getTorrentInfo(torrentId);
 
-      // Si el nombre del torrent en sí es CAM, registrar aviso
+      // Si el nombre del torrent en sí es CAM, descartar y eliminar inmediatamente de la cuenta
       if (this.isCamOrLowQuality(torrentInfo.filename)) {
-        console.warn(`[VJ STREAM Anti-CAM] Advertencia: Torrent "${torrentInfo.filename}" detectado como posible CAM/TS.`);
+        console.warn(`[VJ STREAM Anti-CAM] 🚫 Torrent descartado y eliminado de Real-Debrid por CAM/TS: "${torrentInfo.filename}"`);
+        await this.deleteTorrent(torrentId).catch(() => {});
+        return { success: false, message: 'Torrent descartado por baja calidad CAM/TS.', streams: [] };
       }
 
-      // Si aún no está en caché o descargado en Real-Debrid, esperar brevemente a que el cloud de Real-Debrid procese o descargue
+      // Si aún no está en caché o descargado en Real-Debrid, esperar máximo 1 intento
       let attempts = 0;
-      while ((!torrentInfo.links || torrentInfo.links.length === 0) && attempts < 3 && torrentInfo.status !== 'magnet_error' && torrentInfo.status !== 'error') {
+      while ((!torrentInfo.links || torrentInfo.links.length === 0) && attempts < 1 && torrentInfo.status !== 'magnet_error' && torrentInfo.status !== 'error') {
         attempts++;
-        console.log(`[RealDebridService] ⏳ Esperando procesamiento/descarga en la nube para "${torrentInfo.filename}" (intento ${attempts}/3)...`);
-        await new Promise(r => setTimeout(r, 2000));
+        console.log(`[RealDebridService] ⏳ Verificando caché instantáneo para "${torrentInfo.filename}"...`);
+        await new Promise(r => setTimeout(r, 1500));
         torrentInfo = await this.getTorrentInfo(torrentId);
       }
 
-      if (!torrentInfo.links || torrentInfo.links.length === 0) {
+      // Si no está 100% cacheado, BORRARLO DE INMEDIATO para mantener limpia la cuenta del usuario
+      if (!torrentInfo.links || torrentInfo.links.length === 0 || torrentInfo.status !== 'downloaded') {
+        console.log(`[RealDebridService] 🧹 Torrent no cacheado en RD [RD+]. Eliminando de la cuenta (${torrentId}) para no saturar Real-Debrid...`);
+        await this.deleteTorrent(torrentId).catch(() => {});
         return {
-          success: true,
+          success: false,
           torrentId,
           status: torrentInfo.status,
-          progress: torrentInfo.progress,
-          message: 'El torrent ha sido añadido a tu nube de Real-Debrid para descarga.',
+          message: 'Torrent descartado: solo se reproducen torrents con caché instantáneo [RD+].',
           streams: []
         };
       }

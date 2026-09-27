@@ -109,9 +109,13 @@ class StreamResolverService {
       audioLanguage = 'Dual (Español Estéreo)';
       score += 2200;
     } else {
-      isSpanishAudio = false;
-      audioLanguage = 'Inglés / Original';
-      score = 400;
+      // REGLA ESTRICTA VJ STREAM: Descartar totalmente si no tiene audio en español (latino/castellano)
+      return {
+        stream,
+        score: -999999,
+        audioLanguage: 'Inglés / Sin Español',
+        isSpanishAudio: false
+      };
     }
 
     // Ventaja para pistas Estéreo 2.0: Diálogos nítidos y sin problemas de voces bajas en Smart TV sin soundbar
@@ -454,25 +458,6 @@ class StreamResolverService {
               label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
               language: 'Castellano Estéreo',
               audioChannels: verified.audioChannels || 'Estéreo 2.0',
-              streamUrl: verified.streamUrl,
-              qualityLabel: verified.qualityLabel,
-              filename: verified.filename,
-              isBackup: false
-            });
-            break;
-          }
-        }
-
-        // 3. Probar y resolver el mejor Audio Original / Inglés (como opción o respaldo)
-        for (const cand of instant.original.slice(0, 3)) {
-          const verified = await verifyCandidate(cand);
-          if (verified) {
-            if (!primaryStream) primaryStream = verified;
-            availableStreams.push({
-              id: 'original',
-              label: `Inglés / Audio Original (${verified.audioChannels || 'Estéreo'} 🇺🇸)`,
-              language: 'Audio Original',
-              audioChannels: verified.audioChannels || 'Estéreo',
               streamUrl: verified.streamUrl,
               qualityLabel: verified.qualityLabel,
               filename: verified.filename,

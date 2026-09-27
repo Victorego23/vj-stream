@@ -99,6 +99,43 @@ router.get('/movies/by-year/:year', async (req, res, next) => {
 });
 
 /**
+ * @route   GET /api/streaming/genres
+ * @desc    Devuelve la lista oficial de géneros cinematográficos con íconos
+ */
+router.get('/genres', (req, res) => {
+  const genres = tmdbService.getGenresList();
+  return res.json({
+    success: true,
+    genres
+  });
+});
+
+/**
+ * @route   GET /api/streaming/movies/by-genre/:genreId
+ * @desc    Obtiene películas filtradas por género con paginación
+ */
+router.get('/movies/by-genre/:genreId', async (req, res, next) => {
+  try {
+    const genreId = parseInt(req.params.genreId, 10);
+    const page = parseInt(req.query.page, 10) || 1;
+
+    if (isNaN(genreId)) {
+      return res.status(400).json({ success: false, error: 'ID de género no válido.' });
+    }
+
+    const movies = await tmdbService.getMoviesByGenre(genreId, page);
+    return res.json({
+      success: true,
+      genreId,
+      page,
+      movies
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * @route   GET /api/streaming/search
  * @desc    Busca películas y series en TMDB con sinopsis y carátulas
  * @query   q {string} - Término de búsqueda

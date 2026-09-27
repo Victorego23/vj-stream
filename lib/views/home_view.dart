@@ -190,8 +190,20 @@ class _HomeViewState extends State<HomeView> {
       final trending = categories['trending'] ?? [];
       final nowPlaying = categories['nowPlaying'] ?? [];
       final action = categories['action'] ?? [];
+      final comedy = categories['comedy'] ?? [];
+      final horror = categories['horror'] ?? [];
+      final animation = categories['animation'] ?? [];
       final scifi = categories['scifi'] ?? [];
+      final adventure = categories['adventure'] ?? [];
+      final classics = categories['classics'] ?? [];
       final series = categories['series'] ?? [];
+
+      final extraFromCatalog = <Map<String, dynamic>>[];
+      if (comedy.isNotEmpty) extraFromCatalog.add({'title': '😂 Comedias y Risas Aseguradas', 'items': comedy});
+      if (horror.isNotEmpty) extraFromCatalog.add({'title': '😱 Terror, Horror y Suspenso', 'items': horror});
+      if (animation.isNotEmpty) extraFromCatalog.add({'title': '🎨 Animación y Éxitos Familiares', 'items': animation});
+      if (adventure.isNotEmpty) extraFromCatalog.add({'title': '🗺️ Aventuras Épicas y Fantasía', 'items': adventure});
+      if (classics.isNotEmpty) extraFromCatalog.add({'title': '👑 Grandes Éxitos y Clásicos (2000-2015)', 'items': classics});
 
       setState(() {
         _trendingItems = trending;
@@ -199,6 +211,7 @@ class _HomeViewState extends State<HomeView> {
         _actionItems = action;
         _scifiItems = scifi;
         _seriesItems = series;
+        _extraCategories.addAll(extraFromCatalog);
 
         // Seleccionamos la primera película con buen backdrop para el Banner Hero
         if (trending.isNotEmpty) {

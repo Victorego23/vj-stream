@@ -181,6 +181,60 @@
       font-weight: 700;
     }
 
+    /* BARRA DE GÉNEROS Y BARRA DE CATEGORÍAS DE TV */
+    .genres-bar, .tv-categories-bar {
+      display: none;
+      gap: 6px;
+      padding: 4px 20px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .genres-bar::-webkit-scrollbar, .tv-categories-bar::-webkit-scrollbar { display: none; }
+
+    .genre-chip, .tv-chip {
+      padding: 6px 14px;
+      border-radius: 18px;
+      background: #141416;
+      border: 1px solid #26262a;
+      color: #d1d1d1;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .genre-chip:hover, .tv-chip:hover {
+      background: #222228;
+      border-color: #3e3e46;
+      color: #fff;
+    }
+    .genre-chip.active, .tv-chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      box-shadow: 0 0 12px rgba(229, 9, 20, 0.45);
+    }
+
+    .media-lang-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(229, 9, 20, 0.92);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.8);
+      backdrop-filter: blur(4px);
+    }
+
     /* HERO BANNER */
     .hero-banner {
       position: relative;
@@ -917,6 +971,12 @@
   <!-- BARRA SELECTORA DE AÑOS (2000 a 2026) -->
   <div class="years-bar" id="yearsBar"></div>
 
+  <!-- BARRA DE GÉNEROS CINEMATOGRÁFICOS -->
+  <div class="genres-bar" id="genresBar"></div>
+
+  <!-- BARRA DE CATEGORÍAS DE TV EN VIVO -->
+  <div class="tv-categories-bar" id="tvCategoriesBar"></div>
+
   <!-- CONTENIDO PRINCIPAL -->
   <main id="mainContent">
     <!-- HERO BANNER -->
@@ -1302,9 +1362,13 @@
 
     let currentTab = 'Todos';
     let selectedYear = null;
+    let selectedGenre = null;
+    let selectedGenreName = '';
+    let selectedTvCategory = 'Todos';
     let catalogData = null;
     let heroItem = null;
     let liveChannels = [];
+    let liveCategories = ['Todos'];
     let currentStreams = [];
     let hlsInstance = null;
     let savedList = JSON.parse(localStorage.getItem('vj_my_list') || '[]');
@@ -1312,12 +1376,120 @@
     // GENERADOR DE AÑOS 2026 A 2000
     function initYearsBar() {
       const bar = document.getElementById('yearsBar');
+      if (!bar) return;
       let html = `<div class="year-chip ${selectedYear === null ? 'active' : ''}" onclick="selectYear(null)">✨ Todos los Años</div>`;
       for (let y = 2026; y >= 2000; y--) {
         const isNew = y >= 2025;
         html += `<div class="year-chip ${selectedYear === y ? 'active' : ''}" onclick="selectYear(${y})">${isNew ? '⭐ ' : ''}${y}</div>`;
       }
       bar.innerHTML = html;
+    }
+
+    // ICONOS Y FILTRO DE GÉNEROS CINEMATOGRÁFICOS
+    const GENRE_ICONS = {
+      28: '💥', 12: '🧭', 16: '🎨', 35: '😂', 80: '🕵️',
+      99: '📽️', 18: '🎭', 10751: '👨‍👩‍👧', 14: '🧙‍♂️', 36: '📜',
+      27: '👻', 10402: '🎵', 9648: '🔍', 10749: '❤️', 878: '🚀',
+      10770: '📺', 53: '⚡', 10752: '🪖', 37: '🤠'
+    };
+
+    const STATIC_GENRES = [
+      { id: 28, name: 'Acción' },
+      { id: 35, name: 'Comedia' },
+      { id: 27, name: 'Terror' },
+      { id: 16, name: 'Animación' },
+      { id: 878, name: 'Ciencia Ficción' },
+      { id: 12, name: 'Aventura' },
+      { id: 53, name: 'Suspenso' },
+      { id: 10749, name: 'Romance' },
+      { id: 80, name: 'Crimen' },
+      { id: 14, name: 'Fantasía' },
+      { id: 18, name: 'Drama' },
+      { id: 10751, name: 'Familiar' }
+    ];
+
+    async function initGenresBar() {
+      const bar = document.getElementById('genresBar');
+      if (!bar) return;
+      let genres = STATIC_GENRES;
+      try {
+        const res = await fetch('/api/streaming/genres');
+        const data = await res.json();
+        if (data.success && data.genres && data.genres.length > 0) {
+          genres = data.genres;
+        }
+      } catch (_) {}
+
+      let html = `<div class="genre-chip ${selectedGenre === null ? 'active' : ''}" onclick="selectGenre(null, 'Todos')">🎬 Todos los Géneros</div>`;
+      genres.forEach(g => {
+        const icon = GENRE_ICONS[g.id] || '🎬';
+        const isActive = selectedGenre === g.id;
+        html += `<div class="genre-chip ${isActive ? 'active' : ''}" onclick="selectGenre(${g.id}, '${g.name}')">${icon} ${g.name}</div>`;
+      });
+      bar.innerHTML = html;
+    }
+
+    async function selectGenre(genreId, genreName) {
+      selectedGenre = genreId;
+      selectedGenreName = genreName;
+      initGenresBar();
+      const container = document.getElementById('contentRows');
+
+      if (!genreId) {
+        renderCurrentTab();
+        return;
+      }
+
+      container.innerHTML = `<div style="text-align: center; padding: 40px;"><div class="loader"></div><p style="margin-top: 10px; color: #888;">Cargando catálogo de ${genreName} en Español...</p></div>`;
+
+      try {
+        const res = await fetch(`/api/streaming/movies/by-genre/${genreId}?page=1`);
+        const data = await res.json();
+        if (data.success && data.movies) {
+          let html = `<div class="section-title">🎬 Películas de ${genreName} (${data.movies.length} títulos)</div>`;
+          html += `<div class="grid-container">`;
+          data.movies.forEach(movie => {
+            html += renderCardHtml(movie);
+          });
+          html += `</div>`;
+          container.innerHTML = html;
+        }
+      } catch (e) {
+        container.innerHTML = `<p style="text-align:center; padding: 40px; color: #888;">No fue posible cargar el género ${genreName}.</p>`;
+      }
+    }
+
+    // CATEGORÍAS DE TV EN VIVO CON SEÑAL PERUANA Y VIP
+    function initTvCategoriesBar() {
+      const bar = document.getElementById('tvCategoriesBar');
+      if (!bar) return;
+      const cats = ['Todos'];
+      liveChannels.forEach(c => {
+        const cat = c.category || 'General';
+        if (!cats.includes(cat)) cats.push(cat);
+      });
+      liveCategories = cats;
+
+      let html = '';
+      cats.forEach(c => {
+        const isActive = selectedTvCategory === c;
+        let icon = '📺';
+        if (c.includes('Deporte')) icon = '⚽';
+        else if (c.includes('Noticia')) icon = '📰';
+        else if (c.includes('Infantil')) icon = '🧸';
+        else if (c.includes('Cine') || c.includes('Serie')) icon = '🍿';
+        else if (c.includes('Música')) icon = '🎵';
+        else if (c.includes('Nacional') || c.includes('Perú')) icon = '🇵🇪';
+
+        html += `<div class="tv-chip ${isActive ? 'active' : ''}" onclick="filterTvCategory('${c}')">${icon} ${c}</div>`;
+      });
+      bar.innerHTML = html;
+    }
+
+    function filterTvCategory(cat) {
+      selectedTvCategory = cat;
+      initTvCategoriesBar();
+      renderCurrentTab();
     }
 
     // CARGAR CATÁLOGO PRINCIPAL
@@ -1334,13 +1506,14 @@
       }
     }
 
-    // CARGAR CANALES PERUANOS
+    // CARGAR CANALES PERUANOS E INTERNACIONALES
     async function loadLiveChannels() {
       try {
         const res = await fetch('/api/streaming/live-channels');
         const data = await res.json();
         if (data.success && data.channels) {
           liveChannels = data.channels;
+          initTvCategoriesBar();
         }
       } catch (e) {
         console.error('Error al cargar canales:', e);
@@ -1355,11 +1528,23 @@
       });
 
       const yearsBar = document.getElementById('yearsBar');
+      const genresBar = document.getElementById('genresBar');
+      const tvCategoriesBar = document.getElementById('tvCategoriesBar');
+
       if (tab === 'Películas') {
         yearsBar.style.display = 'flex';
+        genresBar.style.display = 'flex';
+        tvCategoriesBar.style.display = 'none';
+      } else if (tab === 'TV en Vivo') {
+        yearsBar.style.display = 'none';
+        genresBar.style.display = 'none';
+        tvCategoriesBar.style.display = 'flex';
       } else {
         yearsBar.style.display = 'none';
+        genresBar.style.display = 'none';
+        tvCategoriesBar.style.display = 'none';
         selectedYear = null;
+        selectedGenre = null;
       }
 
       renderCurrentTab();
@@ -1395,7 +1580,7 @@
       }
     }
 
-    // RENDERIZAR PESTAÑA ACTUAL
+    // RENDERIZAR PESTAÑA ACTUAL (CATÁLOGO AMPLIO SIN REPETICIÓN)
     function renderCurrentTab() {
       if (!catalogData) return;
       const heroBanner = document.getElementById('heroBanner');
@@ -1403,12 +1588,17 @@
 
       if (currentTab === 'TV en Vivo') {
         heroBanner.style.display = 'none';
-        let html = `<div class="section-title">📡 Canales Peruanos e Internacionales en Vivo (Optimizado para TV y Móvil)</div>`;
+        const filteredChannels = selectedTvCategory === 'Todos'
+          ? liveChannels
+          : liveChannels.filter(c => c.category === selectedTvCategory);
+
+        let html = `<div class="section-title">📡 Canales de TV en Vivo (${filteredChannels.length} disponibles)</div>`;
         html += `<div class="grid-container">`;
-        liveChannels.forEach(ch => {
+        filteredChannels.forEach(ch => {
+          const logo = ch.logoUrl || ch.logo || '';
           html += `
             <div class="channel-card" onclick='playLiveChannel(${JSON.stringify(ch)})'>
-              <img class="channel-logo" src="${ch.logo}" alt="${ch.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 50\\'%3E%3Crect width=\\'100\\' height=\\'50\\' fill=\\'%23222\\'/ %3E%3Ctext x=\\'50%25\\' y=\\'60%25\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'white\\'%3ETV%3C/text%3E%3C/svg%3E'">
+              <img class="channel-logo" src="${logo}" alt="${ch.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 50\\'%3E%3Crect width=\\'100\\' height=\\'50\\' fill=\\'%23222\\'/ %3E%3Ctext x=\\'50%25\\' y=\\'60%25\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'white\\'%3ETV%3C/text%3E%3C/svg%3E'">
               <div class="channel-name">${ch.name}</div>
               <div class="channel-badge">● SEÑAL EN VIVO</div>
             </div>
@@ -1440,6 +1630,7 @@
 
       let contentHtml = '';
 
+      // CATÁLOGO AMPLIO MULTI-CATEGORÍA 100% DESDUPLICADO
       if (currentTab === 'Todos' || currentTab === 'Películas') {
         if (catalogData.nowPlaying && catalogData.nowPlaying.length > 0) {
           contentHtml += renderRow('🍿 Estrenos de Cine en Calidad Limpia', catalogData.nowPlaying);
@@ -1450,8 +1641,23 @@
         if (catalogData.action && catalogData.action.length > 0) {
           contentHtml += renderRow('💥 Acción y Adrenalina', catalogData.action);
         }
+        if (catalogData.comedy && catalogData.comedy.length > 0) {
+          contentHtml += renderRow('😂 Comedias y Risas', catalogData.comedy);
+        }
+        if (catalogData.horror && catalogData.horror.length > 0) {
+          contentHtml += renderRow('👻 Terror y Suspenso', catalogData.horror);
+        }
+        if (catalogData.animation && catalogData.animation.length > 0) {
+          contentHtml += renderRow('🎨 Animación y Familiar', catalogData.animation);
+        }
         if (catalogData.scifi && catalogData.scifi.length > 0) {
           contentHtml += renderRow('🚀 Ciencia Ficción y Fantasía', catalogData.scifi);
+        }
+        if (catalogData.adventure && catalogData.adventure.length > 0) {
+          contentHtml += renderRow('🧭 Aventura y Épicas', catalogData.adventure);
+        }
+        if (catalogData.classics && catalogData.classics.length > 0) {
+          contentHtml += renderRow('💎 Joyas y Clásicos del Cine', catalogData.classics);
         }
       }
 
@@ -1486,13 +1692,16 @@
     function renderCardHtml(item) {
       const poster = item.posters?.medium || item.posters?.thumbnail || item.posters?.original || '';
       const rating = item.rating ? Number(item.rating).toFixed(1) : '7.5';
+      const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || '');
       const safeItem = encodeURIComponent(JSON.stringify(item));
       return `
         <div class="media-card" onclick="openMediaDetail('${safeItem}')">
+          <div class="media-lang-badge">ESP</div>
           <img class="media-poster" src="${poster}" alt="${item.title}" loading="lazy">
           <div class="media-rating">★ ${rating}</div>
           <div class="media-info">
             <div class="media-title">${item.title}</div>
+            ${year ? `<div style="font-size: 11px; color: #8E8E93; margin-top: 3px;">${year}</div>` : ''}
           </div>
         </div>
       `;
@@ -1730,6 +1939,7 @@
     // INICIALIZACIÓN
     window.addEventListener('DOMContentLoaded', () => {
       initYearsBar();
+      initGenresBar();
       loadCatalog();
       loadLiveChannels();
       checkIosDevice();

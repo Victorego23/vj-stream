@@ -466,23 +466,87 @@ class TmdbService {
   }
 
   /**
-   * Retorna las 5 categorías principales del catálogo consolidado en paralelo.
+   * Lista oficial de géneros cinematográficos con íconos representativos para VJ STREAM.
+   */
+  getGenresList() {
+    return [
+      { id: 28, name: 'Acción', icon: '💥' },
+      { id: 35, name: 'Comedia', icon: '😂' },
+      { id: 27, name: 'Terror', icon: '😱' },
+      { id: 878, name: 'Ciencia Ficción', icon: '🚀' },
+      { id: 16, name: 'Animación', icon: '🎨' },
+      { id: 53, name: 'Suspenso', icon: '🕵️' },
+      { id: 12, name: 'Aventura', icon: '🗺️' },
+      { id: 14, name: 'Fantasía', icon: '🧙' },
+      { id: 10749, name: 'Romance', icon: '💖' },
+      { id: 18, name: 'Drama', icon: '🎭' },
+      { id: 80, name: 'Crimen', icon: '🕶️' }
+    ];
+  }
+
+  /**
+   * Retorna el catálogo ampliado y consolidado con DESDUPLICACIÓN ESTRICTA.
+   * Garantiza que ninguna película se repita en más de una categoría.
    */
   async getFullCatalog() {
     try {
-      const [trending, nowPlaying, action, scifi, series] = await Promise.all([
-        this.getTrendingWeekly(),
+      const [
+        nowPlayingRaw,
+        trendingRaw,
+        actionRaw,
+        comedyRaw,
+        horrorRaw,
+        animationRaw,
+        scifiRaw,
+        adventureRaw,
+        classicsRaw,
+        seriesRaw
+      ] = await Promise.all([
         this.getNowPlayingMovies(),
-        this.getMoviesByGenre(28),  // Acción
-        this.getMoviesByGenre(878), // Ciencia Ficción
-        this.getPopularTvShows()     // Series
+        this.getTrendingWeekly(),
+        this.getMoviesByGenre(28, 1),   // Acción
+        this.getMoviesByGenre(35, 1),   // Comedia
+        this.getMoviesByGenre(27, 1),   // Terror
+        this.getMoviesByGenre(16, 1),   // Animación
+        this.getMoviesByGenre(878, 1),  // Ciencia Ficción
+        this.getMoviesByGenre(12, 1),   // Aventura
+        this.getMoviesByYearRange(2000, 2015, 1), // Clásicos modernos
+        this.getPopularTvShows()        // Series
       ]);
 
+      // Control estricto de desduplicación cruzada: ningún ID se repite en todo el catálogo
+      const seenIds = new Set();
+      const dedupe = (items) => {
+        if (!Array.isArray(items)) return [];
+        return items.filter(item => {
+          if (!item || !item.id) return false;
+          if (seenIds.has(item.id)) return false;
+          seenIds.add(item.id);
+          return true;
+        });
+      };
+
+      const nowPlaying = dedupe(nowPlayingRaw);
+      const trending = dedupe(trendingRaw);
+      const action = dedupe(actionRaw);
+      const comedy = dedupe(comedyRaw);
+      const horror = dedupe(horrorRaw);
+      const animation = dedupe(animationRaw);
+      const scifi = dedupe(scifiRaw);
+      const adventure = dedupe(adventureRaw);
+      const classics = dedupe(classicsRaw);
+      const series = dedupe(seriesRaw);
+
       return {
-        trending,
         nowPlaying,
+        trending,
         action,
+        comedy,
+        horror,
+        animation,
         scifi,
+        adventure,
+        classics,
         series
       };
     } catch (error) {
