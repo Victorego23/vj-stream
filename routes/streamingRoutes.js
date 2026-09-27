@@ -456,15 +456,16 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.5.0',
-    versionCode: 17,
+    latestVersion: '2.6.0',
+    versionCode: 18,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-26',
+    releaseDate: '2026-09-27',
     releaseNotes: [
-      '🎬 Cartelera expandida: Todas las películas del 2000 al 2026 con actualización automática',
-      '🎧 Sonido Español Estéreo 2.0 en películas y series: Diálogos nítidos y sin volumen bajo en TV',
-      '⭐ Explorador de colecciones por año con navegación fluida para Smart TV y móvil',
-      '🔒 Estabilidad y rendimiento optimizado en reproducción y failover de canales'
+      '🍿 Catálogo ultra amplio: 10 categorías temáticas 100% desduplicadas (cero películas repetidas)',
+      '🎧 Filtro estricto 100% en Español garantizado (Latino / Castellano)',
+      '⚡ Optimización de Real-Debrid y limpieza instantánea de enlaces no cacheados',
+      '💥 Barra interactiva de géneros cinematográficos y categorías de TV en vivo',
+      '📺 Nuevos canales y señales de respaldo automáticas (Failover)'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
