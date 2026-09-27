@@ -173,10 +173,18 @@ class AuthService {
       final origin = ApiService().serverOrigin;
       final uri = Uri.parse('$origin/api/auth/verify-license');
 
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString(_prefSessionTokenKey);
+      final clientCode = prefs.getString(_prefClientCodeKey);
+
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'deviceId': deviceId}),
+        body: json.encode({
+          'deviceId': deviceId,
+          'token': token,
+          'code': clientCode,
+        }),
       ).timeout(const Duration(seconds: 6));
 
       if (response.statusCode == 200) {

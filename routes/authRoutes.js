@@ -38,13 +38,13 @@ router.get('/check-status/:code', (req, res) => {
  * @desc    Verifica la validez de la membresía en cada reproducción o inicio
  */
 router.post('/verify-license', (req, res) => {
-  const { deviceId } = req.body;
+  const { deviceId, token, code } = req.body;
 
   if (!deviceId) {
     return res.status(400).json({ success: false, error: 'deviceId es requerido.' });
   }
 
-  const result = accountService.verifyLicense(deviceId);
+  const result = accountService.verifyLicense(deviceId, { token, code });
   return res.json({ success: true, ...result });
 });
 

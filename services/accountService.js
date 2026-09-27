@@ -4,9 +4,11 @@ const crypto = require('crypto');
 
 const DATA_DIR = path.resolve(__dirname, '..', 'data');
 const DB_FILE = path.resolve(DATA_DIR, 'accounts.json');
+const BACKUP_FILE = path.resolve(DATA_DIR, 'accounts_backup.json');
 
 // Contraseña de administrador por defecto (configurable por variable de entorno)
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234';
+const SIGNING_SECRET = process.env.JWT_SECRET || DEFAULT_ADMIN_PASSWORD + '_vj_secure_stream_2026';
 
 class AccountService {
   constructor() {
@@ -18,19 +20,66 @@ class AccountService {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
 
+    let initialData = {
+      admin: {
+        password: DEFAULT_ADMIN_PASSWORD,
+      },
+      settings: {
+        whatsappNumber: process.env.WHATSAPP_NUMBER || '+51999999999',
+        whatsappMessage: 'Hola, mi código de activación de VJ STREAM es {code}',
+      },
+      clients: [
+        {
+          id: 'c1f7a089-victor-egocheaga-vj3166',
+          name: 'victor egocheaga',
+          username: 'victor_egocheaga_343',
+          code: 'VJ-3166',
+          status: 'active',
+          planDays: 365,
+          maxDevices: 5,
+          createdAt: '2026-09-26T00:00:00.000Z',
+          expiresAt: '2027-09-26T23:59:59.000Z',
+          devices: []
+        }
+      ],
+      pendingActivations: []
+    };
+
+    // Auto-recuperación desde Backup si el archivo principal no existe o se reseteó
     if (!fs.existsSync(DB_FILE)) {
-      const initialData = {
-        admin: {
-          password: DEFAULT_ADMIN_PASSWORD,
-        },
-        settings: {
-          whatsappNumber: process.env.WHATSAPP_NUMBER || '+51999999999',
-          whatsappMessage: 'Hola, mi código de activación de VJ STREAM es {code}',
-        },
-        clients: [],
-        pendingActivations: []
-      };
+      if (fs.existsSync(BACKUP_FILE)) {
+        try {
+          const backupRaw = fs.readFileSync(BACKUP_FILE, 'utf8');
+          const backupParsed = JSON.parse(backupRaw);
+          if (backupParsed && Array.isArray(backupParsed.clients) && backupParsed.clients.length > 0) {
+            initialData = backupParsed;
+          }
+        } catch (_) {}
+      }
       fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf8');
+      if (!fs.existsSync(BACKUP_FILE)) {
+        fs.writeFileSync(BACKUP_FILE, JSON.stringify(initialData, null, 2), 'utf8');
+      }
+    } else {
+      // Sincronizar clientes existentes entre DB y Backup para máxima persistencia
+      try {
+        const dbData = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        if (fs.existsSync(BACKUP_FILE)) {
+          const backupData = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+          if (Array.isArray(backupData.clients) && backupData.clients.length > (dbData.clients || []).length) {
+            // Si el backup tiene más clientes que la DB de Git, fusionar
+            const clientMap = new Map();
+            (dbData.clients || []).forEach(c => clientMap.set(c.id, c));
+            backupData.clients.forEach(c => {
+              if (!clientMap.has(c.id)) clientMap.set(c.id, c);
+            });
+            dbData.clients = Array.from(clientMap.values());
+            fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), 'utf8');
+          }
+        } else {
+          fs.writeFileSync(BACKUP_FILE, JSON.stringify(dbData, null, 2), 'utf8');
+        }
+      } catch (_) {}
     }
   }
 
@@ -41,18 +90,73 @@ class AccountService {
       return JSON.parse(content);
     } catch (e) {
       console.error('[AccountService] Error leyendo DB:', e);
+      if (fs.existsSync(BACKUP_FILE)) {
+        try {
+          return JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+        } catch (_) {}
+      }
       return { admin: { password: DEFAULT_ADMIN_PASSWORD }, settings: {}, clients: [], pendingActivations: [] };
     }
   }
 
   _writeDb(data) {
     try {
-      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+      const jsonStr = JSON.stringify(data, null, 2);
+      fs.writeFileSync(DB_FILE, jsonStr, 'utf8');
+      // Guardar copia de seguridad redundante simultáneamente
+      fs.writeFileSync(BACKUP_FILE, jsonStr, 'utf8');
       return true;
     } catch (e) {
       console.error('[AccountService] Error escribiendo en DB:', e);
       return false;
     }
+  }
+
+  // -------------------------------------------------------------
+  // AUTORIZACIÓN Y CRIPTOGRAFÍA AUTÓNOMA (SELF-HEALING LICENSES)
+  // -------------------------------------------------------------
+
+  /**
+   * Genera un token firmado criptográficamente que contiene la identidad,
+   * código y expiración del cliente. Si el backend se reinicia, el token se auto-valida y auto-restaura.
+   */
+  _generateClientToken(client, deviceId) {
+    if (!client) return '';
+    const payload = {
+      cid: client.id,
+      name: client.name,
+      code: client.code,
+      exp: client.expiresAt,
+      did: deviceId,
+      max: client.maxDevices || 1,
+      iat: Date.now()
+    };
+    const b64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const sig = crypto.createHmac('sha256', SIGNING_SECRET).update(b64).digest('base64url');
+    return `vj2.${b64}.${sig}`;
+  }
+
+  /**
+   * Verifica la firma matemática de un token autónomo
+   */
+  _verifyAndDecodeToken(token) {
+    if (!token || typeof token !== 'string') return null;
+
+    if (token.startsWith('vj2.')) {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const [_, b64, sig] = parts;
+      const expectedSig = crypto.createHmac('sha256', SIGNING_SECRET).update(b64).digest('base64url');
+      if (sig !== expectedSig) return null;
+      try {
+        const jsonStr = Buffer.from(b64, 'base64url').toString('utf8');
+        return JSON.parse(jsonStr);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return null;
   }
 
   // -------------------------------------------------------------
@@ -93,7 +197,6 @@ class AccountService {
     const db = this._readDb();
     const now = new Date();
 
-    // Actualizar estado dinámicamente según la fecha de expiración
     return db.clients.map(client => {
       const expiresAt = new Date(client.expiresAt);
       const isExpired = expiresAt < now;
@@ -119,19 +222,29 @@ class AccountService {
     return clients.find(c => c.id === id);
   }
 
-  createClient({ name, username, planDays = 30, maxDevices = 1 }) {
+  createClient({ name, username, planDays = 30, maxDevices = 1, customCode = null }) {
     const db = this._readDb();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + (planDays * 24 * 60 * 60 * 1000));
+    const parsedDays = parseInt(planDays, 10) || 30;
+    const expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+
+    let finalCode = customCode;
+    if (!finalCode) {
+      finalCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+      // Evitar colisión de código
+      while (db.clients.some(c => c.code === finalCode)) {
+        finalCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+      }
+    }
 
     const newClient = {
       id: crypto.randomUUID(),
       name: name.trim(),
       username: (username || name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
-      code: 'VJ-' + Math.floor(1000 + Math.random() * 9000),
+      code: finalCode,
       status: 'active',
-      planDays: parseInt(planDays, 10),
-      maxDevices: parseInt(maxDevices, 10),
+      planDays: parsedDays,
+      maxDevices: parseInt(maxDevices, 10) || 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
       devices: []
@@ -155,7 +268,8 @@ class AccountService {
       baseDate = now;
     }
 
-    const newExpiresAt = new Date(baseDate.getTime() + (additionalDays * 24 * 60 * 60 * 1000));
+    const parsedDays = parseInt(additionalDays, 10) || 30;
+    const newExpiresAt = new Date(baseDate.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
     client.expiresAt = newExpiresAt.toISOString();
     client.status = 'active';
 
@@ -193,7 +307,7 @@ class AccountService {
   }
 
   // -------------------------------------------------------------
-  // FLUJO DE ACTIVACIÓN POR CÓDIGO (SMART TV Y MÓVIL)
+  // FLUJO DE ACTIVACIÓN ULTRA-PERSISTENTE (SMART TV, MÓVIL Y IPHONE)
   // -------------------------------------------------------------
 
   /**
@@ -208,7 +322,72 @@ class AccountService {
     const cleanDeviceId = normalize(deviceId);
     const cleanCode = normalize(code).toUpperCase();
 
-    // 1. Verificar si este dispositivo ya está vinculado a un cliente existente por deviceId
+    // 0. AUTO-RESTAURACIÓN POR TOKEN DE LICENCIA CRIPTOGRÁFICA (A PRUEBA DE REINICIOS DE RENDER)
+    if (token) {
+      const decoded = this._verifyAndDecodeToken(token);
+      if (decoded && decoded.exp) {
+        const tokenExpires = new Date(decoded.exp);
+        if (tokenExpires > now) {
+          // El token es auténtico y no ha vencido
+          let targetClient = db.clients.find(c => c.id === decoded.cid || c.code === decoded.code);
+          if (!targetClient) {
+            // Auto-restaurar al cliente si fue borrado por reinicio de contenedor
+            targetClient = {
+              id: decoded.cid || crypto.randomUUID(),
+              name: decoded.name || 'Cliente Autorizado',
+              username: (decoded.name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
+              code: decoded.code || ('VJ-' + Math.floor(1000 + Math.random() * 9000)),
+              status: 'active',
+              planDays: Math.ceil((tokenExpires - now) / (1000 * 60 * 60 * 24)) || 30,
+              maxDevices: decoded.max || 1,
+              createdAt: now.toISOString(),
+              expiresAt: decoded.exp,
+              devices: [
+                {
+                  deviceId: cleanDeviceId,
+                  deviceModel,
+                  lastSeen: now.toISOString()
+                }
+              ]
+            };
+            db.clients.push(targetClient);
+            this._writeDb(db);
+          } else {
+            // Actualizar o vincular este dispositivo
+            if (!targetClient.devices) targetClient.devices = [];
+            const existingDev = targetClient.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
+            if (!existingDev) {
+              targetClient.devices.push({
+                deviceId: cleanDeviceId,
+                deviceModel,
+                lastSeen: now.toISOString()
+              });
+            } else {
+              existingDev.lastSeen = now.toISOString();
+              existingDev.deviceModel = deviceModel;
+            }
+            this._writeDb(db);
+          }
+
+          if (targetClient.status !== 'suspended') {
+            return {
+              status: 'active',
+              client: {
+                id: targetClient.id,
+                name: targetClient.name,
+                username: targetClient.username,
+                code: targetClient.code,
+                expiresAt: targetClient.expiresAt,
+                maxDevices: targetClient.maxDevices
+              },
+              token: this._generateClientToken(targetClient, cleanDeviceId)
+            };
+          }
+        }
+      }
+    }
+
+    // 1. Verificar si este dispositivo ya está registrado por deviceId en algún cliente
     for (const client of db.clients) {
       const matchDevice = client.devices && client.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
       if (matchDevice) {
@@ -246,20 +425,19 @@ class AccountService {
             expiresAt: client.expiresAt,
             maxDevices: client.maxDevices
           },
-          token: this._generateClientToken(client.id, cleanDeviceId)
+          token: this._generateClientToken(client, cleanDeviceId)
         };
       }
     }
 
-    // 2. Si no se encontró por deviceId pero la app o el usuario enviaron su código TV (ej: VJ-3166) o token de sesión:
+    // 2. Si se envió un código de cliente (ej: VJ-3166) o token heredado:
     if (cleanCode || token) {
       for (const client of db.clients) {
         const matchesCode = cleanCode && (normalize(client.code) === cleanCode);
         let matchesToken = false;
         if (token && client.id) {
-          const expectedToken = this._generateClientToken(client.id, cleanDeviceId);
           const [tokenClientId] = token.split('.');
-          matchesToken = (token === expectedToken) || (tokenClientId === client.id) || token.startsWith(client.id);
+          matchesToken = (tokenClientId === client.id) || token.startsWith(client.id);
         }
 
         if (matchesCode || matchesToken) {
@@ -309,7 +487,7 @@ class AccountService {
               expiresAt: client.expiresAt,
               maxDevices: client.maxDevices
             },
-            token: this._generateClientToken(client.id, cleanDeviceId)
+            token: this._generateClientToken(client, cleanDeviceId)
           };
         }
       }
@@ -346,13 +524,12 @@ class AccountService {
             expiresAt: client.expiresAt,
             maxDevices: client.maxDevices
           },
-          token: this._generateClientToken(client.id, cleanDeviceId)
+          token: this._generateClientToken(client, cleanDeviceId)
         };
       }
     }
 
     // 4. Si es un dispositivo nuevo sin activar, buscar si ya tiene un código pendiente ACTIVO
-    // Limpiar códigos pendientes con más de 24 horas de antigüedad
     db.pendingActivations = db.pendingActivations.filter(p => {
       const age = now - new Date(p.createdAt);
       return age < 24 * 60 * 60 * 1000;
@@ -361,7 +538,6 @@ class AccountService {
     let pending = db.pendingActivations.find(p => normalize(p.deviceId) === cleanDeviceId && p.status === 'pending');
 
     if (!pending) {
-      // Generar código fácil de leer (ej: VJ-7429)
       const randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
       pending = {
         code: randomCode,
@@ -385,13 +561,29 @@ class AccountService {
   }
 
   /**
-   * Consulta el estado de un código pendiente (polling cada 3 segundos desde la TV)
+   * Consulta el estado de un código pendiente (polling cada 3 segundos desde la TV o web)
    */
   checkActivationStatus(code, deviceId) {
     const db = this._readDb();
     const pending = db.pendingActivations.find(p => p.code === code);
 
     if (!pending) {
+      // Si no está en pending, buscar si ya es el código de un cliente activo
+      const client = db.clients.find(c => c.code === code);
+      if (client && client.status === 'active') {
+        return {
+          status: 'active',
+          client: {
+            id: client.id,
+            name: client.name,
+            username: client.username,
+            code: client.code,
+            expiresAt: client.expiresAt,
+            maxDevices: client.maxDevices
+          },
+          token: this._generateClientToken(client, deviceId)
+        };
+      }
       return { status: 'not_found' };
     }
 
@@ -408,7 +600,7 @@ class AccountService {
             expiresAt: client.expiresAt,
             maxDevices: client.maxDevices
           },
-          token: this._generateClientToken(client.id, deviceId)
+          token: this._generateClientToken(client, deviceId || pending.deviceId)
         };
       }
     }
@@ -419,7 +611,6 @@ class AccountService {
   getPendingActivations() {
     const db = this._readDb();
     const now = new Date();
-    // Solo pendientes en las últimas 24 horas
     return db.pendingActivations
       .filter(p => p.status === 'pending')
       .map(p => {
@@ -443,7 +634,8 @@ class AccountService {
     }
 
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + (planDays * 24 * 60 * 60 * 1000));
+    const parsedDays = parseInt(planDays, 10) || 30;
+    const expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
 
     // Crear el nuevo cliente asociado al dispositivo que generó el código
     const newClient = {
@@ -452,8 +644,8 @@ class AccountService {
       username: name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
       code: pending.code,
       status: 'active',
-      planDays: parseInt(planDays, 10),
-      maxDevices: parseInt(maxDevices, 10),
+      planDays: parsedDays,
+      maxDevices: parseInt(maxDevices, 10) || 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
       devices: [
@@ -482,12 +674,14 @@ class AccountService {
   /**
    * Valida la licencia en cada inicio de la app o reproducción
    */
-  verifyLicense(deviceId) {
+  verifyLicense(deviceId, { token, code } = {}) {
     const db = this._readDb();
     const now = new Date();
+    const cleanDeviceId = (deviceId || '').trim();
 
+    // 1. Búsqueda por deviceId registrado
     for (const client of db.clients) {
-      const dev = client.devices && client.devices.find(d => d.deviceId === deviceId);
+      const dev = client.devices && client.devices.find(d => (d.deviceId || '').trim() === cleanDeviceId);
       if (dev) {
         dev.lastSeen = now.toISOString();
 
@@ -514,13 +708,102 @@ class AccountService {
       }
     }
 
+    // 2. Si no se encontró por deviceId pero hay token de licencia firmado (Auto-Sanación tras reinicios)
+    if (token) {
+      const decoded = this._verifyAndDecodeToken(token);
+      if (decoded && decoded.exp) {
+        const tokenExpires = new Date(decoded.exp);
+        if (tokenExpires > now) {
+          let client = db.clients.find(c => c.id === decoded.cid || c.code === decoded.code);
+          if (!client) {
+            client = {
+              id: decoded.cid || crypto.randomUUID(),
+              name: decoded.name || 'Cliente Autorizado',
+              username: (decoded.name || 'cliente').toLowerCase().replace(/\s+/g, '_'),
+              code: decoded.code || ('VJ-' + Math.floor(1000 + Math.random() * 9000)),
+              status: 'active',
+              planDays: 30,
+              maxDevices: decoded.max || 1,
+              createdAt: now.toISOString(),
+              expiresAt: decoded.exp,
+              devices: [
+                {
+                  deviceId: cleanDeviceId,
+                  deviceModel: 'Dispositivo Vinculado',
+                  lastSeen: now.toISOString()
+                }
+              ]
+            };
+            db.clients.push(client);
+          } else {
+            if (!client.devices) client.devices = [];
+            if (!client.devices.some(d => (d.deviceId || '').trim() === cleanDeviceId)) {
+              client.devices.push({
+                deviceId: cleanDeviceId,
+                deviceModel: 'Dispositivo Vinculado',
+                lastSeen: now.toISOString()
+              });
+            }
+          }
+          this._writeDb(db);
+
+          return {
+            active: true,
+            client: {
+              name: client.name,
+              expiresAt: client.expiresAt,
+              maxDevices: client.maxDevices
+            }
+          };
+        }
+      }
+    }
+
     return { active: false, reason: 'unregistered', message: 'Dispositivo no registrado.' };
   }
 
-  _generateClientToken(clientId, deviceId) {
-    const data = `${clientId}:${deviceId}`;
-    const sig = crypto.createHmac('sha256', DEFAULT_ADMIN_PASSWORD).update(data).digest('hex');
-    return `${clientId}.${sig}`;
+  // -------------------------------------------------------------
+  // BACKUP Y RESTAURACIÓN DEL PANEL DE ADMINISTRACIÓN
+  // -------------------------------------------------------------
+
+  exportBackup() {
+    const db = this._readDb();
+    return {
+      version: '2.6.0',
+      exportedAt: new Date().toISOString(),
+      app: 'VJ STREAM',
+      admin: db.admin,
+      settings: db.settings,
+      clients: db.clients,
+      pendingActivations: db.pendingActivations
+    };
+  }
+
+  importBackup(backupData) {
+    if (!backupData || !Array.isArray(backupData.clients)) {
+      return { success: false, error: 'Formato de copia de seguridad inválido.' };
+    }
+
+    const currentDb = this._readDb();
+    const clientMap = new Map();
+
+    // Mantener clientes actuales y agregar los del backup
+    (currentDb.clients || []).forEach(c => clientMap.set(c.id, c));
+    backupData.clients.forEach(c => {
+      if (c && c.id) clientMap.set(c.id, c);
+    });
+
+    currentDb.clients = Array.from(clientMap.values());
+    if (backupData.settings) {
+      currentDb.settings = { ...currentDb.settings, ...backupData.settings };
+    }
+
+    this._writeDb(currentDb);
+    return {
+      success: true,
+      totalClients: currentDb.clients.length,
+      message: `Copia de seguridad restaurada con éxito. ${currentDb.clients.length} clientes activos en el sistema.`
+    };
   }
 }
 

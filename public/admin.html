@@ -241,7 +241,9 @@
         <div class="status-pill"><span>●</span> En Línea</div>
       </div>
       <div class="nav-actions">
-        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 APK v2.5.0</a>
+        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 APK v2.6.0</a>
+        <button class="btn btn-secondary btn-sm" onclick="downloadBackup()" title="Descargar copia de seguridad de clientes en JSON">💾 Backup</button>
+        <button class="btn btn-secondary btn-sm" onclick="openRestoreModal()" title="Restaurar clientes desde JSON">📥 Restaurar</button>
         <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">🔄 Refrescar</button>
         <button class="btn btn-danger btn-sm" onclick="handleLogout()">Salir</button>
       </div>
@@ -421,11 +423,15 @@
         <div class="form-group">
           <label>Plan de Servicio:</label>
           <select id="act-plan" class="form-control">
-            <option value="30">1 Mes (30 días)</option>
-            <option value="60">2 Meses (60 días)</option>
-            <option value="90">3 Meses (90 días)</option>
-            <option value="365">1 Año (365 días)</option>
-            <option value="7">Demo 7 Días</option>
+            <option value="3">3 Días (Prueba Gratis)</option>
+            <option value="7">7 Días (Demo VIP)</option>
+            <option value="15">15 Días (Quincenal)</option>
+            <option value="30" selected>30 Días (1 Mes Oficial)</option>
+            <option value="60">60 Días (2 Meses)</option>
+            <option value="90">90 Días (3 Meses Trimestral)</option>
+            <option value="180">180 Días (6 Meses Semestral)</option>
+            <option value="365">365 Días (1 Año Anual)</option>
+            <option value="9999">Vitalicio / Permanente (VIP)</option>
           </select>
         </div>
         <div class="form-group">
@@ -434,6 +440,8 @@
             <option value="1">1 Dispositivo (Estándar)</option>
             <option value="2">2 Dispositivos</option>
             <option value="3">3 Dispositivos</option>
+            <option value="4">4 Dispositivos</option>
+            <option value="5">5 Dispositivos (Familiar)</option>
           </select>
         </div>
         <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">¡Confirmar y Desbloquear Pantalla!</button>
@@ -456,10 +464,15 @@
         <div class="form-group">
           <label>Plan de Servicio:</label>
           <select id="new-plan" class="form-control">
-            <option value="30">1 Mes (30 días)</option>
-            <option value="60">2 Meses (60 días)</option>
-            <option value="90">3 Meses (90 días)</option>
-            <option value="365">1 Año (365 días)</option>
+            <option value="3">3 Días (Prueba Gratis)</option>
+            <option value="7">7 Días (Demo VIP)</option>
+            <option value="15">15 Días (Quincenal)</option>
+            <option value="30" selected>30 Días (1 Mes Oficial)</option>
+            <option value="60">60 Días (2 Meses)</option>
+            <option value="90">90 Días (3 Meses Trimestral)</option>
+            <option value="180">180 Días (6 Meses Semestral)</option>
+            <option value="365">365 Días (1 Año Anual)</option>
+            <option value="9999">Vitalicio / Permanente (VIP)</option>
           </select>
         </div>
         <div class="form-group">
@@ -468,10 +481,34 @@
             <option value="1">1 Pantalla</option>
             <option value="2">2 Pantallas</option>
             <option value="3">3 Pantallas</option>
+            <option value="4">4 Pantallas</option>
+            <option value="5">5 Pantallas (Familiar)</option>
           </select>
         </div>
         <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">Guardar Cliente</button>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RESTAURAR COPIA DE SEGURIDAD -->
+  <div class="modal" id="modal-restore">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">📥 Restaurar Copia de Seguridad</h3>
+        <button class="close-btn" onclick="closeModal('modal-restore')">&times;</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Selecciona un archivo JSON previamente descargado para restaurar clientes y dispositivos autorizados.
+      </p>
+      <div class="form-group">
+        <label>Seleccionar archivo .json de respaldo:</label>
+        <input type="file" id="restore-file-input" class="form-control" accept=".json" onchange="handleRestoreFile(event)">
+      </div>
+      <div class="form-group">
+        <label>O pega el texto JSON de respaldo:</label>
+        <textarea id="restore-json-text" class="form-control" rows="5" placeholder='{"clients": [...]}'></textarea>
+      </div>
+      <button type="button" class="btn btn-primary" style="width: 100%;" onclick="submitRestoreBackup()">Restaurar Clientes Ahora</button>
     </div>
   </div>
 
@@ -749,10 +786,11 @@
             <td>${c.deviceCount} / ${c.maxDevices}</td>
             <td>
               <div class="actions-cell">
-                <button class="btn btn-whatsapp btn-sm" title="Enviar recordatorio por WhatsApp" onclick="sendWhatsAppReminder('${c.id}')">💬 WhatsApp</button>
+                <button class="btn btn-whatsapp btn-sm" title="Enviar enlace de activación rápida y acceso por WhatsApp" onclick="sendWhatsAppQuickLink('${c.id}')">📲 WhatsApp</button>
+                <button class="btn btn-secondary btn-sm" title="Copiar enlace directo de activación instantánea" onclick="copyClientActivationLink('${c.code}')">🔗 Link</button>
                 <button class="btn btn-success btn-sm" title="Renovar +30 Días" onclick="renewClient('${c.id}', 30)">+30d</button>
                 <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
-                <button class="btn btn-secondary btn-sm" title="Limpiar dispositivos si cambió de TV" onclick="resetDevices('${c.id}')">📺</button>
+                <button class="btn btn-secondary btn-sm" title="Desvincular dispositivos para permitir registrar una nueva TV o móvil" onclick="resetDevices('${c.id}')">📺 Reset (${c.deviceCount})</button>
                 <button class="btn btn-danger btn-sm" title="Eliminar cliente" onclick="deleteClient('${c.id}')">🗑️</button>
               </div>
             </td>
@@ -761,24 +799,82 @@
       }).join('');
     }
 
-    function sendWhatsAppReminder(clientId) {
+    function getBaseAppUrl() {
+      return window.location.origin;
+    }
+
+    function copyClientActivationLink(code) {
+      const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(code)}`;
+      navigator.clipboard.writeText(link).then(() => {
+        alert(`✅ ¡Enlace de activación copiado!\n\n${link}\n\nEnvíalo a tu cliente por WhatsApp. Al tocarlo en su iPhone o navegador, su dispositivo se activará automáticamente sin pedir código.`);
+      }).catch(() => {
+        prompt('Copia este enlace directo de activación:', link);
+      });
+    }
+
+    function sendWhatsAppQuickLink(clientId) {
       const client = allClients.find(c => c.id === clientId);
       if (!client) return;
 
+      const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(client.code)}`;
       const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-      let message = `Hola ${client.name}! `;
+      
+      let msg = `¡Hola ${client.name}! Tu acceso a VJ STREAM ya está activo.\n\n`;
+      msg += `🔑 Código de Activación: *${client.code}*\n`;
+      msg += `📅 Vence el: *${expDate}* (${client.daysRemaining} días restantes)\n\n`;
+      msg += `📱 *Para ver en iPhone, iPad o navegador web*, pulsa en este enlace directo:\n${link}\n\n`;
+      msg += `📺 *Para Smart TV o Android TV*, abre la app VJ STREAM e ingresa tu código *${client.code}*.\n\n`;
+      msg += `¡Que disfrutes de tus películas, series y canales en vivo!`;
 
-      if (client.daysRemaining <= 0 || client.status === 'expired') {
-        message += `Tu suscripción a VJ STREAM ha vencido el ${expDate}. Para renovar tu acceso y seguir disfrutando del catálogo y TV en Vivo sin interrupciones, responde a este mensaje para confirmar tu pago.`;
-      } else if (client.daysRemaining <= 3) {
-        message += `Te recordamos que a tu cuenta de VJ STREAM le quedan ${client.daysRemaining} días de servicio (vence el ${expDate}). Puedes renovar hoy mismo para no perder el servicio.`;
-      } else {
-        message += `Tu cuenta de VJ STREAM está activa con ${client.daysRemaining} días restantes (vence el ${expDate}). ¡Gracias por preferir VJ STREAM!`;
+      const encoded = encodeURIComponent(msg);
+      window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    function downloadBackup() {
+      if (!adminToken) return;
+      window.open(`/api/admin/backup?key=${encodeURIComponent(adminToken)}`, '_blank');
+    }
+
+    function openRestoreModal() {
+      document.getElementById('restore-file-input').value = '';
+      document.getElementById('restore-json-text').value = '';
+      document.getElementById('modal-restore').style.display = 'flex';
+    }
+
+    function handleRestoreFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        document.getElementById('restore-json-text').value = ev.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    async function submitRestoreBackup() {
+      const text = document.getElementById('restore-json-text').value.trim();
+      if (!text) {
+        alert('Por favor selecciona un archivo JSON o pega el texto de respaldo.');
+        return;
       }
-
-      const encoded = encodeURIComponent(message);
-      const url = `https://wa.me/?text=${encoded}`;
-      window.open(url, '_blank');
+      try {
+        const parsed = JSON.parse(text);
+        const res = await fetch('/api/admin/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify(parsed)
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`✅ ${data.message || 'Copia de seguridad restaurada.'}`);
+          closeModal('modal-restore');
+          fetchOverview();
+        } else {
+          alert(`❌ Error: ${data.error || 'No fue posible restaurar.'}`);
+        }
+      } catch (err) {
+        alert('El texto no es un formato JSON válido.');
+      }
     }
 
     // Acciones de Clientes

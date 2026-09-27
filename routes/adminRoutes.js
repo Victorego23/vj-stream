@@ -186,6 +186,30 @@ router.post('/settings', (req, res) => {
 });
 
 /**
+ * @route   GET /api/admin/backup
+ * @desc    Descarga la copia de seguridad completa de clientes y configuraciones
+ */
+router.get('/backup', (req, res) => {
+  const backup = accountService.exportBackup();
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="vj_stream_backup_${new Date().toISOString().slice(0, 10)}.json"`);
+  return res.json(backup);
+});
+
+/**
+ * @route   POST /api/admin/restore
+ * @desc    Restaura la copia de seguridad de clientes
+ */
+router.post('/restore', (req, res) => {
+  const backupData = req.body;
+  const result = accountService.importBackup(backupData);
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  return res.json(result);
+});
+
+/**
  * ====================================================================
  * GESTIÓN DE CANALES DE TV EN VIVO (ADMIN)
  * ====================================================================

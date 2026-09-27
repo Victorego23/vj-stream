@@ -1164,7 +1164,11 @@
       const deviceId = getDeviceId();
       const deviceModel = getDeviceModel();
       const savedToken = getStorage('vj_stream_session_token');
-      const savedCode = manualCode || getStorage('vj_stream_client_code');
+
+      // Detectar si el usuario abrió un enlace directo de activación (ej: ?code=VJ-3166 o #VJ-3166)
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlCode = urlParams.get('code') || urlParams.get('activar') || urlParams.get('vj') || (window.location.hash ? window.location.hash.replace('#', '') : null);
+      const savedCode = manualCode || urlCode || getStorage('vj_stream_client_code');
 
       authCheckingPromise = (async () => {
         try {
@@ -1183,6 +1187,14 @@
           if (!data.success) {
             console.warn('[Auth] Error registrando dispositivo:', data);
             return;
+          }
+
+          if (urlCode && data.status === 'active') {
+            // Limpiar la URL sin recargar para que quede limpia
+            try {
+              window.history.replaceState({}, document.title, window.location.pathname);
+            } catch (_) {}
+            alert(`🎉 ¡Bienvenido ${data.client?.name || ''}! Tu dispositivo ha sido activado con éxito. Ya puedes disfrutar de todo el contenido.`);
           }
 
           handleAuthResponse(data);
