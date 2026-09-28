@@ -272,12 +272,36 @@ class StreamResolverService {
     try {
       const target = mediaType === 'tv' ? `${imdbId}:${season}:${episode}` : imdbId;
       const endpoint = mediaType === 'tv' ? 'series' : 'movie';
-      const url = `https://torrentio.strem.fun/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`;
 
-      const res = await axios.get(url, { timeout: 6000 }).catch(() => null);
-      if (!res?.data?.streams) return { latino: [], castellano: [], original: [] };
+      // Configuración Multi-Scraper Turbo para Real-Debrid:
+      // 1. Scraper principal de alta velocidad
+      // 2. Scraper con ordenamiento por tamaño/calidad y filtro Anti-CAM
+      // 3. Scraper multi-proveedor con 14+ trackers públicos y especializados
+      const scraperEndpoints = [
+        `https://torrentio.strem.fun/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://torrentio.strem.fun/providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,commandotorrent|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`
+      ];
 
-      const scored = res.data.streams
+      const responses = await Promise.allSettled(
+        scraperEndpoints.map(u => axios.get(u, { timeout: 6500 }))
+      );
+
+      const streamMap = new Map();
+      for (const r of responses) {
+        if (r.status === 'fulfilled' && Array.isArray(r.value?.data?.streams)) {
+          for (const s of r.value.data.streams) {
+            const key = s.url || s.behaviorHints?.filename || s.title;
+            if (key && !streamMap.has(key)) {
+              streamMap.set(key, s);
+            }
+          }
+        }
+      }
+
+      if (streamMap.size === 0) return { latino: [], castellano: [], original: [] };
+
+      const scored = Array.from(streamMap.values())
         .map(s => this.scoreStream(s))
         .filter(x => x.score > 0);
 
@@ -293,8 +317,10 @@ class StreamResolverService {
         .filter(x => !x.isSpanishAudio)
         .sort((a, b) => b.score - a.score);
 
+      console.log(`[VJ STREAM Multi-Scraper Turbo] 🎯 Fuentes combinadas para ${imdbId}: ${latino.length} Latino, ${castellano.length} Castellano, ${original.length} Original (${streamMap.size} totales)`);
       return { latino, castellano, original };
-    } catch (_) {
+    } catch (err) {
+      console.warn('[VJ STREAM Multi-Scraper] Error en búsqueda combinada:', err.message);
       return { latino: [], castellano: [], original: [] };
     }
   }
@@ -450,7 +476,7 @@ class StreamResolverService {
         let primaryStream = null;
 
         // 1. Probar y resolver el mejor Latino (y un servidor de respaldo)
-        for (const cand of instant.latino.slice(0, 4)) {
+        for (const cand of instant.latino.slice(0, 10)) {
           const verified = await verifyCandidate(cand);
           if (verified) {
             if (!primaryStream) {
@@ -482,7 +508,7 @@ class StreamResolverService {
         }
 
         // 2. Probar y resolver el mejor Castellano
-        for (const cand of instant.castellano.slice(0, 4)) {
+        for (const cand of instant.castellano.slice(0, 10)) {
           const verified = await verifyCandidate(cand);
           if (verified) {
             if (!primaryStream) primaryStream = verified;
@@ -502,7 +528,7 @@ class StreamResolverService {
 
         // 3. Probar y resolver versión en Audio Original con Subtítulos en Español si no hay doblaje
         if (!primaryStream && instant.original.length > 0) {
-          for (const cand of instant.original.slice(0, 3)) {
+          for (const cand of instant.original.slice(0, 8)) {
             const verified = await verifyCandidate(cand);
             if (verified) {
               primaryStream = {
