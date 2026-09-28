@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/live_channel.dart';
 import '../services/api_service.dart';
@@ -13,18 +14,23 @@ class LiveTvView extends StatefulWidget {
 
 class _LiveTvViewState extends State<LiveTvView> {
   final ApiService _apiService = ApiService();
-  final TextEditingController _searchController = TextEditingController();
 
   static const String _favsKey = 'vj_stream_fav_channel_ids';
+  static const String _recentsKey = 'vj_stream_recent_channel_ids';
+
   Set<String> _favoriteChannelIds = {};
+  List<String> _recentChannelIds = [];
 
   List<LiveChannel> _allChannels = [];
-  List<String> _categories = ['Favoritos', 'Todos'];
+  List<String> _categories = ['Favoritos', 'Recientes', 'Todos'];
   String _selectedCategory = 'Todos';
   String _selectedCountry = 'ALL';
-  String _searchQuery = '';
   bool _isLoading = true;
   String? _errorMessage;
+
+  LiveChannel? _focusedChannel;
+  final FocusScopeNode _channelGridScopeNode = FocusScopeNode();
+  final FocusScopeNode _sidebarScopeNode = FocusScopeNode();
 
   static const List<Map<String, String>> _countryFilters = [
     {'code': 'ALL', 'label': '🌎 Todos'},
@@ -82,42 +88,115 @@ class _LiveTvViewState extends State<LiveTvView> {
     }
   }
 
+  static String getCountryName(String code) {
+    switch (code.toLowerCase()) {
+      case 'pe': return 'Perú';
+      case 'mx': return 'México';
+      case 'ar': return 'Argentina';
+      case 'co': return 'Colombia';
+      case 'cl': return 'Chile';
+      case 'es': return 'España';
+      case 'us': return 'Estados Unidos';
+      case 'do': return 'República Dominicana';
+      case 'ec': return 'Ecuador';
+      case 've': return 'Venezuela';
+      case 'bo': return 'Bolivia';
+      case 'cr': return 'Costa Rica';
+      case 'py': return 'Paraguay';
+      case 'gt': return 'Guatemala';
+      case 'hn': return 'Honduras';
+      case 'sv': return 'El Salvador';
+      case 'pr': return 'Puerto Rico';
+      case 'pa': return 'Panamá';
+      case 'uy': return 'Uruguay';
+      default: return 'Internacional';
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadFavorites();
+    _loadFavoritesAndRecents();
     _loadChannels();
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _channelGridScopeNode.dispose();
+    _sidebarScopeNode.dispose();
     super.dispose();
   }
 
-  Future<void> _loadFavorites() async {
+  Future<void> _loadFavoritesAndRecents() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final list = prefs.getStringList(_favsKey) ?? [];
+      final favList = prefs.getStringList(_favsKey) ?? [];
+      final recList = prefs.getStringList(_recentsKey) ?? [];
       if (mounted) {
         setState(() {
-          _favoriteChannelIds = list.toSet();
+          _favoriteChannelIds = favList.toSet();
+          _recentChannelIds = recList;
         });
       }
+    } catch (_) {}
+  }
+
+  Future<void> _recordRecentChannel(String channelId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = List<String>.from(_recentChannelIds);
+      list.remove(channelId);
+      list.insert(0, channelId);
+      if (list.length > 25) {
+        list.removeRange(25, list.length);
+      }
+      setState(() {
+        _recentChannelIds = list;
+      });
+      await prefs.setStringList(_recentsKey, list);
     } catch (_) {}
   }
 
   Future<void> _toggleFavorite(LiveChannel channel) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final isNowFav = !_favoriteChannelIds.contains(channel.id);
       setState(() {
-        if (_favoriteChannelIds.contains(channel.id)) {
-          _favoriteChannelIds.remove(channel.id);
-        } else {
+        if (isNowFav) {
           _favoriteChannelIds.add(channel.id);
+        } else {
+          _favoriteChannelIds.remove(channel.id);
         }
       });
       await prefs.setStringList(_favsKey, _favoriteChannelIds.toList());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: const Color(0xFF1E1F2A),
+            duration: const Duration(seconds: 2),
+            content: Row(
+              children: [
+                Icon(
+                  isNowFav ? Icons.star_rounded : Icons.star_border_rounded,
+                  color: isNowFav ? Colors.amber : Colors.white60,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isNowFav
+                        ? '★ ${channel.name} agregado a Favoritos'
+                        : 'Eliminado de Favoritos: ${channel.name}',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
     } catch (_) {}
   }
 
@@ -135,9 +214,14 @@ class _LiveTvViewState extends State<LiveTvView> {
       if (mounted) {
         setState(() {
           _allChannels = channels;
-          final cleanCats = categories.where((c) => c != 'Todos' && c != 'Favoritos').toList();
-          _categories = ['Favoritos', 'Todos', ...cleanCats];
+          final cleanCats = categories
+              .where((c) => c != 'Todos' && c != 'Favoritos' && c != 'Recientes')
+              .toList();
+          _categories = ['Favoritos', 'Recientes', 'Todos', ...cleanCats];
           _isLoading = false;
+          if (_filteredChannels.isNotEmpty) {
+            _focusedChannel = _filteredChannels.first;
+          }
         });
       }
     } catch (e) {
@@ -151,6 +235,21 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   List<LiveChannel> get _filteredChannels {
+    if (_selectedCategory == 'Recientes') {
+      final map = {for (var c in _allChannels) c.id: c};
+      final list = <LiveChannel>[];
+      for (final id in _recentChannelIds) {
+        if (map.containsKey(id)) {
+          final ch = map[id]!;
+          final chCountry = getChannelCountry(ch);
+          if (_selectedCountry == 'ALL' || chCountry == _selectedCountry) {
+            list.add(ch);
+          }
+        }
+      }
+      return list;
+    }
+
     return _allChannels.where((channel) {
       final matchesCategory = _selectedCategory == 'Todos' ||
           (_selectedCategory == 'Favoritos'
@@ -160,26 +259,25 @@ class _LiveTvViewState extends State<LiveTvView> {
       final channelCountry = getChannelCountry(channel);
       final matchesCountry = _selectedCountry == 'ALL' || channelCountry == _selectedCountry;
 
-      final matchesSearch = _searchQuery.isEmpty ||
-          channel.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          channel.category.toLowerCase().contains(_searchQuery.toLowerCase());
-
-      return matchesCategory && matchesCountry && matchesSearch;
+      return matchesCategory && matchesCountry;
     }).toList();
   }
 
   String _getCategoryIcon(String cat) {
     if (cat == 'Favoritos') return '⭐ ';
+    if (cat == 'Recientes') return '🕒 ';
     final lower = cat.toLowerCase();
     if (lower.contains('depor')) return '⚽ ';
     if (lower.contains('cine') || lower.contains('series')) return '🎬 ';
     if (lower.contains('infant') || lower.contains('kids')) return '👶 ';
     if (lower.contains('entreten') || lower.contains('cult')) return '🌍 ';
-    if (lower.contains('nacion') || lower.contains('noti')) return '🌎 ';
+    if (lower.contains('nacion') || lower.contains('noti')) return '📰 ';
+    if (lower.contains('music')) return '🎵 ';
     return '📺 ';
   }
 
   void _playChannel(LiveChannel channel) {
+    _recordRecentChannel(channel.id);
     final currentList = _filteredChannels;
     final initialIndex = currentList.indexWhere((c) => c.id == channel.id);
     Navigator.of(context).push(
@@ -196,168 +294,629 @@ class _LiveTvViewState extends State<LiveTvView> {
         ),
       ),
     ).then((_) {
-      _loadFavorites();
+      _loadFavoritesAndRecents();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isTv = MediaQuery.of(context).size.width > 700;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0C),
-      body: RefreshIndicator(
-        color: const Color(0xFFE50914),
-        backgroundColor: const Color(0xFF16171F),
-        onRefresh: _loadChannels,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // Barra superior fija con Buscador
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFE50914), Color(0xFF990000)],
-                            ),
-                            borderRadius: BorderRadius.circular(10),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x66E50914),
-                                blurRadius: 10,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(Icons.live_tv_rounded, color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'TV en Vivo',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            Text(
-                              '${_allChannels.length} canales transmitiendo 24/7 con zapping',
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
+      body: isTv ? _buildTvLayout() : _buildMobileLayout(),
+    );
+  }
 
-                    // Buscador de canales
-                    TextField(
-                      controller: _searchController,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color(0xFF16171F),
-                        hintText: 'Buscar canal (ej: ESPN, HBO, Cartoon, La 1)...',
-                        hintStyle: const TextStyle(color: Colors.white38, fontSize: 13),
-                        prefixIcon: const Icon(Icons.search_rounded, color: Colors.white54, size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear_rounded, color: Colors.white54, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF232532)),
+  // ===========================================================================
+  // LAYOUT PROFESIONAL SMART TV (SIDEBAR + BANNER + GRID CON ENFOQUE D-PAD)
+  // ===========================================================================
+  Widget _buildTvLayout() {
+    final channels = _filteredChannels;
+    final currentFocused = _focusedChannel ?? (channels.isNotEmpty ? channels.first : null);
+
+    return Row(
+      children: [
+        // Sidebar lateral de Categorías y Países para Smart TV
+        Container(
+          width: 250,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F1017),
+            border: Border(
+              right: BorderSide(color: Color(0xFF1E202C), width: 1.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Cabecera Sidebar con Badge EN VIVO
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 20, 18, 14),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE50914), Color(0xFF990000)],
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF232532)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE50914), width: 1.5),
-                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x66E50914),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
-                      onChanged: (val) {
-                        setState(() => _searchQuery = val.trim());
-                      },
+                      child: const Icon(Icons.live_tv_rounded, color: Colors.white, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'TV EN VIVO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            '${_allChannels.length} canales 24/7',
+                            style: const TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
 
-            // Chips horizontales de categorías
-            SliverToBoxAdapter(
+              const Divider(color: Color(0xFF1A1C27), height: 1),
+
+              // Selector rápido de País en TV
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+                child: Container(
+                  height: 38,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161722),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF232535)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCountry,
+                      isExpanded: true,
+                      dropdownColor: const Color(0xFF161722),
+                      icon: const Icon(Icons.arrow_drop_down_rounded, color: Colors.white70),
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      items: _countryFilters.map((c) {
+                        return DropdownMenuItem<String>(
+                          value: c['code'],
+                          child: Text(
+                            c['label']!,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedCountry = val;
+                            if (_filteredChannels.isNotEmpty) {
+                              _focusedChannel = _filteredChannels.first;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              // Lista de Categorías navegable con Control Remoto
+              Expanded(
+                child: FocusScope(
+                  node: _sidebarScopeNode,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    itemCount: _categories.length,
+                    itemBuilder: (context, index) {
+                      final cat = _categories[index];
+                      final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
+                      int? count;
+                      if (cat == 'Favoritos') count = _favoriteChannelIds.length;
+                      if (cat == 'Recientes') count = _recentChannelIds.length;
+
+                      return _TvCategoryItem(
+                        title: cat,
+                        icon: _getCategoryIcon(cat),
+                        isSelected: isSelected,
+                        badgeCount: count,
+                        onSelect: () {
+                          setState(() {
+                            _selectedCategory = cat;
+                            if (_filteredChannels.isNotEmpty) {
+                              _focusedChannel = _filteredChannels.first;
+                            }
+                          });
+                        },
+                        onKeyRight: () {
+                          // Pasar foco a la cuadrícula de canales
+                          _channelGridScopeNode.requestFocus();
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              // Indicador inferior de ayuda para el control remoto
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: const Color(0xFF0B0C12),
+                child: const Row(
+                  children: [
+                    Icon(Icons.settings_remote_rounded, color: Colors.white38, size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Flecha Der: Ver Canales',
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Área Principal: Banner de Información + Cuadrícula de Canales
+        Expanded(
+          child: Column(
+            children: [
+              // Panel Superior Dinámico del Canal Enfocado (TV Banner Preview)
+              _buildFocusedChannelBanner(currentFocused),
+
+              // Cuadrícula de Canales con Focus D-Pad
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Color(0xFFE50914)),
+                      )
+                    : _errorMessage != null
+                        ? _buildErrorView()
+                        : channels.isEmpty
+                            ? _buildEmptyView()
+                            : FocusScope(
+                                node: _channelGridScopeNode,
+                                child: GridView.builder(
+                                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 220,
+                                    mainAxisSpacing: 16,
+                                    crossAxisSpacing: 16,
+                                    childAspectRatio: 0.95,
+                                  ),
+                                  itemCount: channels.length,
+                                  itemBuilder: (context, index) {
+                                    final channel = channels[index];
+                                    final channelNumber = index + 1;
+                                    return _TvFocusableChannelCard(
+                                      key: ValueKey(channel.id),
+                                      channel: channel,
+                                      channelNumber: channelNumber,
+                                      isFavorite: _favoriteChannelIds.contains(channel.id),
+                                      onFocusChange: (focused) {
+                                        if (focused) {
+                                          setState(() => _focusedChannel = channel);
+                                        }
+                                      },
+                                      onTap: () => _playChannel(channel),
+                                      onLongPress: () => _toggleFavorite(channel),
+                                      onKeyLeft: (isFirstColumn) {
+                                        if (isFirstColumn) {
+                                          _sidebarScopeNode.requestFocus();
+                                        }
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Banner superior con información del canal enfocado (Estilo Smart TV)
+  Widget _buildFocusedChannelBanner(LiveChannel? channel) {
+    if (channel == null) {
+      return Container(
+        height: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        color: const Color(0xFF11121A),
+        child: const Row(
+          children: [
+            Icon(Icons.tv_rounded, color: Colors.white24, size: 40),
+            SizedBox(width: 16),
+            Text(
+              'Selecciona un canal con el control remoto',
+              style: TextStyle(color: Colors.white54, fontSize: 15),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final isFav = _favoriteChannelIds.contains(channel.id);
+    final country = getChannelCountry(channel);
+
+    return Container(
+      height: 104,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF11121A),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFF1E202C), width: 1.2),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Logo del canal grande
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: const Color(0xFF090A0E),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            ),
+            padding: const EdgeInsets.all(8),
+            child: channel.logoUrl.isNotEmpty
+                ? Image.network(
+                    channel.logoUrl,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.tv_rounded, color: Colors.white38, size: 36),
+                  )
+                : const Icon(Icons.tv_rounded, color: Colors.white38, size: 36),
+          ),
+          const SizedBox(width: 18),
+
+          // Metadatos del canal
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    // Badge EN VIVO
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE50914),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.fiber_manual_record, color: Colors.white, size: 8),
+                          SizedBox(width: 4),
+                          Text(
+                            'EN VIVO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Categoría
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        channel.category,
+                        style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Calidad
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.blueAccent.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.4), width: 0.8),
+                      ),
+                      child: Text(
+                        channel.quality,
+                        style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+
+                    if (isFav) ...[
+                      const SizedBox(width: 8),
+                      const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Nombre del canal
+                Text(
+                  channel.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+
+                // País y Fuentes
+                Row(
+                  children: [
+                    Text(
+                      '${getCountryFlag(country)} ${getCountryName(country)}',
+                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '⚡ ${channel.sources.length} ${channel.sources.length == 1 ? "señal" : "señales"} disponible${channel.sources.length == 1 ? "" : "s"}',
+                      style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Leyenda de botones del control remoto
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF181A25),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF26293B)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE50914),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text('Pantalla Completa', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '★ OK Largo',
+                        style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isFav ? 'Quitar Favorito' : 'Guardar Favorito',
+                      style: const TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // LAYOUT MÓVIL / PANTALLA ESTRECHA (LIMPIO, SIN BARRA DE BÚSQUEDA)
+  // ===========================================================================
+  Widget _buildMobileLayout() {
+    final channels = _filteredChannels;
+
+    return RefreshIndicator(
+      color: const Color(0xFFE50914),
+      backgroundColor: const Color(0xFF16171F),
+      onRefresh: _loadChannels,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          // Cabecera Móvil
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFE50914), Color(0xFF990000)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x66E50914),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(Icons.live_tv_rounded, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'TV en Vivo',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Text(
+                        '${_allChannels.length} canales transmitiendo 24/7',
+                        style: const TextStyle(
+                          color: Colors.white54,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Categorías Móvil
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 42,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                itemCount: _categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final cat = _categories[index];
+                  final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
+                  final icon = cat == 'Todos' ? '🌐 ' : _getCategoryIcon(cat);
+                  int? count;
+                  if (cat == 'Favoritos' && _favoriteChannelIds.isNotEmpty) count = _favoriteChannelIds.length;
+                  if (cat == 'Recientes' && _recentChannelIds.isNotEmpty) count = _recentChannelIds.length;
+                  final badgeCount = count != null ? ' ($count)' : '';
+
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedCategory = cat);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                            ? const LinearGradient(
+                                colors: [Color(0xFFE50914), Color(0xFF990000)],
+                              )
+                            : null,
+                        color: isSelected ? null : const Color(0xFF16171F),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFFE50914) : const Color(0xFF232532),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '$icon$cat$badgeCount',
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : Colors.white70,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+
+          // Países Móvil
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 12),
               child: SizedBox(
-                height: 44,
+                height: 32,
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   scrollDirection: Axis.horizontal,
-                  itemCount: _categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemCount: _countryFilters.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
                   itemBuilder: (context, index) {
-                    final cat = _categories[index];
-                    final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
-                    final icon = cat == 'Todos' ? '🌐 ' : _getCategoryIcon(cat);
-                    final badgeCount = cat == 'Favoritos' && _favoriteChannelIds.isNotEmpty
-                        ? ' (${_favoriteChannelIds.length})'
-                        : '';
+                    final c = _countryFilters[index];
+                    final code = c['code']!;
+                    final label = c['label']!;
+                    final isSelected = _selectedCountry == code;
 
                     return GestureDetector(
                       onTap: () {
-                        setState(() => _selectedCategory = cat);
+                        setState(() => _selectedCountry = code);
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
                         decoration: BoxDecoration(
-                          gradient: isSelected
-                              ? const LinearGradient(
-                                  colors: [Color(0xFFE50914), Color(0xFF990000)],
-                                )
-                              : null,
-                          color: isSelected ? null : const Color(0xFF16171F),
-                          borderRadius: BorderRadius.circular(20),
+                          color: isSelected
+                              ? const Color(0xFFE50914).withValues(alpha: 0.22)
+                              : const Color(0xFF13141C),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: isSelected ? const Color(0xFFE50914) : const Color(0xFF232532),
-                            width: 1,
+                            color: isSelected ? const Color(0xFFE50914) : const Color(0xFF222432),
+                            width: isSelected ? 1.2 : 0.8,
                           ),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(0xFFE50914).withValues(alpha: 0.35),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                  ),
-                                ]
-                              : null,
                         ),
                         child: Center(
                           child: Text(
-                            '$icon$cat$badgeCount',
+                            label,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                              fontSize: 13,
+                              color: isSelected ? Colors.white : Colors.white60,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 11.5,
                             ),
                           ),
                         ),
@@ -367,164 +926,45 @@ class _LiveTvViewState extends State<LiveTvView> {
                 ),
               ),
             ),
+          ),
 
-            // Chips horizontales de Países / Regiones
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: SizedBox(
-                  height: 34,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _countryFilters.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (context, index) {
-                      final c = _countryFilters[index];
-                      final code = c['code']!;
-                      final label = c['label']!;
-                      final isSelected = _selectedCountry == code;
-
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() => _selectedCountry = code);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFFE50914).withValues(alpha: 0.22)
-                                : const Color(0xFF13141C),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isSelected ? const Color(0xFFE50914) : const Color(0xFF222432),
-                              width: isSelected ? 1.2 : 0.8,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              label,
-                              style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.white60,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                fontSize: 11.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+          // Cuadrícula Móvil
+          if (_isLoading)
+            const SliverFillRemaining(
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFFE50914)),
+              ),
+            )
+          else if (_errorMessage != null)
+            SliverFillRemaining(child: _buildErrorView())
+          else if (channels.isEmpty)
+            SliverFillRemaining(child: _buildEmptyView())
+          else
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 200,
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 0.95,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final channel = channels[index];
+                    final channelNumber = index + 1;
+                    return _buildMobileChannelCard(channel, channelNumber);
+                  },
+                  childCount: channels.length,
                 ),
               ),
             ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 14)),
-
-            // Lista o Grid de Canales
-            if (_isLoading)
-              const SliverFillRemaining(
-                child: Center(
-                  child: CircularProgressIndicator(color: Color(0xFFE50914)),
-                ),
-              )
-            else if (_errorMessage != null)
-              SliverFillRemaining(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.wifi_off_rounded, color: Color(0xFFE50914), size: 48),
-                        const SizedBox(height: 12),
-                        Text(
-                          _errorMessage!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE50914),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: _loadChannels,
-                          icon: const Icon(Icons.refresh_rounded),
-                          label: const Text('Reintentar'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            else if (_filteredChannels.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _selectedCategory == 'Favoritos'
-                            ? Icons.star_border_rounded
-                            : Icons.tv_off_rounded,
-                        color: _selectedCategory == 'Favoritos'
-                            ? Colors.amber.withValues(alpha: 0.6)
-                            : Colors.white38,
-                        size: 52,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        _selectedCategory == 'Favoritos'
-                            ? 'Aún no tienes canales favoritos\nToca la estrella (★) en cualquier canal para tenerlo a mano'
-                            : 'No se encontraron canales en esta categoría',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
-                      ),
-                      if (_searchQuery.isNotEmpty) ...[
-                        const SizedBox(height: 10),
-                        TextButton(
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _selectedCategory = 'Todos';
-                            });
-                          },
-                          child: const Text('Limpiar búsqueda', style: TextStyle(color: Color(0xFFE50914))),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-                sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 0.95,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final channel = _filteredChannels[index];
-                      return _buildChannelCard(channel);
-                    },
-                    childCount: _filteredChannels.length,
-                  ),
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildChannelCard(LiveChannel channel) {
+  Widget _buildMobileChannelCard(LiveChannel channel, int channelNumber) {
     final isFav = _favoriteChannelIds.contains(channel.id);
 
     return InkWell(
@@ -550,100 +990,60 @@ class _LiveTvViewState extends State<LiveTvView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cabecera: Badge EN VIVO + Fuentes + Estrella Favorito
+            // Cabecera con número + badge vivo + favorito
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE50914),
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x66E50914),
-                        blurRadius: 6,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.fiber_manual_record, color: Colors.white, size: 7),
-                      const SizedBox(width: 3),
-                      const Text(
-                        'VIVO',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        getCountryFlag(getChannelCountry(channel)),
-                        style: const TextStyle(fontSize: 9),
-                      ),
-                    ],
-                  ),
-                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (channel.sources.length > 1) ...[
-                      Container(
-                        margin: const EdgeInsets.only(right: 5),
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00E676).withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: const Color(0xFF00E676).withValues(alpha: 0.4),
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Text(
-                          '${channel.sources.length}x',
-                          style: const TextStyle(
-                            color: Color(0xFF00E676),
-                            fontSize: 8.5,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
                       ),
-                    ],
-                    GestureDetector(
-                      onTap: () => _toggleFavorite(channel),
-                      behavior: HitTestBehavior.opaque,
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: isFav
-                              ? Colors.amber.withValues(alpha: 0.2)
-                              : Colors.white.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: isFav
-                                ? Colors.amber.withValues(alpha: 0.6)
-                                : Colors.transparent,
-                            width: 0.8,
-                          ),
-                        ),
-                        child: Icon(
-                          isFav ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: isFav ? Colors.amber : Colors.white54,
-                          size: 14,
-                        ),
+                      child: Text(
+                        '#${channelNumber.toString().padLeft(2, "0")}',
+                        style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE50914),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        getCountryFlag(getChannelCountry(channel)),
+                        style: const TextStyle(fontSize: 9),
                       ),
                     ),
                   ],
                 ),
+                GestureDetector(
+                  onTap: () => _toggleFavorite(channel),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: isFav
+                          ? Colors.amber.withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Icon(
+                      isFav ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: isFav ? Colors.amber : Colors.white54,
+                      size: 15,
+                    ),
+                  ),
+                ),
               ],
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             // Logo central
             Expanded(
@@ -654,25 +1054,20 @@ class _LiveTvViewState extends State<LiveTvView> {
                   decoration: BoxDecoration(
                     color: const Color(0xFF0D0E14),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
                   ),
                   padding: const EdgeInsets.all(8),
                   child: channel.logoUrl.isNotEmpty
                       ? Image.network(
                           channel.logoUrl,
                           fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const Center(
-                            child: Icon(Icons.tv_rounded, color: Colors.white38, size: 36),
-                          ),
+                          errorBuilder: (_, __, ___) => const Icon(Icons.tv_rounded, color: Colors.white38, size: 32),
                         )
-                      : const Center(
-                          child: Icon(Icons.tv_rounded, color: Colors.white38, size: 36),
-                        ),
+                      : const Icon(Icons.tv_rounded, color: Colors.white38, size: 32),
                 ),
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
 
             // Nombre y categoría
             Text(
@@ -710,6 +1105,508 @@ class _LiveTvViewState extends State<LiveTvView> {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorView() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded, color: Color(0xFFE50914), size: 48),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage ?? 'Error desconocido',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE50914),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: _loadChannels,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _selectedCategory == 'Favoritos'
+                ? Icons.star_border_rounded
+                : _selectedCategory == 'Recientes'
+                    ? Icons.history_rounded
+                    : Icons.tv_off_rounded,
+            color: _selectedCategory == 'Favoritos'
+                ? Colors.amber.withValues(alpha: 0.6)
+                : Colors.white38,
+            size: 52,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _selectedCategory == 'Favoritos'
+                ? 'Aún no tienes canales favoritos\nMantén presionado OK en el control remoto para agregar'
+                : _selectedCategory == 'Recientes'
+                    ? 'Aún no has reproducido canales recientemente'
+                    : 'No se encontraron canales en esta categoría',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _selectedCategory = 'Todos';
+                _selectedCountry = 'ALL';
+              });
+            },
+            child: const Text('Ver todos los canales', style: TextStyle(color: Color(0xFFE50914))),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// WIDGET ITEM CATEGORÍA FOCUSABLE PARA CONTROL REMOTO SMART TV
+// =============================================================================
+class _TvCategoryItem extends StatefulWidget {
+  final String title;
+  final String icon;
+  final bool isSelected;
+  final int? badgeCount;
+  final VoidCallback onSelect;
+  final VoidCallback onKeyRight;
+
+  const _TvCategoryItem({
+    required this.title,
+    required this.icon,
+    required this.isSelected,
+    this.badgeCount,
+    required this.onSelect,
+    required this.onKeyRight,
+  });
+
+  @override
+  State<_TvCategoryItem> createState() => _TvCategoryItemState();
+}
+
+class _TvCategoryItemState extends State<_TvCategoryItem> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocus);
+  }
+
+  void _handleFocus() {
+    if (mounted) {
+      setState(() => _isFocused = _focusNode.hasFocus);
+      if (_focusNode.hasFocus) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocus);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onSelect();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            widget.onKeyRight();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () {
+          _focusNode.requestFocus();
+          widget.onSelect();
+        },
+        child: AnimatedScale(
+          scale: _isFocused ? 1.04 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            margin: const EdgeInsets.symmetric(vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: (_isFocused || widget.isSelected)
+                  ? LinearGradient(
+                      colors: _isFocused
+                          ? [const Color(0xFFE50914), const Color(0xFFB0060E)]
+                          : [const Color(0xFF26293A), const Color(0xFF1B1D29)],
+                    )
+                  : null,
+              color: (_isFocused || widget.isSelected) ? null : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _isFocused
+                    ? Colors.white
+                    : widget.isSelected
+                        ? const Color(0xFFE50914).withValues(alpha: 0.5)
+                        : Colors.transparent,
+                width: _isFocused ? 2 : 1,
+              ),
+              boxShadow: _isFocused
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.5),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Text(widget.icon, style: const TextStyle(fontSize: 14)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: _isFocused
+                          ? Colors.white
+                          : widget.isSelected
+                              ? Colors.white
+                              : Colors.white70,
+                      fontWeight: (_isFocused || widget.isSelected) ? FontWeight.bold : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                if (widget.badgeCount != null && widget.badgeCount! > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: _isFocused
+                          ? Colors.black.withValues(alpha: 0.3)
+                          : const Color(0xFFE50914).withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${widget.badgeCount}',
+                      style: TextStyle(
+                        color: _isFocused ? Colors.white : const Color(0xFFFF5252),
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// TARJETA DE CANAL FOCUSABLE CON ZOOM, GLOW Y MANEJO D-PAD PARA SMART TV
+// =============================================================================
+class _TvFocusableChannelCard extends StatefulWidget {
+  final LiveChannel channel;
+  final int channelNumber;
+  final bool isFavorite;
+  final ValueChanged<bool> onFocusChange;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final ValueChanged<bool> onKeyLeft;
+
+  const _TvFocusableChannelCard({
+    super.key,
+    required this.channel,
+    required this.channelNumber,
+    required this.isFavorite,
+    required this.onFocusChange,
+    required this.onTap,
+    required this.onLongPress,
+    required this.onKeyLeft,
+  });
+
+  @override
+  State<_TvFocusableChannelCard> createState() => _TvFocusableChannelCardState();
+}
+
+class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
+  final FocusNode _focusNode = FocusNode();
+  bool _isFocused = false;
+  DateTime? _keyDownTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_handleFocus);
+  }
+
+  void _handleFocus() {
+    if (mounted) {
+      final focused = _focusNode.hasFocus;
+      setState(() => _isFocused = focused);
+      widget.onFocusChange(focused);
+
+      if (focused) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocus);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final country = _LiveTvViewState.getChannelCountry(widget.channel);
+    final flag = _LiveTvViewState.getCountryFlag(country);
+
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            _keyDownTime = DateTime.now();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            // Notificar si está en la primera columna para regresar al sidebar
+            widget.onKeyLeft(true);
+          }
+        } else if (event is KeyUpEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            if (_keyDownTime != null) {
+              final elapsed = DateTime.now().difference(_keyDownTime!).inMilliseconds;
+              _keyDownTime = null;
+              if (elapsed >= 600) {
+                // Pulsación larga: Favorito
+                widget.onLongPress();
+              } else {
+                // Pulsación corta: Reproducir
+                widget.onTap();
+              }
+              return KeyEventResult.handled;
+            }
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () {
+          _focusNode.requestFocus();
+          widget.onTap();
+        },
+        onLongPress: () {
+          _focusNode.requestFocus();
+          widget.onLongPress();
+        },
+        child: AnimatedScale(
+          scale: _isFocused ? 1.08 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: _isFocused ? const Color(0xFF1F2232) : const Color(0xFF14151E),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _isFocused
+                    ? const Color(0xFFE50914)
+                    : widget.isFavorite
+                        ? Colors.amber.withValues(alpha: 0.4)
+                        : const Color(0xFF222432),
+                width: _isFocused ? 3.0 : 1.0,
+              ),
+              boxShadow: [
+                if (_isFocused)
+                  BoxShadow(
+                    color: const Color(0xFFE50914).withValues(alpha: 0.6),
+                    blurRadius: 18,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 4),
+                  )
+                else
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+              ],
+            ),
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Cabecera de la tarjeta: Número de canal + Bandera + Indicador de Favorito
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _isFocused
+                            ? const Color(0xFFE50914)
+                            : Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '#${widget.channelNumber.toString().padLeft(2, "0")}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(flag, style: const TextStyle(fontSize: 10)),
+                        if (widget.isFavorite) ...[
+                          const SizedBox(width: 4),
+                          const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 6),
+
+                // Logo central del canal
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0A0B10),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      padding: const EdgeInsets.all(6),
+                      child: widget.channel.logoUrl.isNotEmpty
+                          ? Image.network(
+                              widget.channel.logoUrl,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.tv_rounded,
+                                color: Colors.white30,
+                                size: 34,
+                              ),
+                            )
+                          : const Icon(
+                              Icons.tv_rounded,
+                              color: Colors.white30,
+                              size: 34,
+                            ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                // Nombre del canal
+                Text(
+                  widget.channel.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: _isFocused ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5,
+                  ),
+                ),
+
+                const SizedBox(height: 2),
+
+                // Categoría y Calidad
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.channel.category,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: _isFocused ? Colors.white70 : Colors.white38,
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                      child: Text(
+                        widget.channel.quality,
+                        style: const TextStyle(
+                          color: Colors.white60,
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -531,16 +531,17 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.0.0',
-    versionCode: 20,
+    latestVersion: '3.1.0',
+    versionCode: 21,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-28',
     releaseNotes: [
-      '📺 ¡Bienvenido a TOM TV! Actualización oficial de marca y máxima velocidad',
-      '🍿 Modo Tráiler HD Oficial para próximos estrenos (Coyote vs. Acme, La Odisea, Spider-Man: Brand New Day)',
-      '⚡ Multi-Scraper Turbo: Mayor cantidad de torrents y desbridado al instante con Real-Debrid',
-      '📡 Canales de TV en Vivo 100% operativos: 1,338 señales auditadas y fluidas (canales caídos eliminados)',
-      '💎 Nueva experiencia cinematográfica VIP sin cuadros de error ni interrupciones'
+      '📺 ¡Experiencia Smart TV Optimizada en TV en Vivo!',
+      '🎮 Navegación fluida por Control Remoto (D-Pad) con enfoque visual ampliado, borde iluminado y auto-scroll',
+      '🚫 Eliminada la barra de búsqueda en TV para evitar que se abra el teclado en pantalla y dar mayor visibilidad',
+      '🗂️ Menú lateral de categorías con acceso rápido a Favoritos y canales Recientes',
+      '🔢 Numeración de canales visible (#01, #02...) y panel de vista previa superior con logos HD y país',
+      '⭐ Acceso instantáneo a Favoritos manteniendo pulsado el botón OK del control remoto'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
