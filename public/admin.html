@@ -258,6 +258,9 @@
         <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
           <span class="tab-icon">📺</span> Canales TV en Vivo
         </button>
+        <button class="tab-btn" id="tab-resellers-btn" onclick="switchTab('resellers')">
+          <span class="tab-icon">💼</span> Revendedores & Créditos
+        </button>
         <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
           <span class="tab-icon">⚙️</span> Ajustes & WhatsApp
         </button>
@@ -286,6 +289,14 @@
           <div class="stat-card">
             <span class="stat-title">📺 TV Esperando</span>
             <span class="stat-value" style="color: var(--primary);" id="stat-pending">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">💼 Revendedores</span>
+            <span class="stat-value" style="color: #38BDF8;" id="stat-resellers">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">💎 Créditos Activos</span>
+            <span class="stat-value" style="color: #F59E0B;" id="stat-credits">0</span>
           </div>
         </div>
 
@@ -397,6 +408,43 @@
 
               <button type="submit" class="btn btn-primary" style="margin-top: 10px;">💾 Guardar Ajustes</button>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA 4: REVENDEDORES & SISTEMA DE CRÉDITOS -->
+      <div id="view-resellers" style="display: none;">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">💼 Red de Distribuidores & Prepago de Créditos</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Crea cuentas de revendedores, recarga paquetes de créditos y supervisa sus ventas en tiempo real</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">🌐 Ver Portal Reseller</a>
+              <button class="btn btn-primary btn-sm" onclick="openNewResellerModal()">+ Nuevo Revendedor</button>
+            </div>
+          </div>
+
+          <div class="table-responsive" style="padding: 16px 20px 24px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+              <thead>
+                <tr>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Distribuidor</th>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Usuario</th>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">WhatsApp</th>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Saldo Créditos</th>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Clientes Activos</th>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Estado</th>
+                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase; text-align: right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="resellers-tbody">
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando revendedores...</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -575,6 +623,81 @@
     </div>
   </div>
 
+  <!-- MODAL: CREAR REVENDEDOR -->
+  <div class="modal" id="modal-reseller">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">💼 Registrar Nuevo Revendedor</h3>
+        <button class="close-btn" onclick="closeModal('modal-reseller')">&times;</button>
+      </div>
+      <form id="reseller-create-form" onsubmit="submitNewReseller(event)">
+        <div class="form-group">
+          <label>Nombre Completo del Revendedor:</label>
+          <input type="text" id="res-name" class="form-control" placeholder="Ej: Carlos Mendoza (Distribuidor Norte)" required>
+        </div>
+        <div class="form-group">
+          <label>Nombre de Usuario (Para iniciar sesión en /reseller):</label>
+          <input type="text" id="res-username" class="form-control" placeholder="Ej: carlos_ventas" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña de Acceso:</label>
+          <input type="password" id="res-password" class="form-control" placeholder="Mínimo 4 caracteres" required>
+        </div>
+        <div class="form-group">
+          <label>Teléfono de WhatsApp:</label>
+          <input type="text" id="res-whatsapp" class="form-control" placeholder="Ej: +51987654321">
+        </div>
+        <div class="form-group">
+          <label>Créditos Iniciales Asignados (1 Crédito = 1 Mes):</label>
+          <input type="number" id="res-credits" class="form-control" value="10" min="0" required>
+          <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Puedes recargarle más créditos en cualquier momento al recibir sus pagos.</small>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-save-reseller" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Guardar Revendedor
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: RECARGAR CRÉDITOS A REVENDEDOR -->
+  <div class="modal" id="modal-recharge">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">💎 Recargar Créditos a Revendedor</h3>
+        <button class="close-btn" onclick="closeModal('modal-recharge')">&times;</button>
+      </div>
+      <form id="recharge-form" onsubmit="submitRecharge(event)">
+        <input type="hidden" id="recharge-reseller-id">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
+          Revendedor: <strong id="recharge-reseller-name" style="color: #fff;">-</strong>
+        </p>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Saldo actual: <strong id="recharge-current-credits" style="color: #F59E0B;">0 créditos</strong>
+        </p>
+
+        <!-- Botones rápidos de paquetes -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(10)">+10 Créditos</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(25)">+25 Créditos</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(50)">+50 Créditos</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(100)">+100 Créditos</button>
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad de Créditos a Añadir:</label>
+          <input type="number" id="recharge-amount" class="form-control" value="25" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Nota / Referencia de Pago (Opcional):</label>
+          <input type="text" id="recharge-note" class="form-control" placeholder="Ej: Pago confirmado por Yape / Transferencia">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-recharge" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Confirmar y Añadir Créditos
+        </button>
+      </form>
+    </div>
+  </div>
+
   <script>
     let adminToken = localStorage.getItem('vj_admin_token') || '';
     let allClients = [];
@@ -597,10 +720,13 @@
 
       document.getElementById('view-clients').style.display = tab === 'clients' ? 'block' : 'none';
       document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
+      document.getElementById('view-resellers').style.display = tab === 'resellers' ? 'block' : 'none';
       document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
 
       if (tab === 'channels') {
         fetchChannels();
+      } else if (tab === 'resellers') {
+        fetchResellers();
       }
     }
 
@@ -695,6 +821,12 @@
       document.getElementById('stat-expiring').textContent = stats.expiringSoon || 0;
       document.getElementById('stat-expired').textContent = stats.expiredClients || 0;
       document.getElementById('stat-pending').textContent = stats.pendingCount || 0;
+      if (document.getElementById('stat-resellers')) {
+        document.getElementById('stat-resellers').textContent = stats.totalResellers || 0;
+      }
+      if (document.getElementById('stat-credits')) {
+        document.getElementById('stat-credits').textContent = stats.totalCredits || 0;
+      }
       document.getElementById('pending-badge').textContent = `${stats.pendingCount || 0} pendientes`;
 
       const pendingSection = document.getElementById('pending-section');
@@ -777,6 +909,9 @@
             <td>
               <div class="client-name">${c.name}</div>
               <div class="client-user">Usuario: ${c.username}</div>
+              <div style="font-size: 11px; color: ${c.resellerName ? '#38BDF8' : '#94A3B8'}; margin-top: 2px;">
+                ${c.resellerName ? '💼 Revendedor: ' + c.resellerName : '🏷️ Venta Directa'}
+              </div>
             </td>
             <td>
               <span style="font-family: monospace; font-weight: 700; color: #fff; background: #07080B; border: 1px solid #232532; padding: 4px 8px; border-radius: 6px;">${c.code}</span>
@@ -1201,6 +1336,208 @@
           localStorage.setItem('vj_admin_token', adminToken);
         }
         alert('Ajustes guardados con éxito.');
+      }
+    }
+
+    // ==============================================================
+    // FUNCIONALIDADES DE GESTIÓN DE REVENDEDORES
+    // ==============================================================
+
+    let allResellersList = [];
+
+    async function fetchResellers() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/resellers', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          allResellersList = data.resellers || [];
+          renderResellers(allResellersList);
+        }
+      } catch (err) {
+        console.error('Error cargando revendedores:', err);
+      }
+    }
+
+    function renderResellers(resellers) {
+      const tbody = document.getElementById('resellers-tbody');
+      if (!resellers || resellers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 28px;">No hay revendedores registrados. Haz clic en "+ Nuevo Revendedor" para dar de alta a tu primer distribuidor.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = resellers.map(r => {
+        const isSuspended = r.status === 'suspended';
+        const waLink = r.whatsapp ? `https://wa.me/${r.whatsapp.replace(/[^0-9+]/g, '')}` : null;
+
+        return `
+          <tr>
+            <td>
+              <div style="font-weight: 700; color: #fff;">${r.name}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Registrado: ${new Date(r.createdAt).toLocaleDateString()}</div>
+            </td>
+            <td>
+              <span style="font-family: monospace; font-weight: 700; color: #38BDF8; background: #080A0F; padding: 4px 8px; border-radius: 6px; border: 1px solid #1E293B;">
+                ${r.username}
+              </span>
+            </td>
+            <td>
+              ${waLink ? `<a href="${waLink}" target="_blank" style="color: #25D366; text-decoration: none; font-weight: 600;">📲 ${r.whatsapp}</a>` : '<span style="color: var(--text-muted);">-</span>'}
+            </td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 900; color: #F59E0B; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); padding: 4px 10px; border-radius: 8px;">
+                💎 ${r.credits || 0}
+              </span>
+            </td>
+            <td>
+              <strong style="color: #fff;">${r.activeClients || 0}</strong> <span style="color: var(--text-muted); font-size: 11px;">/ ${r.totalClients || 0} total</span>
+            </td>
+            <td>
+              <span class="badge ${isSuspended ? 'badge-expired' : 'badge-active'}">
+                ${isSuspended ? 'Suspendido' : 'Activo'}
+              </span>
+            </td>
+            <td style="text-align: right;">
+              <div style="display: flex; gap: 6px; justify-content: flex-end;">
+                <button class="btn btn-primary btn-sm" onclick="openRechargeModal('${r.id}', '${r.name}', ${r.credits || 0})" title="Añadir créditos al revendedor">💎 Recargar</button>
+                <button class="btn btn-warning btn-sm" onclick="toggleResellerStatus('${r.id}', '${r.status}')" title="Suspender o reactivar">${isSuspended ? '▶️ Activar' : '⏸️ Suspender'}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteResellerAdmin('${r.id}', '${r.name}')" title="Eliminar revendedor">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openNewResellerModal() {
+      document.getElementById('res-name').value = '';
+      document.getElementById('res-username').value = '';
+      document.getElementById('res-password').value = '';
+      document.getElementById('res-whatsapp').value = '';
+      document.getElementById('res-credits').value = '10';
+      openModal('modal-reseller');
+    }
+
+    async function submitNewReseller(e) {
+      e.preventDefault();
+      const name = document.getElementById('res-name').value.trim();
+      const username = document.getElementById('res-username').value.trim();
+      const password = document.getElementById('res-password').value.trim();
+      const whatsapp = document.getElementById('res-whatsapp').value.trim();
+      const initialCredits = parseInt(document.getElementById('res-credits').value, 10);
+      const btn = document.getElementById('btn-save-reseller');
+
+      btn.textContent = 'Guardando...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/resellers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ name, username, password, whatsapp, initialCredits })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`¡Revendedor "${name}" creado exitosamente con ${initialCredits} créditos!`);
+          closeModal('modal-reseller');
+          fetchResellers();
+          fetchOverview();
+        } else {
+          alert('Error: ' + (data.error || 'No se pudo crear revendedor'));
+        }
+      } catch (err) {
+        alert('Error de conexión.');
+      } finally {
+        btn.textContent = 'Guardar Revendedor';
+        btn.disabled = false;
+      }
+    }
+
+    function openRechargeModal(id, name, credits) {
+      document.getElementById('recharge-reseller-id').value = id;
+      document.getElementById('recharge-reseller-name').textContent = name;
+      document.getElementById('recharge-current-credits').textContent = `${credits} créditos`;
+      document.getElementById('recharge-amount').value = '25';
+      document.getElementById('recharge-note').value = '';
+      openModal('modal-recharge');
+    }
+
+    function setQuickRecharge(amount) {
+      document.getElementById('recharge-amount').value = amount;
+    }
+
+    async function submitRecharge(e) {
+      e.preventDefault();
+      const id = document.getElementById('recharge-reseller-id').value;
+      const credits = parseInt(document.getElementById('recharge-amount').value, 10);
+      const note = document.getElementById('recharge-note').value.trim();
+      const btn = document.getElementById('btn-submit-recharge');
+
+      btn.textContent = 'Añadiendo Créditos...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/admin/resellers/${id}/recharge`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ credits, note })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`¡Se añadieron ${credits} créditos con éxito!`);
+          closeModal('modal-recharge');
+          fetchResellers();
+          fetchOverview();
+        } else {
+          alert('Error: ' + (data.error || 'No se pudo recargar'));
+        }
+      } catch (err) {
+        alert('Error al conectar.');
+      } finally {
+        btn.textContent = 'Confirmar y Añadir Créditos';
+        btn.disabled = false;
+      }
+    }
+
+    async function toggleResellerStatus(id, currentStatus) {
+      const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+      try {
+        const res = await fetch(`/api/admin/resellers/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchResellers();
+        } else {
+          alert('Error al cambiar estado.');
+        }
+      } catch (err) {
+        alert('Error de conexión.');
+      }
+    }
+
+    async function deleteResellerAdmin(id, name) {
+      if (!confirm(`¿Estás seguro de que deseas eliminar al revendedor "${name}"? Sus clientes permanecerán en el sistema.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/admin/resellers/${id}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          fetchResellers();
+          fetchOverview();
+        } else {
+          alert('Error al eliminar revendedor.');
+        }
+      } catch (err) {
+        alert('Error de conexión.');
       }
     }
   </script>

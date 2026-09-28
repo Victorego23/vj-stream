@@ -18,4 +18,5 @@ android/local.properties
 ios/.symlinks/
 *.lock
 *.backup.json
+*backup*.json
 

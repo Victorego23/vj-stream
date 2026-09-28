@@ -87,15 +87,21 @@ class AccountService {
     this._ensureDb();
     try {
       const content = fs.readFileSync(DB_FILE, 'utf8');
-      return JSON.parse(content);
+      const data = JSON.parse(content);
+      if (!Array.isArray(data.resellers)) {
+        data.resellers = [];
+      }
+      return data;
     } catch (e) {
       console.error('[AccountService] Error leyendo DB:', e);
       if (fs.existsSync(BACKUP_FILE)) {
         try {
-          return JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+          const bData = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+          if (!Array.isArray(bData.resellers)) bData.resellers = [];
+          return bData;
         } catch (_) {}
       }
-      return { admin: { password: DEFAULT_ADMIN_PASSWORD }, settings: {}, clients: [], pendingActivations: [] };
+      return { admin: { password: DEFAULT_ADMIN_PASSWORD }, settings: {}, clients: [], pendingActivations: [], resellers: [] };
     }
   }
 
@@ -210,6 +216,8 @@ class AccountService {
 
       return {
         ...client,
+        resellerId: client.resellerId || null,
+        resellerName: client.resellerName || 'Venta Directa (Admin)',
         status: computedStatus,
         daysRemaining: isExpired ? 0 : diffDays,
         deviceCount: client.devices ? client.devices.length : 0
@@ -301,6 +309,370 @@ class AccountService {
     const db = this._readDb();
     const initialLen = db.clients.length;
     db.clients = db.clients.filter(c => c.id !== clientId);
+    const deleted = db.clients.length < initialLen;
+    if (deleted) this._writeDb(db);
+    return deleted;
+  }
+
+  // -------------------------------------------------------------
+  // GESTIÓN DE REVENDEDORES Y SISTEMA DE CRÉDITOS
+  // -------------------------------------------------------------
+
+  _generateResellerToken(reseller) {
+    if (!reseller) return '';
+    const payload = {
+      rid: reseller.id,
+      usr: reseller.username,
+      iat: Date.now()
+    };
+    const b64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const sig = crypto.createHmac('sha256', SIGNING_SECRET).update(b64).digest('base64url');
+    return `rst.${b64}.${sig}`;
+  }
+
+  _verifyResellerToken(token) {
+    if (!token || typeof token !== 'string') return null;
+    if (!token.startsWith('rst.')) return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const [_, b64, sig] = parts;
+    const expectedSig = crypto.createHmac('sha256', SIGNING_SECRET).update(b64).digest('base64url');
+    if (sig !== expectedSig) return null;
+    try {
+      const jsonStr = Buffer.from(b64, 'base64url').toString('utf8');
+      const decoded = JSON.parse(jsonStr);
+      if (Date.now() - decoded.iat > 30 * 24 * 60 * 60 * 1000) return null;
+      return decoded;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  calculateCreditsForDays(days) {
+    const d = parseInt(days, 10) || 30;
+    if (d <= 31) return 1;
+    if (d <= 62) return 2;
+    if (d <= 93) return 3;
+    if (d <= 186) return 6;
+    if (d <= 366) return 12;
+    return Math.max(1, Math.ceil(d / 30));
+  }
+
+  getResellers() {
+    const db = this._readDb();
+    const clients = this.getClients();
+
+    return (db.resellers || []).map(r => {
+      const resellerClients = clients.filter(c => c.resellerId === r.id);
+      const activeClients = resellerClients.filter(c => c.status === 'active').length;
+      return {
+        id: r.id,
+        name: r.name,
+        username: r.username,
+        whatsapp: r.whatsapp || '',
+        credits: parseInt(r.credits, 10) || 0,
+        status: r.status || 'active',
+        createdAt: r.createdAt,
+        totalClients: resellerClients.length,
+        activeClients: activeClients
+      };
+    });
+  }
+
+  getResellerById(id) {
+    const db = this._readDb();
+    const r = (db.resellers || []).find(res => res.id === id);
+    if (!r) return null;
+    const clients = this.getClients().filter(c => c.resellerId === r.id);
+    return {
+      id: r.id,
+      name: r.name,
+      username: r.username,
+      whatsapp: r.whatsapp || '',
+      credits: parseInt(r.credits, 10) || 0,
+      status: r.status || 'active',
+      createdAt: r.createdAt,
+      totalClients: clients.length,
+      activeClients: clients.filter(c => c.status === 'active').length,
+      history: r.history || []
+    };
+  }
+
+  createReseller({ name, username, password, whatsapp, initialCredits = 10 }) {
+    if (!name || !name.trim()) throw new Error('El nombre del revendedor es obligatorio.');
+    if (!username || !username.trim()) throw new Error('El nombre de usuario es obligatorio.');
+    if (!password || password.trim().length < 4) throw new Error('La contraseña debe tener al menos 4 caracteres.');
+
+    const cleanUsername = username.trim().toLowerCase();
+    const db = this._readDb();
+    if (!Array.isArray(db.resellers)) db.resellers = [];
+
+    if (db.resellers.some(r => r.username.toLowerCase() === cleanUsername)) {
+      throw new Error(`El nombre de usuario "${cleanUsername}" ya está registrado.`);
+    }
+
+    const credits = Math.max(0, parseInt(initialCredits, 10) || 0);
+    const now = new Date().toISOString();
+
+    const newReseller = {
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      username: cleanUsername,
+      password: password.trim(),
+      whatsapp: (whatsapp || '').trim(),
+      credits: credits,
+      status: 'active',
+      createdAt: now,
+      history: [
+        {
+          type: 'initial_deposit',
+          amount: credits,
+          date: now,
+          note: 'Asignación de créditos iniciales al registrar revendedor'
+        }
+      ]
+    };
+
+    db.resellers.push(newReseller);
+    this._writeDb(db);
+
+    return {
+      id: newReseller.id,
+      name: newReseller.name,
+      username: newReseller.username,
+      whatsapp: newReseller.whatsapp,
+      credits: newReseller.credits,
+      status: newReseller.status,
+      createdAt: newReseller.createdAt
+    };
+  }
+
+  updateReseller(id, { name, whatsapp, status, password }) {
+    const db = this._readDb();
+    const reseller = (db.resellers || []).find(r => r.id === id);
+    if (!reseller) throw new Error('Revendedor no encontrado.');
+
+    if (name && name.trim()) reseller.name = name.trim();
+    if (whatsapp !== undefined) reseller.whatsapp = whatsapp.trim();
+    if (status && ['active', 'suspended'].includes(status)) reseller.status = status;
+    if (password && password.trim().length >= 4) reseller.password = password.trim();
+
+    this._writeDb(db);
+    return {
+      id: reseller.id,
+      name: reseller.name,
+      username: reseller.username,
+      whatsapp: reseller.whatsapp,
+      credits: reseller.credits,
+      status: reseller.status
+    };
+  }
+
+  rechargeResellerCredits(id, creditsToAdd, note = '') {
+    const amount = parseInt(creditsToAdd, 10);
+    if (isNaN(amount) || amount === 0) {
+      throw new Error('Cantidad de créditos inválida.');
+    }
+
+    const db = this._readDb();
+    const reseller = (db.resellers || []).find(r => r.id === id);
+    if (!reseller) throw new Error('Revendedor no encontrado.');
+
+    const current = parseInt(reseller.credits, 10) || 0;
+    const newTotal = current + amount;
+    if (newTotal < 0) {
+      throw new Error(`No se puede deducir más de los créditos disponibles (${current}).`);
+    }
+
+    reseller.credits = newTotal;
+    if (!Array.isArray(reseller.history)) reseller.history = [];
+    reseller.history.push({
+      type: amount > 0 ? 'recharge' : 'deduction',
+      amount: amount,
+      date: new Date().toISOString(),
+      note: note.trim() || (amount > 0 ? `Recarga de +${amount} créditos` : `Ajuste de ${amount} créditos`)
+    });
+
+    this._writeDb(db);
+    return {
+      id: reseller.id,
+      name: reseller.name,
+      username: reseller.username,
+      credits: reseller.credits
+    };
+  }
+
+  deleteReseller(id) {
+    const db = this._readDb();
+    const initialLen = (db.resellers || []).length;
+    db.resellers = (db.resellers || []).filter(r => r.id !== id);
+    const deleted = db.resellers.length < initialLen;
+    if (deleted) this._writeDb(db);
+    return deleted;
+  }
+
+  authenticateReseller(username, password) {
+    if (!username || !password) throw new Error('Usuario y contraseña requeridos.');
+    const db = this._readDb();
+    const cleanUser = username.trim().toLowerCase();
+    const cleanPass = password.trim();
+
+    const reseller = (db.resellers || []).find(r => r.username.toLowerCase() === cleanUser);
+    if (!reseller || reseller.password !== cleanPass) {
+      throw new Error('Usuario o contraseña de revendedor incorrectos.');
+    }
+
+    if (reseller.status === 'suspended') {
+      throw new Error('Tu cuenta de revendedor se encuentra suspendida temporalmente.');
+    }
+
+    const token = this._generateResellerToken(reseller);
+    const clients = this.getClients().filter(c => c.resellerId === reseller.id);
+
+    return {
+      token,
+      reseller: {
+        id: reseller.id,
+        name: reseller.name,
+        username: reseller.username,
+        whatsapp: reseller.whatsapp || '',
+        credits: parseInt(reseller.credits, 10) || 0,
+        status: reseller.status,
+        totalClients: clients.length,
+        activeClients: clients.filter(c => c.status === 'active').length
+      }
+    };
+  }
+
+  verifyResellerAuth(token) {
+    const decoded = this._verifyResellerToken(token);
+    if (!decoded || !decoded.rid) return null;
+    return this.getResellerById(decoded.rid);
+  }
+
+  getResellerClients(resellerId) {
+    return this.getClients().filter(c => c.resellerId === resellerId);
+  }
+
+  createClientForReseller(resellerId, { name, planDays = 30, maxDevices = 1, customCode = null }) {
+    if (!name || !name.trim()) throw new Error('El nombre del cliente es obligatorio.');
+    const db = this._readDb();
+    const reseller = (db.resellers || []).find(r => r.id === resellerId);
+    if (!reseller) throw new Error('Revendedor no encontrado.');
+    if (reseller.status === 'suspended') throw new Error('Tu cuenta de revendedor está suspendida.');
+
+    const parsedDays = parseInt(planDays, 10) || 30;
+    const requiredCredits = this.calculateCreditsForDays(parsedDays);
+    const currentCredits = parseInt(reseller.credits, 10) || 0;
+
+    if (currentCredits < requiredCredits) {
+      throw new Error(`Créditos insuficientes. Se requieren ${requiredCredits} créditos para ${parsedDays} días y tienes ${currentCredits} disponibles. Por favor solicita una recarga.`);
+    }
+
+    // Descontar créditos
+    reseller.credits = currentCredits - requiredCredits;
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+
+    let finalCode = customCode;
+    if (!finalCode) {
+      finalCode = 'TOM-' + Math.floor(1000 + Math.random() * 9000);
+      while (db.clients.some(c => c.code === finalCode)) {
+        finalCode = 'TOM-' + Math.floor(1000 + Math.random() * 9000);
+      }
+    }
+
+    const newClient = {
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      username: (name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
+      code: finalCode,
+      status: 'active',
+      planDays: parsedDays,
+      maxDevices: parseInt(maxDevices, 10) || 1,
+      resellerId: reseller.id,
+      resellerName: reseller.name,
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      devices: []
+    };
+
+    if (!Array.isArray(reseller.history)) reseller.history = [];
+    reseller.history.push({
+      type: 'client_created',
+      clientId: newClient.id,
+      clientName: newClient.name,
+      code: newClient.code,
+      deductedCredits: requiredCredits,
+      remainingCredits: reseller.credits,
+      date: now.toISOString()
+    });
+
+    db.clients.push(newClient);
+    this._writeDb(db);
+
+    return {
+      success: true,
+      client: newClient,
+      creditsDeducted: requiredCredits,
+      remainingCredits: reseller.credits
+    };
+  }
+
+  renewClientForReseller(resellerId, clientId, additionalDays = 30) {
+    const db = this._readDb();
+    const reseller = (db.resellers || []).find(r => r.id === resellerId);
+    if (!reseller) throw new Error('Revendedor no encontrado.');
+    if (reseller.status === 'suspended') throw new Error('Tu cuenta está suspendida.');
+
+    const client = db.clients.find(c => c.id === clientId && c.resellerId === resellerId);
+    if (!client) throw new Error('Cliente no encontrado en tu cartera de revendedor.');
+
+    const parsedDays = parseInt(additionalDays, 10) || 30;
+    const requiredCredits = this.calculateCreditsForDays(parsedDays);
+    const currentCredits = parseInt(reseller.credits, 10) || 0;
+
+    if (currentCredits < requiredCredits) {
+      throw new Error(`Créditos insuficientes. Se requieren ${requiredCredits} créditos para renovar ${parsedDays} días y tienes ${currentCredits} disponibles.`);
+    }
+
+    // Descontar créditos
+    reseller.credits = currentCredits - requiredCredits;
+
+    const now = new Date();
+    let baseDate = new Date(client.expiresAt);
+    if (baseDate < now) {
+      baseDate = now;
+    }
+
+    const newExpiresAt = new Date(baseDate.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+    client.expiresAt = newExpiresAt.toISOString();
+    client.status = 'active';
+
+    if (!Array.isArray(reseller.history)) reseller.history = [];
+    reseller.history.push({
+      type: 'client_renewed',
+      clientId: client.id,
+      clientName: client.name,
+      deductedCredits: requiredCredits,
+      remainingCredits: reseller.credits,
+      date: now.toISOString()
+    });
+
+    this._writeDb(db);
+
+    return {
+      success: true,
+      client: client,
+      creditsDeducted: requiredCredits,
+      remainingCredits: reseller.credits
+    };
+  }
+
+  deleteClientForReseller(resellerId, clientId) {
+    const db = this._readDb();
+    const initialLen = db.clients.length;
+    db.clients = db.clients.filter(c => !(c.id === clientId && c.resellerId === resellerId));
     const deleted = db.clients.length < initialLen;
     if (deleted) this._writeDb(db);
     return deleted;
@@ -775,7 +1147,8 @@ class AccountService {
       admin: db.admin,
       settings: db.settings,
       clients: db.clients,
-      pendingActivations: db.pendingActivations
+      pendingActivations: db.pendingActivations,
+      resellers: db.resellers || []
     };
   }
 
@@ -796,6 +1169,14 @@ class AccountService {
     currentDb.clients = Array.from(clientMap.values());
     if (backupData.settings) {
       currentDb.settings = { ...currentDb.settings, ...backupData.settings };
+    }
+    if (Array.isArray(backupData.resellers)) {
+      const resellerMap = new Map();
+      (currentDb.resellers || []).forEach(r => resellerMap.set(r.id, r));
+      backupData.resellers.forEach(r => {
+        if (r && r.id) resellerMap.set(r.id, r);
+      });
+      currentDb.resellers = Array.from(resellerMap.values());
     }
 
     this._writeDb(currentDb);

@@ -4,7 +4,7 @@
   },
   "settings": {
     "whatsappNumber": "+51999999999",
-    "whatsappMessage": "Hola, mi código de activación de VJ STREAM es {code}"
+    "whatsappMessage": "Hola, mi código de activación de TOM TV es {code}"
   },
   "clients": [
     {
@@ -20,5 +20,6 @@
       "devices": []
     }
   ],
-  "pendingActivations": []
+  "pendingActivations": [],
+  "resellers": []
 }

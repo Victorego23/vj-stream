@@ -52,6 +52,11 @@ router.get('/overview', (req, res) => {
   const expiringSoon = clients.filter(c => c.status === 'active' && c.daysRemaining <= 3).length;
   const expiredClients = clients.filter(c => c.status !== 'active').length;
 
+  const resellers = accountService.getResellers();
+  const totalResellers = resellers.length;
+  const totalCredits = resellers.reduce((acc, r) => acc + (r.credits || 0), 0);
+  const resellerClientsCount = clients.filter(c => c.resellerId).length;
+
   return res.json({
     success: true,
     stats: {
@@ -59,10 +64,14 @@ router.get('/overview', (req, res) => {
       activeClients,
       expiringSoon,
       expiredClients,
-      pendingCount: pending.length
+      pendingCount: pending.length,
+      totalResellers,
+      totalCredits,
+      resellerClientsCount
     },
     clients,
     pending,
+    resellers,
     settings
   });
 });
@@ -316,6 +325,128 @@ router.post('/channels/sync-iptv', async (req, res) => {
       success: true,
       message: 'Sincronización con iptv-org completada con éxito.',
       result
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ====================================================================
+ * GESTIÓN DE REVENDEDORES Y CRÉDITOS (MASTER ADMIN)
+ * ====================================================================
+ */
+
+/**
+ * @route   GET /api/admin/resellers
+ * @desc    Lista todos los revendedores registrados
+ */
+router.get('/resellers', (req, res) => {
+  try {
+    const resellers = accountService.getResellers();
+    return res.json({
+      success: true,
+      resellers
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/resellers
+ * @desc    Crea un nuevo revendedor con asignación inicial de créditos
+ */
+router.post('/resellers', (req, res) => {
+  try {
+    const { name, username, password, whatsapp, initialCredits } = req.body;
+    const newReseller = accountService.createReseller({
+      name,
+      username,
+      password,
+      whatsapp,
+      initialCredits
+    });
+
+    return res.status(201).json({
+      success: true,
+      reseller: newReseller,
+      message: 'Revendedor creado exitosamente.'
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   GET /api/admin/resellers/:id
+ * @desc    Obtiene detalles de un revendedor, historial y lista de clientes
+ */
+router.get('/resellers/:id', (req, res) => {
+  try {
+    const reseller = accountService.getResellerById(req.params.id);
+    if (!reseller) {
+      return res.status(404).json({ success: false, error: 'Revendedor no encontrado.' });
+    }
+    const clients = accountService.getResellerClients(req.params.id);
+    return res.json({
+      success: true,
+      reseller,
+      clients
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   PUT /api/admin/resellers/:id
+ * @desc    Actualiza datos del revendedor (estado, whatsapp, contraseña, etc.)
+ */
+router.put('/resellers/:id', (req, res) => {
+  try {
+    const updated = accountService.updateReseller(req.params.id, req.body);
+    return res.json({
+      success: true,
+      reseller: updated,
+      message: 'Datos del revendedor actualizados.'
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/resellers/:id/recharge
+ * @desc    Recarga créditos al revendedor tras confirmar el pago
+ */
+router.post('/resellers/:id/recharge', (req, res) => {
+  try {
+    const { credits, note } = req.body;
+    const result = accountService.rechargeResellerCredits(req.params.id, credits, note);
+    return res.json({
+      success: true,
+      reseller: result,
+      message: `Se han añadido ${credits} créditos con éxito al revendedor.`
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/admin/resellers/:id
+ * @desc    Elimina un revendedor del sistema
+ */
+router.delete('/resellers/:id', (req, res) => {
+  try {
+    const deleted = accountService.deleteReseller(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'Revendedor no encontrado.' });
+    }
+    return res.json({
+      success: true,
+      message: 'Revendedor eliminado con éxito.'
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
