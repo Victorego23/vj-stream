@@ -37,11 +37,11 @@ class AppUpdateInfo {
   }
 }
 
-/// Servicio de actualización automática In-App (OTA) para VJ STREAM
+/// Servicio de actualización automática In-App (OTA) para TOM TV
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '2.7.0';
-  static const int currentVersionCode = 19;
+  static const String currentVersion = '3.0.0';
+  static const int currentVersionCode = 20;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
@@ -79,7 +79,7 @@ class UpdateService {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   backgroundColor: Color(0xFF1E1E1E),
-                  content: Text('Ya tienes la versión más reciente de VJ STREAM (v$currentVersion).'),
+                  content: Text('Ya tienes la versión más reciente de TOM TV (v$currentVersion).'),
                 ),
               );
             }
@@ -214,7 +214,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
     setState(() {
       _isDownloading = true;
       _progress = 0.0;
-      _downloadMessage = 'Conectando con el servidor para descargar VJ STREAM v${widget.updateInfo.latestVersion}...';
+      _downloadMessage = 'Conectando con el servidor para descargar TOM TV v${widget.updateInfo.latestVersion}...';
     });
 
     IOSink? sink;
@@ -351,7 +351,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
                       ],
                     ),
                     child: const Text(
-                      'VJ STREAM',
+                      'TOM TV',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,

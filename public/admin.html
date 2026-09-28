@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VJ STREAM - Panel de Control & TV en Vivo</title>
+  <title>TOM TV - Panel de Control & TV en Vivo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -218,7 +218,7 @@
   <!-- PANTALLA DE LOGIN -->
   <div id="login-view">
     <div class="login-card">
-      <div class="brand-badge">VJ STREAM</div>
+      <div class="brand-badge">TOM TV</div>
       <h2 style="margin-bottom: 8px; font-weight: 900; font-size: 22px;">Panel de Control Master</h2>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Gestión de Clientes, Licencias y TV en Vivo</p>
 
@@ -237,11 +237,11 @@
     <!-- Navbar -->
     <nav class="navbar">
       <div class="nav-brand">
-        <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 12px;">VJ STREAM</div>
+        <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 12px;">TOM TV</div>
         <div class="status-pill"><span>●</span> En Línea</div>
       </div>
       <div class="nav-actions">
-        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 APK v2.6.0</a>
+        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 APK v3.0.0</a>
         <button class="btn btn-secondary btn-sm" onclick="downloadBackup()" title="Descargar copia de seguridad de clientes en JSON">💾 Backup</button>
         <button class="btn btn-secondary btn-sm" onclick="openRestoreModal()" title="Restaurar clientes desde JSON">📥 Restaurar</button>
         <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">🔄 Refrescar</button>
@@ -346,7 +346,7 @@
           <div class="section-header">
             <div>
               <div class="section-title">📺 Canales de TV en Vivo Transmitiendo</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transmisiones HLS (.m3u8) reproducidas directamente en la app VJ STREAM</p>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transmisiones HLS (.m3u8) reproducidas directamente en la app TOM TV</p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
               <input type="text" id="channel-search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar canal..." onkeyup="filterChannels()">
@@ -386,7 +386,7 @@
 
               <div class="form-group">
                 <label>Plantilla de Recordatorio de Pago / Renovación:</label>
-                <textarea id="tab-whatsapp-msg" class="form-control" rows="3" placeholder="Hola {nombre}, te recordamos que tu suscripción VJ STREAM vence en {dias} días ({fecha}). Para renovar responde a este mensaje."></textarea>
+                <textarea id="tab-whatsapp-msg" class="form-control" rows="3" placeholder="Hola {nombre}, te recordamos que tu suscripción TOM TV vence en {dias} días ({fecha}). Para renovar responde a este mensaje."></textarea>
                 <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Variables disponibles: {nombre}, {dias}, {fecha}, {codigo}.</small>
               </div>
 
@@ -819,11 +819,11 @@
       const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(client.code)}`;
       const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
       
-      let msg = `¡Hola ${client.name}! Tu acceso a VJ STREAM ya está activo.\n\n`;
+      let msg = `¡Hola ${client.name}! Tu acceso a TOM TV ya está activo.\n\n`;
       msg += `🔑 Código de Activación: *${client.code}*\n`;
       msg += `📅 Vence el: *${expDate}* (${client.daysRemaining} días restantes)\n\n`;
       msg += `📱 *Para ver en iPhone, iPad o navegador web*, pulsa en este enlace directo:\n${link}\n\n`;
-      msg += `📺 *Para Smart TV o Android TV*, abre la app VJ STREAM e ingresa tu código *${client.code}*.\n\n`;
+      msg += `📺 *Para Smart TV o Android TV*, abre la app TOM TV e ingresa tu código *${client.code}*.\n\n`;
       msg += `¡Que disfrutes de tus películas, series y canales en vivo!`;
 
       const encoded = encodeURIComponent(msg);

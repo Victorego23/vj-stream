@@ -74,7 +74,7 @@ class AuthService {
           'code': savedCode,
           'deviceModel': defaultTargetPlatform == TargetPlatform.android
               ? 'Android TV / Móvil'
-              : 'Dispositivo VJ STREAM',
+              : 'Dispositivo TOM TV',
         }),
       ).timeout(const Duration(seconds: 10));
 
@@ -237,7 +237,7 @@ class AuthService {
 
   static Future<String> getClientName() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_prefClientNameKey) ?? 'Cliente VJ STREAM';
+    return prefs.getString(_prefClientNameKey) ?? 'Cliente TOM TV';
   }
 
   static Future<String?> getSavedClientCode() async {

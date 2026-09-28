@@ -34,8 +34,8 @@ app.use((req, res, next) => {
 // Endpoint de verificación de estado y salud del servidor
 app.get('/health', (req, res) => {
   res.json({
-    app: 'VJ STREAM API',
-    version: '2.0.0',
+    app: 'TOM TV API',
+    version: '3.0.0',
     status: 'ok',
     features: {
       antiCamFilter: true,
@@ -117,7 +117,7 @@ app.use((err, req, res, next) => {
 
   res.status(statusCode).json({
     success: false,
-    app: 'VJ STREAM',
+    app: 'TOM TV',
     error: err.message || 'Error interno del servidor',
     ...(process.env.NODE_ENV !== 'production' && { details: err.originalError?.response?.data || null })
   });
@@ -128,7 +128,7 @@ app.use((err, req, res, next) => {
 // ====================================================================
 const server = app.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(`🔥 VJ STREAM - Servidor Backend Premium Iniciado`);
+  console.log(`🔥 TOM TV - Servidor Backend Premium Iniciado`);
   console.log(`🛡️  Filtro Anti-CAM: ACTIVO (CAM, TS, HDCAM descartados)`);
   console.log(`🇪🇸 Audio en Español: PRIORIDAD MÁXIMA (Latino / Castellano)`);
   console.log(`📡 URL local: http://localhost:${PORT}`);
@@ -145,11 +145,11 @@ const udpServer = dgram.createSocket('udp4');
 
 udpServer.on('message', (msg, rinfo) => {
   const messageStr = msg.toString();
-  if (messageStr.includes('VJ_STREAM_PING') || messageStr.includes('DISCOVER_VJ_STREAM')) {
+  if (messageStr.includes('TOM_TV_PING') || messageStr.includes('VJ_STREAM_PING') || messageStr.includes('DISCOVER_VJ_STREAM')) {
     const response = JSON.stringify({
-      app: 'VJ STREAM',
+      app: 'TOM TV',
       port: PORT,
-      version: '2.2.6'
+      version: '3.0.0'
     });
     udpServer.send(response, rinfo.port, rinfo.address, (err) => {
       if (err) console.error('[UDP Discovery] Error respondiendo ping:', err);

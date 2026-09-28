@@ -26,7 +26,7 @@ class AccountService {
       },
       settings: {
         whatsappNumber: process.env.WHATSAPP_NUMBER || '+51999999999',
-        whatsappMessage: 'Hola, mi código de activación de VJ STREAM es {code}',
+        whatsappMessage: 'Hola, mi código de activación de TOM TV es {code}',
       },
       clients: [
         {
@@ -769,9 +769,9 @@ class AccountService {
   exportBackup() {
     const db = this._readDb();
     return {
-      version: '2.6.0',
+      version: '3.0.0',
       exportedAt: new Date().toISOString(),
-      app: 'VJ STREAM',
+      app: 'TOM TV',
       admin: db.admin,
       settings: db.settings,
       clients: db.clients,

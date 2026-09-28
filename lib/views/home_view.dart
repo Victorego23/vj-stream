@@ -302,7 +302,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'VJ STREAM',
+                  'TOM TV',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -365,7 +365,7 @@ class _HomeViewState extends State<HomeView> {
           ),
           content: Text(
             streamInfo?['message'] ??
-                'Esta película solo cuenta actualmente con grabaciones de sala de cine. VJ STREAM protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.',
+                'Esta película solo cuenta actualmente con grabaciones de sala de cine. TOM TV protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.',
             style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
           ),
           actions: [
@@ -443,7 +443,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'VJ STREAM',
+                  'TOM TV',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -598,7 +598,7 @@ class _HomeViewState extends State<HomeView> {
             ),
             const SizedBox(width: 12),
             const Text(
-              'Ajustes de VJ STREAM',
+              'Ajustes de TOM TV',
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
@@ -891,7 +891,7 @@ class _HomeViewState extends State<HomeView> {
                     expandedHeight: 60,
                     title: Row(
                       children: [
-                        // Logo VJ STREAM
+                        // Logo TOM TV
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
@@ -908,7 +908,7 @@ class _HomeViewState extends State<HomeView> {
                             ],
                           ),
                           child: const Text(
-                            'VJ',
+                            'TOM',
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w900,
@@ -919,7 +919,7 @@ class _HomeViewState extends State<HomeView> {
                         ),
                         const SizedBox(width: 10),
                         const Text(
-                          'STREAM',
+                          'TV',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 17,
@@ -931,7 +931,7 @@ class _HomeViewState extends State<HomeView> {
                     ),
                     actions: [
                       IconButton(
-                        tooltip: 'Buscar en VJ STREAM',
+                        tooltip: 'Buscar en TOM TV',
                         icon: const Icon(Icons.search, color: Colors.white, size: 24),
                         onPressed: _openSearch,
                       ),
@@ -1138,7 +1138,7 @@ class _HomeViewState extends State<HomeView> {
             ),
             const SizedBox(width: 10),
             const Text(
-              '¿Salir de VJ STREAM?',
+              '¿Salir de TOM TV?',
               style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
             ),
           ],

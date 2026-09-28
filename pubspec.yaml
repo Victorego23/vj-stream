@@ -1,7 +1,7 @@
-name: vj_stream
-description: "VJ STREAM - Plataforma de Streaming de Alta Calidad con Real-Debrid y TMDB"
+name: tom_tv
+description: "TOM TV - Plataforma de Streaming de Alta Calidad con Real-Debrid y TMDB"
 publish_to: 'none'
-version: 2.7.0+19
+version: 3.0.0+20
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

@@ -98,7 +98,7 @@ class HeroBanner extends StatelessWidget {
                         ],
                       ),
                       child: const Text(
-                        'VJ STREAM',
+                        'TOM TV',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 11,

@@ -120,7 +120,7 @@ class _SearchViewState extends State<SearchView> {
             focusNode: _searchFocusNode,
             style: const TextStyle(color: Colors.white, fontSize: 15),
             decoration: InputDecoration(
-              hintText: 'Buscar películas, series en VJ STREAM...',
+              hintText: 'Buscar películas, series en TOM TV...',
               hintStyle: const TextStyle(color: Colors.white54, fontSize: 14),
               prefixIcon: const Icon(Icons.search, color: Color(0xFFE50914), size: 20),
               suffixIcon: _searchController.text.isNotEmpty
@@ -169,7 +169,7 @@ class _SearchViewState extends State<SearchView> {
             CircularProgressIndicator(color: Color(0xFFE50914)),
             SizedBox(height: 16),
             Text(
-              'Buscando en VJ STREAM...',
+              'Buscando en TOM TV...',
               style: TextStyle(color: Colors.white70, fontSize: 14),
             ),
           ],
@@ -185,7 +185,7 @@ class _SearchViewState extends State<SearchView> {
             Icon(Icons.search_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
             const SizedBox(height: 16),
             const Text(
-              'Encuentra películas y series en VJ STREAM',
+              'Encuentra películas y series en TOM TV',
               style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),

@@ -235,7 +235,7 @@ class _ActivationViewState extends State<ActivationView> {
                       ],
                     ),
                     child: const Text(
-                      'VJ STREAM',
+                      'TOM TV',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -261,7 +261,7 @@ class _ActivationViewState extends State<ActivationView> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Bienvenido ${_clientName ?? ""}. Tu suscripción está lista.\nIniciando VJ STREAM...',
+                      'Bienvenido ${_clientName ?? ""}. Tu suscripción está lista.\nIniciando TOM TV...',
                       style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
                       textAlign: TextAlign.center,
                     ),
@@ -273,7 +273,7 @@ class _ActivationViewState extends State<ActivationView> {
                     const CircularProgressIndicator(color: Color(0xFFE50914)),
                     const SizedBox(height: 24),
                     const Text(
-                      'Conectando con el servidor VJ STREAM...',
+                      'Conectando con el servidor TOM TV...',
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 30),
@@ -291,7 +291,7 @@ class _ActivationViewState extends State<ActivationView> {
                     const SizedBox(height: 8),
                     Text(
                       _errorMessage ??
-                          'Envía este código a tu proveedor de VJ STREAM por WhatsApp para activar tu membresía:',
+                          'Envía este código a tu proveedor de TOM TV por WhatsApp para activar tu membresía:',
                       style: TextStyle(
                         color: _errorMessage != null ? const Color(0xFFEF4444) : Colors.white70,
                         fontSize: 13,

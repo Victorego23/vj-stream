@@ -38,7 +38,7 @@ class VjStreamApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'VJ STREAM',
+      title: 'TOM TV',
       debugShowCheckedModeBanner: false,
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
@@ -117,7 +117,7 @@ class _AuthGateState extends State<AuthGate> {
               CircularProgressIndicator(color: Color(0xFFE50914)),
               SizedBox(height: 16),
               Text(
-                'Iniciando VJ STREAM...',
+                'Iniciando TOM TV...',
                 style: TextStyle(color: Colors.white54, fontSize: 13),
               ),
             ],

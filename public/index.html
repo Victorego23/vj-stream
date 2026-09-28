@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>VJ STREAM - Películas, Series y TV en Vivo</title>
+  <title>TOM TV - Películas, Series y TV en Vivo</title>
 
   <!-- PWA & Apple iOS Tags -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#E50914">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="VJ STREAM">
-  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%23E50914'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-family='Arial, sans-serif' font-weight='900' font-size='68' fill='white'%3EVJ%3C/text%3E%3C/svg%3E">
+  <meta name="apple-mobile-web-app-title" content="TOM TV">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%23E50914'/%3E%3Ctext x='50%25' y='60%25' text-anchor='middle' font-family='Arial, sans-serif' font-weight='900' font-size='56' fill='white'%3ETOM%3C/text%3E%3C/svg%3E">
 
   <!-- Tipografía Google Fonts Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -943,8 +943,8 @@
   <!-- HEADER -->
   <header>
     <div class="brand" onclick="switchTab('Todos')">
-      <div class="brand-logo">VJ</div>
-      <div class="brand-name">STREAM</div>
+      <div class="brand-logo">TOM</div>
+      <div class="brand-name">TV</div>
     </div>
     <div class="header-actions">
       <button class="account-btn" id="accountHeaderBtn" onclick="handleAccountBtnClick()">
@@ -983,9 +983,9 @@
     <div class="hero-banner" id="heroBanner">
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <div class="hero-badge">DESTACADO EN VJ STREAM</div>
+        <div class="hero-badge">DESTACADO EN TOM TV</div>
         <h1 class="hero-title" id="heroTitle">Cargando catálogo...</h1>
-        <p class="hero-synopsis" id="heroSynopsis">Conectando con el servidor en la nube de VJ STREAM...</p>
+        <p class="hero-synopsis" id="heroSynopsis">Conectando con el servidor en la nube de TOM TV...</p>
         <div class="hero-buttons">
           <button class="btn-play" id="heroPlayBtn" onclick="playHeroMedia()">▶ Reproducir Ahora</button>
           <button class="btn-more" id="heroSaveBtn" onclick="toggleSaveHero()">+ Mi Lista</button>
@@ -1002,7 +1002,7 @@
     <div class="ios-banner-text">
       <span style="font-size: 22px;">📱</span>
       <div>
-        <strong>Instala VJ STREAM en tu iPhone:</strong><br>
+        <strong>Instala TOM TV en tu iPhone:</strong><br>
         Toca el botón <strong>Compartir ⬆️</strong> abajo en Safari y luego <strong>"Añadir a pantalla de inicio"</strong>.
       </div>
       <button class="ios-banner-close" onclick="closeIosBanner()">✕</button>
@@ -1032,7 +1032,7 @@
   <!-- MODAL DE BÚSQUEDA -->
   <div class="search-modal" id="searchModal">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2 style="font-size: 18px; font-weight: 800;">Buscar en VJ STREAM</h2>
+      <h2 style="font-size: 18px; font-weight: 800;">Buscar en TOM TV</h2>
       <button style="background: none; border: none; color: #fff; font-size: 20px; cursor: pointer;" onclick="closeSearchModal()">✕</button>
     </div>
     <div class="search-input-box">
@@ -1045,7 +1045,7 @@
   <div class="activation-modal" id="activationModal">
     <div class="activation-card">
       <button class="btn-close-act-modal" onclick="closeActivationModal()" title="Cerrar ventana">✕</button>
-      <div class="act-brand-badge">⚡ VJ STREAM ACCESO</div>
+      <div class="act-brand-badge">⚡ TOM TV ACCESO</div>
       <h2 class="act-title" id="actTitle">Activar Dispositivo</h2>
       <p class="act-desc" id="actDesc">Para reproducir películas, series y canales en vivo en tu iPhone, necesitas autorizar este dispositivo.</p>
       
@@ -1082,7 +1082,7 @@
       <button class="btn-close-act-modal" onclick="closeAccountModal()">✕</button>
       <div style="font-size: 32px; margin-bottom: 8px;">👑</div>
       <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Membresía Activa</h3>
-      <p style="font-size: 12px; color: #8E8E93; margin-bottom: 18px;">Dispositivo autorizado en VJ STREAM</p>
+      <p style="font-size: 12px; color: #8E8E93; margin-bottom: 18px;">Dispositivo autorizado en TOM TV</p>
 
       <div class="acc-detail-item">
         <span class="acc-detail-title">Cliente:</span>
@@ -1244,7 +1244,7 @@
     function displayActivationDetails(data) {
       document.getElementById('actCodeDisplay').textContent = data.code;
       const whatsappNum = (data.whatsappNumber || '+51999999999').replace(/[^0-9+]/g, '');
-      const rawMsg = data.whatsappMessage || 'Hola, mi código de activación de VJ STREAM es {code}';
+      const rawMsg = data.whatsappMessage || 'Hola, mi código de activación de TOM TV es {code}';
       const finalMsg = rawMsg.replace('{code}', data.code);
       
       const waBtn = document.getElementById('actWhatsappBtn');
@@ -1938,7 +1938,7 @@
     }
 
     function showIosInstallModal() {
-      alert("📱 PARA INSTALAR EN IPHONE:\n\n1. Toca el botón Compartir (el cuadrado con flecha ⬆️ abajo en Safari).\n2. Elige 'Añadir a pantalla de inicio'.\n3. ¡Listo! VJ STREAM se abrirá como app a pantalla completa.");
+      alert("📱 PARA INSTALAR EN IPHONE:\n\n1. Toca el botón Compartir (el cuadrado con flecha ⬆️ abajo en Safari).\n2. Elige 'Añadir a pantalla de inicio'.\n3. ¡Listo! TOM TV se abrirá como app a pantalla completa.");
     }
 
     // REGISTRO DE SERVICE WORKER PARA PWA

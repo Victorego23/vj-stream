@@ -278,7 +278,7 @@ class _DetailViewState extends State<DetailView> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'VJ STREAM',
+                  'TOM TV',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -386,7 +386,7 @@ class _DetailViewState extends State<DetailView> {
   }) {
     if (!mounted) return;
     final message = streamInfo?['message'] as String? ??
-        'Esta película se encuentra actualmente en proceso de digitalización o en salas de cine. VJ STREAM protege tu experiencia evitando grabaciones de mala calidad o enlaces caídos.';
+        'Esta película se encuentra actualmente en proceso de digitalización o en salas de cine. TOM TV protege tu experiencia evitando grabaciones de mala calidad o enlaces caídos.';
 
     showDialog(
       context: context,
@@ -442,7 +442,7 @@ class _DetailViewState extends State<DetailView> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'VJ STREAM solo ofrece contenidos en alta definición (1080p / 4K) verificados.',
+                      'TOM TV solo ofrece contenidos en alta definición (1080p / 4K) verificados.',
                       style: TextStyle(color: Colors.white54, fontSize: 11),
                     ),
                   ),
@@ -863,7 +863,7 @@ class _DetailViewState extends State<DetailView> {
               ),
               const SizedBox(width: 10),
               Text(
-                _isTrailerOnly ? 'Ver Tráiler Oficial' : 'Reproducir en VJ STREAM',
+                _isTrailerOnly ? 'Ver Tráiler Oficial' : 'Reproducir en TOM TV',
                 style: TextStyle(
                   color: _isTrailerOnly ? Colors.black : Colors.white,
                   fontSize: 16,

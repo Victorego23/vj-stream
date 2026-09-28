@@ -111,7 +111,7 @@ class ApiService {
       final res = await http.get(uri).timeout(const Duration(milliseconds: 3000));
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
-        if (body['app'] == 'VJ STREAM' || body['success'] == true) {
+        if (body['app'] == 'TOM TV' || body['app'] == 'VJ STREAM' || body['success'] == true) {
           return true;
         }
       }
@@ -137,7 +137,7 @@ class ApiService {
             try {
               final text = utf8.decode(datagram.data);
               final decoded = json.decode(text);
-              if (decoded['app'] == 'VJ STREAM') {
+              if (decoded['app'] == 'TOM TV' || decoded['app'] == 'VJ STREAM') {
                 final host = datagram.address.address;
                 final port = decoded['port'] ?? 3000;
                 final foundUrl = 'http://$host:$port/api/streaming';

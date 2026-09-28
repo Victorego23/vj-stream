@@ -530,17 +530,17 @@ router.get('/live-channels', getChannelsHandler);
 router.get('/version', (req, res) => {
   return res.json({
     success: true,
-    app: 'VJ STREAM',
-    latestVersion: '2.7.0',
-    versionCode: 19,
+    app: 'TOM TV',
+    latestVersion: '3.0.0',
+    versionCode: 20,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-27',
+    releaseDate: '2026-09-28',
     releaseNotes: [
-      '🍿 Nueva sección y pestaña "Próximamente": cartelera de estrenos de cine con tráilers oficiales en HD',
-      '🎬 Reproductor nativo de tráilers en alta definición sin publicidad ni webviews para Smart TV y móvil',
-      '⚡ Integración automática al catálogo: al publicarse audio en español (Latino/Castellano), la película se habilita automáticamente',
-      '🔔 Sistema de recordatorios: "Avisarme cuando esté en español" con aviso in-app automático',
-      '💎 Optimización de desbridado y resolución ultra veloz en menos de 500ms'
+      '📺 ¡Bienvenido a TOM TV! Actualización oficial de marca y máxima velocidad',
+      '🍿 Modo Tráiler HD Oficial para próximos estrenos (Coyote vs. Acme, La Odisea, Spider-Man: Brand New Day)',
+      '⚡ Multi-Scraper Turbo: Mayor cantidad de torrents y desbridado al instante con Real-Debrid',
+      '📡 Canales de TV en Vivo 100% operativos: 1,338 señales auditadas y fluidas (canales caídos eliminados)',
+      '💎 Nueva experiencia cinematográfica VIP sin cuadros de error ni interrupciones'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
@@ -549,28 +549,31 @@ router.get('/version', (req, res) => {
 
 /**
  * @route   GET /api/streaming/download-apk
- * @desc    Descarga directa del APK de VJ STREAM para actualización OTA
+ * @desc    Descarga directa del APK de TOM TV para actualización OTA
  */
 router.get('/download-apk', (req, res) => {
   const path = require('path');
   const fs = require('fs');
 
+  const tomReleasePath = path.resolve(__dirname, '..', 'TOM-TV-release.apk');
   const releasePath = path.resolve(__dirname, '..', 'VJ-STREAM-release.apk');
   const apkPath = path.resolve(__dirname, '..', 'VJ-STREAM-debug.apk');
   const fallbackPath = path.resolve(__dirname, '..', 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
 
-  const fileToSend = fs.existsSync(releasePath) ? releasePath : (fs.existsSync(apkPath) ? apkPath : fallbackPath);
+  const fileToSend = fs.existsSync(tomReleasePath)
+    ? tomReleasePath
+    : (fs.existsSync(releasePath) ? releasePath : (fs.existsSync(apkPath) ? apkPath : fallbackPath));
 
   if (!fs.existsSync(fileToSend)) {
     return res.status(404).json({
       success: false,
-      error: 'El archivo APK de VJ STREAM no está disponible para descarga en este momento.'
+      error: 'El archivo APK de TOM TV no está disponible para descarga en este momento.'
     });
   }
 
   res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-  res.setHeader('Content-Disposition', 'attachment; filename="VJ-STREAM.apk"');
-  return res.download(fileToSend, 'VJ-STREAM.apk');
+  res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
+  return res.download(fileToSend, 'TOM-TV.apk');
 });
 
 module.exports = router;
