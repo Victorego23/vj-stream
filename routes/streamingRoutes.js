@@ -544,7 +544,7 @@ router.get('/version', (req, res) => {
       '⭐ Acceso instantáneo a Favoritos manteniendo pulsado el botón OK del control remoto'
     ],
     downloadUrl: '/api/streaming/download-apk',
-    forceUpdate: false
+    forceUpdate: true
   });
 });
 
