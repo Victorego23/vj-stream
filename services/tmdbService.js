@@ -1,6 +1,48 @@
 const axios = require('axios');
 
 /**
+ * Títulos especiales configurados en modo tráiler exclusivo
+ * hasta que cuenten con su estreno y disponibilidad oficial en español.
+ */
+const FORCED_TRAILER_TITLES = [
+  {
+    id: 1204680,
+    title: 'Coyote vs. Acme',
+    originalTitle: 'Coyote vs. Acme',
+    aliases: ['coyote vs acme', 'coyote vs. acme', 'coyote contra acme', 'coyote acme'],
+    trailerKey: 'WQRoa6l4bwI',
+    trailer: 'https://www.youtube.com/watch?v=WQRoa6l4bwI',
+    statusBadge: 'Solo Tráiler - Próximamente en Español'
+  },
+  {
+    id: 1368337,
+    title: 'La Odisea',
+    originalTitle: 'The Odyssey',
+    aliases: ['la odisea', 'the odyssey', 'odisea'],
+    trailerKey: '8un_UztYsw0',
+    trailer: 'https://www.youtube.com/watch?v=8un_UztYsw0',
+    statusBadge: 'Solo Tráiler - Próximamente en Español'
+  },
+  {
+    id: 969681,
+    title: 'Spider-Man: Brand New Day',
+    originalTitle: 'Spider-Man: Brand New Day',
+    aliases: [
+      'spider-man: brand new day',
+      'spider-man brand new day',
+      'spider man brand new day',
+      'spider man un nuevo dia',
+      'spiderman brand new day',
+      'brand new day',
+      'spider-man 4'
+    ],
+    trailerKey: 'pqLSLoDkZWE',
+    trailer: 'https://www.youtube.com/watch?v=pqLSLoDkZWE',
+    statusBadge: 'Solo Tráiler - Próximamente en Español'
+  }
+];
+
+/**
  * Servicio para interactuar con la API REST v3 de TMDB (The Movie Database).
  * Documentación oficial: https://developer.themoviedb.org/reference/intro/getting-started
  */
@@ -8,6 +50,28 @@ class TmdbService {
   constructor() {
     this.baseURL = 'https://api.themoviedb.org/3';
     this.imageBaseUrl = 'https://image.tmdb.org/t/p';
+  }
+
+  /**
+   * Determina si un elemento corresponde a una de las películas fijadas en modo tráiler.
+   * @param {Object} item
+   * @returns {Object|null}
+   */
+  getForcedTrailerConfig(item) {
+    if (!item) return null;
+    const itemId = Number(item.id);
+    const title = (item.title || item.name || '').toLowerCase().trim();
+    const origTitle = (item.originalTitle || item.original_title || '').toLowerCase().trim();
+
+    for (const conf of FORCED_TRAILER_TITLES) {
+      if (itemId && itemId === conf.id) return conf;
+      for (const alias of conf.aliases) {
+        if (title.includes(alias) || origTitle.includes(alias)) {
+          return conf;
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -127,7 +191,21 @@ class TmdbService {
         page: data.page,
         totalPages: data.total_pages,
         totalResults: data.total_results,
-        results: (data.results || []).map(item => this.formatMediaItem(item))
+        results: (data.results || []).map(item => {
+          const formatted = this.formatMediaItem(item);
+          const forcedConf = this.getForcedTrailerConfig(item) || this.getForcedTrailerConfig(formatted);
+          if (forcedConf) {
+            return {
+              ...formatted,
+              isTrailerOnly: true,
+              hasSpanishAudio: false,
+              trailer: forcedConf.trailer,
+              trailerKey: forcedConf.trailerKey,
+              statusBadge: forcedConf.statusBadge
+            };
+          }
+          return formatted;
+        })
       };
     } catch (error) {
       this.handleError('searchMedia', error);
@@ -208,6 +286,8 @@ class TmdbService {
       const formatted = this.formatMediaItem({ ...data, media_type: 'movie' });
       const { trailer, trailerKey } = this._extractTrailer(data.videos);
 
+      const forcedConf = this.getForcedTrailerConfig(data) || this.getForcedTrailerConfig(formatted) || this.getForcedTrailerConfig({ id: movieId });
+
       return {
         ...formatted,
         genres: data.genres || [],
@@ -219,8 +299,11 @@ class TmdbService {
           character: actor.character,
           profileImage: this.buildImageUrl(actor.profile_path, 'w185')
         })),
-        trailer,
-        trailerKey
+        trailer: forcedConf?.trailer || trailer,
+        trailerKey: forcedConf?.trailerKey || trailerKey,
+        isTrailerOnly: Boolean(forcedConf),
+        hasSpanishAudio: forcedConf ? false : true,
+        statusBadge: forcedConf ? forcedConf.statusBadge : null
       };
     } catch (error) {
       this.handleError(`getMovieDetails (id: ${movieId})`, error);
@@ -359,21 +442,25 @@ class TmdbService {
       const items = await Promise.all(
         rawItems.slice(0, 20).map(async (item) => {
           const formatted = this.formatMediaItem({ ...item, media_type: 'movie' });
-          let trailer = null;
-          let trailerKey = null;
+          const forcedConf = this.getForcedTrailerConfig(item) || this.getForcedTrailerConfig(formatted);
 
-          try {
-            const vidRes = await client.get(`/movie/${item.id}/videos`, {
-              params: {
-                language: 'es-ES',
-                include_video_language: 'es,es-ES,es-MX,en,null'
-              },
-              timeout: 4000
-            });
-            const extracted = this._extractTrailer(vidRes.data);
-            trailer = extracted.trailer;
-            trailerKey = extracted.trailerKey;
-          } catch (_) {}
+          let trailer = forcedConf?.trailer || null;
+          let trailerKey = forcedConf?.trailerKey || null;
+
+          if (!trailerKey) {
+            try {
+              const vidRes = await client.get(`/movie/${item.id}/videos`, {
+                params: {
+                  language: 'es-ES',
+                  include_video_language: 'es,es-ES,es-MX,en,null'
+                },
+                timeout: 4000
+              });
+              const extracted = this._extractTrailer(vidRes.data);
+              trailer = extracted.trailer;
+              trailerKey = extracted.trailerKey;
+            } catch (_) {}
+          }
 
           return {
             ...formatted,
@@ -381,10 +468,56 @@ class TmdbService {
             hasSpanishAudio: false,
             trailer,
             trailerKey,
-            statusBadge: 'Próximamente en Español'
+            statusBadge: forcedConf?.statusBadge || 'Próximamente en Español'
           };
         })
       );
+
+      // Si es la página 1, asegurar que las 3 películas fijadas por el usuario
+      // (Coyote vs. Acme, La Odisea, Spider-Man: Brand New Day) encabecen la lista
+      if (Number(page) === 1) {
+        const pinnedItems = [];
+        const otherItems = [];
+
+        for (const it of items) {
+          if (this.getForcedTrailerConfig(it)) {
+            pinnedItems.push(it);
+          } else {
+            otherItems.push(it);
+          }
+        }
+
+        // Si alguna de las 3 fijadas no vino en el listado nativo de /upcoming, la cargamos directamente
+        for (const conf of FORCED_TRAILER_TITLES) {
+          const exists = pinnedItems.some(it => it.id === conf.id || this.getForcedTrailerConfig(it)?.id === conf.id);
+          if (!exists) {
+            try {
+              const details = await this.getMovieDetails(conf.id);
+              if (details) {
+                pinnedItems.push({
+                  ...details,
+                  isTrailerOnly: true,
+                  hasSpanishAudio: false,
+                  trailer: conf.trailer,
+                  trailerKey: conf.trailerKey,
+                  statusBadge: conf.statusBadge
+                });
+              }
+            } catch (err) {
+              console.warn(`[TmdbService] Error cargando película fijada ${conf.title}:`, err.message);
+            }
+          }
+        }
+
+        // Ordenar pinnedItems para garantizar el orden de FORCED_TRAILER_TITLES
+        pinnedItems.sort((a, b) => {
+          const idxA = FORCED_TRAILER_TITLES.findIndex(c => c.id === a.id || this.getForcedTrailerConfig(a)?.id === c.id);
+          const idxB = FORCED_TRAILER_TITLES.findIndex(c => c.id === b.id || this.getForcedTrailerConfig(b)?.id === c.id);
+          return (idxA >= 0 ? idxA : 99) - (idxB >= 0 ? idxB : 99);
+        });
+
+        return [...pinnedItems, ...otherItems];
+      }
 
       return items;
     } catch (error) {

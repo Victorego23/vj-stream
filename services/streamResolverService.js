@@ -372,6 +372,19 @@ class StreamResolverService {
       this.cache.delete(cacheKey);
     }
 
+    // Verificar si es una de las películas fijadas en modo tráiler exclusivo
+    const forcedConf = tmdbService.getForcedTrailerConfig(mediaInfo);
+    if (forcedConf) {
+      console.log(`[VJ STREAM Auto-Resolver] 🎬 "${forcedConf.title}" está en modo tráiler oficial exclusivo hasta estreno.`);
+      return {
+        success: false,
+        isTrailerOnly: true,
+        trailerKey: forcedConf.trailerKey,
+        trailer: forcedConf.trailer,
+        message: `"${forcedConf.title}" está en modo tráiler oficial exclusivo hasta su estreno y disponibilidad oficial en español.`
+      };
+    }
+
     console.log(`[VJ STREAM Auto-Resolver] 🔍 Buscando transmisión automática en ESPAÑOL para: "${title}" (ID: ${id || 'N/A'}${mediaType === 'tv' ? ` S${season}E${episode}` : ''})`);
 
     // 1. Obtener IMDb ID a través de TMDB si no viene en el payload
@@ -618,6 +631,19 @@ class StreamResolverService {
    */
   async checkSpanishAvailability(mediaInfo) {
     const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1 } = mediaInfo;
+
+    // Si la película está configurada exclusivamente como tráiler hasta estreno oficial
+    const forcedConf = tmdbService.getForcedTrailerConfig(mediaInfo);
+    if (forcedConf) {
+      return {
+        hasSpanishAudio: false,
+        isAvailable: false,
+        isTrailerOnly: true,
+        trailerKey: forcedConf.trailerKey,
+        message: `"${forcedConf.title}" está en modo tráiler oficial hasta su estreno y disponibilidad oficial en español.`
+      };
+    }
+
     const cacheKey = this._getCacheKey(mediaInfo);
 
     // 1. Revisar caché

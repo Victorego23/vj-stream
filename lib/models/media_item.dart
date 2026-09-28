@@ -60,10 +60,36 @@ class MediaItem {
       }).where((name) => name.isNotEmpty).toList();
     }
 
-    final isTrailer = json['isTrailerOnly'] == true;
-    final hasSpanish = json['hasSpanishAudio'] is bool
-        ? json['hasSpanishAudio'] as bool
-        : !isTrailer;
+    final titleLower = (json['title'] ?? json['name'] ?? '').toString().toLowerCase();
+    final origLower = (json['originalTitle'] ?? json['original_title'] ?? '').toString().toLowerCase();
+    final isForcedTrailer = titleLower.contains('coyote vs') ||
+        titleLower.contains('coyote contra acme') ||
+        titleLower.contains('spider-man: brand new day') ||
+        titleLower.contains('spider man brand new day') ||
+        titleLower.contains('spiderman brand new day') ||
+        titleLower.contains('la odisea') ||
+        titleLower.contains('the odyssey') ||
+        json['id'] == 1204680 ||
+        json['id'] == 1368337 ||
+        json['id'] == 969681;
+
+    final isTrailer = json['isTrailerOnly'] == true || isForcedTrailer;
+    final hasSpanish = isForcedTrailer
+        ? false
+        : (json['hasSpanishAudio'] is bool
+            ? json['hasSpanishAudio'] as bool
+            : !isTrailer);
+
+    String? key = json['trailerKey']?.toString();
+    if (key == null || key.isEmpty) {
+      if (json['id'] == 1204680 || titleLower.contains('coyote vs')) key = 'WQRoa6l4bwI';
+      if (json['id'] == 1368337 || titleLower.contains('odisea') || origLower.contains('odyssey')) key = '8un_UztYsw0';
+      if (json['id'] == 969681 || titleLower.contains('brand new day')) key = 'pqLSLoDkZWE';
+    }
+
+    final badge = isForcedTrailer
+        ? 'Solo Tráiler - Próximamente en Español'
+        : json['statusBadge']?.toString();
 
     return MediaItem(
       id: json['id'],
@@ -83,10 +109,10 @@ class MediaItem {
       runtime: json['runtime'] as int?,
       genres: parsedGenres,
       trailerUrl: json['trailer'] ?? json['trailerUrl'],
-      trailerKey: json['trailerKey']?.toString(),
+      trailerKey: key,
       isTrailerOnly: isTrailer,
       hasSpanishAudio: hasSpanish,
-      statusBadge: json['statusBadge']?.toString(),
+      statusBadge: badge,
     );
   }
 
