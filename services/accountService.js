@@ -7,7 +7,7 @@ const DB_FILE = path.resolve(DATA_DIR, 'accounts.json');
 const BACKUP_FILE = path.resolve(DATA_DIR, 'accounts_backup.json');
 
 // Contraseña de administrador por defecto (configurable por variable de entorno)
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin1234';
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123456';
 const SIGNING_SECRET = process.env.JWT_SECRET || DEFAULT_ADMIN_PASSWORD + '_vj_secure_stream_2026';
 
 class AccountService {

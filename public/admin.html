@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOM TV - Panel de Control & TV en Vivo</title>
+  <title>TOM TV - Tablero de Super Administrador</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -11,47 +11,83 @@
   <style>
     :root {
       --primary: #E50914;
-      --primary-dark: #990000;
-      --primary-glow: rgba(229, 9, 20, 0.35);
-      --bg-dark: #0A0A0C;
-      --bg-surface: #121318;
-      --card-bg: #16171F;
-      --card-border: #232532;
+      --primary-dark: #B20710;
+      --primary-glow: rgba(229, 9, 20, 0.45);
+      --bg-dark: #07080B;
+      --bg-surface: #0E1017;
+      --card-bg: #12141C;
+      --card-border: #1E222F;
+      --card-border-hover: rgba(229, 9, 20, 0.45);
       --text-main: #FFFFFF;
       --text-muted: #8E8E93;
+      --text-subtle: #64748B;
       --success: #22C55E;
+      --success-glow: rgba(34, 197, 94, 0.3);
       --warning: #F59E0B;
+      --warning-glow: rgba(245, 158, 11, 0.3);
       --danger: #EF4444;
-      --accent: #3B82F6;
+      --accent: #38BDF8;
+      --gold: #F59E0B;
+      --gold-glow: rgba(245, 158, 11, 0.35);
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
     body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #07080B; }
+    ::-webkit-scrollbar-thumb { background: #1E222F; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #333A4D; }
+
     /* Login Screen */
     #login-view {
       display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;
-      background: radial-gradient(circle at center, #1F0708 0%, #0A0A0C 75%);
+      background: radial-gradient(circle at center, #270B0E 0%, #07080B 80%);
     }
     .login-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; padding: 40px; width: 100%; max-width: 440px; text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px var(--primary-glow);
+      border-radius: 24px; padding: 44px 38px; width: 100%; max-width: 440px; text-align: center;
+      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.9), 0 0 35px var(--primary-glow);
+      position: relative; overflow: hidden;
+    }
+    .login-card::before {
+      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, transparent, var(--primary), transparent);
     }
     .brand-badge {
       display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 22px; letter-spacing: 2px;
-      margin-bottom: 20px; box-shadow: 0 4px 15px var(--primary-glow);
+      padding: 6px 20px; border-radius: 12px; font-weight: 900; font-size: 22px; letter-spacing: 2px;
+      margin-bottom: 14px; box-shadow: 0 4px 18px var(--primary-glow); color: #fff;
     }
     .form-group { margin-bottom: 18px; text-align: left; }
     .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
     .form-control {
-      width: 100%; background: #0D0E12; border: 1px solid var(--card-border); border-radius: 10px;
+      width: 100%; background: #0A0C11; border: 1px solid var(--card-border); border-radius: 10px;
       padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s;
     }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
     select.form-control { cursor: pointer; }
+
+    .input-group {
+      position: relative; display: flex; align-items: center;
+    }
+    .input-group input { padding-right: 42px; }
+    .input-toggle-btn {
+      position: absolute; right: 12px; background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.2s;
+    }
+    .input-toggle-btn:hover { color: #fff; }
+
+    /* Quick Preset Button */
+    .quick-preset-badge {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent);
+      background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);
+      padding: 4px 10px; border-radius: 8px; cursor: pointer; margin-top: 8px; font-weight: 600;
+      transition: all 0.2s;
+    }
+    .quick-preset-badge:hover { background: rgba(56, 189, 248, 0.2); }
 
     /* Buttons */
     .btn {
@@ -61,6 +97,8 @@
     }
     .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
     .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 4px 14px var(--primary-glow); }
+    .btn-gold { background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 900; }
+    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--gold-glow); }
     .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
     .btn-success { background: #15803D; color: #fff; }
     .btn-success:hover { background: #16A34A; }
@@ -68,16 +106,16 @@
     .btn-whatsapp:hover { background: #25D366; }
     .btn-warning { background: #B45309; color: #fff; }
     .btn-warning:hover { background: #D97706; }
-    .btn-secondary { background: #232532; color: #E2E8F0; }
-    .btn-secondary:hover { background: #323546; }
+    .btn-secondary { background: #1A1D27; color: #E2E8F0; border: 1px solid var(--card-border); }
+    .btn-secondary:hover { background: #262A38; color: #fff; }
     .btn-danger { background: #991B1B; color: #fff; }
     .btn-danger:hover { background: #DC2626; }
 
     /* Dashboard Layout */
     #dashboard-view { display: none; }
     .navbar {
-      background: rgba(18, 19, 24, 0.85); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
-      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between;
+      background: rgba(14, 16, 23, 0.94); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
+      padding: 12px 28px; display: flex; align-items: center; justify-content: space-between;
       position: sticky; top: 0; z-index: 100;
     }
     .nav-brand { display: flex; align-items: center; gap: 14px; }
@@ -85,8 +123,12 @@
       font-size: 11px; font-weight: 700; color: #22C55E; background: rgba(34, 197, 94, 0.12);
       padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; gap: 6px;
     }
-    .nav-actions { display: flex; align-items: center; gap: 10px; }
-    .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px 60px; }
+    .live-clock {
+      font-size: 12px; font-weight: 700; color: var(--text-muted); font-family: monospace;
+      background: #0A0C11; padding: 4px 10px; border-radius: 8px; border: 1px solid #1E222F;
+    }
+    .nav-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .container { max-width: 1360px; margin: 0 auto; padding: 24px 20px 60px; }
 
     /* Tabs Bar */
     .tabs-bar {
@@ -101,24 +143,31 @@
     .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
     .tab-btn.active {
       color: #fff; background: var(--card-bg); border-color: var(--card-border);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
     }
     .tab-btn.active span.tab-icon { transform: scale(1.15); }
 
-    /* Stats Grid */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    /* Executive KPI Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .stat-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
-      padding: 18px; display: flex; flex-direction: column; gap: 6px; transition: transform 0.2s;
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+      padding: 18px; display: flex; flex-direction: column; gap: 6px; transition: all 0.2s; position: relative;
+      overflow: hidden;
     }
-    .stat-card:hover { transform: translateY(-2px); border-color: rgba(229,9,20,0.3); }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--card-border-hover); }
+    .stat-card::after {
+      content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+      background: transparent; transition: background 0.3s;
+    }
+    .stat-card:hover::after { background: var(--primary); }
     .stat-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
     .stat-value { font-size: 28px; font-weight: 900; color: #fff; }
+    .stat-sub { font-size: 11px; color: var(--text-subtle); margin-top: 2px; }
 
     /* Filter Chips */
     .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
     .chip {
-      background: #111218; border: 1px solid var(--card-border); color: var(--text-muted);
+      background: #0E1017; border: 1px solid var(--card-border); color: var(--text-muted);
       padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
     }
     .chip:hover { color: #fff; border-color: #444; }
@@ -127,13 +176,14 @@
     /* Section Cards */
     .section-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 16px; margin-bottom: 24px; overflow: hidden;
+      border-radius: 18px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4);
     }
     .section-header {
-      padding: 18px 22px; border-bottom: 1px solid var(--card-border);
+      padding: 18px 24px; border-bottom: 1px solid var(--card-border);
       display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
     }
-    .section-title { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .section-title { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+
     .badge {
       display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
     }
@@ -146,20 +196,21 @@
     /* Pending Grid */
     .pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 20px; }
     .pending-item {
-      background: #0D0E12; border: 1px solid var(--card-border); border-radius: 12px; padding: 18px;
+      background: #090B10; border: 1px solid var(--card-border); border-radius: 14px; padding: 18px;
       display: flex; flex-direction: column; gap: 12px;
     }
     .code-display {
       font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--primary);
       background: #190B0C; padding: 10px; border-radius: 8px; text-align: center; border: 1px dashed var(--primary);
+      font-family: monospace;
     }
 
     /* Table */
     .table-container { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { padding: 14px 20px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; background: #0E0F14; border-bottom: 1px solid var(--card-border); font-weight: 700; }
-    td { padding: 14px 20px; border-bottom: 1px solid #1C1E28; font-size: 13px; }
-    tr:hover td { background: #1A1C26; }
+    th { padding: 14px 20px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; background: #0A0C11; border-bottom: 1px solid var(--card-border); font-weight: 700; letter-spacing: 0.5px; }
+    td { padding: 14px 20px; border-bottom: 1px solid #181A24; font-size: 13px; vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
     .client-name { font-weight: 700; color: #fff; font-size: 14px; }
     .client-user { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -169,14 +220,14 @@
       display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 20px;
     }
     .channel-card {
-      background: #0E0F14; border: 1px solid var(--card-border); border-radius: 14px;
+      background: #0B0D13; border: 1px solid var(--card-border); border-radius: 14px;
       padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: all 0.2s; position: relative;
     }
     .channel-card:hover { border-color: rgba(229,9,20,0.4); transform: translateY(-2px); }
     .channel-card.inactive { opacity: 0.55; }
     .channel-top { display: flex; align-items: center; gap: 14px; }
     .channel-logo {
-      width: 56px; height: 56px; border-radius: 12px; background: #1C1E28; display: flex; align-items: center;
+      width: 56px; height: 56px; border-radius: 12px; background: #161822; display: flex; align-items: center;
       justify-content: center; overflow: hidden; flex-shrink: 0; padding: 6px; border: 1px solid rgba(255,255,255,0.06);
     }
     .channel-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
@@ -200,34 +251,65 @@
     /* Modals */
     .modal {
       display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 200; padding: 20px;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; z-index: 200; padding: 20px;
     }
     .modal-content {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 18px; width: 100%; max-width: 500px; padding: 26px;
+      border-radius: 20px; width: 100%; max-width: 520px; padding: 28px;
       box-shadow: 0 25px 50px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto;
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .close-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
     .pulse { animation: pulse 2s infinite; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+    /* Toast Notification */
+    #toast-container {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: auto; background: #12141C; border: 1px solid #1E222F; color: #fff;
+      padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; display: flex;
+      align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .toast-success { border-color: rgba(34, 197, 94, 0.5); }
+    .toast-error { border-color: rgba(239, 68, 68, 0.5); }
+    .toast-info { border-color: rgba(56, 189, 248, 0.5); }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- PANTALLA DE LOGIN -->
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- PANTALLA DE LOGIN (SUPER ADMIN) -->
   <div id="login-view">
     <div class="login-card">
       <div class="brand-badge">TOM TV</div>
-      <h2 style="margin-bottom: 8px; font-weight: 900; font-size: 22px;">Panel de Control Master</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Gestión de Clientes, Licencias y TV en Vivo</p>
+      <h2 style="margin-bottom: 8px; font-weight: 900; font-size: 22px;">Tablero de Super Admin</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Centro de Control Maestro</p>
 
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="form-group">
           <label>Contraseña Maestra:</label>
-          <input type="password" id="admin-pass-input" class="form-control" placeholder="••••••••" required autofocus>
+          <div class="input-group">
+            <input type="password" id="admin-pass-input" class="form-control" placeholder="Ingresa contraseña (123456)" required autofocus>
+            <button type="button" class="input-toggle-btn" onclick="togglePassVisibility('admin-pass-input')">👁️</button>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+            <span class="quick-preset-badge" onclick="fillDefaultPass()">⚡ Usar clave: 123456</span>
+            <span style="font-size: 11px; color: var(--text-subtle);">Acceso exclusivo</span>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary" id="login-btn" style="width: 100%; padding: 12px;">Acceder al Panel</button>
+        <button type="submit" class="btn btn-primary" id="login-btn" style="width: 100%; padding: 13px; margin-top: 8px; font-size: 14px;">
+          Entrar al Panel Master
+        </button>
       </form>
     </div>
   </div>
@@ -238,13 +320,16 @@
     <nav class="navbar">
       <div class="nav-brand">
         <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 12px;">TOM TV</div>
-        <div class="status-pill"><span>●</span> En Línea</div>
+        <div class="status-pill"><span>●</span> Super Admin Activo</div>
+        <div class="live-clock" id="live-clock">--:--:--</div>
       </div>
       <div class="nav-actions">
-        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 APK v3.0.0</a>
-        <button class="btn btn-secondary btn-sm" onclick="downloadBackup()" title="Descargar copia de seguridad de clientes en JSON">💾 Backup</button>
-        <button class="btn btn-secondary btn-sm" onclick="openRestoreModal()" title="Restaurar clientes desde JSON">📥 Restaurar</button>
-        <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">🔄 Refrescar</button>
+        <a href="/" target="_blank" class="btn btn-secondary btn-sm" title="Abrir la Web App oficial">🌐 Web App</a>
+        <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">💼 Portal Resellers</a>
+        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial v3.0.0">📥 APK v3.0.0</a>
+        <button class="btn btn-secondary btn-sm" onclick="downloadBackup()" title="Descargar copia de seguridad en JSON">💾 Backup</button>
+        <button class="btn btn-secondary btn-sm" onclick="openRestoreModal()" title="Restaurar desde JSON">📥 Restaurar</button>
+        <button class="btn btn-secondary btn-sm" onclick="fetchOverview()" title="Refrescar datos en vivo">🔄 Refrescar</button>
         <button class="btn btn-danger btn-sm" onclick="handleLogout()">Salir</button>
       </div>
     </nav>
@@ -255,11 +340,11 @@
         <button class="tab-btn active" id="tab-clients-btn" onclick="switchTab('clients')">
           <span class="tab-icon">👥</span> Clientes y Pantallas
         </button>
-        <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
-          <span class="tab-icon">📺</span> Canales TV en Vivo
-        </button>
         <button class="tab-btn" id="tab-resellers-btn" onclick="switchTab('resellers')">
           <span class="tab-icon">💼</span> Revendedores & Créditos
+        </button>
+        <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
+          <span class="tab-icon">📺</span> Canales TV en Vivo
         </button>
         <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
           <span class="tab-icon">⚙️</span> Ajustes & WhatsApp
@@ -273,63 +358,110 @@
           <div class="stat-card">
             <span class="stat-title">Total Clientes</span>
             <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-sub">Registrados global</span>
           </div>
           <div class="stat-card">
             <span class="stat-title">🟢 Activos</span>
             <span class="stat-value" style="color: var(--success);" id="stat-active">0</span>
+            <span class="stat-sub">Con servicio vigente</span>
           </div>
           <div class="stat-card">
-            <span class="stat-title">🟡 Por Vencer (≤3d)</span>
+            <span class="stat-title">🟡 Por Vencer</span>
             <span class="stat-value" style="color: var(--warning);" id="stat-expiring">0</span>
+            <span class="stat-sub">En ≤ 3 días</span>
           </div>
           <div class="stat-card">
             <span class="stat-title">🔴 Vencidos</span>
             <span class="stat-value" style="color: var(--danger);" id="stat-expired">0</span>
+            <span class="stat-sub">Suscripción caducada</span>
           </div>
           <div class="stat-card">
             <span class="stat-title">📺 TV Esperando</span>
             <span class="stat-value" style="color: var(--primary);" id="stat-pending">0</span>
+            <span class="stat-sub">Por aprobar</span>
           </div>
           <div class="stat-card">
             <span class="stat-title">💼 Revendedores</span>
-            <span class="stat-value" style="color: #38BDF8;" id="stat-resellers">0</span>
+            <span class="stat-value" style="color: var(--accent);" id="stat-resellers">0</span>
+            <span class="stat-sub">Distribuidores</span>
           </div>
           <div class="stat-card">
             <span class="stat-title">💎 Créditos Activos</span>
-            <span class="stat-value" style="color: #F59E0B;" id="stat-credits">0</span>
+            <span class="stat-value" style="color: var(--gold);" id="stat-credits">0</span>
+            <span class="stat-sub">En circulación</span>
           </div>
         </div>
 
         <!-- Pantallas Pendientes de Activación -->
-        <div class="section-card" id="pending-section" style="border-color: rgba(229,9,20,0.5);">
+        <div class="section-card" id="pending-section" style="border-color: rgba(229,9,20,0.5); display: none;">
           <div class="section-header" style="background: rgba(229,9,20,0.08);">
             <div class="section-title">
-              <span class="pulse">🔴</span> Pantallas Esperando Activación
-              <span class="badge badge-pending" id="pending-badge">0 pendientes</span>
+              <span class="pulse" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--primary); margin-right:8px;"></span>
+              📺 Pantallas de TV / Dispositivos Esperando Activación
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="fetchOverview()">Refrescar</button>
+            <span class="badge badge-pending" id="pending-badge">0 pendientes</span>
           </div>
-          <div id="pending-container" class="pending-grid"></div>
+          <div class="pending-grid" id="pending-container"></div>
         </div>
 
-        <!-- Directorio de Clientes -->
+        <!-- Lista de Clientes Registrados -->
         <div class="section-card">
           <div class="section-header">
-            <div class="section-title">👥 Directorio de Clientes y Licencias</div>
+            <div>
+              <div class="section-title">👥 Cartera Global de Clientes</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Clientes activos en el sistema (Ventas Directas + Revendedores)</p>
+            </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <input type="text" id="search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar cliente..." onkeyup="filterClients()">
-              <button class="btn btn-primary btn-sm" onclick="openCreateModal()">+ Crear Cliente</button>
+              <input type="text" id="search-input" class="form-control" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar cliente por nombre o código..." onkeyup="filterClients()">
+              <button class="btn btn-primary btn-sm" onclick="openNewClientModal()">+ Nuevo Cliente Directo</button>
             </div>
           </div>
 
-          <!-- Filtros de Estado -->
-          <div style="padding: 12px 20px 0;">
+          <!-- Filtros de Clientes -->
+          <div style="padding: 16px 20px 0;">
             <div class="filter-chips">
               <div class="chip active" onclick="setClientFilter('all', this)">Todos</div>
               <div class="chip" onclick="setClientFilter('active', this)">🟢 Activos</div>
-              <div class="chip" onclick="setClientFilter('expiring', this)">🟡 Por Vencer</div>
+              <div class="chip" onclick="setClientFilter('expiring', this)">🟡 Por Vencer (≤3d)</div>
               <div class="chip" onclick="setClientFilter('expired', this)">🔴 Vencidos</div>
               <div class="chip" onclick="setClientFilter('suspended', this)">⏸️ Suspendidos</div>
+              <div class="chip" onclick="setClientFilter('direct', this)">🏷️ Ventas Directas</div>
+              <div class="chip" onclick="setClientFilter('resellers', this)">💼 De Revendedores</div>
+            </div>
+          </div>
+
+          <!-- Tabla de Clientes -->
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Código de Activación</th>
+                  <th>Estado</th>
+                  <th>Vence el</th>
+                  <th>Pantallas</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="clients-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando clientes...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA 2: REVENDEDORES & SISTEMA DE CRÉDITOS -->
+      <div id="view-resellers" style="display: none;">
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">💼 Red de Distribuidores & Prepago de Créditos</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Crea cuentas de revendedores, recarga paquetes de créditos y supervisa sus ventas en tiempo real</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">🌐 Ver Portal Reseller</a>
+              <button class="btn btn-primary btn-sm" onclick="openNewResellerModal()">+ Nuevo Revendedor</button>
             </div>
           </div>
 
@@ -337,30 +469,35 @@
             <table>
               <thead>
                 <tr>
-                  <th>Cliente</th>
-                  <th>Código TV</th>
+                  <th>Distribuidor</th>
+                  <th>Usuario</th>
+                  <th>WhatsApp</th>
+                  <th>Saldo Créditos</th>
+                  <th>Clientes Activos</th>
                   <th>Estado</th>
-                  <th>Vencimiento</th>
-                  <th>Pantallas</th>
-                  <th>Acciones Rápidas & WhatsApp</th>
+                  <th style="text-align: right;">Acciones</th>
                 </tr>
               </thead>
-              <tbody id="clients-tbody"></tbody>
+              <tbody id="resellers-tbody">
+                <tr>
+                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando revendedores...</td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- VISTA 2: CANALES TV EN VIVO -->
+      <!-- VISTA 3: CANALES DE TV EN VIVO -->
       <div id="view-channels" style="display: none;">
         <div class="section-card">
           <div class="section-header">
             <div>
               <div class="section-title">📺 Canales de TV en Vivo Transmitiendo</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transmisiones HLS (.m3u8) reproducidas directamente en la app TOM TV</p>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transmisiones HLS (.m3u8) 100% auditadas y funcionales en TOM TV</p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <input type="text" id="channel-search-input" class="form-control" style="width: 200px; padding: 6px 12px; font-size: 13px;" placeholder="Buscar canal..." onkeyup="filterChannels()">
+              <input type="text" id="channel-search-input" class="form-control" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar canal..." onkeyup="filterChannels()">
               <button class="btn btn-primary btn-sm" onclick="openChannelModal()">+ Nuevo Canal</button>
             </div>
           </div>
@@ -381,7 +518,7 @@
         </div>
       </div>
 
-      <!-- VISTA 3: AJUSTES & WHATSAPP -->
+      <!-- VISTA 4: AJUSTES & WHATSAPP -->
       <div id="view-settings" style="display: none;">
         <div class="section-card" style="max-width: 680px; margin: 0 auto;">
           <div class="section-header">
@@ -402,8 +539,11 @@
               </div>
 
               <div class="form-group" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--card-border);">
-                <label>Cambiar Contraseña de Administrador:</label>
-                <input type="password" id="tab-admin-pass" class="form-control" placeholder="Dejar en blanco para conservar la actual">
+                <label>Cambiar Contraseña de Administrador (Actual: 123456):</label>
+                <div class="input-group">
+                  <input type="password" id="tab-admin-pass" class="form-control" placeholder="Dejar en blanco para conservar la actual (123456)">
+                  <button type="button" class="input-toggle-btn" onclick="togglePassVisibility('tab-admin-pass')">👁️</button>
+                </div>
               </div>
 
               <button type="submit" class="btn btn-primary" style="margin-top: 10px;">💾 Guardar Ajustes</button>
@@ -411,44 +551,6 @@
           </div>
         </div>
       </div>
-
-      <!-- VISTA 4: REVENDEDORES & SISTEMA DE CRÉDITOS -->
-      <div id="view-resellers" style="display: none;">
-        <div class="section-card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">💼 Red de Distribuidores & Prepago de Créditos</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Crea cuentas de revendedores, recarga paquetes de créditos y supervisa sus ventas en tiempo real</p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">🌐 Ver Portal Reseller</a>
-              <button class="btn btn-primary btn-sm" onclick="openNewResellerModal()">+ Nuevo Revendedor</button>
-            </div>
-          </div>
-
-          <div class="table-responsive" style="padding: 16px 20px 24px;">
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-              <thead>
-                <tr>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Distribuidor</th>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Usuario</th>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">WhatsApp</th>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Saldo Créditos</th>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Clientes Activos</th>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase;">Estado</th>
-                  <th style="padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase; text-align: right;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="resellers-tbody">
-                <tr>
-                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando revendedores...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -461,106 +563,149 @@
       </div>
       <form id="activate-form" onsubmit="submitActivation(event)">
         <div class="form-group">
-          <label>Código de Pantalla:</label>
-          <input type="text" id="act-code" class="form-control" readonly style="font-weight: 900; letter-spacing: 2px; color: var(--primary);">
+          <label>Código de Pantalla TV:</label>
+          <input type="text" id="act-code" class="form-control" style="font-family: monospace; font-weight: 900; font-size: 18px; color: var(--primary);" readonly>
         </div>
         <div class="form-group">
           <label>Nombre del Cliente:</label>
-          <input type="text" id="act-name" class="form-control" placeholder="Ej: Carlos Gómez" required autofocus>
+          <input type="text" id="act-name" class="form-control" placeholder="Ej: Roberto Salas" required autofocus>
         </div>
         <div class="form-group">
-          <label>Plan de Servicio:</label>
+          <label>Plan / Duración de la Membresía:</label>
           <select id="act-plan" class="form-control">
-            <option value="3">3 Días (Prueba Gratis)</option>
-            <option value="7">7 Días (Demo VIP)</option>
-            <option value="15">15 Días (Quincenal)</option>
-            <option value="30" selected>30 Días (1 Mes Oficial)</option>
-            <option value="60">60 Días (2 Meses)</option>
-            <option value="90">90 Días (3 Meses Trimestral)</option>
-            <option value="180">180 Días (6 Meses Semestral)</option>
-            <option value="365">365 Días (1 Año Anual)</option>
-            <option value="9999">Vitalicio / Permanente (VIP)</option>
+            <option value="30">1 Mes (30 días)</option>
+            <option value="90">3 Meses (90 días)</option>
+            <option value="180">6 Meses (180 días)</option>
+            <option value="365">1 Año (365 días)</option>
+            <option value="7">Prueba (7 días)</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Límite de Pantallas Permitidas:</label>
+          <label>Pantallas Máximas Permitidas:</label>
           <select id="act-devices" class="form-control">
-            <option value="1">1 Dispositivo (Estándar)</option>
+            <option value="1">1 Dispositivo</option>
             <option value="2">2 Dispositivos</option>
             <option value="3">3 Dispositivos</option>
-            <option value="4">4 Dispositivos</option>
             <option value="5">5 Dispositivos (Familiar)</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">¡Confirmar y Desbloquear Pantalla!</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Aprobar y Activar Inmediatamente</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: CREAR CLIENTE MANUAL -->
-  <div class="modal" id="modal-create">
+  <!-- MODAL: NUEVO CLIENTE DIRECTO (SIN CÓDIGO PREVIO) -->
+  <div class="modal" id="modal-new-client-admin">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">+ Crear Cliente Manual</h3>
-        <button class="close-btn" onclick="closeModal('modal-create')">&times;</button>
+        <h3 style="font-weight: 800;">➕ Registrar Nuevo Cliente Directo</h3>
+        <button class="close-btn" onclick="closeModal('modal-new-client-admin')">&times;</button>
       </div>
-      <form id="create-form" onsubmit="submitCreateClient(event)">
+      <form id="direct-client-form" onsubmit="submitDirectClient(event)">
         <div class="form-group">
           <label>Nombre Completo:</label>
-          <input type="text" id="new-name" class="form-control" placeholder="Ej: Andrea Salazar" required>
+          <input type="text" id="dir-name" class="form-control" placeholder="Ej: Maria Fernández" required>
         </div>
         <div class="form-group">
-          <label>Plan de Servicio:</label>
-          <select id="new-plan" class="form-control">
-            <option value="3">3 Días (Prueba Gratis)</option>
-            <option value="7">7 Días (Demo VIP)</option>
-            <option value="15">15 Días (Quincenal)</option>
-            <option value="30" selected>30 Días (1 Mes Oficial)</option>
-            <option value="60">60 Días (2 Meses)</option>
-            <option value="90">90 Días (3 Meses Trimestral)</option>
-            <option value="180">180 Días (6 Meses Semestral)</option>
-            <option value="365">365 Días (1 Año Anual)</option>
-            <option value="9999">Vitalicio / Permanente (VIP)</option>
+          <label>Plan / Tiempo:</label>
+          <select id="dir-plan" class="form-control">
+            <option value="30">1 Mes (30 días)</option>
+            <option value="90">3 Meses (90 días)</option>
+            <option value="180">6 Meses (180 días)</option>
+            <option value="365">1 Año (365 días)</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Pantallas:</label>
-          <select id="new-devices" class="form-control">
+          <label>Pantallas Permitidas:</label>
+          <select id="dir-devices" class="form-control">
             <option value="1">1 Pantalla</option>
             <option value="2">2 Pantallas</option>
             <option value="3">3 Pantallas</option>
-            <option value="4">4 Pantallas</option>
-            <option value="5">5 Pantallas (Familiar)</option>
+            <option value="5">5 Pantallas</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">Guardar Cliente</button>
+        <button type="submit" class="btn btn-primary" id="btn-save-dir-client" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Crear Cliente y Generar Código
+        </button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: RESTAURAR COPIA DE SEGURIDAD -->
-  <div class="modal" id="modal-restore">
+  <!-- MODAL: CREAR REVENDEDOR -->
+  <div class="modal" id="modal-reseller">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">📥 Restaurar Copia de Seguridad</h3>
-        <button class="close-btn" onclick="closeModal('modal-restore')">&times;</button>
+        <h3 style="font-weight: 800;">💼 Registrar Nuevo Revendedor</h3>
+        <button class="close-btn" onclick="closeModal('modal-reseller')">&times;</button>
       </div>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-        Selecciona un archivo JSON previamente descargado para restaurar clientes y dispositivos autorizados.
-      </p>
-      <div class="form-group">
-        <label>Seleccionar archivo .json de respaldo:</label>
-        <input type="file" id="restore-file-input" class="form-control" accept=".json" onchange="handleRestoreFile(event)">
-      </div>
-      <div class="form-group">
-        <label>O pega el texto JSON de respaldo:</label>
-        <textarea id="restore-json-text" class="form-control" rows="5" placeholder='{"clients": [...]}'></textarea>
-      </div>
-      <button type="button" class="btn btn-primary" style="width: 100%;" onclick="submitRestoreBackup()">Restaurar Clientes Ahora</button>
+      <form id="reseller-create-form" onsubmit="submitNewReseller(event)">
+        <div class="form-group">
+          <label>Nombre Completo del Revendedor:</label>
+          <input type="text" id="res-name" class="form-control" placeholder="Ej: Carlos Mendoza (Distribuidor Norte)" required>
+        </div>
+        <div class="form-group">
+          <label>Nombre de Usuario (Para iniciar sesión en /reseller):</label>
+          <input type="text" id="res-username" class="form-control" placeholder="Ej: carlos_ventas" required>
+        </div>
+        <div class="form-group">
+          <label>Contraseña de Acceso:</label>
+          <input type="password" id="res-password" class="form-control" placeholder="Mínimo 4 caracteres" required>
+        </div>
+        <div class="form-group">
+          <label>Teléfono de WhatsApp:</label>
+          <input type="text" id="res-whatsapp" class="form-control" placeholder="Ej: +51987654321">
+        </div>
+        <div class="form-group">
+          <label>Créditos Iniciales Asignados (1 Crédito = 1 Mes):</label>
+          <input type="number" id="res-credits" class="form-control" value="10" min="0" required>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-save-reseller" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Guardar Revendedor
+        </button>
+      </form>
     </div>
   </div>
 
-  <!-- MODAL: GESTIONAR CANAL DE TV (CREAR / EDITAR) -->
+  <!-- MODAL: RECARGAR CRÉDITOS A REVENDEDOR -->
+  <div class="modal" id="modal-recharge">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">💎 Recargar Créditos a Revendedor</h3>
+        <button class="close-btn" onclick="closeModal('modal-recharge')">&times;</button>
+      </div>
+      <form id="recharge-form" onsubmit="submitRecharge(event)">
+        <input type="hidden" id="recharge-reseller-id">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
+          Revendedor: <strong id="recharge-reseller-name" style="color: #fff;">-</strong>
+        </p>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Saldo actual: <strong id="recharge-current-credits" style="color: var(--gold);">0 créditos</strong>
+        </p>
+
+        <!-- Botones rápidos -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(10)">+10 Créditos</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(25)">+25 Créditos</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(50)">+50 Créditos</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(100)">+100 Créditos</button>
+        </div>
+
+        <div class="form-group">
+          <label>Cantidad de Créditos a Añadir:</label>
+          <input type="number" id="recharge-amount" class="form-control" value="25" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Nota / Referencia de Pago (Opcional):</label>
+          <input type="text" id="recharge-note" class="form-control" placeholder="Ej: Pago confirmado por Yape / Transferencia">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-recharge" style="width: 100%; margin-top: 10px; padding: 12px;">
+          Confirmar y Añadir Créditos
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GESTIONAR CANAL DE TV -->
   <div class="modal" id="modal-channel">
     <div class="modal-content">
       <div class="modal-header">
@@ -623,78 +768,24 @@
     </div>
   </div>
 
-  <!-- MODAL: CREAR REVENDEDOR -->
-  <div class="modal" id="modal-reseller">
+  <!-- MODAL: RESTAURAR COPIA DE SEGURIDAD -->
+  <div class="modal" id="modal-restore">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">💼 Registrar Nuevo Revendedor</h3>
-        <button class="close-btn" onclick="closeModal('modal-reseller')">&times;</button>
+        <h3 style="font-weight: 800;">📥 Restaurar Copia de Seguridad</h3>
+        <button class="close-btn" onclick="closeModal('modal-restore')">&times;</button>
       </div>
-      <form id="reseller-create-form" onsubmit="submitNewReseller(event)">
-        <div class="form-group">
-          <label>Nombre Completo del Revendedor:</label>
-          <input type="text" id="res-name" class="form-control" placeholder="Ej: Carlos Mendoza (Distribuidor Norte)" required>
-        </div>
-        <div class="form-group">
-          <label>Nombre de Usuario (Para iniciar sesión en /reseller):</label>
-          <input type="text" id="res-username" class="form-control" placeholder="Ej: carlos_ventas" required>
-        </div>
-        <div class="form-group">
-          <label>Contraseña de Acceso:</label>
-          <input type="password" id="res-password" class="form-control" placeholder="Mínimo 4 caracteres" required>
-        </div>
-        <div class="form-group">
-          <label>Teléfono de WhatsApp:</label>
-          <input type="text" id="res-whatsapp" class="form-control" placeholder="Ej: +51987654321">
-        </div>
-        <div class="form-group">
-          <label>Créditos Iniciales Asignados (1 Crédito = 1 Mes):</label>
-          <input type="number" id="res-credits" class="form-control" value="10" min="0" required>
-          <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Puedes recargarle más créditos en cualquier momento al recibir sus pagos.</small>
-        </div>
-        <button type="submit" class="btn btn-primary" id="btn-save-reseller" style="width: 100%; margin-top: 10px; padding: 12px;">
-          Guardar Revendedor
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: RECARGAR CRÉDITOS A REVENDEDOR -->
-  <div class="modal" id="modal-recharge">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 style="font-weight: 800;">💎 Recargar Créditos a Revendedor</h3>
-        <button class="close-btn" onclick="closeModal('modal-recharge')">&times;</button>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Selecciona un archivo JSON previamente descargado para restaurar clientes, revendedores y configuraciones.
+      </p>
+      <div class="form-group">
+        <input type="file" id="restore-file-input" accept=".json" class="form-control" onchange="handleRestoreFile(event)">
       </div>
-      <form id="recharge-form" onsubmit="submitRecharge(event)">
-        <input type="hidden" id="recharge-reseller-id">
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">
-          Revendedor: <strong id="recharge-reseller-name" style="color: #fff;">-</strong>
-        </p>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-          Saldo actual: <strong id="recharge-current-credits" style="color: #F59E0B;">0 créditos</strong>
-        </p>
-
-        <!-- Botones rápidos de paquetes -->
-        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(10)">+10 Créditos</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(25)">+25 Créditos</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(50)">+50 Créditos</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(100)">+100 Créditos</button>
-        </div>
-
-        <div class="form-group">
-          <label>Cantidad de Créditos a Añadir:</label>
-          <input type="number" id="recharge-amount" class="form-control" value="25" min="1" required>
-        </div>
-        <div class="form-group">
-          <label>Nota / Referencia de Pago (Opcional):</label>
-          <input type="text" id="recharge-note" class="form-control" placeholder="Ej: Pago confirmado por Yape / Transferencia">
-        </div>
-        <button type="submit" class="btn btn-primary" id="btn-submit-recharge" style="width: 100%; margin-top: 10px; padding: 12px;">
-          Confirmar y Añadir Créditos
-        </button>
-      </form>
+      <div class="form-group">
+        <label>O pega el contenido JSON directamente:</label>
+        <textarea id="restore-json-text" class="form-control" rows="5" placeholder="Pega aquí el JSON"></textarea>
+      </div>
+      <button type="button" class="btn btn-primary" style="width: 100%;" onclick="submitRestoreBackup()">Restaurar Datos Ahora</button>
     </div>
   </div>
 
@@ -704,23 +795,76 @@
     let currentClientFilter = 'all';
     let allChannels = [];
     let currentChannelCategory = 'Todos';
+    let allResellersList = [];
     let appSettings = {};
     let hlsInstance = null;
+    let refreshInterval = null;
 
     // Inicialización
     window.addEventListener('DOMContentLoaded', () => {
+      startLiveClock();
       if (adminToken) {
         testTokenAndLoad();
       }
     });
 
+    // Reloj digital en vivo
+    function startLiveClock() {
+      const clockEl = document.getElementById('live-clock');
+      function update() {
+        const now = new Date();
+        clockEl.textContent = now.toLocaleTimeString('es-ES', { hour12: false });
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    // Toggle de visibilidad de contraseñas
+    function togglePassVisibility(inputId) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    // Rellenar contraseña por defecto (123456)
+    function fillDefaultPass() {
+      const input = document.getElementById('admin-pass-input');
+      if (input) {
+        input.value = '123456';
+        input.focus();
+        showToast('Clave 123456 asignada', 'info');
+      }
+    }
+
+    // Sistema de notificaciones Toast
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      if (type === 'error') icon = '❌';
+
+      toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(`tab-${tab}-btn`).classList.add('active');
+      const activeBtn = document.getElementById(`tab-${tab}-btn`);
+      if (activeBtn) activeBtn.classList.add('active');
 
       document.getElementById('view-clients').style.display = tab === 'clients' ? 'block' : 'none';
-      document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
       document.getElementById('view-resellers').style.display = tab === 'resellers' ? 'block' : 'none';
+      document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
       document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
 
       if (tab === 'channels') {
@@ -735,6 +879,7 @@
       const pass = document.getElementById('admin-pass-input').value.trim();
       const btn = document.getElementById('login-btn');
       btn.textContent = 'Verificando...';
+      btn.disabled = true;
 
       try {
         const res = await fetch('/api/admin/login', {
@@ -746,14 +891,17 @@
         if (data.success) {
           adminToken = pass;
           localStorage.setItem('vj_admin_token', adminToken);
+          showToast('Bienvenido Super Administrador', 'success');
           showDashboard();
         } else {
-          alert('Contraseña incorrecta.');
-          btn.textContent = 'Acceder al Panel';
+          showToast('Contraseña incorrecta. Recuerda que es: 123456', 'error');
+          btn.textContent = 'Entrar al Panel Master';
+          btn.disabled = false;
         }
       } catch (err) {
-        alert('Error al conectar con el servidor.');
-        btn.textContent = 'Acceder al Panel';
+        showToast('Error de conexión con el servidor', 'error');
+        btn.textContent = 'Entrar al Panel Master';
+        btn.disabled = false;
       }
     }
 
@@ -777,14 +925,21 @@
       document.getElementById('dashboard-view').style.display = 'block';
       fetchOverview();
       fetchChannels();
-      setInterval(fetchOverview, 10000);
+      if (!refreshInterval) {
+        refreshInterval = setInterval(fetchOverview, 10000);
+      }
     }
 
     function handleLogout() {
       adminToken = '';
       localStorage.removeItem('vj_admin_token');
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
       document.getElementById('login-view').style.display = 'flex';
       document.getElementById('dashboard-view').style.display = 'none';
+      showToast('Sesión cerrada correctamente', 'info');
     }
 
     async function fetchOverview() {
@@ -864,15 +1019,17 @@
     }
 
     function filterClientsList() {
-      const q = (document.getElementById('search-input')?.value || '').toLowerCase();
+      const q = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
       return allClients.filter(c => {
-        const matchesQuery = c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || c.username.toLowerCase().includes(q);
+        const matchesQuery = !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.resellerName && c.resellerName.toLowerCase().includes(q));
         if (!matchesQuery) return false;
 
         if (currentClientFilter === 'active') return c.status === 'active';
         if (currentClientFilter === 'expiring') return c.status === 'active' && c.daysRemaining <= 3;
         if (currentClientFilter === 'expired') return c.status === 'expired' || c.daysRemaining <= 0;
         if (currentClientFilter === 'suspended') return c.status === 'suspended';
+        if (currentClientFilter === 'direct') return !c.resellerId;
+        if (currentClientFilter === 'resellers') return !!c.resellerId;
         return true;
       });
     }
@@ -910,7 +1067,7 @@
               <div class="client-name">${c.name}</div>
               <div class="client-user">Usuario: ${c.username}</div>
               <div style="font-size: 11px; color: ${c.resellerName ? '#38BDF8' : '#94A3B8'}; margin-top: 2px;">
-                ${c.resellerName ? '💼 Revendedor: ' + c.resellerName : '🏷️ Venta Directa'}
+                ${c.resellerName ? '💼 Revendedor: ' + c.resellerName : '🏷️ Venta Directa (Admin)'}
               </div>
             </td>
             <td>
@@ -918,20 +1075,94 @@
             </td>
             <td><span class="badge ${badgeClass}">${statusText}</span></td>
             <td>${expDate}</td>
-            <td>${c.deviceCount} / ${c.maxDevices}</td>
+            <td>${c.deviceCount || 0} / ${c.maxDevices || 1}</td>
             <td>
               <div class="actions-cell">
-                <button class="btn btn-whatsapp btn-sm" title="Enviar enlace de activación rápida y acceso por WhatsApp" onclick="sendWhatsAppQuickLink('${c.id}')">📲 WhatsApp</button>
+                <button class="btn btn-whatsapp btn-sm" title="Enviar enlace de activación rápida por WhatsApp" onclick="sendWhatsAppQuickLink('${c.id}')">📲 WhatsApp</button>
+                <button class="btn btn-secondary btn-sm" title="Copiar ficha de bienvenida completa para compartir" onclick="copyFullClientCard('${c.id}')">📋 Ficha</button>
                 <button class="btn btn-secondary btn-sm" title="Copiar enlace directo de activación instantánea" onclick="copyClientActivationLink('${c.code}')">🔗 Link</button>
                 <button class="btn btn-success btn-sm" title="Renovar +30 Días" onclick="renewClient('${c.id}', 30)">+30d</button>
                 <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
-                <button class="btn btn-secondary btn-sm" title="Desvincular dispositivos para permitir registrar una nueva TV o móvil" onclick="resetDevices('${c.id}')">📺 Reset (${c.deviceCount})</button>
+                <button class="btn btn-secondary btn-sm" title="Desvincular dispositivos para permitir registrar una nueva TV o móvil" onclick="resetDevices('${c.id}')">📺 Reset (${c.deviceCount || 0})</button>
                 <button class="btn btn-danger btn-sm" title="Eliminar cliente" onclick="deleteClient('${c.id}')">🗑️</button>
               </div>
             </td>
           </tr>
         `;
       }).join('');
+    }
+
+    function openNewClientModal() {
+      document.getElementById('dir-name').value = '';
+      document.getElementById('dir-plan').value = '30';
+      document.getElementById('dir-devices').value = '1';
+      openModal('modal-new-client-admin');
+    }
+
+    async function submitDirectClient(e) {
+      e.preventDefault();
+      const name = document.getElementById('dir-name').value.trim();
+      const planDays = parseInt(document.getElementById('dir-plan').value, 10);
+      const maxDevices = parseInt(document.getElementById('dir-devices').value, 10);
+      const btn = document.getElementById('btn-save-dir-client');
+
+      btn.textContent = 'Creando Cliente...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/clients', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ name, planDays, maxDevices })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`¡Cliente "${data.client.name}" creado con éxito! Código: ${data.client.code}`, 'success');
+          closeModal('modal-new-client-admin');
+          fetchOverview();
+        } else {
+          showToast('Error: ' + (data.error || 'No se pudo crear cliente'), 'error');
+        }
+      } catch (err) {
+        showToast('Error al conectar con el servidor.', 'error');
+      } finally {
+        btn.textContent = 'Crear Cliente y Generar Código';
+        btn.disabled = false;
+      }
+    }
+
+    function openActivateModal(code) {
+      document.getElementById('act-code').value = code;
+      document.getElementById('act-name').value = '';
+      document.getElementById('act-plan').value = '30';
+      document.getElementById('act-devices').value = '1';
+      openModal('modal-activate');
+    }
+
+    async function submitActivation(e) {
+      e.preventDefault();
+      const code = document.getElementById('act-code').value;
+      const name = document.getElementById('act-name').value.trim();
+      const planDays = document.getElementById('act-plan').value;
+      const maxDevices = document.getElementById('act-devices').value;
+
+      try {
+        const res = await fetch('/api/admin/activate-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ code, name, planDays, maxDevices })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('¡Pantalla activada con éxito!', 'success');
+          closeModal('modal-activate');
+          fetchOverview();
+        } else {
+          showToast('Error al activar: ' + (data.error || 'Intente nuevamente'), 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión.', 'error');
+      }
     }
 
     function getBaseAppUrl() {
@@ -941,9 +1172,29 @@
     function copyClientActivationLink(code) {
       const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(code)}`;
       navigator.clipboard.writeText(link).then(() => {
-        alert(`✅ ¡Enlace de activación copiado!\n\n${link}\n\nEnvíalo a tu cliente por WhatsApp. Al tocarlo en su iPhone o navegador, su dispositivo se activará automáticamente sin pedir código.`);
-      }).catch(() => {
-        prompt('Copia este enlace directo de activación:', link);
+        showToast('¡Enlace de activación copiado al portapapeles!', 'success');
+      });
+    }
+
+    function copyFullClientCard(clientId) {
+      const client = allClients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(client.code)}`;
+      const apkLink = `${getBaseAppUrl()}/api/streaming/download-apk`;
+      const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      let card = `🎬 *BIENVENIDO A TOM TV*\n\n`;
+      card += `👤 *Cliente:* ${client.name}\n`;
+      card += `🔑 *Código de Acceso:* ${client.code}\n`;
+      card += `📅 *Vencimiento:* ${expDate} (${client.daysRemaining} días)\n`;
+      card += `📺 *Pantallas Permitidas:* ${client.maxDevices || 1}\n\n`;
+      card += `🌐 *Ver en iPhone / Navegador:* \n${link}\n\n`;
+      card += `📥 *Descargar App para Smart TV / Android TV / Celular:* \n${apkLink}\n\n`;
+      card += `¡Disfruta del mejor entretenimiento en películas, series y TV en vivo sin publicidad!`;
+
+      navigator.clipboard.writeText(card).then(() => {
+        showToast('¡Ficha de bienvenida copiada al portapapeles!', 'success');
       });
     }
 
@@ -952,398 +1203,91 @@
       if (!client) return;
 
       const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(client.code)}`;
+      const apkLink = `${getBaseAppUrl()}/api/streaming/download-apk`;
       const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
       
       let msg = `¡Hola ${client.name}! Tu acceso a TOM TV ya está activo.\n\n`;
       msg += `🔑 Código de Activación: *${client.code}*\n`;
       msg += `📅 Vence el: *${expDate}* (${client.daysRemaining} días restantes)\n\n`;
       msg += `📱 *Para ver en iPhone, iPad o navegador web*, pulsa en este enlace directo:\n${link}\n\n`;
-      msg += `📺 *Para Smart TV o Android TV*, abre la app TOM TV e ingresa tu código *${client.code}*.\n\n`;
+      msg += `📥 *Para Smart TV o TV Box Android*, descarga la app aquí:\n${apkLink}\n`;
+      msg += `E ingresa tu código: *${client.code}*\n\n`;
       msg += `¡Que disfrutes de tus películas, series y canales en vivo!`;
 
       const encoded = encodeURIComponent(msg);
       window.open(`https://wa.me/?text=${encoded}`, '_blank');
     }
 
-    function downloadBackup() {
-      if (!adminToken) return;
-      window.open(`/api/admin/backup?key=${encodeURIComponent(adminToken)}`, '_blank');
-    }
-
-    function openRestoreModal() {
-      document.getElementById('restore-file-input').value = '';
-      document.getElementById('restore-json-text').value = '';
-      document.getElementById('modal-restore').style.display = 'flex';
-    }
-
-    function handleRestoreFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        document.getElementById('restore-json-text').value = ev.target.result;
-      };
-      reader.readAsText(file);
-    }
-
-    async function submitRestoreBackup() {
-      const text = document.getElementById('restore-json-text').value.trim();
-      if (!text) {
-        alert('Por favor selecciona un archivo JSON o pega el texto de respaldo.');
-        return;
-      }
+    async function renewClient(clientId, days = 30) {
       try {
-        const parsed = JSON.parse(text);
-        const res = await fetch('/api/admin/restore', {
+        const res = await fetch(`/api/admin/clients/${clientId}/renew`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify(parsed)
+          body: JSON.stringify({ additionalDays: days })
         });
         const data = await res.json();
         if (data.success) {
-          alert(`✅ ${data.message || 'Copia de seguridad restaurada.'}`);
-          closeModal('modal-restore');
+          showToast(`Suscripción renovada +${days} días`, 'success');
           fetchOverview();
-        } else {
-          alert(`❌ Error: ${data.error || 'No fue posible restaurar.'}`);
         }
       } catch (err) {
-        alert('El texto no es un formato JSON válido.');
+        showToast('Error al renovar suscripción.', 'error');
       }
     }
 
-    // Acciones de Clientes
-    async function renewClient(id, days) {
-      if (!confirm(`¿Renovar suscripción por ${days} días adicionales?`)) return;
-      await fetch('/api/admin/renew', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ clientId: id, days })
-      });
-      fetchOverview();
-    }
-
-    async function toggleStatus(id) {
-      await fetch('/api/admin/toggle-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ clientId: id })
-      });
-      fetchOverview();
-    }
-
-    async function resetDevices(id) {
-      if (!confirm('¿Desvincular los dispositivos de este cliente para que pueda registrar una TV nueva?')) return;
-      await fetch('/api/admin/reset-devices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ clientId: id })
-      });
-      fetchOverview();
-    }
-
-    async function deleteClient(id) {
-      if (!confirm('¿Seguro que deseas eliminar definitivamente a este cliente?')) return;
-      await fetch(`/api/admin/clients/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-password': adminToken }
-      });
-      fetchOverview();
-    }
-
-    // CANALES DE TV EN VIVO
-    async function fetchChannels() {
-      if (!adminToken) return;
+    async function toggleStatus(clientId) {
       try {
-        const res = await fetch('/api/admin/channels', {
+        const res = await fetch(`/api/admin/clients/${clientId}/toggle-status`, {
+          method: 'POST',
           headers: { 'x-admin-password': adminToken }
         });
         const data = await res.json();
         if (data.success) {
-          allChannels = data.channels || [];
-          renderChannels(filterChannelsList());
+          showToast('Estado del cliente actualizado', 'info');
+          fetchOverview();
         }
-      } catch (e) {
-        console.error('Error fetching channels:', e);
+      } catch (err) {
+        showToast('Error al cambiar estado.', 'error');
       }
     }
 
-    function setChannelCategoryFilter(category, el) {
-      currentChannelCategory = category;
-      el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      renderChannels(filterChannelsList());
-    }
-
-    function filterChannelsList() {
-      const q = (document.getElementById('channel-search-input')?.value || '').toLowerCase();
-      return allChannels.filter(c => {
-        const matchesQuery = c.name.toLowerCase().includes(q) || (c.category && c.category.toLowerCase().includes(q));
-        if (!matchesQuery) return false;
-        if (currentChannelCategory !== 'Todos') {
-          return c.category && c.category.toLowerCase() === currentChannelCategory.toLowerCase();
-        }
-        return true;
-      });
-    }
-
-    function filterChannels() {
-      renderChannels(filterChannelsList());
-    }
-
-    function renderChannels(channels) {
-      const container = document.getElementById('channels-container');
-      if (!channels || channels.length === 0) {
-        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">No se encontraron canales en este filtro. Presiona "+ Nuevo Canal" para agregar uno.</div>';
-        return;
-      }
-
-      container.innerHTML = channels.map(c => `
-        <div class="channel-card ${!c.isActive ? 'inactive' : ''}" id="card-${c.id}">
-          <div class="channel-top">
-            <div class="channel-logo">
-              ${c.logoUrl ? `<img src="${c.logoUrl}" alt="${c.name}" onerror="this.onerror=null; this.src='https://placehold.co/100x100/16171F/FFF?text=TV'">` : '📺'}
-            </div>
-            <div class="channel-meta">
-              <div class="channel-title" title="${c.name}">${c.name}</div>
-              <div class="channel-sub">
-                <span class="badge badge-category">${c.category || 'General'}</span>
-                <span class="badge" style="background: rgba(255,255,255,0.08); color: #fff;">${c.quality || '1080p HD'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="channel-stream-url" title="${c.streamUrl}">${c.streamUrl}</div>
-
-          <div class="channel-footer">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <label class="switch" title="Activar / Desactivar canal">
-                <input type="checkbox" ${c.isActive ? 'checked' : ''} onchange="toggleChannel('${c.id}')">
-                <span class="slider"></span>
-              </label>
-              <span style="font-size: 11px; color: ${c.isActive ? 'var(--success)' : 'var(--text-muted)'}; font-weight: 700;">
-                ${c.isActive ? 'ACTIVO' : 'INACTIVO'}
-              </span>
-            </div>
-
-            <div style="display: flex; gap: 6px;">
-              <button class="btn btn-secondary btn-sm" onclick="previewChannelStream('${c.name}', '${c.streamUrl}')" title="Probar transmisión en vivo">▶️ Probar</button>
-              <button class="btn btn-secondary btn-sm" onclick="editChannelModal('${c.id}')" title="Editar">✏️</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteChannel('${c.id}')" title="Eliminar">🗑️</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function toggleChannel(id) {
-      await fetch(`/api/admin/channels/${id}/toggle`, {
-        method: 'POST',
-        headers: { 'x-admin-password': adminToken }
-      });
-      fetchChannels();
-    }
-
-    async function deleteChannel(id) {
-      if (!confirm('¿Eliminar este canal de TV en vivo?')) return;
-      await fetch(`/api/admin/channels/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-admin-password': adminToken }
-      });
-      fetchChannels();
-    }
-
-    function openChannelModal() {
-      document.getElementById('channel-modal-title').textContent = '📺 Añadir Canal de TV en Vivo';
-      document.getElementById('ch-edit-id').value = '';
-      document.getElementById('ch-name').value = '';
-      document.getElementById('ch-category').value = 'Deportes';
-      document.getElementById('ch-logo').value = '';
-      document.getElementById('ch-stream').value = '';
-      document.getElementById('ch-quality').value = '1080p HD';
-      document.getElementById('ch-active').checked = true;
-      document.getElementById('modal-channel').style.display = 'flex';
-      document.getElementById('ch-name').focus();
-    }
-
-    function editChannelModal(id) {
-      const c = allChannels.find(ch => ch.id === id);
-      if (!c) return;
-      document.getElementById('channel-modal-title').textContent = '✏️ Editar Canal de TV';
-      document.getElementById('ch-edit-id').value = c.id;
-      document.getElementById('ch-name').value = c.name;
-      document.getElementById('ch-category').value = c.category || 'Deportes';
-      document.getElementById('ch-logo').value = c.logoUrl || '';
-      document.getElementById('ch-stream').value = c.streamUrl || '';
-      document.getElementById('ch-quality').value = c.quality || '1080p HD';
-      document.getElementById('ch-active').checked = c.isActive !== false;
-      document.getElementById('modal-channel').style.display = 'flex';
-    }
-
-    async function submitChannel(e) {
-      e.preventDefault();
-      const id = document.getElementById('ch-edit-id').value;
-      const payload = {
-        name: document.getElementById('ch-name').value.trim(),
-        category: document.getElementById('ch-category').value,
-        logoUrl: document.getElementById('ch-logo').value.trim(),
-        streamUrl: document.getElementById('ch-stream').value.trim(),
-        quality: document.getElementById('ch-quality').value,
-        isActive: document.getElementById('ch-active').checked
-      };
-
-      const url = id ? `/api/admin/channels/${id}` : '/api/admin/channels';
-      const method = id ? 'PUT' : 'POST';
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.success) {
-        closeModal('modal-channel');
-        fetchChannels();
-      } else {
-        alert(data.error || 'Error al guardar canal.');
-      }
-    }
-
-    // Reproductor de prueba HLS en navegador
-    function previewChannelStream(name, url) {
-      document.getElementById('player-title').textContent = '📺 En Vivo: ' + name;
-      document.getElementById('player-status').textContent = 'Cargando stream: ' + url;
-      const video = document.getElementById('preview-video');
-      document.getElementById('modal-player').style.display = 'flex';
-
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-
-      if (Hls.isSupported() && url.includes('.m3u8')) {
-        hlsInstance = new Hls({ enableWorker: true });
-        hlsInstance.loadSource(url);
-        hlsInstance.attachMedia(video);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-          document.getElementById('player-status').textContent = '🟢 Reproduciendo HLS con éxito';
-          video.play().catch(() => {});
+    async function resetDevices(clientId) {
+      if (!confirm('¿Deseas desvincular todos los dispositivos de este cliente para que pueda registrar una nueva TV?')) return;
+      try {
+        const res = await fetch(`/api/admin/clients/${clientId}/reset-devices`, {
+          method: 'POST',
+          headers: { 'x-admin-password': adminToken }
         });
-        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            document.getElementById('player-status').textContent = '⚠️ Error al cargar stream HLS: ' + data.type;
-          }
-        });
-      } else {
-        video.src = url;
-        video.play().catch(() => {});
-        document.getElementById('player-status').textContent = 'Reproduciendo directo en el navegador';
-      }
-    }
-
-    function closePlayerModal() {
-      const video = document.getElementById('preview-video');
-      video.pause();
-      video.src = '';
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-      closeModal('modal-player');
-    }
-
-    // Modales de Clientes
-    function openActivateModal(code) {
-      document.getElementById('act-code').value = code;
-      document.getElementById('act-name').value = '';
-      document.getElementById('modal-activate').style.display = 'flex';
-      document.getElementById('act-name').focus();
-    }
-
-    function openCreateModal() {
-      document.getElementById('new-name').value = '';
-      document.getElementById('modal-create').style.display = 'flex';
-      document.getElementById('new-name').focus();
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).style.display = 'none';
-    }
-
-    async function submitActivation(e) {
-      e.preventDefault();
-      const code = document.getElementById('act-code').value;
-      const name = document.getElementById('act-name').value;
-      const planDays = document.getElementById('act-plan').value;
-      const maxDevices = document.getElementById('act-devices').value;
-
-      const res = await fetch('/api/admin/activate-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ code, name, planDays, maxDevices })
-      });
-      const data = await res.json();
-      if (data.success) {
-        closeModal('modal-activate');
-        alert(`¡Pantalla de ${name} activada con éxito!`);
-        fetchOverview();
-      } else {
-        alert(data.error || 'Error al activar.');
-      }
-    }
-
-    async function submitCreateClient(e) {
-      e.preventDefault();
-      const name = document.getElementById('new-name').value;
-      const planDays = document.getElementById('new-plan').value;
-      const maxDevices = document.getElementById('new-devices').value;
-
-      const res = await fetch('/api/admin/create-client', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ name, planDays, maxDevices })
-      });
-      const data = await res.json();
-      if (data.success) {
-        closeModal('modal-create');
-        alert(`Cliente ${name} creado con éxito. Código generado: ${data.client.code}`);
-        fetchOverview();
-      } else {
-        alert(data.error || 'Error al crear.');
-      }
-    }
-
-    async function submitSettings(e) {
-      e.preventDefault();
-      const adminPassword = document.getElementById('tab-admin-pass').value.trim();
-      const whatsappNumber = document.getElementById('tab-whatsapp-number').value.trim();
-      const whatsappMessage = document.getElementById('tab-whatsapp-msg').value.trim();
-
-      const body = { whatsappNumber, whatsappMessage };
-      if (adminPassword) {
-        body.adminPassword = adminPassword;
-      }
-
-      const res = await fetch('/api/admin/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify(body)
-      });
-      const data = await res.json();
-      if (data.success) {
-        if (adminPassword) {
-          adminToken = adminPassword;
-          localStorage.setItem('vj_admin_token', adminToken);
+        const data = await res.json();
+        if (data.success) {
+          showToast('Pantallas desvinculadas con éxito', 'success');
+          fetchOverview();
         }
-        alert('Ajustes guardados con éxito.');
+      } catch (err) {
+        showToast('Error al desvincular.', 'error');
+      }
+    }
+
+    async function deleteClient(clientId) {
+      if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este cliente?')) return;
+      try {
+        const res = await fetch(`/api/admin/clients/${clientId}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Cliente eliminado del sistema', 'info');
+          fetchOverview();
+        }
+      } catch (err) {
+        showToast('Error al eliminar.', 'error');
       }
     }
 
     // ==============================================================
-    // FUNCIONALIDADES DE GESTIÓN DE REVENDEDORES
+    // SECCIÓN REVENDEDORES
     // ==============================================================
-
-    let allResellersList = [];
 
     async function fetchResellers() {
       if (!adminToken) return;
@@ -1440,15 +1384,15 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert(`¡Revendedor "${name}" creado exitosamente con ${initialCredits} créditos!`);
+          showToast(`¡Revendedor "${name}" creado exitosamente con ${initialCredits} créditos!`, 'success');
           closeModal('modal-reseller');
           fetchResellers();
           fetchOverview();
         } else {
-          alert('Error: ' + (data.error || 'No se pudo crear revendedor'));
+          showToast('Error: ' + (data.error || 'No se pudo crear revendedor'), 'error');
         }
       } catch (err) {
-        alert('Error de conexión.');
+        showToast('Error de conexión.', 'error');
       } finally {
         btn.textContent = 'Guardar Revendedor';
         btn.disabled = false;
@@ -1486,15 +1430,15 @@
         });
         const data = await res.json();
         if (data.success) {
-          alert(`¡Se añadieron ${credits} créditos con éxito!`);
+          showToast(`¡Se añadieron ${credits} créditos con éxito!`, 'success');
           closeModal('modal-recharge');
           fetchResellers();
           fetchOverview();
         } else {
-          alert('Error: ' + (data.error || 'No se pudo recargar'));
+          showToast('Error: ' + (data.error || 'No se pudo recargar'), 'error');
         }
       } catch (err) {
-        alert('Error al conectar.');
+        showToast('Error al conectar.', 'error');
       } finally {
         btn.textContent = 'Confirmar y Añadir Créditos';
         btn.disabled = false;
@@ -1511,12 +1455,13 @@
         });
         const data = await res.json();
         if (data.success) {
+          showToast('Estado del revendedor actualizado', 'info');
           fetchResellers();
         } else {
-          alert('Error al cambiar estado.');
+          showToast('Error al cambiar estado.', 'error');
         }
       } catch (err) {
-        alert('Error de conexión.');
+        showToast('Error de conexión.', 'error');
       }
     }
 
@@ -1531,14 +1476,332 @@
         });
         const data = await res.json();
         if (data.success) {
+          showToast('Revendedor eliminado con éxito', 'info');
           fetchResellers();
           fetchOverview();
         } else {
-          alert('Error al eliminar revendedor.');
+          showToast('Error al eliminar revendedor.', 'error');
         }
       } catch (err) {
-        alert('Error de conexión.');
+        showToast('Error de conexión.', 'error');
       }
+    }
+
+    // ==============================================================
+    // SECCIÓN CANALES DE TV EN VIVO
+    // ==============================================================
+
+    async function fetchChannels() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/channels', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          allChannels = data.channels || [];
+          renderChannels(filterChannelsList());
+        }
+      } catch (err) {
+        console.error('Error cargando canales:', err);
+      }
+    }
+
+    function setChannelCategoryFilter(category, el) {
+      currentChannelCategory = category;
+      document.querySelectorAll('#channel-category-chips .chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      renderChannels(filterChannelsList());
+    }
+
+    function filterChannelsList() {
+      const q = (document.getElementById('channel-search-input')?.value || '').toLowerCase().trim();
+      return allChannels.filter(c => {
+        const matchesQuery = !q || c.name.toLowerCase().includes(q) || (c.category && c.category.toLowerCase().includes(q));
+        if (!matchesQuery) return false;
+        if (currentChannelCategory === 'Todos') return true;
+        return c.category === currentChannelCategory;
+      });
+    }
+
+    function filterChannels() {
+      renderChannels(filterChannelsList());
+    }
+
+    function renderChannels(channels) {
+      const container = document.getElementById('channels-container');
+      if (!channels || channels.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 30px;">No se encontraron canales en esta categoría.</p>';
+        return;
+      }
+
+      container.innerHTML = channels.map(ch => `
+        <div class="channel-card ${ch.active === false ? 'inactive' : ''}">
+          <div class="channel-top">
+            <div class="channel-logo">
+              ${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.onerror=null; this.src='https://placehold.co/56x56/121318/ffffff?text=TV';">` : '📺'}
+            </div>
+            <div class="channel-meta">
+              <div class="channel-title" title="${ch.name}">${ch.name}</div>
+              <div class="channel-sub">
+                <span class="badge badge-category">${ch.category || 'General'}</span>
+                <span style="font-size: 11px; color: var(--text-muted);">${ch.quality || 'HD'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="channel-stream-url" title="${ch.streamUrl}">${ch.streamUrl}</div>
+
+          <div class="channel-footer">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label class="switch">
+                <input type="checkbox" ${ch.active !== false ? 'checked' : ''} onchange="toggleChannelActive('${ch.id}', this.checked)">
+                <span class="slider"></span>
+              </label>
+              <span style="font-size: 11px; color: var(--text-muted);">${ch.active !== false ? 'Activo' : 'Pausado'}</span>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button class="btn btn-secondary btn-sm" onclick="previewChannel('${ch.id}', '${ch.name.replace(/'/g, "\\'")}', '${ch.streamUrl}')" title="Probar reproducción">▶ Probar</button>
+              <button class="btn btn-secondary btn-sm" onclick="openChannelEdit('${ch.id}')" title="Editar canal">✏️</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteChannelAdmin('${ch.id}', '${ch.name.replace(/'/g, "\\'")}')" title="Eliminar canal">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openChannelModal() {
+      document.getElementById('channel-modal-title').textContent = '📺 Añadir Canal de TV en Vivo';
+      document.getElementById('ch-edit-id').value = '';
+      document.getElementById('ch-name').value = '';
+      document.getElementById('ch-category').value = 'Deportes';
+      document.getElementById('ch-logo').value = '';
+      document.getElementById('ch-stream').value = '';
+      document.getElementById('ch-quality').value = '1080p HD';
+      document.getElementById('ch-active').checked = true;
+      openModal('modal-channel');
+    }
+
+    function openChannelEdit(id) {
+      const ch = allChannels.find(c => c.id === id);
+      if (!ch) return;
+      document.getElementById('channel-modal-title').textContent = '✏️ Editar Canal de TV';
+      document.getElementById('ch-edit-id').value = ch.id;
+      document.getElementById('ch-name').value = ch.name;
+      document.getElementById('ch-category').value = ch.category || 'Deportes';
+      document.getElementById('ch-logo').value = ch.logo || '';
+      document.getElementById('ch-stream').value = ch.streamUrl;
+      document.getElementById('ch-quality').value = ch.quality || '1080p HD';
+      document.getElementById('ch-active').checked = ch.active !== false;
+      openModal('modal-channel');
+    }
+
+    async function submitChannel(e) {
+      e.preventDefault();
+      const editId = document.getElementById('ch-edit-id').value;
+      const body = {
+        name: document.getElementById('ch-name').value.trim(),
+        category: document.getElementById('ch-category').value,
+        logo: document.getElementById('ch-logo').value.trim(),
+        streamUrl: document.getElementById('ch-stream').value.trim(),
+        quality: document.getElementById('ch-quality').value,
+        active: document.getElementById('ch-active').checked
+      };
+
+      const url = editId ? `/api/admin/channels/${editId}` : '/api/admin/channels';
+      const method = editId ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Canal guardado correctamente', 'success');
+          closeModal('modal-channel');
+          fetchChannels();
+        } else {
+          showToast('Error al guardar canal.', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión.', 'error');
+      }
+    }
+
+    async function toggleChannelActive(id, active) {
+      try {
+        await fetch(`/api/admin/channels/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ active })
+        });
+        const ch = allChannels.find(c => c.id === id);
+        if (ch) ch.active = active;
+        renderChannels(filterChannelsList());
+      } catch (_) {}
+    }
+
+    async function deleteChannelAdmin(id, name) {
+      if (!confirm(`¿Estás seguro de eliminar el canal "${name}"?`)) return;
+      try {
+        const res = await fetch(`/api/admin/channels/${id}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Canal eliminado', 'info');
+          fetchChannels();
+        }
+      } catch (_) {}
+    }
+
+    function previewChannel(id, name, streamUrl) {
+      document.getElementById('player-title').textContent = `📺 En Vivo: ${name}`;
+      const video = document.getElementById('preview-video');
+      const status = document.getElementById('player-status');
+      status.textContent = `Conectando con: ${streamUrl}`;
+
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+
+      openModal('modal-player');
+
+      if (Hls.isSupported()) {
+        hlsInstance = new Hls({ enableWorker: true });
+        hlsInstance.loadSource(streamUrl);
+        hlsInstance.attachMedia(video);
+        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
+          status.textContent = 'Transmisión en vivo iniciada con éxito.';
+          video.play().catch(() => {});
+        });
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            status.textContent = `Aviso HLS: ${data.details}. Verificando origen...`;
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.play().catch(() => {});
+      }
+    }
+
+    function closePlayerModal() {
+      const video = document.getElementById('preview-video');
+      video.pause();
+      video.src = '';
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      closeModal('modal-player');
+    }
+
+    // ==============================================================
+    // BACKUP & RESTAURACIÓN
+    // ==============================================================
+
+    function downloadBackup() {
+      if (!adminToken) return;
+      window.open(`/api/admin/backup?key=${encodeURIComponent(adminToken)}`, '_blank');
+      showToast('Descargando copia de seguridad JSON...', 'info');
+    }
+
+    function openRestoreModal() {
+      document.getElementById('restore-file-input').value = '';
+      document.getElementById('restore-json-text').value = '';
+      openModal('modal-restore');
+    }
+
+    function handleRestoreFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        document.getElementById('restore-json-text').value = event.target.result;
+      };
+      reader.readAsText(file);
+    }
+
+    async function submitRestoreBackup() {
+      const raw = document.getElementById('restore-json-text').value.trim();
+      if (!raw) {
+        showToast('Por favor carga un archivo o pega el contenido JSON.', 'error');
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch (e) {
+        showToast('El texto no es un formato JSON válido.', 'error');
+        return;
+      }
+
+      if (!confirm(`¿Confirmas restaurar la copia de seguridad? Se sincronizarán los clientes y configuraciones.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/restore', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify(parsed)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || 'Copia de seguridad restaurada correctamente.', 'success');
+          closeModal('modal-restore');
+          fetchOverview();
+        } else {
+          showToast('Error: ' + (data.error || 'No se pudo restaurar la copia'), 'error');
+        }
+      } catch (err) {
+        showToast('Error al conectar con el servidor.', 'error');
+      }
+    }
+
+    // ==============================================================
+    // AJUSTES DEL SISTEMA
+    // ==============================================================
+
+    async function submitSettings(e) {
+      e.preventDefault();
+      const adminPassword = document.getElementById('tab-admin-pass').value.trim();
+      const whatsappNumber = document.getElementById('tab-whatsapp-number').value.trim();
+      const whatsappMessage = document.getElementById('tab-whatsapp-msg').value.trim();
+
+      const body = { whatsappNumber, whatsappMessage };
+      if (adminPassword) {
+        body.adminPassword = adminPassword;
+      }
+
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (adminPassword) {
+          adminToken = adminPassword;
+          localStorage.setItem('vj_admin_token', adminToken);
+        }
+        showToast('Ajustes guardados con éxito.', 'success');
+      }
+    }
+
+    // Helpers de Modales
+    function openModal(id) {
+      document.getElementById(id).style.display = 'flex';
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
     }
   </script>
 </body>
