@@ -355,94 +355,138 @@ class _DetailViewState extends State<DetailView> {
         return;
       }
 
-      // Si el servidor detectó que solo existe en grabación de cine o solo en inglés sin doblaje
-      if (streamInfo?['isCinemaOnly'] == true || streamInfo?['hasNoSpanishAudio'] == true) {
-        showDialog(
-          context: context,
-          builder: (dContext) => AlertDialog(
-            backgroundColor: const Color(0xFF141414),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: Color(0x33F59E0B)),
-            ),
-            title: const Row(
-              children: [
-                Icon(Icons.movie_creation_rounded, color: Color(0xFFF59E0B), size: 22),
-                SizedBox(width: 8),
-                Text(
-                  'Próximamente en Español',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            content: Text(
-              streamInfo?['message'] ??
-                  'Esta película se encuentra actualmente en salas de cine o solo con audio en inglés. Puedes disfrutar de su tráiler oficial y recibir un aviso automático al estrenarse en español.',
-              style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dContext),
-                child: const Text('Cerrar', style: TextStyle(color: Colors.white60)),
-              ),
-              OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFF59E0B),
-                  side: const BorderSide(color: Color(0xFFF59E0B)),
-                ),
-                icon: const Icon(Icons.notifications_active_rounded, size: 16),
-                onPressed: () {
-                  Navigator.pop(dContext);
-                  _toggleReminder();
-                },
-                label: const Text('Avisarme'),
-              ),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF59E0B),
-                  foregroundColor: Colors.black,
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                onPressed: () {
-                  Navigator.pop(dContext);
-                  _playTrailer();
-                },
-                label: const Text('Ver Tráiler'),
-              ),
-            ],
-          ),
-        );
-        return;
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'No se encontró una transmisión digital activa para "$displayTitle". Intenta nuevamente.',
-          ),
-          backgroundColor: const Color(0xFFE50914),
-          behavior: SnackBarBehavior.floating,
-        ),
+      // Si no hay enlace de transmisión válido o el servidor reportó no disponibilidad en español
+      _showStreamUnavailableModal(
+        displayTitle,
+        streamInfo,
+        season: season,
+        episode: episode,
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Error al conectar con la transmisión de "$displayTitle". Verifica tu red.',
-          ),
-          backgroundColor: const Color(0xFFE50914),
-          behavior: SnackBarBehavior.floating,
-        ),
+      _showStreamUnavailableModal(
+        displayTitle,
+        null,
+        season: season,
+        episode: episode,
       );
     }
   }
 
+  /// Muestra un diálogo VIP moderno y amigable cuando un título no tiene transmisión activa,
+  /// evitando cuadros de error rojos y ofreciendo el tráiler oficial o recordatorio automático.
+  void _showStreamUnavailableModal(
+    String displayTitle,
+    Map<String, dynamic>? streamInfo, {
+    int season = 1,
+    int episode = 1,
+  }) {
+    if (!mounted) return;
+    final message = streamInfo?['message'] as String? ??
+        'Esta película se encuentra actualmente en proceso de digitalización o en salas de cine. VJ STREAM protege tu experiencia evitando grabaciones de mala calidad o enlaces caídos.';
 
+    showDialog(
+      context: context,
+      builder: (dContext) => AlertDialog(
+        backgroundColor: const Color(0xFF161616),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Color(0x33F59E0B), width: 1.2),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.movie_filter_rounded, color: Color(0xFFF59E0B), size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Próximamente en Español',
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              displayTitle,
+              style: const TextStyle(color: Colors.amberAccent, fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.45),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.verified_rounded, color: Colors.greenAccent, size: 16),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'VJ STREAM solo ofrece contenidos en alta definición (1080p / 4K) verificados.',
+                      style: TextStyle(color: Colors.white54, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dContext),
+            child: const Text('Cerrar', style: TextStyle(color: Colors.white54)),
+          ),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFFF59E0B),
+              side: const BorderSide(color: Color(0xFFF59E0B), width: 1),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: Icon(_hasReminder ? Icons.notifications_active_rounded : Icons.notifications_none_rounded, size: 16),
+            onPressed: () {
+              Navigator.pop(dContext);
+              _toggleReminder();
+            },
+            label: Text(_hasReminder ? 'Recordatorio Activo' : 'Avisarme (ESP)'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF59E0B),
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            icon: const Icon(Icons.movie_creation_rounded, size: 16),
+            onPressed: () {
+              Navigator.pop(dContext);
+              _playTrailer();
+            },
+            label: const Text('Ver Tráiler Oficial', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

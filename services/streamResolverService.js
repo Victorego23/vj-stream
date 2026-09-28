@@ -397,6 +397,26 @@ class StreamResolverService {
       } catch (_) {}
     }
 
+    // Si aún no tenemos imdbId (ej. id no vino en payload), buscar en TMDB por título y año
+    if (!imdbId && title) {
+      try {
+        const searchRes = await tmdbService.searchMedia(title, { type: mediaType === 'tv' ? 'tv' : 'movie' });
+        const results = searchRes?.results || [];
+        const match = results.find(r => {
+          if (!year) return true;
+          const y = r.releaseDate?.slice(0, 4) || '';
+          return y === String(year);
+        }) || results[0];
+
+        if (match?.id) {
+          const client = tmdbService.getAxiosClient();
+          const extRes = await client.get(`/${mediaType === 'tv' ? 'tv' : 'movie'}/${match.id}/external_ids`);
+          imdbId = extRes.data?.imdb_id;
+          if (!mediaInfo.id) mediaInfo.id = match.id;
+        }
+      } catch (_) {}
+    }
+
     // 2. PASO 1: BÚSQUEDA INSTANTÁNEA EN CACHÉ DE REAL-DEBRID (TORRENTIO RD)
     // Clasifica fuentes en Latino, Castellano, Original y prepara opciones para el selector
     if (imdbId) {
@@ -477,6 +497,32 @@ class StreamResolverService {
               isBackup: false
             });
             break;
+          }
+        }
+
+        // 3. Probar y resolver versión en Audio Original con Subtítulos en Español si no hay doblaje
+        if (!primaryStream && instant.original.length > 0) {
+          for (const cand of instant.original.slice(0, 3)) {
+            const verified = await verifyCandidate(cand);
+            if (verified) {
+              primaryStream = {
+                ...verified,
+                audioLanguage: 'Original (Subtitulado al Español)',
+                isSpanishAudio: false,
+                isSubtitled: true
+              };
+              availableStreams.push({
+                id: 'original_sub',
+                label: `Audio Original (${verified.qualityLabel || 'HD'} Subtítulos 🇲🇽)`,
+                language: 'Original Subtitulado',
+                audioChannels: verified.audioChannels || 'Estéreo 2.0',
+                streamUrl: verified.streamUrl,
+                qualityLabel: verified.qualityLabel,
+                filename: verified.filename,
+                isBackup: false
+              });
+              break;
+            }
           }
         }
 
@@ -613,13 +659,31 @@ class StreamResolverService {
     // 4. PASO 3: SI NO HAY VERSIÓN EN ESPAÑOL DISPONIBLE
     console.log(`[VJ STREAM Auto-Resolver] 🚫 Sin versión en español verificada para "${title}".`);
     const isRecentCinema = year && (new Date().getFullYear() - parseInt(year, 10) <= 0);
+    let trailerKey = null;
+    let trailer = null;
+    const mediaId = id || mediaInfo.id;
+    if (mediaId) {
+      try {
+        const client = tmdbService.getAxiosClient();
+        const vidRes = await client.get(`/${mediaType === 'tv' ? 'tv' : 'movie'}/${mediaId}/videos`, {
+          params: { language: 'es-ES', include_video_language: 'es,es-ES,es-MX,en,null' },
+          timeout: 3000
+        });
+        const extracted = tmdbService._extractTrailer(vidRes.data);
+        trailerKey = extracted.trailerKey;
+        trailer = extracted.trailer;
+      } catch (_) {}
+    }
+
     return {
       success: false,
       isCinemaOnly: Boolean(isRecentCinema),
       hasNoSpanishAudio: true,
+      trailerKey,
+      trailer,
       message: isRecentCinema
-        ? `"${title}" está actualmente en salas de cine o sin lanzamiento oficial en español. VJ STREAM protege la calidad de tus clientes evitando grabaciones piratas de sala.`
-        : `"${title}" no cuenta actualmente con una versión en audio español (Latino o Castellano) verificada en los servidores. VJ STREAM solo reproduce contenido en español.`
+        ? `"${title}" se encuentra actualmente en salas de cine o sin lanzamiento digital oficial en español. Puedes disfrutar de su tráiler oficial y recibir un aviso automático al estrenarse.`
+        : `"${title}" está en proceso de digitalización para servidores en español. Puedes ver su tráiler oficial o activar el recordatorio.`
     };
   }
 

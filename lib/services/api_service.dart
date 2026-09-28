@@ -536,9 +536,10 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = json.decode(utf8.decode(response.bodyBytes));
-        if (body['success'] == true && body['data'] != null) {
+        if (body['data'] is Map<String, dynamic>) {
           return body['data'] as Map<String, dynamic>;
         }
+        return body;
       }
       return null;
     } catch (e) {
