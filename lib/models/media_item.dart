@@ -18,6 +18,10 @@ class MediaItem {
   final int? runtime;
   final List<String> genres;
   final String? trailerUrl;
+  final String? trailerKey;
+  final bool isTrailerOnly;
+  final bool hasSpanishAudio;
+  final String? statusBadge;
 
   MediaItem({
     required this.id,
@@ -37,6 +41,10 @@ class MediaItem {
     this.runtime,
     this.genres = const [],
     this.trailerUrl,
+    this.trailerKey,
+    this.isTrailerOnly = false,
+    this.hasSpanishAudio = true,
+    this.statusBadge,
   });
 
   /// Factory constructor para deserializar desde el JSON que retorna el backend en Node.js
@@ -51,6 +59,11 @@ class MediaItem {
         return g.toString();
       }).where((name) => name.isNotEmpty).toList();
     }
+
+    final isTrailer = json['isTrailerOnly'] == true;
+    final hasSpanish = json['hasSpanishAudio'] is bool
+        ? json['hasSpanishAudio'] as bool
+        : !isTrailer;
 
     return MediaItem(
       id: json['id'],
@@ -69,7 +82,11 @@ class MediaItem {
       backdropOriginal: backdrops?['original'],
       runtime: json['runtime'] as int?,
       genres: parsedGenres,
-      trailerUrl: json['trailer'],
+      trailerUrl: json['trailer'] ?? json['trailerUrl'],
+      trailerKey: json['trailerKey']?.toString(),
+      isTrailerOnly: isTrailer,
+      hasSpanishAudio: hasSpanish,
+      statusBadge: json['statusBadge']?.toString(),
     );
   }
 
@@ -92,5 +109,54 @@ class MediaItem {
   /// Retorna la mejor URL de fondo disponible para banners
   String get bestBackdropUrl {
     return backdropLarge ?? backdropOriginal ?? backdropMedium ?? bestPosterUrl;
+  }
+
+  /// Retorna una copia con campos modificados (ej. cuando pasa de solo tráiler a disponible en español)
+  MediaItem copyWith({
+    dynamic id,
+    String? title,
+    String? originalTitle,
+    String? synopsis,
+    String? releaseDate,
+    double? rating,
+    int? voteCount,
+    String? mediaType,
+    String? posterThumbnail,
+    String? posterMedium,
+    String? posterOriginal,
+    String? backdropMedium,
+    String? backdropLarge,
+    String? backdropOriginal,
+    int? runtime,
+    List<String>? genres,
+    String? trailerUrl,
+    String? trailerKey,
+    bool? isTrailerOnly,
+    bool? hasSpanishAudio,
+    String? statusBadge,
+  }) {
+    return MediaItem(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      originalTitle: originalTitle ?? this.originalTitle,
+      synopsis: synopsis ?? this.synopsis,
+      releaseDate: releaseDate ?? this.releaseDate,
+      rating: rating ?? this.rating,
+      voteCount: voteCount ?? this.voteCount,
+      mediaType: mediaType ?? this.mediaType,
+      posterThumbnail: posterThumbnail ?? this.posterThumbnail,
+      posterMedium: posterMedium ?? this.posterMedium,
+      posterOriginal: posterOriginal ?? this.posterOriginal,
+      backdropMedium: backdropMedium ?? this.backdropMedium,
+      backdropLarge: backdropLarge ?? this.backdropLarge,
+      backdropOriginal: backdropOriginal ?? this.backdropOriginal,
+      runtime: runtime ?? this.runtime,
+      genres: genres ?? this.genres,
+      trailerUrl: trailerUrl ?? this.trailerUrl,
+      trailerKey: trailerKey ?? this.trailerKey,
+      isTrailerOnly: isTrailerOnly ?? this.isTrailerOnly,
+      hasSpanishAudio: hasSpanishAudio ?? this.hasSpanishAudio,
+      statusBadge: statusBadge ?? this.statusBadge,
+    );
   }
 }

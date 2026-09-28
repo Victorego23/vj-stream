@@ -609,6 +609,71 @@ class StreamResolverService {
         : `"${title}" no cuenta actualmente con una versión en audio español (Latino o Castellano) verificada en los servidores. VJ STREAM solo reproduce contenido en español.`
     };
   }
+
+  /**
+   * Comprueba de manera rápida y sin consumo innecesario de recursos
+   * si un título ya cuenta con transmisiones activas con audio en Español (Latino o Castellano).
+   * Permite la integración automática en el catálogo en cuanto aparezca la primera fuente en español.
+   * @param {Object} mediaInfo 
+   */
+  async checkSpanishAvailability(mediaInfo) {
+    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1 } = mediaInfo;
+    const cacheKey = this._getCacheKey(mediaInfo);
+
+    // 1. Revisar caché
+    const cached = this.cache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < this.CACHE_TTL_MS)) {
+      if (cached.data?.isSpanishAudio && cached.data?.streamUrl) {
+        return {
+          hasSpanishAudio: true,
+          isAvailable: true,
+          audioLanguage: cached.data.audioLanguage || 'Español'
+        };
+      }
+    }
+
+    // 2. Obtener imdbId
+    let imdbId = mediaInfo.imdbId;
+    if (!imdbId && id) {
+      try {
+        const client = tmdbService.getAxiosClient();
+        const extRes = await client.get(`/${mediaType === 'tv' ? 'tv' : 'movie'}/${id}/external_ids`);
+        imdbId = extRes.data?.imdb_id;
+      } catch (_) {}
+    }
+
+    if (!imdbId) {
+      return {
+        hasSpanishAudio: false,
+        isAvailable: false,
+        message: 'Aún no disponible en español.'
+      };
+    }
+
+    // 3. Consulta rápida en Torrentio / Real-Debrid
+    const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode);
+    const hasLatino = instant.latino && instant.latino.length > 0;
+    const hasCastellano = instant.castellano && instant.castellano.length > 0;
+
+    if (hasLatino || hasCastellano) {
+      const topAudio = hasLatino ? 'Español Latino' : 'Castellano';
+      return {
+        hasSpanishAudio: true,
+        isAvailable: true,
+        audioLanguage: topAudio,
+        counts: {
+          latino: instant.latino.length,
+          castellano: instant.castellano.length
+        }
+      };
+    }
+
+    return {
+      hasSpanishAudio: false,
+      isAvailable: false,
+      message: 'Esta película aún está en idioma original (inglés / cines). Se integrará al catálogo automáticamente cuando esté en español.'
+    };
+  }
 }
 
 module.exports = new StreamResolverService();

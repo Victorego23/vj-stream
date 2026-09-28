@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
+import '../services/coming_soon_service.dart';
 import '../services/update_service.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/media_row.dart';
@@ -29,12 +30,13 @@ class _HomeViewState extends State<HomeView> {
   MediaItem? _heroItem;
   List<MediaItem> _trendingItems = [];
   List<MediaItem> _nowPlayingItems = [];
+  List<MediaItem> _upcomingItems = [];
   List<MediaItem> _actionItems = [];
   List<MediaItem> _scifiItems = [];
   List<MediaItem> _seriesItems = [];
 
   // Pestañas de categoría rápida
-  String _activeTab = 'Todos'; // 'Todos', 'Películas', 'Series', 'Mi Lista'
+  String _activeTab = 'Todos'; // 'Todos', 'TV en Vivo', 'Películas', 'Series', 'Próximamente', 'Mi Lista'
   List<WatchHistoryItem> _continueWatching = [];
   List<MediaItem> _favorites = [];
 
@@ -160,7 +162,46 @@ class _HomeViewState extends State<HomeView> {
     // Comprobación automática de actualización OTA en segundo plano al iniciar
     if (mounted) {
       UpdateService.checkUpdate(context, silent: true);
+      _checkComingSoonReleases();
     }
+  }
+
+  /// Comprueba silenciosamente si alguna película guardada en espera de audio en español
+  /// ya cuenta con versión doblada y notifica alegremente al usuario para verla de inmediato.
+  Future<void> _checkComingSoonReleases() async {
+    try {
+      final newlyAvailable = await ComingSoonService.checkNewReleasesInSpanish(_apiService);
+      if (newlyAvailable.isNotEmpty && mounted) {
+        final title = newlyAvailable.first.title;
+        final extra = newlyAvailable.length - 1;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.celebration_rounded, color: Colors.amberAccent, size: 24),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    extra > 0
+                        ? '🎉 ¡"$title" y $extra estrenos más ya están disponibles en Español!'
+                        : '🎉 ¡"$title" ya está disponible en Español Latino/Castellano!',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF1B5E20),
+            duration: const Duration(seconds: 5),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'VER AHORA',
+              textColor: Colors.white,
+              onPressed: () => _openDetail(newlyAvailable.first),
+            ),
+          ),
+        );
+      }
+    } catch (_) {}
   }
 
   Future<void> _loadHistoryAndFavorites() async {
@@ -189,6 +230,7 @@ class _HomeViewState extends State<HomeView> {
 
       final trending = categories['trending'] ?? [];
       final nowPlaying = categories['nowPlaying'] ?? [];
+      final upcoming = categories['upcoming'] ?? [];
       final action = categories['action'] ?? [];
       final comedy = categories['comedy'] ?? [];
       final horror = categories['horror'] ?? [];
@@ -208,6 +250,7 @@ class _HomeViewState extends State<HomeView> {
       setState(() {
         _trendingItems = trending;
         _nowPlayingItems = nowPlaying;
+        _upcomingItems = upcoming;
         _actionItems = action;
         _scifiItems = scifi;
         _seriesItems = series;
@@ -928,6 +971,11 @@ class _HomeViewState extends State<HomeView> {
                     SliverToBoxAdapter(
                       child: _buildMyListTab(isTv),
                     )
+                  // Vista cuando la pestaña activa es "Próximamente" (Solo Tráilers y Estrenos)
+                  else if (_activeTab == 'Próximamente')
+                    SliverToBoxAdapter(
+                      child: _buildComingSoonTab(isTv),
+                    )
                   // Vista cuando seleccionó un año específico en Películas (2000 - 2026)
                   else if (_activeTab == 'Películas' && _selectedMovieYear != null)
                     SliverToBoxAdapter(
@@ -955,6 +1003,16 @@ class _HomeViewState extends State<HomeView> {
                         child: MediaRow(
                           title: '⭐ Mi Lista Guardada',
                           items: _favorites,
+                          onItemTap: _openDetail,
+                        ),
+                      ),
+
+                    // Fila destacada: Próximamente en Español (Solo Tráiler)
+                    if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
+                      SliverToBoxAdapter(
+                        child: MediaRow(
+                          title: '🍿 Próximamente en Español (Solo Tráiler)',
+                          items: _upcomingItems,
                           onItemTap: _openDetail,
                         ),
                       ),
@@ -1127,6 +1185,7 @@ class _HomeViewState extends State<HomeView> {
       {'id': 'TV en Vivo', 'label': 'TV en Vivo', 'icon': Icons.live_tv_rounded},
       {'id': 'Películas', 'label': 'Películas', 'icon': Icons.movie_rounded},
       {'id': 'Series', 'label': 'Series', 'icon': Icons.tv_rounded},
+      {'id': 'Próximamente', 'label': 'Próximamente', 'icon': Icons.upcoming_rounded},
       {'id': 'Mi Lista', 'label': 'Mi Lista', 'icon': Icons.star_rounded},
     ];
 
@@ -1437,6 +1496,135 @@ class _HomeViewState extends State<HomeView> {
               );
             }).toList(),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComingSoonTab(bool isTv) {
+    if (_upcomingItems.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF141414),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.movie_creation_rounded,
+                  color: Color(0xFFF59E0B),
+                  size: 54,
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text(
+                'Cargando cartelera de próximos estrenos...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final cardWidth = isTv ? 160.0 : 130.0;
+    final cardHeight = isTv ? 240.0 : 195.0;
+
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: isTv ? 48.0 : 20.0, vertical: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Banner informativo superior de la pestaña
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF261D07), Color(0xFF141109)],
+              ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.upcoming_rounded, color: Color(0xFFF59E0B), size: 28),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Próximamente en Español • Tráilers Oficiales',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Títulos actualmente en cines o en idioma original (inglés). Mira el tráiler oficial y activa recordatorios: al detectarse audio en español se integrarán automáticamente para reproducir.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Título de conteo
+          Row(
+            children: [
+              const Icon(Icons.movie_creation_rounded, color: Color(0xFFF59E0B), size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'Cartelera y Estrenos en Tráiler (${_upcomingItems.length})',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Grid de películas en trailer
+          Wrap(
+            spacing: 12,
+            runSpacing: 16,
+            children: _upcomingItems.map((item) {
+              return SizedBox(
+                width: cardWidth,
+                height: cardHeight,
+                child: TvFocusableCard(
+                  item: item,
+                  width: cardWidth,
+                  height: cardHeight,
+                  onTap: () => _openDetail(item),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 40),
         ],
       ),
     );

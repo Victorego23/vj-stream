@@ -140,6 +140,54 @@ class TmdbService {
    * @param {string} [language='es-ES'] - Código de idioma (estrictamente es-ES).
    * @returns {Promise<Object>}
    */
+  /**
+   * Extrae el mejor trailer disponible dando prioridad a trailers oficiales en español.
+   * @private
+   */
+  _extractTrailer(videos) {
+    const results = videos?.results || [];
+    if (!results || results.length === 0) return { trailer: null, trailerKey: null };
+
+    // 1. Priorizar trailers explícitamente en español
+    const spanishTrailer = results.find(v => 
+      v.site === 'YouTube' && 
+      v.type === 'Trailer' && 
+      /español|castellano|latino|tráiler oficial|trailer oficial/i.test(v.name || '')
+    );
+    if (spanishTrailer?.key) {
+      return {
+        trailer: `https://www.youtube.com/watch?v=${spanishTrailer.key}`,
+        trailerKey: spanishTrailer.key
+      };
+    }
+
+    // 2. Cualquier trailer oficial de YouTube
+    const trailer = results.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+    if (trailer?.key) {
+      return {
+        trailer: `https://www.youtube.com/watch?v=${trailer.key}`,
+        trailerKey: trailer.key
+      };
+    }
+
+    // 3. Teaser o Clip de YouTube
+    const teaser = results.find(v => v.site === 'YouTube' && (v.type === 'Teaser' || v.type === 'Clip'));
+    if (teaser?.key) {
+      return {
+        trailer: `https://www.youtube.com/watch?v=${teaser.key}`,
+        trailerKey: teaser.key
+      };
+    }
+
+    return { trailer: null, trailerKey: null };
+  }
+
+  /**
+   * Obtiene los detalles completos de una película por su ID forzando español (es-ES).
+   * @param {string|number} movieId - ID de la película en TMDB.
+   * @param {string} [language='es-ES'] - Código de idioma (estrictamente es-ES).
+   * @returns {Promise<Object>}
+   */
   async getMovieDetails(movieId, language = 'es-ES') {
     try {
       if (!movieId) throw new Error('El parámetro "movieId" es obligatorio.');
@@ -151,12 +199,14 @@ class TmdbService {
         params: {
           language: lang,
           include_image_language: 'es,null',
+          include_video_language: 'es,es-ES,es-MX,en,null',
           append_to_response: 'credits,videos,recommendations'
         }
       });
 
       const data = response.data;
       const formatted = this.formatMediaItem({ ...data, media_type: 'movie' });
+      const { trailer, trailerKey } = this._extractTrailer(data.videos);
 
       return {
         ...formatted,
@@ -169,9 +219,8 @@ class TmdbService {
           character: actor.character,
           profileImage: this.buildImageUrl(actor.profile_path, 'w185')
         })),
-        trailer: (data.videos?.results || []).find(v => v.site === 'YouTube' && v.type === 'Trailer')?.key
-          ? `https://www.youtube.com/watch?v=${(data.videos?.results || []).find(v => v.site === 'YouTube' && v.type === 'Trailer').key}`
-          : null
+        trailer,
+        trailerKey
       };
     } catch (error) {
       this.handleError(`getMovieDetails (id: ${movieId})`, error);
@@ -195,12 +244,14 @@ class TmdbService {
         params: {
           language: lang,
           include_image_language: 'es,null',
+          include_video_language: 'es,es-ES,es-MX,en,null',
           append_to_response: 'credits,videos,recommendations'
         }
       });
 
       const data = response.data;
       const formatted = this.formatMediaItem({ ...data, media_type: 'tv' });
+      const { trailer, trailerKey } = this._extractTrailer(data.videos);
 
       return {
         ...formatted,
@@ -220,9 +271,8 @@ class TmdbService {
           character: actor.character,
           profileImage: this.buildImageUrl(actor.profile_path, 'w185')
         })),
-        trailer: (data.videos?.results || []).find(v => v.site === 'YouTube' && v.type === 'Trailer')?.key
-          ? `https://www.youtube.com/watch?v=${(data.videos?.results || []).find(v => v.site === 'YouTube' && v.type === 'Trailer').key}`
-          : null
+        trailer,
+        trailerKey
       };
     } catch (error) {
       this.handleError(`getTvShowDetails (id: ${tvId})`, error);
@@ -285,6 +335,60 @@ class TmdbService {
       return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'movie' }));
     } catch (error) {
       console.warn('[TmdbService] Error en getNowPlayingMovies:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Obtiene próximos estrenos de cine y películas aún no disponibles en digital / español.
+   * Se marcan como modo tráiler (isTrailerOnly: true) para reproducir su avance oficial en video.
+   * @param {number} [page=1]
+   */
+  async getUpcomingMovies(page = 1) {
+    try {
+      const client = this.getAxiosClient();
+      const response = await client.get('/movie/upcoming', {
+        params: {
+          language: 'es-ES',
+          page: page || 1
+        }
+      });
+
+      const rawItems = response.data?.results || [];
+      // Resolver concurrentemente trailers para las películas principales
+      const items = await Promise.all(
+        rawItems.slice(0, 20).map(async (item) => {
+          const formatted = this.formatMediaItem({ ...item, media_type: 'movie' });
+          let trailer = null;
+          let trailerKey = null;
+
+          try {
+            const vidRes = await client.get(`/movie/${item.id}/videos`, {
+              params: {
+                language: 'es-ES',
+                include_video_language: 'es,es-ES,es-MX,en,null'
+              },
+              timeout: 4000
+            });
+            const extracted = this._extractTrailer(vidRes.data);
+            trailer = extracted.trailer;
+            trailerKey = extracted.trailerKey;
+          } catch (_) {}
+
+          return {
+            ...formatted,
+            isTrailerOnly: true,
+            hasSpanishAudio: false,
+            trailer,
+            trailerKey,
+            statusBadge: 'Próximamente en Español'
+          };
+        })
+      );
+
+      return items;
+    } catch (error) {
+      console.warn('[TmdbService] Error en getUpcomingMovies:', error.message);
       return [];
     }
   }
@@ -492,6 +596,7 @@ class TmdbService {
     try {
       const [
         nowPlayingRaw,
+        upcomingRaw,
         trendingRaw,
         actionRaw,
         comedyRaw,
@@ -503,6 +608,7 @@ class TmdbService {
         seriesRaw
       ] = await Promise.all([
         this.getNowPlayingMovies(),
+        this.getUpcomingMovies(1),
         this.getTrendingWeekly(),
         this.getMoviesByGenre(28, 1),   // Acción
         this.getMoviesByGenre(35, 1),   // Comedia
@@ -527,6 +633,7 @@ class TmdbService {
       };
 
       const nowPlaying = dedupe(nowPlayingRaw);
+      const upcoming = dedupe(upcomingRaw);
       const trending = dedupe(trendingRaw);
       const action = dedupe(actionRaw);
       const comedy = dedupe(comedyRaw);
@@ -539,6 +646,7 @@ class TmdbService {
 
       return {
         nowPlaying,
+        upcoming,
         trending,
         action,
         comedy,

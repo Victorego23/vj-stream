@@ -336,6 +336,7 @@ class ApiService {
 
           final trending = parseList(catalogData['trending']);
           final nowPlaying = parseList(catalogData['nowPlaying']);
+          final upcoming = parseList(catalogData['upcoming']);
           final action = parseList(catalogData['action']);
           final comedy = parseList(catalogData['comedy']);
           final horror = parseList(catalogData['horror']);
@@ -345,9 +346,10 @@ class ApiService {
           final classics = parseList(catalogData['classics']);
           final series = parseList(catalogData['series']);
 
-          if (trending.isNotEmpty || nowPlaying.isNotEmpty || series.isNotEmpty) {
+          if (trending.isNotEmpty || nowPlaying.isNotEmpty || series.isNotEmpty || upcoming.isNotEmpty) {
             return {
               'nowPlaying': nowPlaying,
+              'upcoming': upcoming,
               'trending': trending,
               'action': action,
               'comedy': comedy,
@@ -450,6 +452,58 @@ class ApiService {
       return [];
     } catch (_) {
       return [];
+    }
+  }
+
+  /// Obtiene los próximos estrenos de cine y películas en modo tráiler (solo inglés por ahora)
+  Future<List<MediaItem>> fetchUpcomingMovies({int page = 1}) async {
+    try {
+      final uri = Uri.parse('$baseUrl/upcoming?page=$page');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['movies'] is List) {
+          final List<dynamic> raw = data['movies'];
+          return raw
+              .map((item) => MediaItem.fromJson(item as Map<String, dynamic>))
+              .where((m) => m.bestPosterUrl.isNotEmpty)
+              .toList();
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Comprueba en el backend si una película que estaba en modo tráiler ya tiene audio en español
+  Future<Map<String, dynamic>?> checkSpanishAvailability(MediaItem item) async {
+    try {
+      final uri = Uri.parse('$baseUrl/check-spanish-availability');
+      final response = await http.post(
+        uri,
+        headers: _getHeaders(uri.toString()),
+        body: json.encode({
+          'id': item.id,
+          'title': item.title,
+          'originalTitle': item.originalTitle,
+          'year': item.releaseYear,
+          'mediaType': item.mediaType,
+        }),
+      ).timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true) {
+          return data;
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
     }
   }
 

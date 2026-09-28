@@ -3,10 +3,13 @@ import 'package:flutter/services.dart';
 import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
+import '../services/trailer_service.dart';
+import '../services/coming_soon_service.dart';
 import 'video_player_view.dart';
 
 /// Pantalla de Detalles de Película / Serie (DetailView) para VJ STREAM.
 /// Reproducción 100% automática, sin pantallas técnicas ni diálogos de magnets.
+/// Soporta modo Tráiler para películas en inglés e integración automática al salir en español.
 
 class DetailView extends StatefulWidget {
   final MediaItem item;
@@ -20,6 +23,10 @@ class DetailView extends StatefulWidget {
 class _DetailViewState extends State<DetailView> {
   final ApiService _apiService = ApiService();
   final FocusNode _playButtonFocus = FocusNode();
+  late MediaItem _currentItem;
+  bool _isTrailerOnly = false;
+  bool _hasReminder = false;
+  bool _isCheckingAvailability = false;
   bool _isPreparing = false;
   bool _isFavorite = false;
   int _selectedSeason = 1;
@@ -29,7 +36,13 @@ class _DetailViewState extends State<DetailView> {
   @override
   void initState() {
     super.initState();
+    _currentItem = widget.item;
+    _isTrailerOnly = widget.item.isTrailerOnly;
     _checkFavorite();
+    _checkReminder();
+    if (_isTrailerOnly) {
+      _verifySpanishAvailability();
+    }
     if (widget.item.mediaType == 'tv') {
       _loadEpisodes(1);
     }
@@ -39,19 +52,13 @@ class _DetailViewState extends State<DetailView> {
     });
   }
 
-  @override
-  void dispose() {
-    _playButtonFocus.dispose();
-    super.dispose();
-  }
-
   Future<void> _checkFavorite() async {
-    final fav = await PlaybackHistoryService.isFavorite(widget.item.id);
+    final fav = await PlaybackHistoryService.isFavorite(_currentItem.id);
     if (mounted) setState(() => _isFavorite = fav);
   }
 
   Future<void> _toggleFavorite() async {
-    final newFav = await PlaybackHistoryService.toggleFavorite(widget.item);
+    final newFav = await PlaybackHistoryService.toggleFavorite(_currentItem);
     if (mounted) {
       setState(() => _isFavorite = newFav);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +66,162 @@ class _DetailViewState extends State<DetailView> {
           content: Text(newFav ? '⭐ Agregado a Mi Lista' : 'Eliminado de Mi Lista'),
           backgroundColor: newFav ? const Color(0xFF22C55E) : const Color(0xFFE50914),
           duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _checkReminder() async {
+    final has = await ComingSoonService.hasReminder(_currentItem.id);
+    if (mounted) setState(() => _hasReminder = has);
+  }
+
+  Future<void> _toggleReminder() async {
+    final newReminder = await ComingSoonService.toggleReminder(_currentItem);
+    if (mounted) {
+      setState(() => _hasReminder = newReminder);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newReminder
+                ? '🔔 Te avisaremos en cuanto salga en Español Latino / Castellano'
+                : 'Recordatorio cancelado',
+          ),
+          backgroundColor: newReminder ? const Color(0xFFF59E0B) : const Color(0xFF333333),
+          duration: const Duration(seconds: 3),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Comprueba en segundo plano si la película ya salió con audio en español.
+  /// Si es así, se integra automáticamente al catálogo disponible al instante.
+  Future<void> _verifySpanishAvailability() async {
+    setState(() => _isCheckingAvailability = true);
+    try {
+      final res = await _apiService.checkSpanishAvailability(_currentItem);
+      if (!mounted) return;
+      if (res?['hasSpanishAudio'] == true || res?['isAvailable'] == true) {
+        setState(() {
+          _isTrailerOnly = false;
+          _currentItem = _currentItem.copyWith(
+            isTrailerOnly: false,
+            hasSpanishAudio: true,
+            statusBadge: '¡Ya disponible en Español!',
+          );
+          _isCheckingAvailability = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text('🎉 ¡Genial! Esta película ya está disponible en Español.'),
+                ),
+              ],
+            ),
+            backgroundColor: Color(0xFF1B5E20),
+            duration: Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        setState(() => _isCheckingAvailability = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isCheckingAvailability = false);
+    }
+  }
+
+  /// Reproduce el tráiler oficial con extracción nativa sin salir de la aplicación
+  Future<void> _playTrailer() async {
+    final trailerSource = _currentItem.trailerKey ?? _currentItem.trailerUrl;
+    if (trailerSource == null || trailerSource.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Tráiler oficial no disponible para este título.'),
+          backgroundColor: Color(0xFF333333),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF141414),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+            child: Row(
+              children: [
+                const SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    'Cargando tráiler oficial de ${_currentItem.title}...',
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    try {
+      final directStreamUrl = await TrailerService().resolveDirectStreamUrl(trailerSource);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+
+      if (directStreamUrl != null && directStreamUrl.isNotEmpty) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerView(
+              videoUrl: directStreamUrl,
+              title: '🎬 Tráiler: ${_currentItem.title}',
+              posterUrl: _currentItem.bestPosterUrl,
+              backdropUrl: _currentItem.bestBackdropUrl,
+              mediaType: _currentItem.mediaType,
+              audioLanguage: 'Tráiler Oficial (HD)',
+              qualityLabel: 'HD 720p',
+              mediaItem: _currentItem,
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo iniciar el stream del tráiler. Intenta nuevamente.'),
+            backgroundColor: Color(0xFFE50914),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error al conectar con el servidor del tráiler.'),
+          backgroundColor: Color(0xFFE50914),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -192,39 +355,60 @@ class _DetailViewState extends State<DetailView> {
         return;
       }
 
-      // Si el servidor detectó que la película solo existe en grabación de cine pirata de sala
-      if (streamInfo?['isCinemaOnly'] == true) {
+      // Si el servidor detectó que solo existe en grabación de cine o solo en inglés sin doblaje
+      if (streamInfo?['isCinemaOnly'] == true || streamInfo?['hasNoSpanishAudio'] == true) {
         showDialog(
           context: context,
           builder: (dContext) => AlertDialog(
             backgroundColor: const Color(0xFF141414),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
-              side: const BorderSide(color: Color(0x33E50914)),
+              side: const BorderSide(color: Color(0x33F59E0B)),
             ),
             title: const Row(
               children: [
-                Icon(Icons.verified_user_rounded, color: Colors.amber, size: 22),
+                Icon(Icons.movie_creation_rounded, color: Color(0xFFF59E0B), size: 22),
                 SizedBox(width: 8),
                 Text(
-                  'Filtro Anti-CAM Activo',
+                  'Próximamente en Español',
                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             content: Text(
               streamInfo?['message'] ??
-                  'Esta película solo cuenta actualmente con grabaciones de sala de cine. VJ STREAM protege la calidad evitando grabaciones de baja calidad.',
+                  'Esta película se encuentra actualmente en salas de cine o solo con audio en inglés. Puedes disfrutar de su tráiler oficial y recibir un aviso automático al estrenarse en español.',
               style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
             ),
             actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE50914),
-                  foregroundColor: Colors.white,
-                ),
+              TextButton(
                 onPressed: () => Navigator.pop(dContext),
-                child: const Text('Entendido'),
+                child: const Text('Cerrar', style: TextStyle(color: Colors.white60)),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFF59E0B),
+                  side: const BorderSide(color: Color(0xFFF59E0B)),
+                ),
+                icon: const Icon(Icons.notifications_active_rounded, size: 16),
+                onPressed: () {
+                  Navigator.pop(dContext);
+                  _toggleReminder();
+                },
+                label: const Text('Avisarme'),
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF59E0B),
+                  foregroundColor: Colors.black,
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                onPressed: () {
+                  Navigator.pop(dContext);
+                  _playTrailer();
+                },
+                label: const Text('Ver Tráiler'),
               ),
             ],
           ),
@@ -326,20 +510,20 @@ class _DetailViewState extends State<DetailView> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Metadatos (Puntuación, año, calidad comercial, audio español)
+                  // Metadatos (Puntuación, año, calidad comercial, audio español o modo tráiler)
                   Wrap(
                     spacing: 10,
                     runSpacing: 6,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      if (widget.item.rating > 0) ...[
+                      if (_currentItem.rating > 0) ...[
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.star, color: Colors.amber, size: 16),
                             const SizedBox(width: 4),
                             Text(
-                              widget.item.formattedRating,
+                              _currentItem.formattedRating,
                               style: const TextStyle(
                                 color: Colors.amber,
                                 fontWeight: FontWeight.bold,
@@ -349,60 +533,135 @@ class _DetailViewState extends State<DetailView> {
                           ],
                         ),
                       ],
-                      if (widget.item.releaseYear.isNotEmpty) ...[
+                      if (_currentItem.releaseYear.isNotEmpty) ...[
                         Text(
-                          widget.item.releaseYear,
+                          _currentItem.releaseYear,
                           style: const TextStyle(color: Colors.white70, fontSize: 14),
                         ),
                       ],
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE50914).withValues(alpha: 0.2),
-                          border: Border.all(color: const Color(0xFFE50914), width: 0.8),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: const Text(
-                          'CALIDAD 4K / 1080p',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                      if (_isTrailerOnly) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.movie_creation_rounded, color: Colors.black, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                'SOLO TRÁILER',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.2),
-                          border: Border.all(color: Colors.greenAccent, width: 0.8),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: const Text(
-                          'ANTI-CAM CERTIFICADO',
-                          style: TextStyle(
-                            color: Colors.greenAccent,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1705),
+                            border: Border.all(color: const Color(0xFFF59E0B), width: 0.8),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_isCheckingAvailability) ...[
+                                const SizedBox(
+                                  width: 10,
+                                  height: 10,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                              ],
+                              const Text(
+                                'PRÓXIMAMENTE EN ESPAÑOL',
+                                style: TextStyle(
+                                  color: Color(0xFFF59E0B),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          border: Border.all(color: Colors.white30, width: 0.6),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                        child: const Text(
-                          'AUDIO ESPAÑOL',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1A1A1A),
+                            border: Border.all(color: Colors.white24, width: 0.8),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'ORIGINAL (CINE / INGLÉS)',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
+                      ] else ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE50914).withValues(alpha: 0.2),
+                            border: Border.all(color: const Color(0xFFE50914), width: 0.8),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: const Text(
+                            'CALIDAD 4K / 1080p',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.2),
+                            border: Border.all(color: Colors.greenAccent, width: 0.8),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: const Text(
+                            'ANTI-CAM CERTIFICADO',
+                            style: TextStyle(
+                              color: Colors.greenAccent,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            border: Border.all(color: Colors.white30, width: 0.6),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: const Text(
+                            'AUDIO ESPAÑOL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -506,44 +765,63 @@ class _DetailViewState extends State<DetailView> {
           if (event.logicalKey == LogicalKeyboardKey.select ||
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space) {
-            _startPlayback();
+            if (_isTrailerOnly) {
+              _playTrailer();
+            } else {
+              _startPlayback();
+            }
             return KeyEventResult.handled;
           }
         }
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
-        onTap: _startPlayback,
+        onTap: () {
+          if (_isTrailerOnly) {
+            _playTrailer();
+          } else {
+            _startPlayback();
+          }
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE50914), Color(0xFF990000)],
+            gradient: LinearGradient(
+              colors: _isTrailerOnly
+                  ? const [Color(0xFFF59E0B), Color(0xFFD97706)]
+                  : const [Color(0xFFE50914), Color(0xFF990000)],
             ),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: _playButtonFocus.hasFocus ? Colors.white : Colors.transparent,
+              color: _playButtonFocus.hasFocus
+                  ? (_isTrailerOnly ? Colors.amberAccent : Colors.white)
+                  : Colors.transparent,
               width: 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFE50914).withValues(alpha: _playButtonFocus.hasFocus ? 0.6 : 0.25),
+                color: (_isTrailerOnly ? const Color(0xFFF59E0B) : const Color(0xFFE50914))
+                    .withValues(alpha: _playButtonFocus.hasFocus ? 0.6 : 0.25),
                 blurRadius: _playButtonFocus.hasFocus ? 18 : 10,
                 spreadRadius: _playButtonFocus.hasFocus ? 2 : 0,
               ),
             ],
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.play_arrow_rounded, color: Colors.white, size: 28),
-              SizedBox(width: 10),
+              Icon(
+                _isTrailerOnly ? Icons.movie_creation_rounded : Icons.play_arrow_rounded,
+                color: _isTrailerOnly ? Colors.black : Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
               Text(
-                'Reproducir en VJ STREAM',
+                _isTrailerOnly ? 'Ver Tráiler Oficial' : 'Reproducir en VJ STREAM',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: _isTrailerOnly ? Colors.black : Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
@@ -557,72 +835,119 @@ class _DetailViewState extends State<DetailView> {
   }
 
   Widget _buildSecondaryActions() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Botón Mi Lista
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: _toggleFavorite,
-            icon: Icon(
-              _isFavorite ? Icons.check_circle_rounded : Icons.add_rounded,
-              color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
-              size: 20,
-            ),
-            label: Text(
-              _isFavorite ? 'En Mi Lista' : 'Mi Lista',
-              style: TextStyle(
-                color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
-                fontWeight: FontWeight.bold,
+        Row(
+          children: [
+            // Botón Mi Lista
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _toggleFavorite,
+                icon: Icon(
+                  _isFavorite ? Icons.check_circle_rounded : Icons.add_rounded,
+                  color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
+                  size: 20,
+                ),
+                label: Text(
+                  _isFavorite ? 'En Mi Lista' : 'Mi Lista',
+                  style: TextStyle(
+                    color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(
+                    color: _isFavorite ? const Color(0xFF22C55E) : const Color(0xFF333333),
+                    width: 1.5,
+                  ),
+                  backgroundColor: const Color(0xFF141414),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
               ),
             ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: BorderSide(
-                color: _isFavorite ? const Color(0xFF22C55E) : const Color(0xFF333333),
-                width: 1.5,
+            const SizedBox(width: 12),
+            // Si está en modo tráiler: Botón "Avisarme cuando esté en español"
+            // Si está completa: Botón "Tráiler"
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _isTrailerOnly ? _toggleReminder : _playTrailer,
+                icon: Icon(
+                  _isTrailerOnly
+                      ? (_hasReminder ? Icons.notifications_active_rounded : Icons.notification_add_rounded)
+                      : Icons.movie_creation_outlined,
+                  color: _isTrailerOnly
+                      ? (_hasReminder ? const Color(0xFFF59E0B) : Colors.white)
+                      : Colors.white,
+                  size: 20,
+                ),
+                label: Text(
+                  _isTrailerOnly
+                      ? (_hasReminder ? 'Te avisaremos' : 'Avisarme (ESP)')
+                      : 'Tráiler',
+                  style: TextStyle(
+                    color: _isTrailerOnly
+                        ? (_hasReminder ? const Color(0xFFF59E0B) : Colors.white)
+                        : Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(
+                    color: _isTrailerOnly && _hasReminder
+                        ? const Color(0xFFF59E0B)
+                        : const Color(0xFF333333),
+                    width: 1.5,
+                  ),
+                  backgroundColor: const Color(0xFF141414),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
               ),
-              backgroundColor: const Color(0xFF141414),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+          ],
+        ),
+
+        // Banner informativo elegante si está en modo Solo Tráiler
+        if (_isTrailerOnly) ...[
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF161208),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
+            ),
+            child: const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline_rounded, color: Color(0xFFF59E0B), size: 22),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Integración Automática al Salir en Español',
+                        style: TextStyle(
+                          color: Color(0xFFF59E0B),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Esta película se encuentra en cines o en versión inglesa. En cuanto se detecte una copia de alta calidad con audio en Español Latino o Castellano, se habilitará la reproducción completa automáticamente.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        // Botón Ver Tráiler Oficial
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: () {
-              if (widget.item.trailerUrl != null && widget.item.trailerUrl!.isNotEmpty) {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => VideoPlayerView(
-                      videoUrl: widget.item.trailerUrl!,
-                      title: 'Tráiler: ${widget.item.title}',
-                    ),
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Tráiler oficial no disponible para este título.'),
-                    backgroundColor: Color(0xFF333333),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              }
-            },
-            icon: const Icon(Icons.movie_creation_outlined, color: Colors.white, size: 20),
-            label: const Text(
-              'Tráiler',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: const BorderSide(color: Color(0xFF333333), width: 1.5),
-              backgroundColor: const Color(0xFF141414),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-            ),
-          ),
-        ),
+        ],
       ],
     );
   }

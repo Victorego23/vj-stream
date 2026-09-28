@@ -142,47 +142,79 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
                     ),
                   ),
 
-                  // Badges de calidad y audio en español (Anti-CAM VJ STREAM)
+                  // Badges de calidad y audio en español o modo Tráiler Oficial
                   Positioned(
                     top: 6,
                     left: 6,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE50914),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: const Text(
-                            '4K',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
+                    child: widget.item.isTrailerOnly
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                              ),
+                              borderRadius: BorderRadius.circular(3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
+                                  blurRadius: 4,
+                                ),
+                              ],
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1E1E).withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(3),
-                            border: Border.all(color: Colors.white30, width: 0.5),
-                          ),
-                          child: const Text(
-                            'ESP',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.movie_creation_rounded, color: Colors.black, size: 10),
+                                SizedBox(width: 3),
+                                Text(
+                                  'TRÁILER',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.4,
+                                  ),
+                                ),
+                              ],
                             ),
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE50914),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: const Text(
+                                  '4K',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 3),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF1E1E1E).withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(3),
+                                  border: Border.all(color: Colors.white30, width: 0.5),
+                                ),
+                                child: const Text(
+                                  'ESP',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
                   ),
 
                   // Insignia de puntuación superior derecha

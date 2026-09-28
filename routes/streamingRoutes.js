@@ -412,6 +412,81 @@ router.post('/auto-resolve', async (req, res, next) => {
 });
 
 /**
+ * @route   GET /api/streaming/upcoming
+ * @route   GET /api/streaming/trailers
+ * @desc    Obtiene los próximos estrenos de cine y títulos disponibles solo en tráiler (inglés)
+ *          que se integrarán automáticamente al catálogo una vez doblados al español.
+ * @query   page {number} - Página actual (default 1)
+ */
+router.get('/upcoming', async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const upcoming = await tmdbService.getUpcomingMovies(page);
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      page,
+      data: upcoming,
+      movies: upcoming
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+router.get('/trailers', async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1;
+    const upcoming = await tmdbService.getUpcomingMovies(page);
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      page,
+      data: upcoming,
+      movies: upcoming
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   POST /api/streaming/check-spanish-availability
+ * @desc    Comprueba si una película que estaba solo en inglés/tráiler ya cuenta con audio en español
+ *          para integrarla automáticamente al catálogo completo.
+ * @body    id {string|number} - ID de TMDB
+ * @body    title {string} - Título
+ * @body    originalTitle {string} - Título original
+ * @body    year {string|number} - Año
+ */
+router.post('/check-spanish-availability', async (req, res, next) => {
+  try {
+    const { title, originalTitle, year, mediaType = 'movie', id } = req.body;
+    if (!title && !id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Se requiere "title" o "id" para verificar disponibilidad.'
+      });
+    }
+
+    const availability = await streamResolverService.checkSpanishAvailability({
+      title,
+      originalTitle,
+      year,
+      mediaType,
+      id
+    });
+
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      ...availability
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * ====================================================================
  * SISTEMA DE ACTUALIZACIÓN AUTOMÁTICA IN-APP (OTA)
  * ====================================================================
@@ -456,16 +531,16 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'VJ STREAM',
-    latestVersion: '2.6.0',
-    versionCode: 18,
+    latestVersion: '2.7.0',
+    versionCode: 19,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-27',
     releaseNotes: [
-      '🍿 Catálogo ultra amplio: 10 categorías temáticas 100% desduplicadas (cero películas repetidas)',
-      '🎧 Filtro estricto 100% en Español garantizado (Latino / Castellano)',
-      '⚡ Optimización de Real-Debrid y limpieza instantánea de enlaces no cacheados',
-      '💥 Barra interactiva de géneros cinematográficos y categorías de TV en vivo',
-      '📺 Nuevos canales y señales de respaldo automáticas (Failover)'
+      '🍿 Nueva sección y pestaña "Próximamente": cartelera de estrenos de cine con tráilers oficiales en HD',
+      '🎬 Reproductor nativo de tráilers en alta definición sin publicidad ni webviews para Smart TV y móvil',
+      '⚡ Integración automática al catálogo: al publicarse audio en español (Latino/Castellano), la película se habilita automáticamente',
+      '🔔 Sistema de recordatorios: "Avisarme cuando esté en español" con aviso in-app automático',
+      '💎 Optimización de desbridado y resolución ultra veloz en menos de 500ms'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false
