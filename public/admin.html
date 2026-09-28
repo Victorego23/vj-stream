@@ -413,6 +413,7 @@
             </div>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
               <input type="text" id="search-input" class="form-control" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar cliente por nombre o código..." onkeyup="filterClients()">
+              <button class="btn btn-gold btn-sm" onclick="openQuickDemoModal()">⚡ Generar Demo (2 Horas)</button>
               <button class="btn btn-primary btn-sm" onclick="openNewClientModal()">+ Nuevo Cliente Directo</button>
             </div>
           </div>
@@ -422,6 +423,7 @@
             <div class="filter-chips">
               <div class="chip active" onclick="setClientFilter('all', this)">Todos</div>
               <div class="chip" onclick="setClientFilter('active', this)">🟢 Activos</div>
+              <div class="chip" onclick="setClientFilter('demos', this)">⚡ Demos (2h)</div>
               <div class="chip" onclick="setClientFilter('expiring', this)">🟡 Por Vencer (≤3d)</div>
               <div class="chip" onclick="setClientFilter('expired', this)">🔴 Vencidos</div>
               <div class="chip" onclick="setClientFilter('suspended', this)">⏸️ Suspendidos</div>
@@ -573,11 +575,11 @@
         <div class="form-group">
           <label>Plan / Duración de la Membresía:</label>
           <select id="act-plan" class="form-control">
-            <option value="30">1 Mes (30 días)</option>
+            <option value="2h">⚡ Demo Gratuito (2 Horas)</option>
+            <option value="30" selected>1 Mes (30 días)</option>
             <option value="90">3 Meses (90 días)</option>
             <option value="180">6 Meses (180 días)</option>
             <option value="365">1 Año (365 días)</option>
-            <option value="7">Prueba (7 días)</option>
           </select>
         </div>
         <div class="form-group">
@@ -591,6 +593,38 @@
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Aprobar y Activar Inmediatamente</button>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GENERAR DEMO RÁPIDO (2 HORAS) -->
+  <div class="modal" id="modal-quick-demo">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">⚡ Generar Demo Rápido (2 Horas)</h3>
+        <button class="close-btn" onclick="closeModal('modal-quick-demo')">&times;</button>
+      </div>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Crea un código de prueba con vigencia exacta de 2 horas para enviar a tu cliente prospecto por WhatsApp.
+      </p>
+      <form id="quick-demo-form" onsubmit="submitQuickDemo(event)">
+        <div class="form-group">
+          <label>Nombre del Prospecto (Opcional):</label>
+          <input type="text" id="demo-client-name" class="form-control" placeholder="Ej: Prospecto WhatsApp / Juan">
+        </div>
+        <button type="submit" class="btn btn-gold" id="btn-create-demo-submit" style="width: 100%; padding: 12px; margin-top: 6px;">
+          ⚡ Generar Demo de 2 Horas
+        </button>
+      </form>
+
+      <!-- Resultado del demo generado -->
+      <div id="demo-result-box" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--card-border); text-align: center;">
+        <span style="font-size: 11px; color: var(--gold); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Demo Activo por 2 Horas:</span>
+        <div style="font-size: 32px; font-weight: 900; color: #fff; background: #07080B; border: 1px dashed var(--gold); padding: 12px; border-radius: 10px; margin: 10px 0; font-family: monospace;" id="demo-generated-code">VJ-0000</div>
+        <div style="display: flex; gap: 8px; flex-direction: column;">
+          <a id="demo-whatsapp-share-btn" href="#" target="_blank" class="btn btn-whatsapp" style="width: 100%; padding: 11px;">📲 Enviar Demo por WhatsApp</a>
+          <button class="btn btn-secondary" onclick="copyDemoLink()">🔗 Copiar Enlace Directo</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -609,7 +643,8 @@
         <div class="form-group">
           <label>Plan / Tiempo:</label>
           <select id="dir-plan" class="form-control">
-            <option value="30">1 Mes (30 días)</option>
+            <option value="2h">⚡ Demo Gratuito (2 Horas)</option>
+            <option value="30" selected>1 Mes (30 días)</option>
             <option value="90">3 Meses (90 días)</option>
             <option value="180">6 Meses (180 días)</option>
             <option value="365">1 Año (365 días)</option>
@@ -1024,9 +1059,10 @@
         const matchesQuery = !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.resellerName && c.resellerName.toLowerCase().includes(q));
         if (!matchesQuery) return false;
 
-        if (currentClientFilter === 'active') return c.status === 'active';
-        if (currentClientFilter === 'expiring') return c.status === 'active' && c.daysRemaining <= 3;
-        if (currentClientFilter === 'expired') return c.status === 'expired' || c.daysRemaining <= 0;
+        if (currentClientFilter === 'active') return c.status === 'active' && !c.isDemo;
+        if (currentClientFilter === 'demos') return c.isDemo;
+        if (currentClientFilter === 'expiring') return c.status === 'active' && c.daysRemaining <= 3 && !c.isDemo;
+        if (currentClientFilter === 'expired') return c.status === 'expired' || (c.isDemo && c.diffMinutes <= 0) || c.daysRemaining <= 0;
         if (currentClientFilter === 'suspended') return c.status === 'suspended';
         if (currentClientFilter === 'direct') return !c.resellerId;
         if (currentClientFilter === 'resellers') return !!c.resellerId;
@@ -1051,6 +1087,15 @@
         if (c.status === 'suspended') {
           badgeClass = 'badge-suspended';
           statusText = 'Suspendido';
+        } else if (c.isDemo) {
+          if (c.status === 'expired' || (c.diffMinutes !== undefined && c.diffMinutes <= 0)) {
+            badgeClass = 'badge-expired';
+            statusText = '⚡ Demo Vencido';
+          } else {
+            badgeClass = 'badge-pending';
+            const mins = c.diffMinutes || 120;
+            statusText = mins > 60 ? `⚡ Demo (${(mins/60).toFixed(1)}h)` : `⚡ Demo (${mins}m)`;
+          }
         } else if (c.status === 'expired' || c.daysRemaining <= 0) {
           badgeClass = 'badge-expired';
           statusText = 'Vencido';
@@ -1059,7 +1104,9 @@
           statusText = `Vence en ${c.daysRemaining}d`;
         }
 
-        const expDate = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        const expDate = c.isDemo 
+          ? new Date(c.expiresAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ' (Hoy)'
+          : new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
         return `
           <tr>
@@ -1081,7 +1128,7 @@
                 <button class="btn btn-whatsapp btn-sm" title="Enviar enlace de activación rápida por WhatsApp" onclick="sendWhatsAppQuickLink('${c.id}')">📲 WhatsApp</button>
                 <button class="btn btn-secondary btn-sm" title="Copiar ficha de bienvenida completa para compartir" onclick="copyFullClientCard('${c.id}')">📋 Ficha</button>
                 <button class="btn btn-secondary btn-sm" title="Copiar enlace directo de activación instantánea" onclick="copyClientActivationLink('${c.code}')">🔗 Link</button>
-                <button class="btn btn-success btn-sm" title="Renovar +30 Días" onclick="renewClient('${c.id}', 30)">+30d</button>
+                <button class="btn btn-success btn-sm" title="${c.isDemo ? 'Convertir a Cliente Oficial (+30 días)' : 'Renovar +30 Días'}" onclick="renewClient('${c.id}', 30)">+30d</button>
                 <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
                 <button class="btn btn-secondary btn-sm" title="Desvincular dispositivos para permitir registrar una nueva TV o móvil" onclick="resetDevices('${c.id}')">📺 Reset (${c.deviceCount || 0})</button>
                 <button class="btn btn-danger btn-sm" title="Eliminar cliente" onclick="deleteClient('${c.id}')">🗑️</button>
@@ -1090,6 +1137,62 @@
           </tr>
         `;
       }).join('');
+    }
+
+    // Modal de Demo Rápido de 2 Horas
+    let lastGeneratedDemoCode = '';
+    function openQuickDemoModal() {
+      document.getElementById('demo-client-name').value = '';
+      document.getElementById('demo-result-box').style.display = 'none';
+      openModal('modal-quick-demo');
+    }
+
+    async function submitQuickDemo(e) {
+      e.preventDefault();
+      const name = document.getElementById('demo-client-name').value.trim() || 'Cliente Demo';
+      const btn = document.getElementById('btn-create-demo-submit');
+      btn.textContent = 'Generando Demo...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/create-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ name })
+        });
+        const data = await res.json();
+        if (data.success && data.client) {
+          lastGeneratedDemoCode = data.client.code;
+          document.getElementById('demo-generated-code').textContent = data.client.code;
+          
+          const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(data.client.code)}`;
+          const apkLink = `${getBaseAppUrl()}/api/streaming/download-apk`;
+          let msg = `🎬 *¡DEMO GRATUITO DE 2 HORAS - TOM TV!*\n\n`;
+          msg += `🔑 Código de Activación: *${data.client.code}*\n`;
+          msg += `⏳ Vigencia: *2 Horas Completas*\n\n`;
+          msg += `📱 *Para ver ahora en iPhone, PC o navegador web:*\n${link}\n\n`;
+          msg += `📺 *Para Smart TV o Android TV (Descargar App):*\n${apkLink}\n\n`;
+          msg += `¡Que disfrutes de todo el catálogo en vivo sin límites!`;
+
+          document.getElementById('demo-whatsapp-share-btn').href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+          document.getElementById('demo-result-box').style.display = 'block';
+
+          showToast('¡Demo de 2 Horas creado exitosamente!', 'success');
+          fetchOverview();
+        } else {
+          showToast('Error al crear demo.', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión.', 'error');
+      } finally {
+        btn.textContent = '⚡ Generar Demo de 2 Horas';
+        btn.disabled = false;
+      }
+    }
+
+    function copyDemoLink() {
+      if (!lastGeneratedDemoCode) return;
+      copyClientActivationLink(lastGeneratedDemoCode);
     }
 
     function openNewClientModal() {
@@ -1102,7 +1205,8 @@
     async function submitDirectClient(e) {
       e.preventDefault();
       const name = document.getElementById('dir-name').value.trim();
-      const planDays = parseInt(document.getElementById('dir-plan').value, 10);
+      const rawPlan = document.getElementById('dir-plan').value;
+      const planDays = rawPlan === '2h' ? '2h' : parseInt(rawPlan, 10);
       const maxDevices = parseInt(document.getElementById('dir-devices').value, 10);
       const btn = document.getElementById('btn-save-dir-client');
 

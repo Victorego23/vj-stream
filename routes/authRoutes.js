@@ -49,12 +49,18 @@ router.post('/verify-license', (req, res) => {
 });
 
 /**
- * @route   GET /api/auth/settings
- * @desc    Obtiene datos de contacto de WhatsApp para renovación
+ * @route   POST /api/auth/request-demo
+ * @desc    Solicita activación de prueba gratuita de 2 horas para un dispositivo nuevo
  */
-router.get('/settings', (req, res) => {
-  const settings = accountService.getSettings();
-  return res.json({ success: true, settings });
+router.post('/request-demo', (req, res) => {
+  const { deviceId, deviceModel } = req.body;
+
+  if (!deviceId) {
+    return res.status(400).json({ success: false, error: 'deviceId es requerido.' });
+  }
+
+  const result = accountService.requestPublicTrialDemo(deviceId, deviceModel || 'Web PWA / Smart TV');
+  return res.json(result);
 });
 
 module.exports = router;

@@ -1057,8 +1057,18 @@
         <button class="btn-copy-code" id="btnCopyCode" onclick="copyActivationCode()">📋 Copiar Código</button>
       </div>
 
+      <!-- BOTÓN PROBAR DEMO GRATIS 2 HORAS AL INSTANTE -->
+      <button class="btn-demo-instant" id="btnRequestDemo" onclick="requestTrialDemo()" style="
+        display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+        padding: 13px; background: linear-gradient(135deg, #F59E0B, #D97706); color: #000;
+        font-weight: 900; font-size: 14px; border-radius: 12px; border: none; cursor: pointer;
+        box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4); margin-bottom: 12px; transition: all 0.2s;
+      ">
+        ⚡ Probar Demo Gratis (2 Horas al Instante)
+      </button>
+
       <a id="actWhatsappBtn" href="#" target="_blank" class="btn-whatsapp-act">
-        <span style="font-size: 18px;">📲</span> Solicitar Activación por WhatsApp
+        <span style="font-size: 18px;">📲</span> Solicitar Activación Oficial por WhatsApp
       </a>
 
       <div class="act-waiting-status">
@@ -1219,11 +1229,24 @@
         closeActivationModal();
 
         accountBtn.className = 'account-btn active';
-        accountBtn.innerHTML = `✅ ${data.client?.code || 'Activo'}`;
+        if (data.client?.isDemo) {
+          accountBtn.style.background = 'rgba(245, 158, 11, 0.2)';
+          accountBtn.style.borderColor = 'rgba(245, 158, 11, 0.5)';
+          accountBtn.style.color = '#F59E0B';
+          accountBtn.innerHTML = `⚡ Demo (2h)`;
+        } else {
+          accountBtn.style.background = '';
+          accountBtn.style.borderColor = '';
+          accountBtn.style.color = '';
+          accountBtn.innerHTML = `✅ ${data.client?.code || 'Activo'}`;
+        }
       } else if (data.status === 'pending') {
         isDeviceActive = false;
         currentPendingCode = data.code;
         accountBtn.className = 'account-btn';
+        accountBtn.style.background = '';
+        accountBtn.style.borderColor = '';
+        accountBtn.style.color = '';
         accountBtn.innerHTML = `🔒 Activar (${data.code})`;
 
         displayActivationDetails(data);
@@ -1241,6 +1264,36 @@
       }
     }
 
+    async function requestTrialDemo() {
+      const btn = document.getElementById('btnRequestDemo');
+      btn.textContent = '⚡ Activando Demo 2 Horas...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/auth/request-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            deviceId: getDeviceId(),
+            deviceModel: getDeviceModel()
+          })
+        });
+        const data = await res.json();
+        if (data.success && data.status === 'active') {
+          handleAuthResponse(data);
+          alert('🎉 ¡Tu Demo de 2 Horas ha comenzado! Ya puedes ver películas, series y canales de TV en vivo sin publicidad.');
+        } else {
+          alert(data.message || 'Este dispositivo ya utilizó su demo gratuito de 2 horas. Contacta a un asesor por WhatsApp para activar tu plan.');
+          btn.textContent = '⚡ Probar Demo Gratis (2 Horas al Instante)';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        alert('Error de conexión al activar el demo. Por favor contáctanos por WhatsApp.');
+        btn.textContent = '⚡ Probar Demo Gratis (2 Horas al Instante)';
+        btn.disabled = false;
+      }
+    }
+
     function displayActivationDetails(data) {
       document.getElementById('actCodeDisplay').textContent = data.code;
       const whatsappNum = (data.whatsappNumber || '+51999999999').replace(/[^0-9+]/g, '');
@@ -1252,9 +1305,12 @@
     }
 
     function displayExpiredDetails(data) {
+      const isDemo = data.client?.isDemo || data.reason === 'demo_expired';
       document.getElementById('actCodeDisplay').textContent = data.client?.code || 'VENCIDO';
-      document.getElementById('actTitle').textContent = '⚠️ Membresía Vencida';
-      document.getElementById('actDesc').textContent = data.message || 'Tu suscripción ha finalizado. Contacta a tu proveedor para renovar tu acceso.';
+      document.getElementById('actTitle').textContent = isDemo ? '⏰ Demo de 2 Horas Finalizado' : '⚠️ Membresía Vencida';
+      document.getElementById('actDesc').textContent = isDemo 
+        ? 'Tu prueba gratuita de 2 horas ha terminado. Esperamos que hayas disfrutado de TOM TV. Solicita tu plan mensual por WhatsApp para continuar.'
+        : (data.message || 'Tu suscripción ha finalizado. Contacta a tu proveedor para renovar tu acceso.');
       openActivationModal();
     }
 

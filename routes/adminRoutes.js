@@ -87,10 +87,12 @@ router.post('/activate-code', (req, res) => {
     return res.status(400).json({ success: false, error: 'Código y nombre de cliente requeridos.' });
   }
 
+  const isTwoHourDemo = planDays === '2h' || planDays === 'demo_2h' || planDays === 0 || planDays === '0';
   const result = accountService.activateCode(code.trim().toUpperCase(), {
     name,
-    planDays: parseInt(planDays, 10),
-    maxDevices: parseInt(maxDevices, 10)
+    planDays: isTwoHourDemo ? '2h' : (parseInt(planDays, 10) || 30),
+    maxDevices: parseInt(maxDevices, 10) || 1,
+    isDemo: isTwoHourDemo
   });
 
   if (!result.success) {
@@ -101,31 +103,53 @@ router.post('/activate-code', (req, res) => {
 });
 
 /**
+ * @route   POST /api/admin/create-demo
+ * @desc    Genera instantáneamente un Demo Gratuito de 2 Horas
+ */
+router.post('/create-demo', (req, res) => {
+  const { name = 'Cliente Demo (2 Horas)' } = req.body;
+  const client = accountService.createDemoClient({ name });
+  return res.json({
+    success: true,
+    client,
+    message: 'Demo de 2 Horas generado con éxito.'
+  });
+});
+
+/**
+ * @route   POST /api/admin/clients
  * @route   POST /api/admin/create-client
  * @desc    Crea un cliente manual sin código previo
  */
-router.post('/create-client', (req, res) => {
-  const { name, planDays = 30, maxDevices = 1 } = req.body;
+const handleCreateClient = (req, res) => {
+  const { name, planDays = 30, maxDevices = 1, isDemo = false } = req.body;
 
   if (!name || name.trim().length === 0) {
     return res.status(400).json({ success: false, error: 'El nombre es obligatorio.' });
   }
 
+  const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h';
   const client = accountService.createClient({
     name,
-    planDays: parseInt(planDays, 10),
-    maxDevices: parseInt(maxDevices, 10)
+    planDays: isTwoHourDemo ? '2h' : (parseInt(planDays, 10) || 30),
+    maxDevices: parseInt(maxDevices, 10) || 1,
+    isDemo: isTwoHourDemo
   });
 
   return res.json({ success: true, client });
-});
+};
+
+router.post('/clients', handleCreateClient);
+router.post('/create-client', handleCreateClient);
 
 /**
+ * @route   POST /api/admin/clients/:id/renew
  * @route   POST /api/admin/renew
  * @desc    Renueva la membresía sumando días (ej: +30 días tras pago)
  */
-router.post('/renew', (req, res) => {
-  const { clientId, days = 30 } = req.body;
+const handleRenew = (req, res) => {
+  const clientId = req.params.id || req.body.clientId;
+  const days = req.body.additionalDays || req.body.days || 30;
 
   const client = accountService.renewClient(clientId, parseInt(days, 10));
   if (!client) {
@@ -133,14 +157,18 @@ router.post('/renew', (req, res) => {
   }
 
   return res.json({ success: true, client, message: `Membresía renovada por ${days} días con éxito.` });
-});
+};
+
+router.post('/clients/:id/renew', handleRenew);
+router.post('/renew', handleRenew);
 
 /**
+ * @route   POST /api/admin/clients/:id/toggle-status
  * @route   POST /api/admin/toggle-status
  * @desc    Suspende o reactiva el acceso de un cliente
  */
-router.post('/toggle-status', (req, res) => {
-  const { clientId } = req.body;
+const handleToggleStatus = (req, res) => {
+  const clientId = req.params.id || req.body.clientId;
 
   const client = accountService.toggleClientStatus(clientId);
   if (!client) {
@@ -148,14 +176,18 @@ router.post('/toggle-status', (req, res) => {
   }
 
   return res.json({ success: true, client });
-});
+};
+
+router.post('/clients/:id/toggle-status', handleToggleStatus);
+router.post('/toggle-status', handleToggleStatus);
 
 /**
+ * @route   POST /api/admin/clients/:id/reset-devices
  * @route   POST /api/admin/reset-devices
  * @desc    Limpia los dispositivos registrados del cliente para permitirle cambiar de TV
  */
-router.post('/reset-devices', (req, res) => {
-  const { clientId } = req.body;
+const handleResetDevices = (req, res) => {
+  const clientId = req.params.id || req.body.clientId;
 
   const client = accountService.resetClientDevices(clientId);
   if (!client) {
@@ -163,7 +195,10 @@ router.post('/reset-devices', (req, res) => {
   }
 
   return res.json({ success: true, message: 'Dispositivos desvinculados correctamente.', client });
-});
+};
+
+router.post('/clients/:id/reset-devices', handleResetDevices);
+router.post('/reset-devices', handleResetDevices);
 
 /**
  * @route   DELETE /api/admin/clients/:id

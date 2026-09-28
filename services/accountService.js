@@ -205,21 +205,28 @@ class AccountService {
 
     return db.clients.map(client => {
       const expiresAt = new Date(client.expiresAt);
-      const isExpired = expiresAt < now;
+      const diffMs = expiresAt - now;
+      const isExpired = diffMs <= 0;
       let computedStatus = client.status;
 
       if (client.status === 'active' && isExpired) {
         computedStatus = 'expired';
       }
 
-      const diffDays = Math.ceil((expiresAt - now) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const diffMinutes = Math.max(0, Math.ceil(diffMs / (1000 * 60)));
+      const diffHours = (diffMinutes / 60).toFixed(1);
+      const isDemo = client.isDemo === true || client.planHours === 2 || client.planDays === '2h';
 
       return {
         ...client,
+        isDemo,
         resellerId: client.resellerId || null,
         resellerName: client.resellerName || 'Venta Directa (Admin)',
         status: computedStatus,
         daysRemaining: isExpired ? 0 : diffDays,
+        diffMinutes: isExpired ? 0 : diffMinutes,
+        diffHours: isExpired ? 0 : diffHours,
         deviceCount: client.devices ? client.devices.length : 0
       };
     });
@@ -230,32 +237,48 @@ class AccountService {
     return clients.find(c => c.id === id);
   }
 
-  createClient({ name, username, planDays = 30, maxDevices = 1, customCode = null }) {
+  createClient({ name, username, planDays = 30, planHours = null, maxDevices = 1, customCode = null, isDemo = false, resellerId = null, resellerName = null }) {
     const db = this._readDb();
     const now = new Date();
-    const parsedDays = parseInt(planDays, 10) || 30;
-    const expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+
+    const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h' || planHours === 2;
+    let expiresAt;
+    let parsedDays = 30;
+
+    if (isTwoHourDemo) {
+      // Demo estricto de 2 horas (2 * 60 * 60 * 1000 = 7,200,000 ms)
+      expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+      parsedDays = 0;
+    } else {
+      parsedDays = parseInt(planDays, 10) || 30;
+      expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+    }
 
     let finalCode = customCode;
     if (!finalCode) {
-      finalCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
-      // Evitar colisión de código
+      const prefix = isTwoHourDemo ? 'VJ-' : 'VJ-';
+      finalCode = prefix + Math.floor(1000 + Math.random() * 9000);
       while (db.clients.some(c => c.code === finalCode)) {
-        finalCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+        finalCode = prefix + Math.floor(1000 + Math.random() * 9000);
       }
     }
 
     const newClient = {
       id: crypto.randomUUID(),
-      name: name.trim(),
-      username: (username || name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
+      name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+      username: (username || (name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
       code: finalCode,
       status: 'active',
+      isDemo: isTwoHourDemo,
+      planHours: isTwoHourDemo ? 2 : null,
       planDays: parsedDays,
+      planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
       maxDevices: parseInt(maxDevices, 10) || 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
-      devices: []
+      devices: [],
+      resellerId: resellerId || null,
+      resellerName: resellerName || null
     };
 
     db.clients.push(newClient);
@@ -561,8 +584,22 @@ class AccountService {
     if (!reseller) throw new Error('Revendedor no encontrado.');
     if (reseller.status === 'suspended') throw new Error('Tu cuenta de revendedor está suspendida.');
 
-    const parsedDays = parseInt(planDays, 10) || 30;
-    const requiredCredits = this.calculateCreditsForDays(parsedDays);
+    const isTwoHourDemo = planDays === '2h' || planDays === 'demo_2h' || planDays === 0 || planDays === '0';
+    let requiredCredits = 0;
+    let parsedDays = 30;
+    let expiresAt;
+    const now = new Date();
+
+    if (isTwoHourDemo) {
+      requiredCredits = 0; // Demos de 2 horas no consumen créditos
+      parsedDays = 0;
+      expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    } else {
+      parsedDays = parseInt(planDays, 10) || 30;
+      requiredCredits = this.calculateCreditsForDays(parsedDays);
+      expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+    }
+
     const currentCredits = parseInt(reseller.credits, 10) || 0;
 
     if (currentCredits < requiredCredits) {
@@ -571,8 +608,6 @@ class AccountService {
 
     // Descontar créditos
     reseller.credits = currentCredits - requiredCredits;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
 
     let finalCode = customCode;
     if (!finalCode) {
@@ -584,11 +619,14 @@ class AccountService {
 
     const newClient = {
       id: crypto.randomUUID(),
-      name: name.trim(),
+      name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
       username: (name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
       code: finalCode,
       status: 'active',
+      isDemo: isTwoHourDemo,
+      planHours: isTwoHourDemo ? 2 : null,
       planDays: parsedDays,
+      planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
       maxDevices: parseInt(maxDevices, 10) || 1,
       resellerId: reseller.id,
       resellerName: reseller.name,
@@ -997,7 +1035,7 @@ class AccountService {
   /**
    * El Administrador activa el código desde su Panel Web
    */
-  activateCode(code, { name, planDays = 30, maxDevices = 1 }) {
+  activateCode(code, { name, planDays = 30, maxDevices = 1, isDemo = false, planHours = null }) {
     const db = this._readDb();
     const pending = db.pendingActivations.find(p => p.code === code && p.status === 'pending');
 
@@ -1006,17 +1044,29 @@ class AccountService {
     }
 
     const now = new Date();
-    const parsedDays = parseInt(planDays, 10) || 30;
-    const expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+    const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h' || planHours === 2;
+    let expiresAt;
+    let parsedDays = 30;
+
+    if (isTwoHourDemo) {
+      expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+      parsedDays = 0;
+    } else {
+      parsedDays = parseInt(planDays, 10) || 30;
+      expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+    }
 
     // Crear el nuevo cliente asociado al dispositivo que generó el código
     const newClient = {
       id: crypto.randomUUID(),
-      name: name.trim(),
-      username: name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
+      name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+      username: (name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
       code: pending.code,
       status: 'active',
+      isDemo: isTwoHourDemo,
+      planHours: isTwoHourDemo ? 2 : null,
       planDays: parsedDays,
+      planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
       maxDevices: parseInt(maxDevices, 10) || 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
@@ -1040,6 +1090,101 @@ class AccountService {
     return {
       success: true,
       client: newClient
+    };
+  }
+
+  /**
+   * Genera un Demo de 2 horas instantáneo con código VJ-XXXX
+   */
+  createDemoClient({ name = 'Cliente Demo', resellerId = null, resellerName = null } = {}) {
+    return this.createClient({
+      name,
+      planHours: 2,
+      planDays: 0,
+      isDemo: true,
+      maxDevices: 1,
+      resellerId,
+      resellerName
+    });
+  }
+
+  /**
+   * Solicita una prueba gratuita de 2 horas para un dispositivo nuevo (1 sola vez por dispositivo)
+   */
+  requestPublicTrialDemo(deviceId, deviceModel = 'Navegador Web / Smart TV') {
+    const cleanDeviceId = (deviceId || '').trim();
+    if (!cleanDeviceId) {
+      return { success: false, error: 'deviceId es requerido.' };
+    }
+
+    const db = this._readDb();
+    if (!Array.isArray(db.usedDemos)) {
+      db.usedDemos = [];
+    }
+
+    // Comprobar si el dispositivo ya usó su demo
+    const alreadyUsed = db.usedDemos.find(d => (d.deviceId || '').trim().toLowerCase() === cleanDeviceId.toLowerCase());
+    if (alreadyUsed) {
+      return {
+        success: false,
+        reason: 'demo_already_used',
+        message: 'Este dispositivo ya utilizó su demo gratuito de 2 horas. Contáctanos por WhatsApp para activar tu suscripción mensual.'
+      };
+    }
+
+    const now = new Date();
+    db.usedDemos.push({
+      deviceId: cleanDeviceId,
+      deviceModel,
+      usedAt: now.toISOString()
+    });
+
+    const expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    let randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+    while (db.clients.some(c => c.code === randomCode)) {
+      randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+    }
+
+    const demoClient = {
+      id: crypto.randomUUID(),
+      name: 'Cliente Demo (2 Horas)',
+      username: 'demo_' + Math.floor(1000 + Math.random() * 9000),
+      code: randomCode,
+      status: 'active',
+      isDemo: true,
+      planHours: 2,
+      planDays: 0,
+      planLabel: 'Demo 2 Horas',
+      maxDevices: 1,
+      createdAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      devices: [
+        {
+          deviceId: cleanDeviceId,
+          deviceModel,
+          lastSeen: now.toISOString()
+        }
+      ]
+    };
+
+    db.clients.push(demoClient);
+    this._writeDb(db);
+
+    const token = this._generateClientToken(demoClient, cleanDeviceId);
+
+    return {
+      success: true,
+      status: 'active',
+      client: {
+        id: demoClient.id,
+        name: demoClient.name,
+        code: demoClient.code,
+        expiresAt: demoClient.expiresAt,
+        maxDevices: 1,
+        isDemo: true
+      },
+      token,
+      message: '¡Tu prueba gratuita de 2 horas ha comenzado! Disfruta de todo el catálogo.'
     };
   }
 
