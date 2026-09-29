@@ -15,13 +15,13 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="TOM TV Oficial - Cine y TV en Vivo en Todas tus Pantallas">
   <meta property="og:description" content="Disfruta de estrenos 4K con audio latino limpio y canales de TV en vivo. Activación inmediata vía WhatsApp 914598415.">
-  <meta property="og:image" content="https://image.tmdb.org/t/p/w1280/mXLOH44Q2a6mP9bQoF9Kx8r8pA0.jpg">
+  <meta property="og:image" content="/img/logo.svg">
   <meta property="og:url" content="/">
 
   <!-- PWA & Favicon -->
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#E50914">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23E50914'/%3E%3Ctext x='50%25' y='65%25' text-anchor='middle' font-family='Arial, sans-serif' font-weight='900' font-size='32' fill='white'%3ETOM%3C/text%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="/img/icon.svg">
 
   <!-- Fuentes Google: Outfit & Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -98,7 +98,7 @@
       z-index: 1;
     }
 
-    /* TOP ANNOUNCEMENT BAR CON NÚMERO DIRECTO */
+    /* TOP PROMO BAR CON NÚMERO DIRECTO */
     .top-promo-bar {
       background: linear-gradient(90deg, #990000 0%, #E50914 50%, #990000 100%);
       color: #fff;
@@ -137,7 +137,7 @@
       position: sticky;
       top: 0;
       z-index: 100;
-      background: rgba(6, 6, 8, 0.88);
+      background: rgba(6, 6, 8, 0.92);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
@@ -151,54 +151,20 @@
       height: 76px;
     }
 
-    .brand-group {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
+    .brand-logo-img {
+      height: 48px;
+      display: block;
+      filter: drop-shadow(0 0 16px rgba(229, 9, 20, 0.5));
+      transition: transform 0.25s ease;
     }
-
-    .brand-logo-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: var(--primary-gradient);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-display);
-      font-weight: 900;
-      font-size: 20px;
-      color: #fff;
-      box-shadow: 0 0 22px var(--primary-glow);
-    }
-
-    .brand-text-wrap {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .brand-title {
-      font-family: var(--font-display);
-      font-size: 24px;
-      font-weight: 900;
-      letter-spacing: 1.5px;
-      color: #fff;
-      line-height: 1.1;
-    }
-
-    .brand-tag {
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: var(--accent);
-      font-weight: 700;
+    .brand-logo-img:hover {
+      transform: scale(1.03);
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
       list-style: none;
     }
 
@@ -225,7 +191,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 8px;
       padding: 11px 22px;
       border-radius: var(--radius-full);
       font-size: 14px;
@@ -301,7 +267,7 @@
 
     /* HERO SECTION */
     .hero {
-      padding: 70px 0 50px;
+      padding: 60px 0 50px;
       text-align: center;
       position: relative;
     }
@@ -336,11 +302,11 @@
 
     .hero-title {
       font-family: var(--font-display);
-      font-size: clamp(36px, 6vw, 68px);
+      font-size: clamp(34px, 5.5vw, 64px);
       font-weight: 900;
       line-height: 1.08;
       letter-spacing: -1.5px;
-      margin-bottom: 22px;
+      margin-bottom: 20px;
       max-width: 980px;
       margin-left: auto;
       margin-right: auto;
@@ -353,10 +319,10 @@
     }
 
     .hero-subtitle {
-      font-size: clamp(16px, 2vw, 19px);
+      font-size: clamp(15px, 1.8vw, 18px);
       color: var(--text-muted);
       max-width: 760px;
-      margin: 0 auto 36px;
+      margin: 0 auto 34px;
       font-weight: 400;
     }
 
@@ -364,25 +330,25 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 14px;
       flex-wrap: wrap;
       margin-bottom: 40px;
     }
 
-    /* MOCKUP SHOWCASE INTERACTIVO */
+    /* MOCKUP SHOWCASE SMART TV CON INTERFAZ REAL */
     .mockup-wrapper {
-      margin-top: 30px;
+      margin-top: 25px;
       position: relative;
-      max-width: 1060px;
+      max-width: 1080px;
       margin-left: auto;
       margin-right: auto;
     }
 
     .tv-frame {
-      background: #0d0d12;
-      border: 7px solid #23232e;
-      border-radius: 22px;
-      box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.95), 0 0 45px rgba(229, 9, 20, 0.2);
+      background: #0b0c10;
+      border: 8px solid #20222a;
+      border-radius: 24px;
+      box-shadow: 0 35px 80px -15px rgba(0, 0, 0, 0.98), 0 0 50px rgba(229, 9, 20, 0.25);
       overflow: hidden;
       position: relative;
       aspect-ratio: 16 / 9;
@@ -398,9 +364,12 @@
       font-size: 9px;
       letter-spacing: 2px;
       font-weight: 900;
-      color: #777;
+      color: #888;
       text-transform: uppercase;
       z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .tv-screen {
@@ -414,7 +383,7 @@
     .tv-screen-bg {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(6, 6, 8, 0.96) 20%, rgba(6, 6, 8, 0.45) 60%, rgba(6, 6, 8, 0.2) 100%),
+      background: linear-gradient(to top, rgba(6, 6, 8, 0.97) 22%, rgba(6, 6, 8, 0.5) 65%, rgba(6, 6, 8, 0.25) 100%),
                   url('https://image.tmdb.org/t/p/w1280/mXLOH44Q2a6mP9bQoF9Kx8r8pA0.jpg') center/cover no-repeat;
       transition: background-image 0.6s ease-in-out;
     }
@@ -425,7 +394,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: 24px 32px;
+      padding: 24px 28px 20px;
       z-index: 2;
     }
 
@@ -433,14 +402,31 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tv-logo-badge-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tv-screen-logo {
+      height: 40px;
+      filter: drop-shadow(0 0 16px rgba(229, 9, 20, 0.95)) drop-shadow(0 2px 6px rgba(0,0,0,0.85));
+      transition: transform 0.25s ease;
+    }
+    .tv-screen-logo:hover {
+      transform: scale(1.05);
     }
 
     .tv-pill {
-      background: rgba(229, 9, 20, 0.92);
+      background: rgba(229, 9, 20, 0.95);
       color: #fff;
       font-size: 11px;
       font-weight: 900;
-      padding: 5px 12px;
+      padding: 4px 10px;
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -476,9 +462,16 @@
       box-shadow: 0 0 14px var(--primary-glow);
     }
 
+    .tv-screen-body {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 24px;
+    }
+
     .tv-bottom-info {
       text-align: left;
-      max-width: 65%;
+      max-width: 58%;
     }
 
     .tv-bottom-title {
@@ -486,30 +479,81 @@
       font-size: clamp(20px, 3.2vw, 36px);
       font-weight: 900;
       line-height: 1.1;
-      margin-bottom: 8px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      margin-bottom: 6px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.9);
     }
 
     .tv-bottom-meta {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       align-items: center;
-      font-size: 13px;
+      font-size: 12px;
       color: #e2e8f0;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .tv-tag-hd {
       background: rgba(255, 255, 255, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.4);
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 4px;
       font-weight: 900;
-      font-size: 11px;
+      font-size: 10px;
+    }
+
+    .tv-bottom-desc {
+      font-size: 13px;
+      color: #ddd;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    /* MINI PÓSTERS EN PANTALLA TV */
+    .tv-mini-posters-strip {
+      display: flex;
+      gap: 10px;
+      z-index: 3;
+    }
+
+    .tv-mini-poster {
+      width: 72px;
+      background: #12131a;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: center;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+    }
+    .tv-mini-poster:hover, .tv-mini-poster.active {
+      border-color: var(--primary);
+      transform: translateY(-4px) scale(1.06);
+      box-shadow: 0 8px 20px rgba(229,9,20,0.6);
+    }
+    .tv-mini-poster img {
+      width: 100%;
+      height: 94px;
+      object-fit: cover;
+      display: block;
+    }
+    .tv-mini-poster span {
+      font-size: 9px;
+      font-weight: 800;
+      color: #fff;
+      display: block;
+      padding: 3px 0;
+      background: #09090d;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .tv-base {
-      width: 160px;
+      width: 170px;
       height: 16px;
       background: linear-gradient(180deg, #333 0%, #16161c 100%);
       margin: 0 auto;
@@ -517,69 +561,399 @@
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
     }
 
-    /* MOCKUP TELÉFONO FLOTANTE */
-    .mobile-floating-mockup {
-      position: absolute;
-      right: -25px;
-      bottom: -35px;
-      width: 190px;
-      height: 380px;
-      background: #000;
-      border: 5px solid #2d2d3a;
-      border-radius: 32px;
-      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(229, 9, 20, 0.3);
-      overflow: hidden;
-      z-index: 5;
-      display: none;
+    /* BISEL INFERIOR DE SMART TV CON LOGO Y LED NEÓN */
+    .tv-bezel-bottom {
+      background: #0d0e12;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 10;
     }
 
-    @media (min-width: 960px) {
+    .tv-power-led {
+      width: 8px;
+      height: 8px;
+      background: #E50914;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #E50914, 0 0 20px #E50914;
+      animation: pulseLed 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseLed {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.25); filter: drop-shadow(0 0 6px #ff3344); }
+    }
+
+    .tv-bezel-brand {
+      font-size: 10px;
+      letter-spacing: 2px;
+      font-weight: 900;
+      color: #ccc;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .tv-bezel-icon {
+      height: 14px;
+      width: 14px;
+      border-radius: 3px;
+      filter: drop-shadow(0 0 4px rgba(229,9,20,0.8));
+    }
+
+    .tv-sensor-pill {
+      width: 18px;
+      height: 5px;
+      background: #1c1d24;
+      border-radius: 3px;
+    }
+
+    /* MOCKUP TELÉFONO FLOTANTE CON INTERFAZ REAL Y RESPONSIVE */
+    .mobile-floating-mockup {
+      background: #060608;
+      border: 5px solid #2d2d3a;
+      border-radius: 36px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(229, 9, 20, 0.35);
+      overflow: hidden;
+      z-index: 5;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-floating-mockup:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.98), 0 0 45px rgba(229, 9, 20, 0.55);
+    }
+
+    @media (max-width: 979px) {
+      .mockup-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+      }
       .mobile-floating-mockup {
+        position: relative;
+        right: auto;
+        bottom: auto;
         display: block;
+        margin: 10px auto 0;
+        width: 230px;
+        height: 460px;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9), 0 0 30px rgba(229, 9, 20, 0.4);
+      }
+      .device-preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(229, 9, 20, 0.15);
+        border: 1px solid rgba(229, 9, 20, 0.35);
+        color: #fff;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        margin-top: 10px;
+      }
+    }
+
+    @media (min-width: 980px) {
+      .mobile-floating-mockup {
+        position: absolute;
+        right: -25px;
+        bottom: -35px;
+        width: 220px;
+        height: 445px;
+        display: block;
+      }
+      .device-preview-badge {
+        display: none;
       }
     }
 
     .phone-notch {
       position: absolute;
-      top: 8px;
+      top: 6px;
       left: 50%;
       transform: translateX(-50%);
-      width: 55px;
-      height: 14px;
-      background: #1c1c24;
-      border-radius: 12px;
+      width: 58px;
+      height: 12px;
+      background: #181920;
+      border-radius: 10px;
       z-index: 10;
     }
 
-    .phone-screen {
+    .phone-screen-inner {
       width: 100%;
       height: 100%;
-      background: url('https://image.tmdb.org/t/p/w500/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg') center/cover no-repeat;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      padding: 16px;
+      justify-content: space-between;
+      position: relative;
+      background: linear-gradient(180deg, #12131a 0%, #060608 100%);
+      padding: 22px 10px 8px;
       box-sizing: border-box;
     }
 
-    .phone-overlay {
-      background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.3));
-      padding: 12px;
+    .phone-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      color: #aaa;
+      padding: 0 4px 4px;
+      font-weight: 700;
+    }
+
+    .phone-app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .phone-app-logo {
+      height: 24px;
+      filter: drop-shadow(0 0 10px rgba(229, 9, 20, 0.9));
+      display: block;
+    }
+
+    .phone-tabs-row {
+      display: flex;
+      gap: 5px;
+      padding: 6px 0;
+    }
+
+    .phone-tab {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.1);
+      color: #bbb;
+    }
+    .phone-tab.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .phone-hero-card {
+      position: relative;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 125px;
+      margin-bottom: 6px;
+    }
+
+    .phone-hero-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .phone-hero-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(229,9,20,0.95);
+      color: #fff;
+      font-size: 7px;
+      font-weight: 900;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .phone-hero-text {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.92) 20%, transparent 100%);
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-hero-text strong {
+      font-size: 10px;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .phone-hero-text span {
+      font-size: 8px;
+      color: #aaa;
+    }
+
+    .phone-sub-heading {
+      font-size: 8px;
+      font-weight: 800;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 2px 2px;
+    }
+
+    .phone-posters-row {
+      display: flex;
+      gap: 6px;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+
+    .phone-poster-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .phone-mini-poster {
+      width: 100%;
+      height: 78px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .phone-poster-wrap span {
+      font-size: 7px;
+      font-weight: 700;
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: 58px;
+      text-overflow: ellipsis;
+    }
+
+    .phone-bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: rgba(10,10,14,0.95);
       border-radius: 12px;
-      backdrop-filter: blur(4px);
+      padding: 4px 0;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .p-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 11px;
+      color: #777;
+    }
+    .p-nav-item small {
+      font-size: 7px;
+      font-weight: 700;
+    }
+    .p-nav-item.active {
+      color: var(--primary);
+    }
+
+    /* SECCIÓN DE PLATAFORMAS DE STREAMING UNIFICADAS */
+    .platforms-ribbon-section {
+      padding: 10px 0 35px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .platforms-banner-card {
+      background: linear-gradient(135deg, rgba(20, 20, 30, 0.85) 0%, rgba(10, 10, 15, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-lg);
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      text-align: center;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    .platforms-tag {
+      font-size: 11px;
+      font-weight: 900;
+      color: #FFE066;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      display: inline-block;
+    }
+
+    .platforms-banner-card h3 {
+      font-family: var(--font-display);
+      font-size: clamp(20px, 3vw, 28px);
+      font-weight: 900;
+      color: #fff;
+      margin: 0;
+    }
+
+    .platforms-banner-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    .platforms-logos-grid {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .platform-chip {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #fff;
+      transition: all 0.25s ease;
+    }
+
+    .platform-chip:hover {
+      background: rgba(229, 9, 20, 0.22);
+      border-color: rgba(229, 9, 20, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(229, 9, 20, 0.35);
+    }
+
+    .platform-icon-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 900;
+      color: #fff;
     }
 
     /* SECCIÓN DE ACTIVACIÓN INMEDIATA (KEY FEATURE) */
     .activation-instant-section {
-      margin: 60px 0;
-      padding: 40px 0;
+      margin: 50px 0;
+      padding: 30px 0;
     }
 
     .activation-card-wide {
       background: linear-gradient(135deg, rgba(229, 9, 20, 0.16) 0%, rgba(20, 20, 28, 0.85) 50%, rgba(10, 10, 14, 0.95) 100%);
       border: 2px solid rgba(229, 9, 20, 0.45);
       border-radius: var(--radius-lg);
-      padding: 46px 36px;
+      padding: 44px 34px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 9, 20, 0.25);
       display: grid;
       grid-template-columns: 1fr;
@@ -614,7 +988,7 @@
       background: #09090c;
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: var(--radius-md);
-      padding: 28px 24px;
+      padding: 26px 22px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -676,7 +1050,7 @@
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
       background: rgba(12, 12, 16, 0.6);
-      margin: 40px 0 60px;
+      margin: 40px 0 50px;
     }
 
     .stats-grid {
@@ -706,90 +1080,109 @@
       letter-spacing: 1px;
     }
 
-    /* SECCIONES COMUNES */
-    .section-header {
-      text-align: center;
-      max-width: 720px;
-      margin: 0 auto 50px;
+    /* SECCIÓN DE CANALES EN VIVO CON LOGOS E IMÁGENES */
+    .channels-section {
+      padding: 40px 0 60px;
     }
 
-    .section-tag {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 12px;
+    .channels-category-pills {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 34px;
     }
 
-    .section-title {
-      font-family: var(--font-display);
-      font-size: clamp(28px, 4vw, 44px);
-      font-weight: 900;
-      line-height: 1.15;
-      margin-bottom: 16px;
+    .channel-pill {
+      background: #14141c;
+      border: 1px solid #2e2e3e;
+      color: #aaa;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .channel-pill.active, .channel-pill:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 14px var(--primary-glow);
     }
 
-    .section-desc {
-      font-size: 16px;
-      color: var(--text-muted);
-    }
-
-    /* BENEFICIOS / FEATURES GRID */
-    .features-grid {
+    .channels-logo-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-      margin-bottom: 70px;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 18px;
+      margin-bottom: 30px;
     }
 
-    .feature-card {
+    .channel-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 32px 26px;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 18px 14px;
+      text-align: center;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
       position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(12px);
+    }
+    .channel-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.7), 0 0 16px var(--primary-glow);
     }
 
-    .feature-card:hover {
-      background: var(--bg-card-hover);
-      border-color: rgba(229, 9, 20, 0.4);
-      transform: translateY(-6px);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(229, 9, 20, 0.15);
-    }
-
-    .feature-icon-box {
-      width: 56px;
-      height: 56px;
+    .channel-icon-emblem {
+      width: 58px;
+      height: 58px;
       border-radius: 14px;
-      background: rgba(229, 9, 20, 0.14);
-      border: 1px solid rgba(229, 9, 20, 0.28);
+      background: #0f1016;
+      border: 1px solid rgba(255,255,255,0.12);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 26px;
-      margin-bottom: 20px;
+      font-weight: 900;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
     }
 
-    .feature-card h3 {
+    .channel-card-name {
       font-family: var(--font-display);
-      font-size: 20px;
+      font-size: 15px;
       font-weight: 800;
-      margin-bottom: 12px;
       color: #fff;
     }
 
-    .feature-card p {
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.6;
+    .channel-live-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .badge-live-red {
+      background: rgba(229,9,20,0.2);
+      border: 1px solid rgba(229,9,20,0.5);
+      color: #ff6b72;
+    }
+    .badge-live-green {
+      background: rgba(34,197,94,0.2);
+      border: 1px solid rgba(34,197,94,0.5);
+      color: #4ade80;
+    }
+    .badge-live-blue {
+      background: rgba(56,189,248,0.2);
+      border: 1px solid rgba(56,189,248,0.5);
+      color: #38bdf8;
     }
 
-    /* CARRUSEL DE CATÁLOGO DINÁMICO */
+    /* CARRUSEL DE CATÁLOGO */
     .catalog-section {
       padding: 40px 0 60px;
       position: relative;
@@ -862,7 +1255,90 @@
       font-weight: 800;
     }
 
-    /* COMPATIBILIDAD DE DISPOSITIVOS */
+    /* SECCIONES COMUNES */
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 46px;
+    }
+
+    .section-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 14px;
+    }
+
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    /* BENEFICIOS / FEATURES GRID */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 70px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 30px 24px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    .feature-card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(229, 9, 20, 0.4);
+      transform: translateY(-6px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(229, 9, 20, 0.15);
+    }
+
+    .feature-icon-box {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      background: rgba(229, 9, 20, 0.14);
+      border: 1px solid rgba(229, 9, 20, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      margin-bottom: 18px;
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* DISPOSITIVOS COMPATIBLES */
     .devices-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -874,32 +1350,126 @@
       background: var(--bg-card);
       border: 1px solid var(--border);
       border-radius: var(--radius-md);
-      padding: 26px 20px;
-      text-align: center;
-      transition: all 0.25s ease;
+      padding: 16px;
+      text-align: left;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      flex-direction: column;
     }
 
     .device-card:hover {
-      border-color: rgba(255, 255, 255, 0.25);
-      transform: translateY(-4px);
+      border-color: rgba(229, 9, 20, 0.4);
+      transform: translateY(-5px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), 0 0 20px rgba(229, 9, 20, 0.2);
     }
 
-    .device-icon {
-      font-size: 38px;
+    .device-img-wrap {
+      width: 100%;
+      height: 140px;
+      border-radius: 12px;
+      overflow: hidden;
       margin-bottom: 14px;
-      display: inline-block;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: #0f1015;
+    }
+
+    .device-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+      display: block;
+    }
+
+    .device-card:hover .device-img-wrap img {
+      transform: scale(1.08);
+    }
+
+    .device-badge-overlay {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(6px);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
 
     .device-card h4 {
       font-family: var(--font-display);
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
       margin-bottom: 6px;
+      color: #fff;
     }
 
     .device-card p {
       font-size: 13px;
       color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* GUÍA VISUAL DE ACTIVACIÓN PASO A PASO */
+    .activation-visual-guide {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      width: 100%;
+    }
+
+    .activation-step-card {
+      background: rgba(12, 13, 18, 0.75);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.25s;
+    }
+
+    .activation-step-card:hover {
+      border-color: rgba(37, 211, 102, 0.4);
+      background: rgba(15, 22, 18, 0.9);
+      transform: translateY(-2px);
+    }
+
+    .activation-step-num {
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 15px;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+    }
+
+    .activation-step-info h4 {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+
+    .activation-step-info p {
+      font-size: 11px;
+      color: #aaa;
+      line-height: 1.35;
+      margin: 0;
     }
 
     /* CAJA DOWNLOADER GUÍA */
@@ -970,12 +1540,12 @@
       margin-bottom: 6px;
     }
 
-    /* PLANES Y CALCULADORA */
+    /* PLANES Y CALCULADORA DINÁMICA */
     .calculator-tabs {
       display: flex;
       justify-content: center;
       gap: 10px;
-      margin-bottom: 36px;
+      margin-bottom: 34px;
       flex-wrap: wrap;
     }
 
@@ -1168,7 +1738,7 @@
       color: var(--text-dim);
     }
 
-    /* PREGUNTAS FRECUENTES (FAQ) */
+    /* FAQ */
     .faq-container {
       max-width: 820px;
       margin: 0 auto 70px;
@@ -1408,21 +1978,18 @@
     </a>
   </div>
 
-  <!-- NAVEGACIÓN SUPERIOR -->
+  <!-- NAVEGACIÓN SUPERIOR CON LOGO OFICIAL SVG -->
   <header>
     <div class="container">
       <div class="nav-inner">
-        <a href="/" class="brand-group" id="nav-brand">
-          <div class="brand-logo-icon">T</div>
-          <div class="brand-text-wrap">
-            <span class="brand-title">TOM TV</span>
-            <span class="brand-tag">Oficial 4K Streaming</span>
-          </div>
+        <a href="/" id="nav-brand" title="TOM TV Oficial">
+          <img src="/img/logo.svg" alt="TOM TV Oficial" class="brand-logo-img">
         </a>
 
         <ul class="nav-links">
           <li><a href="#inicio">Inicio</a></li>
           <li><a href="#activacion">Activar Mi TV</a></li>
+          <li><a href="#canales">Canales en Vivo</a></li>
           <li><a href="#catalogo">Catálogo</a></li>
           <li><a href="#dispositivos">Dispositivos</a></li>
           <li><a href="#planes">Planes</a></li>
@@ -1434,7 +2001,7 @@
           <a href="/play" class="btn btn-secondary" id="btn-web-player" title="Abrir en Navegador Web">
             <span>▶️</span> Ver en Web
           </a>
-          <a href="/api/streaming/download-apk" class="btn btn-primary" id="btn-download-nav" download>
+          <a href="/api/streaming/download-apk" class="btn btn-primary btn-glow" id="btn-download-nav" download>
             <span>📥</span> Descargar APK
           </a>
           <button class="mobile-menu-btn" id="mobile-toggle" aria-label="Menú">☰</button>
@@ -1456,7 +2023,7 @@
       </h1>
 
       <p class="hero-subtitle">
-        Estrenos de cine en audio Latino y Castellano en calidad 4K/Full HD sin publicidad y canales premium en directo para tu Smart TV, Android, TV Box y Firestick.
+        Estrenos de cartelera en calidad 4K/Full HD sin publicidad y canales premium en directo para tu Smart TV, Android, TV Box y Firestick.
       </p>
 
       <div class="hero-buttons">
@@ -1471,16 +2038,20 @@
         </a>
       </div>
 
-      <!-- MOCKUP SMART TV CON CANALES INTERACTIVOS -->
+      <!-- MOCKUP SMART TV CON LOGO Y CANALES INTERACTIVOS -->
       <div class="mockup-wrapper">
         <div class="tv-frame">
           <div class="tv-screen">
             <div class="tv-screen-bg" id="tv-hero-bg"></div>
             <div class="tv-screen-content">
+              <!-- Top bar de la TV con logo TOM TV -->
               <div class="tv-top-bar">
-                <div class="tv-pill">
-                  <span id="tv-status-dot">● EN VIVO</span>
-                  <span id="tv-status-res">4K HDR</span>
+                <div class="tv-logo-badge-wrap">
+                  <img src="/img/logo.svg" alt="TOM TV" class="tv-screen-logo">
+                  <div class="tv-pill">
+                    <span id="tv-status-dot">● EN VIVO</span>
+                    <span id="tv-status-res">4K HDR</span>
+                  </div>
                 </div>
                 <div class="tv-interactive-nav">
                   <button class="tv-nav-tab active" onclick="switchTvTab('movies')">🍿 Películas</button>
@@ -1490,32 +2061,169 @@
                 </div>
               </div>
 
-              <div class="tv-bottom-info">
-                <div class="tv-bottom-meta">
-                  <span class="tv-tag-hd" id="tv-showcase-badge">ULTRA HD 4K</span>
-                  <span id="tv-showcase-audio">Audio Latino 5.1</span>
-                  <span id="tv-showcase-rating">⭐ 9.5/10</span>
+              <!-- Cuerpo de la TV: Info y Mini Carrusel de miniaturas -->
+              <div class="tv-screen-body">
+                <div class="tv-bottom-info">
+                  <div class="tv-bottom-meta">
+                    <span class="tv-tag-hd" id="tv-showcase-badge">ULTRA HD 4K</span>
+                    <span id="tv-showcase-audio">Audio Latino 5.1</span>
+                    <span id="tv-showcase-rating">⭐ 9.5/10</span>
+                  </div>
+                  <h3 class="tv-bottom-title" id="tv-showcase-title">Deadpool & Wolverine (2024)</h3>
+                  <p class="tv-bottom-desc" id="tv-showcase-desc">
+                    Disfruta del estreno taquillero del año con sonido envolvente y calidad de cine directa en tu sala de estar.
+                  </p>
+                  <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <a href="/api/streaming/download-apk" class="btn btn-primary btn-sm btn-glow" style="padding: 8px 18px; font-size: 13px;" download>
+                      <span>▶️</span> REPRODUCIR AHORA
+                    </a>
+                    <a href="#activacion" class="btn btn-secondary btn-sm" style="padding: 8px 16px; font-size: 13px;">
+                      <span>🔑</span> ACTIVAR TV
+                    </a>
+                  </div>
                 </div>
-                <h3 class="tv-bottom-title" id="tv-showcase-title">Deadpool & Wolverine (2024)</h3>
-                <p style="font-size: 13px; color: #ddd; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;" id="tv-showcase-desc">
-                  Disfruta del estreno taquillero del año con sonido envolvente y calidad de cine directa en tu sala de estar.
-                </p>
+
+                <!-- Miniaturas reales en la TV -->
+                <div class="tv-mini-posters-strip">
+                  <div class="tv-mini-poster active" id="mini-tab-movies" onclick="switchTvTab('movies')">
+                    <img src="https://image.tmdb.org/t/p/w200/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg" alt="Deadpool">
+                    <span>Películas</span>
+                  </div>
+                  <div class="tv-mini-poster" id="mini-tab-series" onclick="switchTvTab('series')">
+                    <img src="https://image.tmdb.org/t/p/w200/etj5CuMuamhEbRnXxMHqQYeNi9W.jpg" alt="House of Dragon">
+                    <span>Series</span>
+                  </div>
+                  <div class="tv-mini-poster" id="mini-tab-sports" onclick="switchTvTab('sports')">
+                    <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=200&auto=format&fit=crop" alt="Deportes">
+                    <span>Deportes</span>
+                  </div>
+                  <div class="tv-mini-poster" id="mini-tab-peru" onclick="switchTvTab('peru')">
+                    <img src="https://images.unsplash.com/photo-1526392060635-9d6019884377?q=80&w=200&auto=format&fit=crop" alt="Canales Perú">
+                    <span>Perú TV</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <span class="tv-bezel-brand">TOM TV SMART OLED</span>
+          <div class="tv-bezel-bottom">
+            <div class="tv-power-led" title="TOM TV Smart Hub Conectado"></div>
+            <div class="tv-bezel-brand">
+              <img src="/img/icon.svg" alt="TOM TV" class="tv-bezel-icon">
+              <span>TOM TV OLED MASTER 4K HDR</span>
+            </div>
+            <div class="tv-sensor-pill"></div>
+          </div>
         </div>
         <div class="tv-base"></div>
 
-        <!-- MOCKUP MÓVIL FLOTANTE -->
+        <!-- MOCKUP MÓVIL FLOTANTE CON INTERFAZ REAL -->
         <div class="mobile-floating-mockup">
           <div class="phone-notch"></div>
-          <div class="phone-screen">
-            <div class="phone-overlay">
-              <div style="font-size: 10px; font-weight: 800; color: #E50914;">APP MÓVIL</div>
-              <div style="font-size: 12px; font-weight: 700; color: #fff;">Llévalo contigo</div>
-              <div style="font-size: 10px; color: #bbb;">En tu smartphone donde vayas</div>
+          <div class="phone-screen-inner">
+            <div class="phone-status-bar">
+              <span>19:30</span>
+              <div style="display: flex; gap: 4px; font-size: 9px; align-items: center;">
+                <span>📶 5G</span>
+                <span>🔋 100%</span>
+              </div>
             </div>
+
+            <div class="phone-app-header">
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <img src="/img/icon.svg" alt="TOM TV" style="height: 22px; width: 22px; border-radius: 6px; box-shadow: 0 0 8px rgba(229,9,20,0.6);">
+                <img src="/img/logo.svg" alt="TOM TV" class="phone-app-logo">
+              </div>
+              <span style="font-size: 13px; color: #fff;">🔍</span>
+            </div>
+
+            <div class="phone-tabs-row">
+              <span class="phone-tab active">Películas</span>
+              <span class="phone-tab">Series</span>
+              <span class="phone-tab">TV en Vivo</span>
+              <span class="phone-tab">Deportes</span>
+            </div>
+
+            <div class="phone-hero-card">
+              <img src="https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" alt="Intensa-Mente 2" class="phone-hero-img">
+              <div class="phone-hero-badge">● 4K LATINO</div>
+              <div class="phone-hero-text">
+                <strong>Intensa-Mente 2 (2024)</strong>
+                <span>Estreno Oficial de Cartelera</span>
+              </div>
+            </div>
+
+            <div class="phone-sub-heading">Más Vistas Esta Semana</div>
+            <div class="phone-posters-row">
+              <div class="phone-poster-wrap">
+                <img src="https://image.tmdb.org/t/p/w200/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg" alt="Deadpool" class="phone-mini-poster">
+                <span>Deadpool</span>
+              </div>
+              <div class="phone-poster-wrap">
+                <img src="https://image.tmdb.org/t/p/w200/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg" alt="Dune 2" class="phone-mini-poster">
+                <span>Dune 2</span>
+              </div>
+              <div class="phone-poster-wrap">
+                <img src="https://image.tmdb.org/t/p/w200/fqv8v6A9o7li0q0AsbQIj69JSSu.jpg" alt="Bad Boys" class="phone-mini-poster">
+                <span>Bad Boys</span>
+              </div>
+            </div>
+
+            <div class="phone-bottom-nav">
+              <div class="p-nav-item active"><span>🏠</span><small>Inicio</small></div>
+              <div class="p-nav-item"><span>🎬</span><small>Cine</small></div>
+              <div class="p-nav-item"><span>📺</span><small>En Vivo</small></div>
+              <div class="p-nav-item"><span>👤</span><small>Cuenta</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="device-preview-badge">
+          <span>📱</span> También disponible en Celulares y Tablets Android
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BANNER DE PLATAFORMAS DE STREAMING UNIFICADAS -->
+  <section class="platforms-ribbon-section">
+    <div class="container">
+      <div class="platforms-banner-card">
+        <span class="platforms-tag">TODO EN UNA SOLA APP</span>
+        <h3>El Catálogo de Todas las Plataformas de Streaming del Mundo en TOM TV</h3>
+        <p>No pagues 7 u 8 suscripciones mensuales por separado. Con TOM TV tienes acceso ilimitado a estrenos cinematográficos, series originales, documentales y fútbol en directo en un solo lugar.</p>
+        
+        <div class="platforms-logos-grid">
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #E50914;">N</span>
+            <span>Netflix Originales</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #113CCF;">D+</span>
+            <span>Disney+ & Pixar</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #002D72;">MAX</span>
+            <span>Max (HBO Max)</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #00A8E1;">P</span>
+            <span>Prime Video</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #0064FF;">P+</span>
+            <span>Paramount+</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #000000; border: 1px solid #555;">TV</span>
+            <span>Apple TV+</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #FF5A00;">CR</span>
+            <span>Crunchyroll Anime</span>
+          </div>
+          <div class="platform-chip">
+            <span class="platform-icon-circle" style="background: #E50914;">ViX</span>
+            <span>ViX Premium</span>
           </div>
         </div>
       </div>
@@ -1552,6 +2260,31 @@
             <span>🚀</span> Activar Mi TV por WhatsApp al 914598415
           </button>
         </div>
+
+        <!-- GUÍA VISUAL PASO A PASO -->
+        <div class="activation-visual-guide" style="grid-column: 1 / -1;">
+          <div class="activation-step-card">
+            <div class="activation-step-num">1</div>
+            <div class="activation-step-info">
+              <h4>Abre TOM TV en tu Pantalla</h4>
+              <p>Inicia la app en tu Smart TV, TV Box o Firestick y anota el código de 6 caracteres que se muestra.</p>
+            </div>
+          </div>
+          <div class="activation-step-card">
+            <div class="activation-step-num">2</div>
+            <div class="activation-step-info">
+              <h4>Envía el Código al 914 598 415</h4>
+              <p>Usa el botón de WhatsApp o escríbenos directamente con tu código para activación prioritaria.</p>
+            </div>
+          </div>
+          <div class="activation-step-card">
+            <div class="activation-step-num">3</div>
+            <div class="activation-step-info">
+              <h4>¡Activación en 2 Minutos!</h4>
+              <p>Tu televisor se desbloquea al instante y tendrás acceso ilimitado a películas, series y canales.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1575,6 +2308,218 @@
         <div class="stat-card">
           <div class="stat-number">99.9%</div>
           <div class="stat-label">Estabilidad Servidores</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN VISUAL DE CANALES EN VIVO CON LOGOS E IMÁGENES -->
+  <section class="channels-section container" id="canales">
+    <div class="section-header">
+      <span class="section-tag">Televisión en Directo</span>
+      <h2 class="section-title">+800 Canales en Vivo en Calidad 1080p y 60 FPS</h2>
+      <p class="section-desc">Disfruta de todos tus canales favoritos de televisión nacional peruana, fútbol internacional y cine premium sin cortes ni congelamientos.</p>
+    </div>
+
+    <!-- Pestañas de categorías de canales -->
+    <div class="channels-category-pills">
+      <button class="channel-pill active" onclick="filterChannelsCategory('todos')">🌟 Todos los Canales</button>
+      <button class="channel-pill" onclick="filterChannelsCategory('peru')">🇵🇪 Canales Perú</button>
+      <button class="channel-pill" onclick="filterChannelsCategory('deportes')">⚽ Deportes & Fútbol</button>
+      <button class="channel-pill" onclick="filterChannelsCategory('cine')">🍿 Cine & Series Premium</button>
+      <button class="channel-pill" onclick="filterChannelsCategory('infantil')">👶 Infantiles</button>
+    </div>
+
+    <!-- Cuadrícula de Logos de Canales -->
+    <div class="channels-logo-grid" id="channelsGrid">
+      <!-- Canales Perú -->
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #FF6600, #CC0000);">4</div>
+        <div class="channel-card-name">América Televisión</div>
+        <span class="channel-live-badge badge-live-red">● EN VIVO FHD</span>
+      </div>
+
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #0066CC, #001F66);">9</div>
+        <div class="channel-card-name">ATV HD</div>
+        <span class="channel-live-badge badge-live-red">● SEÑAL NACIONAL</span>
+      </div>
+
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #00A859, #005A30);">2</div>
+        <div class="channel-card-name">Latina Televisión</div>
+        <span class="channel-live-badge badge-live-red">● EN DIRECTO 1080p</span>
+      </div>
+
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #D4AF37, #8B6508);">5</div>
+        <div class="channel-card-name">Panamericana TV</div>
+        <span class="channel-live-badge badge-live-red">● HD NACIONAL</span>
+      </div>
+
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #8B0000, #3B0000);">W</div>
+        <div class="channel-card-name">Willax TV</div>
+        <span class="channel-live-badge badge-live-red">● EN VIVO</span>
+      </div>
+
+      <!-- Deportes -->
+      <div class="channel-card" data-cat="deportes">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #E50914, #990000); font-size: 20px;">ESPN</div>
+        <div class="channel-card-name">ESPN Premium</div>
+        <span class="channel-live-badge badge-live-green">⚽ 60 FPS ULTRA</span>
+      </div>
+
+      <div class="channel-card" data-cat="deportes">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #0284C7, #0369A1); font-size: 18px;">FOX</div>
+        <div class="channel-card-name">Fox Sports 1 HD</div>
+        <span class="channel-live-badge badge-live-green">⚽ EN DIRECTO</span>
+      </div>
+
+      <div class="channel-card" data-cat="deportes">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #2563EB, #1D4ED8); font-size: 16px;">DSPORTS</div>
+        <div class="channel-card-name">DSports / Directv</div>
+        <span class="channel-live-badge badge-live-green">⚽ EXCLUSIVO HD</span>
+      </div>
+
+      <div class="channel-card" data-cat="deportes">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #D97706, #B45309); font-size: 16px;">L1 MAX</div>
+        <div class="channel-card-name">Liga 1 MAX Perú</div>
+        <span class="channel-live-badge badge-live-green">🇵🇪 FÚTBOL EN VIVO</span>
+      </div>
+
+      <div class="channel-card" data-cat="deportes">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #059669, #047857); font-size: 18px;">TyC</div>
+        <div class="channel-card-name">TyC Sports Internacional</div>
+        <span class="channel-live-badge badge-live-green">⚽ EN DIRECTO</span>
+      </div>
+
+      <!-- Cine & Series -->
+      <div class="channel-card" data-cat="cine">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #4F46E5, #3730A3); font-size: 20px;">HBO</div>
+        <div class="channel-card-name">HBO Family & Plus</div>
+        <span class="channel-live-badge badge-live-blue">🎬 CINE 4K</span>
+      </div>
+
+      <div class="channel-card" data-cat="cine">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #EC4899, #BE185D); font-size: 18px;">STAR</div>
+        <div class="channel-card-name">Star Channel</div>
+        <span class="channel-live-badge badge-live-blue">📺 SERIES & CINE</span>
+      </div>
+
+      <div class="channel-card" data-cat="cine">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #F59E0B, #D97706); font-size: 18px;">WB</div>
+        <div class="channel-card-name">Warner Channel</div>
+        <span class="channel-live-badge badge-live-blue">🍿 ESTRENOS HD</span>
+      </div>
+
+      <div class="channel-card" data-cat="cine">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #6366F1, #4338CA); font-size: 16px;">SONY</div>
+        <div class="channel-card-name">Sony Movies Channel</div>
+        <span class="channel-live-badge badge-live-blue">🎬 CINE PREMIUM</span>
+      </div>
+
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #B91C1C, #7F1D1D);">7</div>
+        <div class="channel-card-name">TV Perú HD</div>
+        <span class="channel-live-badge badge-live-red">● SEÑAL ABIERTA</span>
+      </div>
+
+      <div class="channel-card" data-cat="peru">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #EA580C, #9A3412);">EX</div>
+        <div class="channel-card-name">Exitosa Noticias</div>
+        <span class="channel-live-badge badge-live-red">● EN VIVO</span>
+      </div>
+
+      <div class="channel-card" data-cat="deportes">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #16A34A, #15803D); font-size: 16px;">GOL</div>
+        <div class="channel-card-name">Gol Perú HD</div>
+        <span class="channel-live-badge badge-live-green">⚽ FÚTBOL NACIONAL</span>
+      </div>
+
+      <div class="channel-card" data-cat="cine">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #0284C7, #0369A1); font-size: 16px;">UNIV</div>
+        <div class="channel-card-name">Universal TV</div>
+        <span class="channel-live-badge badge-live-blue">🍿 SERIES & CINE</span>
+      </div>
+
+      <div class="channel-card" data-cat="cine">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #374151, #111827); font-size: 16px;">SPACE</div>
+        <div class="channel-card-name">Space HD</div>
+        <span class="channel-live-badge badge-live-blue">🎬 ACCIÓN 24/7</span>
+      </div>
+
+      <!-- Infantiles -->
+      <div class="channel-card" data-cat="infantil">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #06B6D4, #0891B2); font-size: 20px;">CN</div>
+        <div class="channel-card-name">Cartoon Network</div>
+        <span class="channel-live-badge badge-live-blue">👶 INFANTIL HD</span>
+      </div>
+
+      <div class="channel-card" data-cat="infantil">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #F97316, #EA580C); font-size: 16px;">NICK</div>
+        <div class="channel-card-name">Nickelodeon HD</div>
+        <span class="channel-live-badge badge-live-blue">👶 ANIMACIÓN</span>
+      </div>
+
+      <div class="channel-card" data-cat="infantil">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #2563EB, #1E40AF); font-size: 16px;">DISNEY</div>
+        <div class="channel-card-name">Disney Channel</div>
+        <span class="channel-live-badge badge-live-blue">👶 FAMILIAR HD</span>
+      </div>
+
+      <div class="channel-card" data-cat="infantil">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #10B981, #047857); font-size: 16px;">DK</div>
+        <div class="channel-card-name">Discovery Kids</div>
+        <span class="channel-live-badge badge-live-blue">👶 DIVERSIÓN</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATÁLOGO DINÁMICO EN VIVO -->
+  <section class="catalog-section" id="catalogo">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">En Cartelera</span>
+        <h2 class="section-title">Estrenos de Cine y Series Disponibles Ahora</h2>
+        <p class="section-desc">Contenido actualizado todos los días directamente desde la nube a tu televisor.</p>
+      </div>
+
+      <div class="carousel-wrap" id="movies-carousel">
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg" alt="Deadpool & Wolverine" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Deadpool & Wolverine</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">4K HDR</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" alt="Intensa-Mente 2" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Intensa-Mente 2</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">FHD Latino</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg" alt="Dune 2" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Dune: Parte Dos</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">4K IMAX</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/fqv8v6A9o7li0q0AsbQIj69JSSu.jpg" alt="Bad Boys" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Bad Boys: Hasta la Muerte</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">4K Latino</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg" alt="Kung Fu Panda 4" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Kung Fu Panda 4</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">FHD Latino</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -1627,57 +2572,8 @@
     </div>
   </section>
 
-  <!-- CATÁLOGO DINÁMICO EN VIVO -->
-  <section class="catalog-section" id="catalogo">
-    <div class="container">
-      <div class="section-header">
-        <span class="section-tag">En Cartelera</span>
-        <h2 class="section-title">Estrenos y Tendencias Disponibles Ahora</h2>
-        <p class="section-desc">Contenido actualizado todos los días directamente desde la nube a tu televisor.</p>
-      </div>
-
-      <div class="carousel-wrap" id="movies-carousel">
-        <div class="poster-card">
-          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg" alt="Deadpool & Wolverine" loading="lazy">
-          <div class="poster-info">
-            <div class="poster-title">Deadpool & Wolverine</div>
-            <div class="poster-year"><span>2024</span><span class="poster-quality">4K HDR</span></div>
-          </div>
-        </div>
-        <div class="poster-card">
-          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" alt="Intensa-Mente 2" loading="lazy">
-          <div class="poster-info">
-            <div class="poster-title">Intensa-Mente 2</div>
-            <div class="poster-year"><span>2024</span><span class="poster-quality">FHD Latino</span></div>
-          </div>
-        </div>
-        <div class="poster-card">
-          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg" alt="Dune 2" loading="lazy">
-          <div class="poster-info">
-            <div class="poster-title">Dune: Parte Dos</div>
-            <div class="poster-year"><span>2024</span><span class="poster-quality">4K IMAX</span></div>
-          </div>
-        </div>
-        <div class="poster-card">
-          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/fqv8v6A9o7li0q0AsbQIj69JSSu.jpg" alt="Bad Boys" loading="lazy">
-          <div class="poster-info">
-            <div class="poster-title">Bad Boys: Hasta la Muerte</div>
-            <div class="poster-year"><span>2024</span><span class="poster-quality">4K Latino</span></div>
-          </div>
-        </div>
-        <div class="poster-card">
-          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg" alt="Kung Fu Panda 4" loading="lazy">
-          <div class="poster-info">
-            <div class="poster-title">Kung Fu Panda 4</div>
-            <div class="poster-year"><span>2024</span><span class="poster-quality">FHD Latino</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- DISPOSITIVOS COMPATIBLES -->
-  <section class="container" id="dispositivos" style="padding: 30px 24px 60px;">
+  <section class="container" id="dispositivos" style="padding: 20px 24px 60px;">
     <div class="section-header">
       <span class="section-tag">Máxima Compatibilidad</span>
       <h2 class="section-title">Compatible con Todos tus Dispositivos</h2>
@@ -1686,39 +2582,69 @@
 
     <div class="devices-grid">
       <div class="device-card">
-        <span class="device-icon">📺</span>
+        <div class="device-img-wrap">
+          <img src="https://images.unsplash.com/photo-1593784991095-a205069470b6?q=80&w=600&auto=format&fit=crop" alt="Smart TV Android" loading="lazy">
+          <div class="device-badge-overlay">
+            <span>📺</span> 4K HDR
+          </div>
+        </div>
         <h4>Android TV & Google TV</h4>
-        <p>Sony, TCL, Xiaomi TV, Hisense, Philips, Chromecast y televisores con sistema Android.</p>
+        <p>Sony, TCL, Xiaomi TV, Hisense, Philips, Chromecast y cualquier televisor con sistema Android TV.</p>
       </div>
 
       <div class="device-card">
-        <span class="device-icon">🔥</span>
+        <div class="device-img-wrap">
+          <img src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?q=80&w=600&auto=format&fit=crop" alt="Amazon Fire TV Stick" loading="lazy">
+          <div class="device-badge-overlay">
+            <span>🔥</span> FIRESTICK
+          </div>
+        </div>
         <h4>Amazon Fire TV Stick</h4>
-        <p>Compatible con todas las generaciones: Firestick Lite, 4K, 4K Max y Fire TV Cube.</p>
+        <p>Compatible con todas las generaciones: Firestick Lite, 4K, 4K Max y Fire TV Cube. Instalación en 1 minuto.</p>
       </div>
 
       <div class="device-card">
-        <span class="device-icon">📦</span>
-        <h4>TV Box & Mi Box</h4>
-        <p>Cualquier dispositivo TV Box Android (Xiaomi Mi Box S, TX9, Tanix, Mecool, etc.).</p>
+        <div class="device-img-wrap">
+          <img src="https://images.unsplash.com/photo-1546868871-7041f2a55e12?q=80&w=600&auto=format&fit=crop" alt="TV Box Android" loading="lazy">
+          <div class="device-badge-overlay">
+            <span>📦</span> MULTIMEDIA
+          </div>
+        </div>
+        <h4>TV Box & Xiaomi Mi Box</h4>
+        <p>Cualquier dispositivo TV Box Android (Xiaomi Mi Box S, TX9, Tanix, Mecool) convierte cualquier TV en cine.</p>
       </div>
 
       <div class="device-card">
-        <span class="device-icon">📱</span>
-        <h4>Celulares & Tablets</h4>
-        <p>Lleva tu contenido favorito a todos lados en tu teléfono o tablet Android.</p>
+        <div class="device-img-wrap">
+          <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02543?q=80&w=600&auto=format&fit=crop" alt="Celulares y Tablets Android" loading="lazy">
+          <div class="device-badge-overlay">
+            <span>📱</span> MÓVIL FHD
+          </div>
+        </div>
+        <h4>Celulares & Tablets Android</h4>
+        <p>Lleva tu entretenimiento a cualquier parte en tu smartphone Samsung, Xiaomi, Motorola o tablet.</p>
       </div>
 
       <div class="device-card">
-        <span class="device-icon">💻</span>
-        <h4>PC, Mac & Navegador</h4>
-        <p>Mira sin instalar nada directamente en Chrome, Edge o Safari mediante nuestro reproductor web.</p>
+        <div class="device-img-wrap">
+          <img src="https://images.unsplash.com/photo-1509281373149-e957c6296406?q=80&w=600&auto=format&fit=crop" alt="Smart TV Samsung y LG" loading="lazy">
+          <div class="device-badge-overlay">
+            <span>📡</span> TIZEN & WEBOS
+          </div>
+        </div>
+        <h4>Smart TV Samsung & LG</h4>
+        <p>Integración garantizada mediante apps IPTV oficiales (IBO Player, IPTV Smarters) con lista M3U activada.</p>
       </div>
 
       <div class="device-card">
-        <span class="device-icon">📡</span>
-        <h4>Smart TV Samsung / LG</h4>
-        <p>Integración con reproductores IPTV (IBO Player, IPTV Smarters, etc.) mediante lista M3U oficial.</p>
+        <div class="device-img-wrap">
+          <img src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?q=80&w=600&auto=format&fit=crop" alt="PC y Navegador Web" loading="lazy">
+          <div class="device-badge-overlay">
+            <span>💻</span> SIN DESCARGAS
+          </div>
+        </div>
+        <h4>PC, Mac & Navegador Web</h4>
+        <p>Disfruta al instante en Google Chrome, Microsoft Edge o Safari mediante nuestro reproductor web integrado.</p>
       </div>
     </div>
 
@@ -1752,7 +2678,7 @@
   </section>
 
   <!-- PLANES Y CALCULADORA DINÁMICA -->
-  <section class="container" id="planes" style="padding: 30px 24px 60px;">
+  <section class="container" id="planes" style="padding: 20px 24px 60px;">
     <div class="section-header">
       <span class="section-tag">Precios Accesibles</span>
       <h2 class="section-title">Elige el Plan Perfecto para Ti</h2>
@@ -1969,12 +2895,8 @@
     <div class="container">
       <div class="footer-grid">
         <div class="footer-col" style="grid-column: span 1.5;">
-          <div class="brand-group" style="margin-bottom: 14px;">
-            <div class="brand-logo-icon">T</div>
-            <div class="brand-text-wrap">
-              <span class="brand-title">TOM TV</span>
-              <span class="brand-tag">Entertainment Platform</span>
-            </div>
+          <div style="margin-bottom: 14px;">
+            <img src="/img/logo.svg" alt="TOM TV" style="height: 42px; filter: drop-shadow(0 0 10px rgba(229,9,20,0.5));">
           </div>
           <p style="font-size: 13px; color: var(--text-dim); max-width: 320px; line-height: 1.6;">
             Tu servicio de streaming favorito con la mayor variedad de películas de cartelera, series y televisión en vivo para Smart TVs y Android.
@@ -1989,6 +2911,7 @@
           <ul>
             <li><a href="#inicio">Inicio</a></li>
             <li><a href="#activacion">Activar Mi Televisor</a></li>
+            <li><a href="#canales">Canales en Vivo</a></li>
             <li><a href="#catalogo">Catálogo de Estrenos</a></li>
             <li><a href="#dispositivos">Dispositivos Soportados</a></li>
             <li><a href="#planes">Planes y Precios</a></li>
@@ -2035,7 +2958,6 @@
 
   <!-- SCRIPTS INTERACTIVOS -->
   <script>
-    // Variables de Estado
     const OFFICIAL_PHONE = '51914598415';
 
     // Función de Activación Directa de TV
@@ -2103,14 +3025,19 @@
 
     function switchTvTab(tabKey) {
       document.querySelectorAll('.tv-nav-tab').forEach(b => b.classList.remove('active'));
-      const activeBtn = event.currentTarget || event.target;
-      if (activeBtn) activeBtn.classList.add('active');
+      document.querySelectorAll('.tv-mini-poster').forEach(p => p.classList.remove('active'));
+
+      const currentBtn = Array.from(document.querySelectorAll('.tv-nav-tab')).find(b => b.getAttribute('onclick')?.includes(tabKey));
+      if (currentBtn) currentBtn.classList.add('active');
+
+      const miniPoster = document.getElementById(`mini-tab-${tabKey}`);
+      if (miniPoster) miniPoster.classList.add('active');
 
       const data = tvShowcases[tabKey];
       if (!data) return;
 
       const tvBg = document.getElementById('tv-hero-bg');
-      if (tvBg) tvBg.style.backgroundImage = `linear-gradient(to top, rgba(6, 6, 8, 0.96) 20%, rgba(6, 6, 8, 0.45) 60%, rgba(6, 6, 8, 0.2) 100%), url('${data.bg}')`;
+      if (tvBg) tvBg.style.backgroundImage = `linear-gradient(to top, rgba(6, 6, 8, 0.97) 22%, rgba(6, 6, 8, 0.5) 65%, rgba(6, 6, 8, 0.25) 100%), url('${data.bg}')`;
 
       document.getElementById('tv-showcase-title').innerText = data.title;
       document.getElementById('tv-showcase-desc').innerText = data.desc;
@@ -2118,6 +3045,22 @@
       document.getElementById('tv-showcase-audio').innerText = data.audio;
       document.getElementById('tv-showcase-rating').innerText = data.rating;
       document.getElementById('tv-status-dot').innerText = data.status;
+    }
+
+    // Filtrar canales de TV por categoría
+    function filterChannelsCategory(cat) {
+      document.querySelectorAll('.channel-pill').forEach(b => b.classList.remove('active'));
+      const activePill = event ? (event.currentTarget || event.target) : null;
+      if (activePill) activePill.classList.add('active');
+
+      const cards = document.querySelectorAll('.channel-card');
+      cards.forEach(card => {
+        if (cat === 'todos' || card.getAttribute('data-cat') === cat) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
     }
 
     // Calculadora Dinámica de Precios por Pantallas

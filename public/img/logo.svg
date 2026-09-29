@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="100%" height="100%">
+  <defs>
+    <!-- Gradientes Principales -->
+    <linearGradient id="tomRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF1E27" />
+      <stop offset="50%" stop-color="#E50914" />
+      <stop offset="100%" stop-color="#8F0006" />
+    </linearGradient>
+
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE066" />
+      <stop offset="100%" stop-color="#FFB800" />
+    </linearGradient>
+
+    <linearGradient id="tvScreenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1A1C24" />
+      <stop offset="100%" stop-color="#0B0C10" />
+    </linearGradient>
+
+    <!-- Filtro de Resplandor Neón -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.85" />
+    </filter>
+  </defs>
+
+  <!-- Contenedor del Ícono de la TV (Emblema Izquierdo) -->
+  <g transform="translate(10, 10)">
+    <!-- Brillo Trasero Neón -->
+    <rect x="0" y="0" width="100" height="100" rx="26" fill="#E50914" opacity="0.35" filter="url(#neonGlow)" />
+
+    <!-- Marco de la Pantalla Smart TV -->
+    <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#tomRedGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="2" filter="url(#softShadow)" />
+
+    <!-- Pantalla Interior de Cine -->
+    <rect x="10" y="10" width="80" height="80" rx="18" fill="url(#tvScreenGrad)" stroke="rgba(229,9,20,0.5)" stroke-width="1.5" />
+
+    <!-- Letra T Gigante Estilizada con Relieve 3D -->
+    <path d="M 28 28 L 72 28 C 74 28 75 29 75 31 L 75 39 C 75 41 74 42 72 42 L 56 42 L 56 70 C 56 72 55 73 53 73 L 47 73 C 45 73 44 72 44 70 L 44 42 L 28 42 C 26 42 25 41 25 39 L 25 31 C 25 29 26 28 28 28 Z" fill="#FFFFFF" filter="url(#softShadow)" />
+
+    <!-- Mini Ícono de Play Luminoso en el Centro -->
+    <polygon points="50,46 50,62 62,54" fill="url(#tomRedGrad)" opacity="0.95" />
+
+    <!-- Antena / Ondas de Transmisión Satelital Superior -->
+    <circle cx="50" cy="18" r="3" fill="#FFE066" />
+    <path d="M 43 14 A 8 8 0 0 1 57 14" fill="none" stroke="#FFE066" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+  </g>
+
+  <!-- Tipografía Principal: TOM -->
+  <g transform="translate(125, 78)">
+    <text font-family="'Outfit', 'Impact', sans-serif" font-weight="900" font-size="64" letter-spacing="1.5" fill="#FFFFFF" filter="url(#softShadow)">
+      TOM
+    </text>
+  </g>
+
+  <!-- Insignia Brillante: TV -->
+  <g transform="translate(275, 26)">
+    <!-- Contenedor Badge TV -->
+    <rect x="0" y="0" width="95" height="58" rx="14" fill="url(#tomRedGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" filter="url(#neonGlow)" />
+    <!-- Texto TV -->
+    <text x="47" y="42" font-family="'Outfit', 'Arial Black', sans-serif" font-weight="900" font-size="34" letter-spacing="2" fill="#FFFFFF" text-anchor="middle">
+      TV
+    </text>
+    <!-- Tag 4K ULTRA HD -->
+    <rect x="12" y="64" width="71" height="18" rx="5" fill="#000000" stroke="url(#goldAccent)" stroke-width="1" />
+    <text x="47.5" y="77" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="9" letter-spacing="1.5" fill="url(#goldAccent)" text-anchor="middle">
+      ULTRA HD
+    </text>
+  </g>
+</svg>
