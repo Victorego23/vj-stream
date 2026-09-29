@@ -61,21 +61,37 @@ class AccountService {
         fs.writeFileSync(BACKUP_FILE, JSON.stringify(initialData, null, 2), 'utf8');
       }
     } else {
-      // Sincronizar clientes existentes entre DB y Backup para máxima persistencia
+      // Sincronizar clientes existentes entre DB y Backup respetando revocaciones y eliminaciones definitivas
       try {
         const dbData = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        if (!Array.isArray(dbData.revokedClients)) dbData.revokedClients = [];
+
         if (fs.existsSync(BACKUP_FILE)) {
           const backupData = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
-          if (Array.isArray(backupData.clients) && backupData.clients.length > (dbData.clients || []).length) {
-            // Si el backup tiene más clientes que la DB de Git, fusionar
-            const clientMap = new Map();
-            (dbData.clients || []).forEach(c => clientMap.set(c.id, c));
-            backupData.clients.forEach(c => {
-              if (!clientMap.has(c.id)) clientMap.set(c.id, c);
-            });
-            dbData.clients = Array.from(clientMap.values());
-            fs.writeFileSync(DB_FILE, JSON.stringify(dbData, null, 2), 'utf8');
-          }
+          if (!Array.isArray(backupData.revokedClients)) backupData.revokedClients = [];
+
+          // Unir revocaciones de ambos
+          const revokedIds = new Set([...dbData.revokedClients, ...backupData.revokedClients].map(r => r.id));
+          const revokedCodes = new Set([...dbData.revokedClients, ...backupData.revokedClients].map(r => (r.code || '').toUpperCase()));
+
+          // Limpiar clientes eliminados tanto en dbData como en backupData
+          dbData.clients = (dbData.clients || []).filter(c => !revokedIds.has(c.id) && !revokedCodes.has((c.code || '').toUpperCase()));
+          backupData.clients = (backupData.clients || []).filter(c => !revokedIds.has(c.id) && !revokedCodes.has((c.code || '').toUpperCase()));
+
+          // Fusionar solo clientes legítimos que no hayan sido eliminados
+          const clientMap = new Map();
+          dbData.clients.forEach(c => clientMap.set(c.id, c));
+          backupData.clients.forEach(c => {
+            if (!clientMap.has(c.id) && !revokedIds.has(c.id) && !revokedCodes.has((c.code || '').toUpperCase())) {
+              clientMap.set(c.id, c);
+            }
+          });
+          dbData.clients = Array.from(clientMap.values());
+          dbData.revokedClients = Array.from(new Map([...dbData.revokedClients, ...backupData.revokedClients].map(r => [r.id, r])).values());
+
+          const json = JSON.stringify(dbData, null, 2);
+          fs.writeFileSync(DB_FILE, json, 'utf8');
+          fs.writeFileSync(BACKUP_FILE, json, 'utf8');
         } else {
           fs.writeFileSync(BACKUP_FILE, JSON.stringify(dbData, null, 2), 'utf8');
         }
@@ -522,13 +538,86 @@ class AccountService {
     return client;
   }
 
+  /**
+   * Elimina un cliente definitivamente del sistema.
+   * Sus códigos, tokens y dispositivos quedan revocados hasta que el administrador los apruebe nuevamente.
+   */
   deleteClient(clientId) {
     const db = this._readDb();
-    const initialLen = db.clients.length;
-    db.clients = db.clients.filter(c => c.id !== clientId);
-    const deleted = db.clients.length < initialLen;
+    if (!Array.isArray(db.revokedClients)) db.revokedClients = [];
+
+    const cleanId = String(clientId || '').trim();
+    const client = db.clients.find(c => c.id === cleanId || c.code === cleanId);
+
+    if (!client) {
+      // También verificar si estaba como pendiente y removerlo
+      const initPending = (db.pendingActivations || []).length;
+      db.pendingActivations = (db.pendingActivations || []).filter(p => 
+        (p.code || '').toUpperCase() !== cleanId.toUpperCase() && 
+        p.deviceId !== cleanId &&
+        p.clientId !== cleanId
+      );
+      if (db.pendingActivations.length < initPending) {
+        this._writeDb(db);
+        return true;
+      }
+      return false;
+    }
+
+    // Registrar en lista negra de eliminados definitivos
+    const devices = (client.devices || []).map(d => (d.deviceId || '').trim()).filter(Boolean);
+    db.revokedClients = db.revokedClients.filter(r => r.id !== client.id && r.code !== client.code);
+    db.revokedClients.push({
+      id: client.id,
+      code: client.code,
+      name: client.name,
+      deletedAt: new Date().toISOString(),
+      devices
+    });
+
+    // Eliminar completamente de la lista de clientes
+    db.clients = db.clients.filter(c => c.id !== client.id);
+
+    // Eliminar también de cualquier activación pendiente asociada
+    db.pendingActivations = (db.pendingActivations || []).filter(p => 
+      p.clientId !== client.id && 
+      p.code !== client.code && 
+      !devices.includes((p.deviceId || '').trim())
+    );
+
+    this._writeDb(db);
+    return true;
+  }
+
+  /**
+   * Elimina o descarta una pantalla pendiente de activación
+   */
+  deletePendingActivation(code) {
+    const db = this._readDb();
+    const cleanCode = (code || '').trim().toUpperCase();
+    const initLen = (db.pendingActivations || []).length;
+    db.pendingActivations = (db.pendingActivations || []).filter(p => (p.code || '').toUpperCase() !== cleanCode);
+    const deleted = db.pendingActivations.length < initLen;
     if (deleted) this._writeDb(db);
     return deleted;
+  }
+
+  /**
+   * Comprueba si un dispositivo, código o cliente está revocado por haber sido eliminado
+   */
+  isRevoked(deviceId, code, cid) {
+    const db = this._readDb();
+    if (!Array.isArray(db.revokedClients) || db.revokedClients.length === 0) return false;
+    const cleanDev = (deviceId || '').toString().trim();
+    const cleanCode = (code || '').toString().trim().toUpperCase();
+    const cleanCid = (cid || '').toString().trim();
+
+    return db.revokedClients.some(r => {
+      if (cleanCid && r.id === cleanCid) return true;
+      if (cleanCode && r.code && r.code.toUpperCase() === cleanCode) return true;
+      if (cleanDev && Array.isArray(r.devices) && r.devices.includes(cleanDev)) return true;
+      return false;
+    });
   }
 
   // -------------------------------------------------------------
@@ -903,16 +992,72 @@ class AccountService {
 
   deleteClientForReseller(resellerId, clientId) {
     const db = this._readDb();
-    const initialLen = db.clients.length;
-    db.clients = db.clients.filter(c => !(c.id === clientId && c.resellerId === resellerId));
-    const deleted = db.clients.length < initialLen;
-    if (deleted) this._writeDb(db);
-    return deleted;
+    if (!Array.isArray(db.revokedClients)) db.revokedClients = [];
+
+    const cleanId = String(clientId || '').trim();
+    const client = db.clients.find(c => (c.id === cleanId || c.code === cleanId) && c.resellerId === resellerId);
+    if (!client) return false;
+
+    const devices = (client.devices || []).map(d => (d.deviceId || '').trim()).filter(Boolean);
+    db.revokedClients = db.revokedClients.filter(r => r.id !== client.id && r.code !== client.code);
+    db.revokedClients.push({
+      id: client.id,
+      code: client.code,
+      name: client.name,
+      resellerId,
+      deletedAt: new Date().toISOString(),
+      devices
+    });
+
+    db.clients = db.clients.filter(c => c.id !== client.id);
+    db.pendingActivations = (db.pendingActivations || []).filter(p => p.clientId !== client.id && p.code !== client.code);
+
+    this._writeDb(db);
+    return true;
   }
 
   // -------------------------------------------------------------
   // FLUJO DE ACTIVACIÓN ULTRA-PERSISTENTE (SMART TV, MÓVIL Y IPHONE)
   // -------------------------------------------------------------
+
+  /**
+   * Genera un código de activación pendiente para un dispositivo nuevo o revocado
+   */
+  _generateFreshPendingActivation(db, cleanDeviceId, deviceModel) {
+    const now = new Date();
+    const normalize = (val) => (val || '').toString().trim();
+    if (!Array.isArray(db.pendingActivations)) db.pendingActivations = [];
+
+    // Limpiar códigos pendientes antiguos (> 48h)
+    db.pendingActivations = db.pendingActivations.filter(p => {
+      const age = now - new Date(p.createdAt || 0);
+      return age < 48 * 60 * 60 * 1000;
+    });
+
+    let pending = db.pendingActivations.find(p => normalize(p.deviceId) === cleanDeviceId && p.status === 'pending');
+    if (!pending) {
+      const randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+      pending = {
+        code: randomCode,
+        deviceId: cleanDeviceId,
+        deviceModel: deviceModel || 'Smart TV',
+        createdAt: now.toISOString(),
+        status: 'pending',
+        clientId: null
+      };
+      db.pendingActivations.push(pending);
+      this._writeDb(db);
+    }
+
+    const settings = db.settings || {};
+    return {
+      status: 'pending',
+      code: pending.code,
+      whatsappNumber: settings.whatsappNumber || '+51914598415',
+      whatsappMessage: settings.whatsappMessage || 'Hola, mi código de activación de TOM TV es {code}',
+      message: 'Pantalla pendiente de activación. Esperando aprobación del administrador.'
+    };
+  }
 
   /**
    * Registra un dispositivo solicitante. Si ya pertenece a un cliente activo,
@@ -926,67 +1071,57 @@ class AccountService {
     const cleanDeviceId = normalize(deviceId);
     const cleanCode = normalize(code).toUpperCase();
 
-    // 0. AUTO-RESTAURACIÓN POR TOKEN DE LICENCIA CRIPTOGRÁFICA (A PRUEBA DE REINICIOS DE RENDER)
+    // 0. VERIFICAR SI EL DISPOSITIVO O CLIENTE ESTÁ REVOCADO POR HABER SIDO ELIMINADO
+    let decodedToken = null;
     if (token) {
-      const decoded = this._verifyAndDecodeToken(token);
-      if (decoded && decoded.exp) {
-        const tokenExpires = new Date(decoded.exp);
-        if (tokenExpires > now) {
-          // El token es auténtico y no ha vencido
-          let targetClient = db.clients.find(c => c.id === decoded.cid || c.code === decoded.code);
-          if (!targetClient) {
-            // Auto-restaurar al cliente si fue borrado por reinicio de contenedor
-            targetClient = {
-              id: decoded.cid || crypto.randomUUID(),
-              name: decoded.name || 'Cliente Autorizado',
-              username: (decoded.name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
-              code: decoded.code || ('VJ-' + Math.floor(1000 + Math.random() * 9000)),
-              status: 'active',
-              planDays: Math.ceil((tokenExpires - now) / (1000 * 60 * 60 * 24)) || 30,
-              maxDevices: decoded.max || 1,
-              createdAt: now.toISOString(),
-              expiresAt: decoded.exp,
-              devices: [
-                {
-                  deviceId: cleanDeviceId,
-                  deviceModel,
-                  lastSeen: now.toISOString()
-                }
-              ]
-            };
-            db.clients.push(targetClient);
-            this._writeDb(db);
-          } else {
-            // Actualizar o vincular este dispositivo
-            if (!targetClient.devices) targetClient.devices = [];
-            const existingDev = targetClient.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
-            if (!existingDev) {
-              targetClient.devices.push({
-                deviceId: cleanDeviceId,
-                deviceModel,
-                lastSeen: now.toISOString()
-              });
-            } else {
-              existingDev.lastSeen = now.toISOString();
-              existingDev.deviceModel = deviceModel;
-            }
-            this._writeDb(db);
-          }
+      decodedToken = this._verifyAndDecodeToken(token);
+    }
 
-          if (targetClient.status !== 'suspended') {
-            return {
-              status: 'active',
-              client: {
-                id: targetClient.id,
-                name: targetClient.name,
-                username: targetClient.username,
-                code: targetClient.code,
-                expiresAt: targetClient.expiresAt,
-                maxDevices: targetClient.maxDevices
-              },
-              token: this._generateClientToken(targetClient, cleanDeviceId)
-            };
-          }
+    if (this.isRevoked(cleanDeviceId, cleanCode, decodedToken?.cid)) {
+      // Dispositivo o cliente eliminado definitivamente por el administrador.
+      // Queda en espera de nueva aprobación con un código pendiente.
+      return this._generateFreshPendingActivation(db, cleanDeviceId, deviceModel);
+    }
+
+    // 1. VALIDACIÓN POR TOKEN CRIPTOGRÁFICO DE LICENCIA
+    if (token && decodedToken && decodedToken.exp) {
+      const tokenExpires = new Date(decodedToken.exp);
+      if (tokenExpires > now) {
+        let targetClient = db.clients.find(c => c.id === decodedToken.cid || c.code === decodedToken.code);
+        if (!targetClient) {
+          // El cliente NO existe en la base de datos (fue eliminado por el administrador).
+          // NUNCA auto-restaurar. Debe quedar en espera de aprobación.
+          return this._generateFreshPendingActivation(db, cleanDeviceId, deviceModel);
+        }
+
+        // Cliente legítimo existente: actualizar dispositivo
+        if (!targetClient.devices) targetClient.devices = [];
+        const existingDev = targetClient.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
+        if (!existingDev) {
+          targetClient.devices.push({
+            deviceId: cleanDeviceId,
+            deviceModel,
+            lastSeen: now.toISOString()
+          });
+        } else {
+          existingDev.lastSeen = now.toISOString();
+          existingDev.deviceModel = deviceModel;
+        }
+        this._writeDb(db);
+
+        if (targetClient.status !== 'suspended') {
+          return {
+            status: 'active',
+            client: {
+              id: targetClient.id,
+              name: targetClient.name,
+              username: targetClient.username,
+              code: targetClient.code,
+              expiresAt: targetClient.expiresAt,
+              maxDevices: targetClient.maxDevices
+            },
+            token: this._generateClientToken(targetClient, cleanDeviceId)
+          };
         }
       }
     }
@@ -1273,6 +1408,14 @@ class AccountService {
       ]
     };
 
+    // Si este código o dispositivo estaba en la lista de revocados, liberarlo porque el admin lo acaba de aprobar
+    if (Array.isArray(db.revokedClients)) {
+      db.revokedClients = db.revokedClients.filter(r => 
+        (r.code || '').toUpperCase() !== pending.code.toUpperCase() &&
+        (!Array.isArray(r.devices) || !r.devices.includes((pending.deviceId || '').trim()))
+      );
+    }
+
     db.clients.push(newClient);
 
     // Marcar el código pendiente como activado
@@ -1390,7 +1533,21 @@ class AccountService {
     const now = new Date();
     const cleanDeviceId = (deviceId || '').trim();
 
-    // 0. Verificar si el dispositivo fue explícitamente expulsado por el administrador
+    // 0. Verificar si el dispositivo, código o token fue explícitamente revocado/eliminado
+    let decodedToken = null;
+    if (token) {
+      decodedToken = this._verifyAndDecodeToken(token);
+    }
+
+    if (this.isRevoked(cleanDeviceId, code, decodedToken?.cid)) {
+      return {
+        active: false,
+        reason: 'revoked',
+        message: 'Tu cuenta ha sido eliminada por el administrador. Requiere nueva aprobación.'
+      };
+    }
+
+    // 1. Verificar si el dispositivo fue desconectado individualmente
     for (const client of db.clients) {
       if (Array.isArray(client.revokedDevices) && client.revokedDevices.includes(cleanDeviceId)) {
         return {
@@ -1401,7 +1558,7 @@ class AccountService {
       }
     }
 
-    // 1. Búsqueda por deviceId registrado
+    // 2. Búsqueda por deviceId registrado
     for (const client of db.clients) {
       const dev = client.devices && client.devices.find(d => (d.deviceId || '').trim() === cleanDeviceId);
       if (dev) {
@@ -1430,54 +1587,38 @@ class AccountService {
       }
     }
 
-    // 2. Si no se encontró por deviceId pero hay token de licencia firmado (Auto-Sanación tras reinicios)
-    if (token) {
-      const decoded = this._verifyAndDecodeToken(token);
-      if (decoded && decoded.exp) {
-        const tokenExpires = new Date(decoded.exp);
-        if (tokenExpires > now) {
-          let client = db.clients.find(c => c.id === decoded.cid || c.code === decoded.code);
-          if (!client) {
-            client = {
-              id: decoded.cid || crypto.randomUUID(),
-              name: decoded.name || 'Cliente Autorizado',
-              username: (decoded.name || 'cliente').toLowerCase().replace(/\s+/g, '_'),
-              code: decoded.code || ('VJ-' + Math.floor(1000 + Math.random() * 9000)),
-              status: 'active',
-              planDays: 30,
-              maxDevices: decoded.max || 1,
-              createdAt: now.toISOString(),
-              expiresAt: decoded.exp,
-              devices: [
-                {
-                  deviceId: cleanDeviceId,
-                  deviceModel: 'Dispositivo Vinculado',
-                  lastSeen: now.toISOString()
-                }
-              ]
-            };
-            db.clients.push(client);
-          } else {
-            if (!client.devices) client.devices = [];
-            if (!client.devices.some(d => (d.deviceId || '').trim() === cleanDeviceId)) {
-              client.devices.push({
-                deviceId: cleanDeviceId,
-                deviceModel: 'Dispositivo Vinculado',
-                lastSeen: now.toISOString()
-              });
-            }
-          }
-          this._writeDb(db);
-
+    // 3. Validación por token criptográfico firmado (solo para clientes legítimos existentes)
+    if (token && decodedToken && decodedToken.exp) {
+      const tokenExpires = new Date(decodedToken.exp);
+      if (tokenExpires > now) {
+        let client = db.clients.find(c => c.id === decodedToken.cid || c.code === decodedToken.code);
+        if (!client) {
+          // El cliente fue eliminado por el administrador. NUNCA auto-restaurar.
           return {
-            active: true,
-            client: {
-              name: client.name,
-              expiresAt: client.expiresAt,
-              maxDevices: client.maxDevices
-            }
+            active: false,
+            reason: 'deleted',
+            message: 'Tu cuenta ha sido eliminada del sistema. Requiere nueva autorización del administrador.'
           };
         }
+
+        if (!client.devices) client.devices = [];
+        if (!client.devices.some(d => (d.deviceId || '').trim() === cleanDeviceId)) {
+          client.devices.push({
+            deviceId: cleanDeviceId,
+            deviceModel: 'Dispositivo Vinculado',
+            lastSeen: now.toISOString()
+          });
+        }
+        this._writeDb(db);
+
+        return {
+          active: true,
+          client: {
+            name: client.name,
+            expiresAt: client.expiresAt,
+            maxDevices: client.maxDevices
+          }
+        };
       }
     }
 
@@ -1546,6 +1687,11 @@ class AccountService {
     }
     const db = this._readDb();
     const clean = String(codeOrUser).trim().toUpperCase();
+
+    if (this.isRevoked(null, clean, clean)) {
+      return { valid: false, reason: 'Cuenta eliminada por el administrador' };
+    }
+
     const client = (db.clients || []).find(c =>
       (c.code && c.code.toUpperCase() === clean) ||
       (c.username && c.username.toUpperCase() === clean) ||

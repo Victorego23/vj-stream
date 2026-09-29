@@ -30,5 +30,16 @@
   ],
   "pendingActivations": [],
   "resellers": [],
-  "usedDemos": []
+  "usedDemos": [],
+  "revokedClients": [
+    {
+      "id": "ab8d4e1c-e55c-4287-b467-ea04fae9a0b2",
+      "code": "VJ-1757",
+      "name": "Cliente Re-Aprobado",
+      "deletedAt": "2026-09-29T21:29:24.313Z",
+      "devices": [
+        "dev-test-xyz"
+      ]
+    }
+  ]
 }

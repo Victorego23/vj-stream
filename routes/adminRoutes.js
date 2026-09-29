@@ -202,16 +202,48 @@ router.post('/reset-devices', handleResetDevices);
 
 /**
  * @route   DELETE /api/admin/clients/:id
- * @desc    Elimina un cliente definitivamente
+ * @route   POST /api/admin/clients/:id/delete
+ * @route   POST /api/admin/delete-client
+ * @desc    Elimina un cliente definitivamente y revoca sus dispositivos hasta nueva aprobación
  */
-router.delete('/clients/:id', (req, res) => {
-  const deleted = accountService.deleteClient(req.params.id);
-  if (!deleted) {
-    return res.status(404).json({ success: false, error: 'Cliente no encontrado.' });
+const handleDeleteClient = (req, res) => {
+  const clientId = req.params.id || req.body.clientId || req.body.id;
+  if (!clientId) {
+    return res.status(400).json({ success: false, error: 'ID o código de cliente requerido.' });
   }
 
-  return res.json({ success: true, message: 'Cliente eliminado correctamente.' });
-});
+  const deleted = accountService.deleteClient(clientId);
+  if (!deleted) {
+    return res.status(404).json({ success: false, error: 'Cliente no encontrado o ya eliminado.' });
+  }
+
+  return res.json({ 
+    success: true, 
+    message: 'Cliente eliminado definitivamente. Sus dispositivos han sido revocados hasta que lo apruebes otra vez.' 
+  });
+};
+
+router.delete('/clients/:id', handleDeleteClient);
+router.post('/clients/:id/delete', handleDeleteClient);
+router.post('/delete-client', handleDeleteClient);
+
+/**
+ * @route   DELETE /api/admin/pending/:code
+ * @route   POST /api/admin/reject-pending
+ * @desc    Descarta / rechaza una pantalla pendiente de activación
+ */
+const handleRejectPending = (req, res) => {
+  const code = req.params.code || req.body.code;
+  if (!code) {
+    return res.status(400).json({ success: false, error: 'Código requerido.' });
+  }
+
+  const deleted = accountService.deletePendingActivation(code);
+  return res.json({ success: true, deleted, message: 'Pantalla pendiente descartada correctamente.' });
+};
+
+router.delete('/pending/:code', handleRejectPending);
+router.post('/reject-pending', handleRejectPending);
 
 /**
  * @route   POST /api/admin/settings

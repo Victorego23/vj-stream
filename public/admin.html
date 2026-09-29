@@ -1522,9 +1522,29 @@
             <span style="font-size: 11px; color: var(--warning);">${item.minutesAgo}</span>
           </div>
           <div class="code-display">${item.code}</div>
-          <button class="btn btn-primary btn-sm" onclick="openActivateModal('${item.code}')">⚡ Activar Pantalla</button>
+          <div style="display: flex; gap: 8px; margin-top: 6px;">
+            <button class="btn btn-primary btn-sm" style="flex: 1;" onclick="openActivateModal('${item.code}')">⚡ Activar Pantalla</button>
+            <button class="btn btn-danger btn-sm" title="Descartar solicitud" onclick="rejectPending('${item.code}')">✕</button>
+          </div>
         </div>
       `).join('');
+    }
+
+    async function rejectPending(code) {
+      if (!confirm(`¿Deseas descartar la solicitud de la pantalla ${code}?`)) return;
+      try {
+        const res = await fetch(`/api/admin/pending/${encodeURIComponent(code)}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Pantalla descartada', 'info');
+          fetchOverview();
+        }
+      } catch (_) {
+        showToast('Error al descartar.', 'error');
+      }
     }
 
     function setClientFilter(filter, el) {
@@ -1862,7 +1882,7 @@
     }
 
     async function deleteClient(clientId) {
-      if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este cliente?')) return;
+      if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este cliente?\n\n⚠️ Sus pantallas y dispositivos quedarán revocados de inmediato y no podrán usar el servicio hasta que decidas aprobarlos otra vez.')) return;
       try {
         const res = await fetch(`/api/admin/clients/${clientId}`, {
           method: 'DELETE',
@@ -1870,8 +1890,10 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Cliente eliminado del sistema', 'info');
+          showToast(data.message || 'Cliente eliminado y dispositivos revocados.', 'info');
           fetchOverview();
+        } else {
+          showToast(data.error || 'Error al eliminar cliente.', 'error');
         }
       } catch (err) {
         showToast('Error al eliminar.', 'error');
