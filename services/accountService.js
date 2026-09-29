@@ -1331,6 +1331,40 @@ class AccountService {
       message: `Copia de seguridad restaurada con éxito. ${currentDb.clients.length} clientes activos en el sistema.`
     };
   }
+
+  /**
+   * Valida acceso de un cliente mediante código de activación o username para listas M3U (IBO Player, Smart TV)
+   */
+  validateClientAccess(codeOrUser) {
+    if (!codeOrUser) {
+      return { valid: false, reason: 'Código o usuario no proporcionado' };
+    }
+    const db = this._readDb();
+    const clean = String(codeOrUser).trim().toUpperCase();
+    const client = (db.clients || []).find(c =>
+      (c.code && c.code.toUpperCase() === clean) ||
+      (c.username && c.username.toUpperCase() === clean) ||
+      (c.id && c.id.toUpperCase() === clean)
+    );
+
+    if (!client) {
+      return { valid: false, reason: 'Cuenta no encontrada o código no registrado' };
+    }
+
+    if (client.status === 'suspended') {
+      return { valid: false, reason: 'Cuenta suspendida por el administrador' };
+    }
+
+    const now = new Date();
+    if (client.expiresAt) {
+      const exp = new Date(client.expiresAt);
+      if (exp < now) {
+        return { valid: false, reason: 'Suscripción vencida el ' + exp.toLocaleDateString(), expiresAt: client.expiresAt };
+      }
+    }
+
+    return { valid: true, client };
+  }
 }
 
 module.exports = new AccountService();

@@ -4,6 +4,7 @@ const realDebridService = require('../services/realDebridService');
 const tmdbService = require('../services/tmdbService');
 const streamResolverService = require('../services/streamResolverService');
 const channelService = require('../services/channelService');
+const accountService = require('../services/accountService');
 const hmacSecurityMiddleware = require('../middlewares/hmacSecurityMiddleware');
 
 // Blindaje de seguridad: Solo la app oficial VJ STREAM puede acceder a los servicios
@@ -524,6 +525,126 @@ router.get('/channels', getChannelsHandler);
 router.get('/live-channels', getChannelsHandler);
 
 /**
+ * @route   GET /api/streaming/playlist.m3u
+ * @route   GET /api/streaming/m3u
+ * @desc    Genera la lista M3U oficial de TOM TV para Smart TVs (LG webOS con IBO Player, IPTV Smarters, etc.)
+ * @query   code | user | username {string} - Código de activación o username del cliente
+ */
+const getM3uPlaylistHandler = async (req, res) => {
+  const { code, user, username, token } = req.query;
+  const access = accountService.validateClientAccess(code || user || username || token);
+
+  res.setHeader('Content-Type', 'application/x-mpegurl; charset=utf-8');
+  res.setHeader('Content-Disposition', 'inline; filename="tomtv.m3u"');
+
+  if (!access.valid) {
+    const errorMsg = access.reason || 'Acceso no autorizado';
+    return res.send(
+      `#EXTM3U name="TOM TV - AVISO"\n` +
+      `#EXTINF:-1 tvg-id="aviso" tvg-name="⚠️ ${errorMsg}" group-title="ESTADO CUENTA",⚠️ ${errorMsg}\n` +
+      `https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8\n`
+    );
+  }
+
+  const proto = req.get('x-forwarded-proto') || req.protocol || 'http';
+  const host = req.get('host');
+  const baseUrl = `${proto}://${host}`;
+
+  const channels = channelService.getChannels();
+  let m3u = `#EXTM3U name="TOM TV (${access.client.name})"\n`;
+
+  // 1. Canales de televisión en vivo (1,338 canales)
+  for (const c of channels) {
+    const name = (c.name || 'Canal').replace(/,/g, ' ');
+    const logo = c.logoUrl || '';
+    const group = c.category || 'General';
+    const stream = c.streamUrl || (Array.isArray(c.sources) && c.sources[0]) || '';
+    if (stream) {
+      m3u += `#EXTINF:-1 tvg-id="${c.id || ''}" tvg-name="${name}" tvg-logo="${logo}" group-title="${group}",${name}\n${stream}\n`;
+    }
+  }
+
+  // 2. Películas VOD organizadas por categorías de estreno
+  try {
+    const catalog = await tmdbService.getFullCatalog();
+    const categoriesMap = [
+      { key: 'nowPlaying', label: 'Películas: Estrenos de Cine' },
+      { key: 'trending', label: 'Películas: Tendencias' },
+      { key: 'action', label: 'Películas: Acción' },
+      { key: 'comedy', label: 'Películas: Comedia' },
+      { key: 'horror', label: 'Películas: Terror' },
+      { key: 'animation', label: 'Películas: Animación' },
+      { key: 'scifi', label: 'Películas: Ciencia Ficción' }
+    ];
+
+    const seenMovieIds = new Set();
+    const clientCode = encodeURIComponent(access.client.code || access.client.username);
+
+    for (const cat of categoriesMap) {
+      const items = catalog[cat.key];
+      if (Array.isArray(items)) {
+        for (const item of items) {
+          if (!item.id || seenMovieIds.has(item.id)) continue;
+          seenMovieIds.add(item.id);
+
+          const title = (item.title || 'Película').replace(/,/g, ' ');
+          const logo = item.posterLarge || item.posterMedium || '';
+          const streamUrl = `${baseUrl}/api/streaming/vod/movie/${item.id}?code=${clientCode}`;
+
+          m3u += `#EXTINF:-1 tvg-id="movie-${item.id}" tvg-name="${title}" tvg-logo="${logo}" group-title="${cat.label}",${title}\n${streamUrl}\n`;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[M3U] Error al cargar películas VOD para M3U:', err.message);
+  }
+
+  return res.send(m3u);
+};
+
+router.get('/playlist.m3u', getM3uPlaylistHandler);
+router.get('/m3u', getM3uPlaylistHandler);
+router.get('/get.php', getM3uPlaylistHandler);
+
+/**
+ * @route   GET /api/streaming/vod/movie/:id
+ * @desc    Resuelve y redirige al stream bajo demanda para IBO Player / Smart TV
+ */
+router.get('/vod/movie/:id', async (req, res) => {
+  const { code, user, username, token } = req.query;
+  const access = accountService.validateClientAccess(code || user || username || token);
+
+  if (!access.valid) {
+    return res.status(403).send(`Acceso no autorizado: ${access.reason}`);
+  }
+
+  try {
+    const movieId = req.params.id;
+    const details = await tmdbService.getMovieDetails(movieId);
+    if (!details || !details.title) {
+      return res.status(404).send('Película no encontrada en TMDB');
+    }
+
+    const streamData = await streamResolverService.resolveBestStream({
+      title: details.title,
+      originalTitle: details.originalTitle || details.original_title,
+      year: details.releaseYear || (details.releaseDate ? details.releaseDate.split('-')[0] : ''),
+      mediaType: 'movie',
+      id: movieId
+    });
+
+    if (streamData && streamData.streamUrl) {
+      return res.redirect(302, streamData.streamUrl);
+    }
+
+    return res.status(404).send('No se encontró una transmisión en español disponible.');
+  } catch (err) {
+    console.error('[VOD Stream Movie] Error:', err.message);
+    return res.status(500).send('Error al procesar película: ' + err.message);
+  }
+});
+
+/**
  * @route   GET /api/streaming/version
  * @desc    Devuelve los metadatos de la última versión y notas de la versión para OTA
  */
@@ -531,17 +652,15 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.1.0',
-    versionCode: 21,
+    latestVersion: '3.2.0',
+    versionCode: 22,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-09-28',
     releaseNotes: [
-      '📺 ¡Experiencia Smart TV Optimizada en TV en Vivo!',
-      '🎮 Navegación fluida por Control Remoto (D-Pad) con enfoque visual ampliado, borde iluminado y auto-scroll',
-      '🚫 Eliminada la barra de búsqueda en TV para evitar que se abra el teclado en pantalla y dar mayor visibilidad',
-      '🗂️ Menú lateral de categorías con acceso rápido a Favoritos y canales Recientes',
-      '🔢 Numeración de canales visible (#01, #02...) y panel de vista previa superior con logos HD y país',
-      '⭐ Acceso instantáneo a Favoritos manteniendo pulsado el botón OK del control remoto'
+      '📺 ¡Soporte Oficial para Android TV y Google TV! Ya aparece en la pantalla principal de la TV.',
+      '🎮 Control Remoto fluido (D-Pad): solucionado el problema donde el cursor se perdía o se quedaba atascado en una fila.',
+      '✨ Enfoque visual de alto contraste con auto-scroll dual para no perder el lugar donde estás.',
+      '🔥 Soporte D-Pad completo en Continuar Viendo, pestañas superiores, detalles y lista de capítulos.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: true

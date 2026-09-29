@@ -46,10 +46,22 @@ class _DetailViewState extends State<DetailView> {
     if (widget.item.mediaType == 'tv') {
       _loadEpisodes(1);
     }
+    _playButtonFocus.addListener(_handlePlayFocus);
     // Autoenfocar el botón de reproducir en Smart TV
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playButtonFocus.requestFocus();
     });
+  }
+
+  void _handlePlayFocus() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _playButtonFocus.removeListener(_handlePlayFocus);
+    _playButtonFocus.dispose();
+    super.dispose();
   }
 
   Future<void> _checkFavorite() async {
@@ -816,6 +828,13 @@ class _DetailViewState extends State<DetailView> {
             }
             return KeyEventResult.handled;
           }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
@@ -842,7 +861,7 @@ class _DetailViewState extends State<DetailView> {
               color: _playButtonFocus.hasFocus
                   ? (_isTrailerOnly ? Colors.amberAccent : Colors.white)
                   : Colors.transparent,
-              width: 2,
+              width: 2.5,
             ),
             boxShadow: [
               BoxShadow(
@@ -886,68 +905,28 @@ class _DetailViewState extends State<DetailView> {
           children: [
             // Botón Mi Lista
             Expanded(
-              child: OutlinedButton.icon(
+              child: _TvDetailActionButton(
                 onPressed: _toggleFavorite,
-                icon: Icon(
-                  _isFavorite ? Icons.check_circle_rounded : Icons.add_rounded,
-                  color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
-                  size: 20,
-                ),
-                label: Text(
-                  _isFavorite ? 'En Mi Lista' : 'Mi Lista',
-                  style: TextStyle(
-                    color: _isFavorite ? const Color(0xFF22C55E) : Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(
-                    color: _isFavorite ? const Color(0xFF22C55E) : const Color(0xFF333333),
-                    width: 1.5,
-                  ),
-                  backgroundColor: const Color(0xFF141414),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
+                icon: _isFavorite ? Icons.check_circle_rounded : Icons.add_rounded,
+                label: _isFavorite ? 'En Mi Lista' : 'Mi Lista',
+                activeColor: const Color(0xFF22C55E),
+                isActive: _isFavorite,
               ),
             ),
             const SizedBox(width: 12),
             // Si está en modo tráiler: Botón "Avisarme cuando esté en español"
             // Si está completa: Botón "Tráiler"
             Expanded(
-              child: OutlinedButton.icon(
+              child: _TvDetailActionButton(
                 onPressed: _isTrailerOnly ? _toggleReminder : _playTrailer,
-                icon: Icon(
-                  _isTrailerOnly
-                      ? (_hasReminder ? Icons.notifications_active_rounded : Icons.notification_add_rounded)
-                      : Icons.movie_creation_outlined,
-                  color: _isTrailerOnly
-                      ? (_hasReminder ? const Color(0xFFF59E0B) : Colors.white)
-                      : Colors.white,
-                  size: 20,
-                ),
-                label: Text(
-                  _isTrailerOnly
-                      ? (_hasReminder ? 'Te avisaremos' : 'Avisarme (ESP)')
-                      : 'Tráiler',
-                  style: TextStyle(
-                    color: _isTrailerOnly
-                        ? (_hasReminder ? const Color(0xFFF59E0B) : Colors.white)
-                        : Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: BorderSide(
-                    color: _isTrailerOnly && _hasReminder
-                        ? const Color(0xFFF59E0B)
-                        : const Color(0xFF333333),
-                    width: 1.5,
-                  ),
-                  backgroundColor: const Color(0xFF141414),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                ),
+                icon: _isTrailerOnly
+                    ? (_hasReminder ? Icons.notifications_active_rounded : Icons.notification_add_rounded)
+                    : Icons.movie_creation_outlined,
+                label: _isTrailerOnly
+                    ? (_hasReminder ? 'Te avisaremos' : 'Avisarme (ESP)')
+                    : 'Tráiler',
+                activeColor: const Color(0xFFF59E0B),
+                isActive: _isTrailerOnly && _hasReminder,
               ),
             ),
           ],
@@ -1097,7 +1076,12 @@ class _DetailViewState extends State<DetailView> {
               final runtime = ep['runtime'];
               final stillUrl = stillPath != null ? 'https://image.tmdb.org/t/p/w300$stillPath' : null;
 
-              return InkWell(
+              return _TvEpisodeCard(
+                epNum: epNum,
+                epName: epName,
+                overview: overview,
+                runtime: runtime is int ? runtime : null,
+                stillUrl: stillUrl,
                 onTap: () {
                   _startPlayback(
                     season: _selectedSeason,
@@ -1105,97 +1089,6 @@ class _DetailViewState extends State<DetailView> {
                     episodeTitle: 'T$_selectedSeason:E$epNum - $epName',
                   );
                 },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF141414),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF222222)),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Miniatura del episodio
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          width: 110,
-                          height: 65,
-                          color: const Color(0xFF222222),
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              if (stillUrl != null)
-                                Image.network(
-                                  stillUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => const Center(
-                                    child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
-                                  ),
-                                )
-                              else
-                                const Center(
-                                  child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
-                                ),
-                              Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.6),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Datos del episodio
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$epNum. $epName',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            if (runtime != null)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Text(
-                                  '$runtime min',
-                                  style: const TextStyle(color: Colors.white38, fontSize: 11),
-                                ),
-                              ),
-                            if (overview.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  overview,
-                                  style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 12,
-                                    height: 1.3,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
           ),
@@ -1237,6 +1130,325 @@ class _DetailViewState extends State<DetailView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Botón de acción secundaria con enfoque nítido para Smart TV
+class _TvDetailActionButton extends StatefulWidget {
+  final VoidCallback onPressed;
+  final IconData icon;
+  final String label;
+  final Color activeColor;
+  final bool isActive;
+
+  const _TvDetailActionButton({
+    required this.onPressed,
+    required this.icon,
+    required this.label,
+    required this.activeColor,
+    this.isActive = false,
+  });
+
+  @override
+  State<_TvDetailActionButton> createState() => _TvDetailActionButtonState();
+}
+
+class _TvDetailActionButtonState extends State<_TvDetailActionButton> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onPressed();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            final moved = node.focusInDirection(TraversalDirection.up);
+            if (!moved) {
+              node.previousFocus();
+            }
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () {
+          _focusNode.requestFocus();
+          widget.onPressed();
+        },
+        child: AnimatedScale(
+          scale: _isFocused ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: _isFocused ? const Color(0xFF262626) : const Color(0xFF141414),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: _isFocused ? Colors.white : (widget.isActive ? widget.activeColor : const Color(0xFF333333)),
+                width: _isFocused ? 2.5 : 1.5,
+              ),
+              boxShadow: _isFocused
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  widget.icon,
+                  color: widget.isActive ? widget.activeColor : Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    color: widget.isActive ? widget.activeColor : Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta de episodio con soporte completo para control remoto D-Pad
+class _TvEpisodeCard extends StatefulWidget {
+  final int epNum;
+  final String epName;
+  final String overview;
+  final int? runtime;
+  final String? stillUrl;
+  final VoidCallback onTap;
+
+  const _TvEpisodeCard({
+    required this.epNum,
+    required this.epName,
+    required this.overview,
+    this.runtime,
+    this.stillUrl,
+    required this.onTap,
+  });
+
+  @override
+  State<_TvEpisodeCard> createState() => _TvEpisodeCardState();
+}
+
+class _TvEpisodeCardState extends State<_TvEpisodeCard> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
+      if (_focusNode.hasFocus) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.4,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            final moved = node.focusInDirection(TraversalDirection.up);
+            if (!moved) {
+              node.previousFocus();
+            }
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () {
+          _focusNode.requestFocus();
+          widget.onTap();
+        },
+        child: AnimatedScale(
+          scale: _isFocused ? 1.02 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _isFocused ? const Color(0xFF1E1E1E) : const Color(0xFF141414),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isFocused ? const Color(0xFFE50914) : const Color(0xFF222222),
+                width: _isFocused ? 2.5 : 1,
+              ),
+              boxShadow: _isFocused
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.45),
+                        blurRadius: 12,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Miniatura del episodio
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 110,
+                    height: 65,
+                    color: const Color(0xFF222222),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (widget.stillUrl != null)
+                          Image.network(
+                            widget.stillUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
+                            ),
+                          )
+                        else
+                          const Center(
+                            child: Icon(Icons.movie_rounded, color: Colors.white24, size: 28),
+                          ),
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: _isFocused
+                                  ? const Color(0xFFE50914)
+                                  : Colors.black.withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Datos del episodio
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${widget.epNum}. ${widget.epName}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: _isFocused ? FontWeight.bold : FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.runtime != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '${widget.runtime} min',
+                            style: const TextStyle(color: Colors.white38, fontSize: 11),
+                          ),
+                        ),
+                      if (widget.overview.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            widget.overview,
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

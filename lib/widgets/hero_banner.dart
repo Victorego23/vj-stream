@@ -317,6 +317,13 @@ class _TvHeroButtonState extends State<_TvHeroButton> {
             widget.onPressed();
             return KeyEventResult.handled;
           }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },

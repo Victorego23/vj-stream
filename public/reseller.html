@@ -639,6 +639,7 @@
             <td style="text-align: right;">
               <div style="display: flex; gap: 6px; justify-content: flex-end;">
                 <button class="btn btn-whatsapp btn-sm" onclick="sendClientWhatsApp('${c.id}')" title="Enviar código por WhatsApp">📲 WhatsApp</button>
+                <button class="btn btn-secondary btn-sm" style="border-color: #38BDF8; color: #38BDF8;" onclick="copyResellerLgLink('${c.code}')" title="Copiar Link para Smart TV LG / IBO Player">📺 Link LG</button>
                 <button class="btn btn-secondary btn-sm" onclick="openRenewModal('${c.id}')" title="Renovar cliente">🔄 Renovar</button>
                 <button class="btn btn-danger btn-sm" onclick="deleteResellerClient('${c.id}')" title="Eliminar cliente">🗑️</button>
               </div>
@@ -646,6 +647,11 @@
           </tr>
         `;
       }).join('');
+    function copyResellerLgLink(code) {
+      const link = `${window.location.origin}/playlist.m3u?code=${encodeURIComponent(code)}`;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast(`¡Enlace para LG (IBO Player) copiado!: ${link}`, 'success');
+      });
     }
 
     function openRechargeWhatsApp() {

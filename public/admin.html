@@ -1128,6 +1128,7 @@
                 <button class="btn btn-whatsapp btn-sm" title="Enviar enlace de activación rápida por WhatsApp" onclick="sendWhatsAppQuickLink('${c.id}')">📲 WhatsApp</button>
                 <button class="btn btn-secondary btn-sm" title="Copiar ficha de bienvenida completa para compartir" onclick="copyFullClientCard('${c.id}')">📋 Ficha</button>
                 <button class="btn btn-secondary btn-sm" title="Copiar enlace directo de activación instantánea" onclick="copyClientActivationLink('${c.code}')">🔗 Link</button>
+                <button class="btn btn-secondary btn-sm" style="border-color: #38BDF8; color: #38BDF8;" title="Copiar URL M3U para Smart TV LG / IBO Player" onclick="copyLgPlaylistLink('${c.code}')">📺 Link LG</button>
                 <button class="btn btn-success btn-sm" title="${c.isDemo ? 'Convertir a Cliente Oficial (+30 días)' : 'Renovar +30 Días'}" onclick="renewClient('${c.id}', 30)">+30d</button>
                 <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
                 <button class="btn btn-secondary btn-sm" title="Desvincular dispositivos para permitir registrar una nueva TV o móvil" onclick="resetDevices('${c.id}')">📺 Reset (${c.deviceCount || 0})</button>
@@ -1277,6 +1278,13 @@
       const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(code)}`;
       navigator.clipboard.writeText(link).then(() => {
         showToast('¡Enlace de activación copiado al portapapeles!', 'success');
+      });
+    }
+
+    function copyLgPlaylistLink(code) {
+      const link = `${getBaseAppUrl()}/playlist.m3u?code=${encodeURIComponent(code)}`;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast(`¡Enlace para LG (IBO Player) copiado!: ${link}`, 'success');
       });
     }
 

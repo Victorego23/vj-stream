@@ -1190,13 +1190,14 @@ class _HomeViewState extends State<HomeView> {
     ];
 
     return Container(
-      height: 42,
+      height: 44,
       margin: EdgeInsets.symmetric(
         horizontal: isTv ? 48 : 16,
         vertical: 8,
       ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        cacheExtent: 500,
         itemCount: tabs.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -1206,34 +1207,11 @@ class _HomeViewState extends State<HomeView> {
           final icon = tab['icon'] as IconData;
           final isSelected = _activeTab == id;
 
-          return ChoiceChip(
-            showCheckmark: false,
-            avatar: Icon(
-              icon,
-              size: 16,
-              color: isSelected ? Colors.white : Colors.white60,
-            ),
-            label: Text(label),
-            selected: isSelected,
-            selectedColor: const Color(0xFFE50914),
-            backgroundColor: const Color(0xFF141414),
-            labelStyle: TextStyle(
-              color: isSelected ? Colors.white : Colors.white70,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              fontSize: 13,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(
-                color: isSelected ? const Color(0xFFE50914) : const Color(0xFF262626),
-                width: 1.2,
-              ),
-            ),
-            onSelected: (selected) {
-              if (selected) {
-                setState(() => _activeTab = id);
-              }
-            },
+          return _TvTabChip(
+            label: label,
+            icon: icon,
+            isSelected: isSelected,
+            onSelected: () => setState(() => _activeTab = id),
           );
         },
       ),
@@ -1275,142 +1253,26 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
           SizedBox(
-            height: isTv ? 175 : 160,
+            height: isTv ? 180 : 165,
             child: ListView.separated(
               padding: EdgeInsets.symmetric(horizontal: isTv ? 48.0 : 20.0),
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
+              cacheExtent: 600,
               itemCount: filtered.length,
               separatorBuilder: (_, __) => const SizedBox(width: 14),
               itemBuilder: (context, index) {
                 final item = filtered[index];
                 final cardWidth = isTv ? 240.0 : 210.0;
-                final image = item.backdropUrl.isNotEmpty ? item.backdropUrl : item.posterUrl;
 
-                return InkWell(
+                return _TvContinueWatchingCard(
+                  item: item,
+                  width: cardWidth,
                   onTap: () => _resumePlayback(item),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    width: cardWidth,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF141414),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF262626)),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              if (image.isNotEmpty)
-                                Image.network(
-                                  image,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: const Color(0xFF222222),
-                                    child: const Center(
-                                      child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
-                                    ),
-                                  ),
-                                )
-                              else
-                                Container(
-                                  color: const Color(0xFF222222),
-                                  child: const Center(
-                                    child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
-                                  ),
-                                ),
-                              Container(
-                                decoration: const BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [Colors.transparent, Color(0xB3000000)],
-                                  ),
-                                ),
-                              ),
-                              Center(
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.65),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white38),
-                                  ),
-                                  child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
-                                ),
-                              ),
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    await PlaybackHistoryService.removeFromHistory(item.id);
-                                    _loadHistoryAndFavorites();
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withValues(alpha: 0.7),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(Icons.close_rounded, color: Colors.white70, size: 14),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                child: LinearProgressIndicator(
-                                  value: item.progressPercentage,
-                                  minHeight: 4,
-                                  backgroundColor: const Color(0x66333333),
-                                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.season != null
-                                          ? '${item.title} (T${item.season}:E${item.episode})'
-                                          : item.title,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      item.formattedProgress,
-                                      style: const TextStyle(color: Colors.white54, fontSize: 10),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.replay_rounded, color: Colors.white54, size: 16),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  onRemove: () async {
+                    await PlaybackHistoryService.removeFromHistory(item.id);
+                    _loadHistoryAndFavorites();
+                  },
                 );
               },
             ),
@@ -1807,4 +1669,365 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 }
+
+/// Chip de pestaña con enfoque y navegación D-Pad para Smart TV
+class _TvTabChip extends StatefulWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onSelected;
+
+  const _TvTabChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onSelected,
+  });
+
+  @override
+  State<_TvTabChip> createState() => _TvTabChipState();
+}
+
+class _TvTabChipState extends State<_TvTabChip> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
+      if (_focusNode.hasFocus) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onSelected();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () {
+          _focusNode.requestFocus();
+          widget.onSelected();
+        },
+        child: AnimatedScale(
+          scale: _isFocused ? 1.08 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? const Color(0xFFE50914)
+                  : (_isFocused ? const Color(0xFF2A2A2A) : const Color(0xFF141414)),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: _isFocused
+                    ? Colors.white
+                    : (widget.isSelected ? const Color(0xFFE50914) : const Color(0xFF262626)),
+                width: _isFocused ? 2 : 1.2,
+              ),
+              boxShadow: _isFocused
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.6),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      )
+                    ]
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.icon,
+                  size: 16,
+                  color: widget.isSelected || _isFocused ? Colors.white : Colors.white60,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    color: widget.isSelected || _isFocused ? Colors.white : Colors.white70,
+                    fontWeight: widget.isSelected || _isFocused ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta de historial "Continuar Viendo" con soporte completo para control remoto de TV
+class _TvContinueWatchingCard extends StatefulWidget {
+  final WatchHistoryItem item;
+  final double width;
+  final VoidCallback onTap;
+  final VoidCallback onRemove;
+
+  const _TvContinueWatchingCard({
+    required this.item,
+    required this.width,
+    required this.onTap,
+    required this.onRemove,
+  });
+
+  @override
+  State<_TvContinueWatchingCard> createState() => _TvContinueWatchingCardState();
+}
+
+class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
+      if (_focusNode.hasFocus) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.5,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+        );
+        final inner = Scrollable.maybeOf(context);
+        if (inner != null) {
+          final outer = Scrollable.maybeOf(inner.context);
+          if (outer != null) {
+            Scrollable.ensureVisible(
+              inner.context,
+              alignment: 0.35,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+            );
+          }
+        }
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final image = widget.item.backdropUrl.isNotEmpty ? widget.item.backdropUrl : widget.item.posterUrl;
+
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.space) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            final moved = node.focusInDirection(TraversalDirection.up);
+            if (!moved) {
+              node.previousFocus();
+            }
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: () {
+          _focusNode.requestFocus();
+          widget.onTap();
+        },
+        child: AnimatedScale(
+          scale: _isFocused ? 1.06 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            width: widget.width,
+            decoration: BoxDecoration(
+              color: const Color(0xFF141414),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isFocused ? const Color(0xFFE50914) : const Color(0xFF262626),
+                width: _isFocused ? 3 : 1,
+              ),
+              boxShadow: _isFocused
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.5),
+                        blurRadius: 16,
+                        spreadRadius: 2,
+                      )
+                    ]
+                  : null,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (image.isNotEmpty)
+                        Image.network(
+                          image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: const Color(0xFF222222),
+                            child: const Center(
+                              child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          color: const Color(0xFF222222),
+                          child: const Center(
+                            child: Icon(Icons.movie_rounded, color: Colors.white24, size: 36),
+                          ),
+                        ),
+                      Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Color(0xB3000000)],
+                          ),
+                        ),
+                      ),
+                      Center(
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: _isFocused
+                                ? const Color(0xFFE50914)
+                                : Colors.black.withValues(alpha: 0.65),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white),
+                          ),
+                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: widget.onRemove,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.7),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close_rounded, color: Colors.white70, size: 14),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        child: LinearProgressIndicator(
+                          value: widget.item.progressPercentage,
+                          minHeight: 4,
+                          backgroundColor: const Color(0x66333333),
+                          valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.item.season != null
+                                  ? '${widget.item.title} (T${widget.item.season}:E${widget.item.episode})'
+                                  : widget.item.title,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: _isFocused ? FontWeight.bold : FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.item.formattedProgress,
+                              style: const TextStyle(color: Colors.white54, fontSize: 10),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.replay_rounded, color: Colors.white54, size: 16),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 

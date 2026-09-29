@@ -14,10 +14,10 @@ function hmacSecurityMiddleware(req, res, next) {
     return next();
   }
 
-  // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, health check, etc.)
+  // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, playlist M3U para IBO Player, etc.)
   const path = req.path || '';
-  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels', '/movies/years', '/genres'];
-  const isPublic = publicEndpoints.some(p => path.endsWith(p));
+  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels', '/movies/years', '/genres', '/playlist.m3u', '/m3u', '/get.php'];
+  const isPublic = publicEndpoints.some(p => path.endsWith(p)) || path.includes('/vod/');
 
   if (isPublic) {
     return next();

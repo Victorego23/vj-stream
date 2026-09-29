@@ -64,6 +64,7 @@ class MediaRow extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: isTv ? 42.0 : 14.0),
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
+              cacheExtent: 600,
               itemCount: items.length,
               itemBuilder: (context, index) {
                 final item = items[index];

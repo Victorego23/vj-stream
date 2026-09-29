@@ -74,6 +74,20 @@ app.get('/tv', (req, res) => {
   res.redirect('/api/streaming/download-apk');
 });
 
+// Endpoints universales de lista M3U para Smart TV / IBO Player / IPTV Smarters
+app.get('/playlist.m3u', (req, res) => {
+  const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect(`/api/streaming/playlist.m3u${query}`);
+});
+app.get('/m3u', (req, res) => {
+  const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect(`/api/streaming/playlist.m3u${query}`);
+});
+app.get('/get.php', (req, res) => {
+  const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect(`/api/streaming/playlist.m3u${query}`);
+});
+
 // Servir archivos estáticos de la Web App / PWA pública
 app.use(express.static(path.join(__dirname, 'public')));
 

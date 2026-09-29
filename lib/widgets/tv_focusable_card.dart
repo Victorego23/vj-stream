@@ -42,12 +42,26 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
       });
       // Si el elemento adquiere foco por navegación D-Pad en Android TV, asegurar visibilidad
       if (_focusNode.hasFocus) {
+        // 1. Visibilidad en el carrusel horizontal
         Scrollable.ensureVisible(
           context,
           alignment: 0.5,
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeInOut,
         );
+        // 2. Visibilidad en el scroll vertical principal para que la fila no quede fuera de pantalla
+        final innerScrollable = Scrollable.maybeOf(context);
+        if (innerScrollable != null) {
+          final outerScrollable = Scrollable.maybeOf(innerScrollable.context);
+          if (outerScrollable != null) {
+            Scrollable.ensureVisible(
+              innerScrollable.context,
+              alignment: 0.35,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+            );
+          }
+        }
       }
     }
   }
@@ -71,6 +85,21 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space) {
             widget.onTap();
+            return KeyEventResult.handled;
+          }
+          // Navegación vertical robusta para Android TV (evita quedarse atascado en una fila)
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            final moved = node.focusInDirection(TraversalDirection.down);
+            if (!moved) {
+              node.nextFocus();
+            }
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            final moved = node.focusInDirection(TraversalDirection.up);
+            if (!moved) {
+              node.previousFocus();
+            }
             return KeyEventResult.handled;
           }
         }
