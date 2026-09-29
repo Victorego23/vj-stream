@@ -1804,6 +1804,179 @@
       padding-bottom: 20px;
     }
 
+    /* MÉTODOS DE PAGO PERÚ */
+    .payment-methods-strip {
+      background: linear-gradient(135deg, rgba(20, 20, 30, 0.92) 0%, rgba(10, 10, 15, 0.98) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      margin: 40px auto 30px;
+      text-align: center;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .payment-chips-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .payment-badge-card {
+      background: #12131a;
+      border: 2px solid #2a2b38;
+      border-radius: 14px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+    .payment-badge-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+    }
+    .pay-logo-tag {
+      font-size: 11px;
+      font-weight: 900;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+    .payment-badge-card strong {
+      font-size: 14px;
+      color: #fff;
+    }
+    .payment-badge-card small {
+      font-size: 11px;
+      color: #aaa;
+    }
+
+    /* TABLA COMPARATIVA DE AHORRO */
+    .comparison-section {
+      margin-bottom: 60px;
+    }
+
+    .comparison-table-wrap {
+      overflow-x: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 45px rgba(0,0,0,0.8);
+      margin-top: 25px;
+    }
+
+    .comparison-table {
+      width: 100%;
+      min-width: 680px;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .comparison-table th, .comparison-table td {
+      padding: 18px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .comparison-table th {
+      background: #101118;
+      font-family: var(--font-display);
+      font-weight: 800;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .comparison-table th.highlight-col {
+      background: rgba(229, 9, 20, 0.25);
+      border-left: 2px solid var(--primary);
+      border-right: 2px solid var(--primary);
+      color: #fff;
+      text-align: center;
+    }
+
+    .comparison-table td.highlight-col {
+      background: rgba(229, 9, 20, 0.1);
+      border-left: 2px solid var(--primary);
+      border-right: 2px solid var(--primary);
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+    }
+
+    .comparison-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .comparison-table tr:hover td.highlight-col {
+      background: rgba(229, 9, 20, 0.16);
+    }
+
+    .badge-check {
+      color: #22c55e;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-cross {
+      color: #ef4444;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* SECCIÓN FÚTBOL & DEPORTES EN VIVO */
+    .sports-showcase-card {
+      background: linear-gradient(135deg, rgba(20, 32, 22, 0.85) 0%, rgba(8, 14, 10, 0.98) 100%);
+      border: 2px solid rgba(34, 197, 94, 0.4);
+      border-radius: var(--radius-lg);
+      padding: 38px 30px;
+      margin: 40px auto 60px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(34, 197, 94, 0.2);
+    }
+
+    .sports-badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .sport-pill-box {
+      background: rgba(12, 20, 15, 0.9);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 14px;
+      padding: 16px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.25s;
+    }
+    .sport-pill-box:hover {
+      border-color: #22c55e;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(34,197,94,0.35);
+    }
+    .sport-pill-icon {
+      font-size: 28px;
+    }
+    .sport-pill-text h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+    .sport-pill-text p {
+      font-size: 11px;
+      color: #aaa;
+      margin: 0;
+      line-height: 1.4;
+    }
+
     /* CTA FINAL */
     .cta-banner {
       background: linear-gradient(135deg, rgba(229, 9, 20, 0.22) 0%, rgba(15, 15, 20, 0.95) 100%);
@@ -2528,10 +2701,24 @@
           </div>
         </div>
         <div class="poster-card">
-          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/fqv8v6A9o7li0q0AsbQIj69JSSu.jpg" alt="Bad Boys" loading="lazy">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/nP6RliHjxsz4irTKsxe8FRhKZYl.jpg" alt="Bad Boys" loading="lazy">
           <div class="poster-info">
-            <div class="poster-title">Bad Boys: Hasta la Muerte</div>
+            <div class="poster-title">Bad Boys: Ride or Die</div>
             <div class="poster-year"><span>2024</span><span class="poster-quality">4K Latino</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycRhoQpsG0FaH.jpg" alt="Mi Villano Favorito 4" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Mi Villano Favorito 4</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">FHD Latino</span></div>
+          </div>
+        </div>
+        <div class="poster-card">
+          <img class="poster-img" src="https://image.tmdb.org/t/p/w500/pjnD08FlMAIXsfOLKQbvmO0f0MD.jpg" alt="Gladiador 2" loading="lazy">
+          <div class="poster-info">
+            <div class="poster-title">Gladiador II (2024)</div>
+            <div class="poster-year"><span>2024</span><span class="poster-quality">4K HDR</span></div>
           </div>
         </div>
         <div class="poster-card">
@@ -2775,6 +2962,165 @@
         </ul>
         <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20el%20Plan%20Anual%20en%20TOM%20TV" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-plan-12m" style="width: 100%;">
           Activar por WhatsApp
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECCIÓN DE MEDIOS DE PAGO NACIONALES -->
+  <section class="container">
+    <div class="payment-methods-strip">
+      <span class="section-tag" style="color: #25D366;">PAGO FÁCIL Y SEGURO EN PERÚ</span>
+      <h3 style="font-family: var(--font-display); font-size: clamp(22px, 3vw, 28px); font-weight: 900; color: #fff; margin: 6px 0 10px;">
+        Aceptamos Todos los Medios de Pago Nacionales
+      </h3>
+      <p style="font-size: 14px; color: var(--text-muted); max-width: 680px; margin: 0 auto 16px;">
+        Paga al instante desde tu celular por Yape o Plin sin comisiones ni esperas. Solo envías tu captura al WhatsApp <strong>914 598 415</strong> y tu pantalla queda activada en menos de 2 minutos.
+      </p>
+
+      <div class="payment-chips-row">
+        <div class="payment-badge-card" style="border-color: #8A05BE;">
+          <span class="pay-logo-tag" style="background: #8A05BE;">🟣 YAPE</span>
+          <strong>Yape Directo</strong>
+          <small>Pago con QR o número móvil</small>
+        </div>
+        <div class="payment-badge-card" style="border-color: #00D1FF;">
+          <span class="pay-logo-tag" style="background: #00A3FF;">🔵 PLIN</span>
+          <strong>Plin Inmediato</strong>
+          <small>Interbank, BBVA, Scotiabank</small>
+        </div>
+        <div class="payment-badge-card" style="border-color: #FF7700;">
+          <span class="pay-logo-tag" style="background: #002A8F;">🟡 BCP</span>
+          <strong>Banco BCP</strong>
+          <small>Transferencias y Agentes</small>
+        </div>
+        <div class="payment-badge-card" style="border-color: #004481;">
+          <span class="pay-logo-tag" style="background: #004481;">🔵 BBVA</span>
+          <strong>BBVA Continental</strong>
+          <small>Transferencia directa</small>
+        </div>
+        <div class="payment-badge-card" style="border-color: #00A650;">
+          <span class="pay-logo-tag" style="background: #00A650;">🟢 INTERBANK</span>
+          <strong>Interbank</strong>
+          <small>App móvil y cajeros</small>
+        </div>
+      </div>
+
+      <div style="margin-top: 24px;">
+        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20comprar%20mi%20suscripci%C3%B3n%20de%20TOM%20TV%20por%20Yape/Plin.%20%C2%BFCu%C3%A1l%20es%20el%20n%C3%BAmero%20para%20transferir?" target="_blank" rel="noopener" class="btn btn-whatsapp btn-lg" style="margin: 0 auto;">
+          <span>📲</span> Comprar por Yape / Plin al 914 598 415
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABLA COMPARATIVA DE AHORRO REAL -->
+  <section class="container comparison-section">
+    <div class="section-header">
+      <span class="section-tag">Ahorro Inteligente</span>
+      <h2 class="section-title">Compara y Comprueba el Ahorro de TOM TV</h2>
+      <p class="section-desc">¿Por qué pagar más de S/. 200 al mes en múltiples servicios cuando puedes tener todo en una sola aplicación?</p>
+    </div>
+
+    <div class="comparison-table-wrap">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Beneficio / Característica</th>
+            <th>❌ Cable Tradicional (Claro/Movistar)</th>
+            <th>❌ Contratar 7 Apps de Streaming</th>
+            <th class="highlight-col">⭐ TOM TV (Todo en Uno)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Costo Mensual Promedio</strong></td>
+            <td><span class="badge-cross">❌ S/. 130 - S/. 180 / mes</span></td>
+            <td><span class="badge-cross">❌ Más de S/. 170 / mes</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ Desde S/. 20 / mes</span></td>
+          </tr>
+          <tr>
+            <td><strong>Contrato de Permanencia</strong></td>
+            <td><span class="badge-cross">❌ Obligatorio 6 a 12 meses</span></td>
+            <td><span class="badge-cross">❌ Múltiples cobros en tarjeta</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ Cero contratos (renueva cuando quieras)</span></td>
+          </tr>
+          <tr>
+            <td><strong>Equipos y Decodificadores</strong></td>
+            <td><span class="badge-cross">❌ Alquiler de decos caros por cada TV</span></td>
+            <td><span class="badge-cross">❌ Solo en Smart TV modernos</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ En tu TV, Firestick, Celular o PC</span></td>
+          </tr>
+          <tr>
+            <td><strong>Fútbol y Deportes en Vivo</strong></td>
+            <td><span class="badge-cross">❌ Cobro extra por paquetes de fútbol</span></td>
+            <td><span class="badge-cross">❌ Dividido entre varias plataformas</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ Liga 1 MAX, Champions y Libertadores</span></td>
+          </tr>
+          <tr>
+            <td><strong>Estrenos de Cine de Cartelera</strong></td>
+            <td><span class="badge-cross">❌ Pago por evento (PPV) adicional</span></td>
+            <td><span class="badge-cross">❌ Tardan meses en salir</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ +15,000 Películas y Series en 4K</span></td>
+          </tr>
+          <tr>
+            <td><strong>Prueba Gratis (Demo)</strong></td>
+            <td><span class="badge-cross">❌ Ninguna (te cobran instalación)</span></td>
+            <td><span class="badge-cross">❌ Sin pruebas gratuitas</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ Demo Gratis de 2 Horas Disponible</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SECCIÓN DESTACADA: TODO EL FÚTBOL Y DEPORTES EN VIVO -->
+  <section class="container">
+    <div class="sports-showcase-card">
+      <div style="text-align: center; max-width: 750px; margin: 0 auto;">
+        <span class="section-tag" style="color: #22c55e;">⚽ PASIÓN POR EL DEPORTE</span>
+        <h3 style="font-family: var(--font-display); font-size: clamp(24px, 3.5vw, 34px); font-weight: 900; color: #fff; margin: 8px 0 12px;">
+          Todos los Partidos de Fútbol Nacional e Internacional en Vivo
+        </h3>
+        <p style="font-size: 15px; color: #ccc; line-height: 1.6;">
+          No te pierdas ni un solo partido. Servidores dedicados con 60 fotogramas por segundo (60 FPS) para que disfrutes las mejores ligas del planeta sin caídas ni pantallas congeladas.
+        </p>
+      </div>
+
+      <div class="sports-badges-grid">
+        <div class="sport-pill-box">
+          <span class="sport-pill-icon">🇵🇪</span>
+          <div class="sport-pill-text">
+            <h4>Liga 1 MAX Perú</h4>
+            <p>Universitario, Alianza Lima, Cristal, Melgar y toda la fecha en vivo.</p>
+          </div>
+        </div>
+        <div class="sport-pill-box">
+          <span class="sport-pill-icon">🏆</span>
+          <div class="sport-pill-text">
+            <h4>Champions & Libertadores</h4>
+            <p>La gloria europea y sudamericana con cobertura completa minuto a minuto.</p>
+          </div>
+        </div>
+        <div class="sport-pill-box">
+          <span class="sport-pill-icon">🌍</span>
+          <div class="sport-pill-text">
+            <h4>Ligas Top Europeas</h4>
+            <p>Premier League, LaLiga de España, Serie A italiana y Bundesliga.</p>
+          </div>
+        </div>
+        <div class="sport-pill-box">
+          <span class="sport-pill-icon">🥊</span>
+          <div class="sport-pill-text">
+            <h4>UFC & Boxeo Internacional</h4>
+            <p>Eventos estelares numerados, veladas de box y Fórmula 1 en directo.</p>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 28px;">
+        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20mi%20Smart%20TV%20para%20ver%20F%C3%BAtbol%20en%20Vivo%20(Liga%201%20y%20Champions)" target="_blank" rel="noopener" class="btn btn-primary btn-lg btn-glow">
+          <span>⚽</span> Activar Canales de Fútbol en Mi TV (WhatsApp 914598415)
         </a>
       </div>
     </div>
