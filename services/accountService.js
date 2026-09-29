@@ -25,7 +25,7 @@ class AccountService {
         password: DEFAULT_ADMIN_PASSWORD,
       },
       settings: {
-        whatsappNumber: process.env.WHATSAPP_NUMBER || '+51999999999',
+        whatsappNumber: process.env.WHATSAPP_NUMBER || '+51914598415',
         whatsappMessage: 'Hola, mi código de activación de TOM TV es {code}',
       },
       clients: [
@@ -1578,7 +1578,7 @@ class AccountService {
     const db = this._readDb();
     const settings = db.settings || {};
     return {
-      whatsappNumber: settings.whatsappNumber || process.env.WHATSAPP_NUMBER || '+51900000000',
+      whatsappNumber: settings.whatsappNumber || process.env.WHATSAPP_NUMBER || '+51914598415',
       whatsappMessage: settings.whatsappMessage || 'Hola, deseo solicitar información de TOM TV'
     };
   }

@@ -1299,7 +1299,7 @@
 
     function displayActivationDetails(data) {
       document.getElementById('actCodeDisplay').textContent = data.code;
-      const whatsappNum = (data.whatsappNumber || '+51999999999').replace(/[^0-9+]/g, '');
+      const whatsappNum = (data.whatsappNumber || '+51914598415').replace(/[^0-9+]/g, '');
       const rawMsg = data.whatsappMessage || 'Hola, mi código de activación de TOM TV es {code}';
       const finalMsg = rawMsg.replace('{code}', data.code);
       
