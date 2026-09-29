@@ -348,12 +348,18 @@
       background: #0b0c10;
       border: 8px solid #20222a;
       border-radius: 24px;
-      box-shadow: 0 35px 80px -15px rgba(0, 0, 0, 0.98), 0 0 50px rgba(229, 9, 20, 0.25);
+      box-shadow: 0 35px 80px -15px rgba(0, 0, 0, 0.98), 0 0 50px rgba(229, 9, 20, 0.35);
       overflow: hidden;
       position: relative;
-      aspect-ratio: 16 / 9;
+      height: 480px;
       display: flex;
       flex-direction: column;
+    }
+
+    @media (max-width: 768px) {
+      .tv-frame {
+        height: 420px;
+      }
     }
 
     .tv-bezel-brand {
@@ -375,7 +381,7 @@
     .tv-screen {
       width: 100%;
       height: 100%;
-      background: #111;
+      background: #08080c;
       position: relative;
       overflow: hidden;
     }
@@ -383,9 +389,9 @@
     .tv-screen-bg {
       position: absolute;
       inset: 0;
-      background: linear-gradient(to top, rgba(6, 6, 8, 0.97) 22%, rgba(6, 6, 8, 0.5) 65%, rgba(6, 6, 8, 0.25) 100%),
-                  url('https://image.tmdb.org/t/p/w1280/mXLOH44Q2a6mP9bQoF9Kx8r8pA0.jpg') center/cover no-repeat;
-      transition: background-image 0.6s ease-in-out;
+      background: linear-gradient(180deg, rgba(6, 6, 8, 0.3) 0%, rgba(6, 6, 8, 0.65) 50%, rgba(6, 6, 8, 0.95) 100%),
+                  url('https://image.tmdb.org/t/p/w1280/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg') center/cover no-repeat;
+      transition: background-image 0.5s ease-in-out;
     }
 
     .tv-screen-content {
@@ -663,10 +669,10 @@
     @media (min-width: 980px) {
       .mobile-floating-mockup {
         position: absolute;
-        right: -25px;
-        bottom: -35px;
-        width: 220px;
-        height: 445px;
+        right: -10px;
+        bottom: 15px;
+        width: 215px;
+        height: 435px;
         display: block;
       }
       .device-preview-badge {
@@ -1982,8 +1988,15 @@
   <header>
     <div class="container">
       <div class="nav-inner">
-        <a href="/" id="nav-brand" title="TOM TV Oficial">
-          <img src="/img/logo.svg" alt="TOM TV Oficial" class="brand-logo-img">
+        <a href="/" id="nav-brand" title="TOM TV Oficial" style="text-decoration: none;">
+          <img src="/img/logo.svg" alt="TOM TV Oficial" class="brand-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <div style="display: none; align-items: center; gap: 8px;">
+            <div style="background: linear-gradient(135deg, #FF1E27, #8F0006); width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: #fff; box-shadow: 0 0 16px rgba(229,9,20,0.8); font-family: Outfit, sans-serif;">T</div>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 22px; font-weight: 900; color: #fff; letter-spacing: 1.5px; font-family: Outfit, sans-serif; line-height: 1;">TOM TV</span>
+              <span style="font-size: 9px; font-weight: 800; color: #E50914; letter-spacing: 2px;">OFICIAL 4K STREAMING</span>
+            </div>
+          </div>
         </a>
 
         <ul class="nav-links">
@@ -2047,7 +2060,13 @@
               <!-- Top bar de la TV con logo TOM TV -->
               <div class="tv-top-bar">
                 <div class="tv-logo-badge-wrap">
-                  <img src="/img/logo.svg" alt="TOM TV" class="tv-screen-logo">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <img src="/img/logo.svg" alt="TOM TV" class="tv-screen-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; align-items: center; gap: 6px;">
+                      <span style="background: linear-gradient(135deg, #FF1E27, #8F0006); color: #fff; font-family: Outfit, sans-serif; font-weight: 900; font-size: 20px; padding: 4px 10px; border-radius: 8px; box-shadow: 0 0 12px rgba(229,9,20,0.8);">TOM</span>
+                      <span style="color: #fff; font-family: Outfit, sans-serif; font-weight: 900; font-size: 20px;">TV</span>
+                    </div>
+                  </div>
                   <div class="tv-pill">
                     <span id="tv-status-dot">● EN VIVO</span>
                     <span id="tv-status-res">4K HDR</span>
@@ -2090,11 +2109,11 @@
                     <span>Películas</span>
                   </div>
                   <div class="tv-mini-poster" id="mini-tab-series" onclick="switchTvTab('series')">
-                    <img src="https://image.tmdb.org/t/p/w200/etj5CuMuamhEbRnXxMHqQYeNi9W.jpg" alt="House of Dragon">
+                    <img src="https://image.tmdb.org/t/p/w200/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" alt="Intensamente 2">
                     <span>Series</span>
                   </div>
                   <div class="tv-mini-poster" id="mini-tab-sports" onclick="switchTvTab('sports')">
-                    <img src="https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=200&auto=format&fit=crop" alt="Deportes">
+                    <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=200&auto=format&fit=crop" alt="Deportes">
                     <span>Deportes</span>
                   </div>
                   <div class="tv-mini-poster" id="mini-tab-peru" onclick="switchTvTab('peru')">
@@ -2130,8 +2149,9 @@
 
             <div class="phone-app-header">
               <div style="display: flex; align-items: center; gap: 6px;">
-                <img src="/img/icon.svg" alt="TOM TV" style="height: 22px; width: 22px; border-radius: 6px; box-shadow: 0 0 8px rgba(229,9,20,0.6);">
-                <img src="/img/logo.svg" alt="TOM TV" class="phone-app-logo">
+                <img src="/img/icon.svg" alt="TOM TV" style="height: 22px; width: 22px; border-radius: 6px; box-shadow: 0 0 8px rgba(229,9,20,0.6);" onerror="this.style.display='none';">
+                <img src="/img/logo.svg" alt="TOM TV" class="phone-app-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+                <span style="display: none; font-size: 13px; font-weight: 900; color: #fff; font-family: Outfit, sans-serif; letter-spacing: 0.8px;">TOM TV</span>
               </div>
               <span style="font-size: 13px; color: #fff;">🔍</span>
             </div>
@@ -2986,7 +3006,7 @@
     // Showcase Interactivo en la Smart TV
     const tvShowcases = {
       movies: {
-        bg: 'https://image.tmdb.org/t/p/w1280/mXLOH44Q2a6mP9bQoF9Kx8r8pA0.jpg',
+        bg: 'https://image.tmdb.org/t/p/w1280/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg',
         title: 'Deadpool & Wolverine (2024)',
         desc: 'Disfruta del estreno taquillero del año con sonido envolvente y calidad de cine directa en tu sala de estar.',
         badge: 'ULTRA HD 4K',
@@ -2995,8 +3015,8 @@
         status: '● EN VIVO'
       },
       series: {
-        bg: 'https://image.tmdb.org/t/p/w1280/etj5CuMuamhEbRnXxMHqQYeNi9W.jpg',
-        title: 'House of the Dragon (Temporada 2)',
+        bg: 'https://image.tmdb.org/t/p/w1280/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg',
+        title: 'House of the Dragon & Estrenos 4K',
         desc: 'La guerra por el trono de Poniente se desata. Capítulos completos en calidad limpia 4K Dolby Atmos.',
         badge: '4K DOLBY ATMOS',
         audio: 'Audio Dual Latino/Inglés',
@@ -3004,7 +3024,7 @@
         status: '● EN VIVO'
       },
       sports: {
-        bg: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?q=80&w=1280&auto=format&fit=crop',
+        bg: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=1280&auto=format&fit=crop',
         title: 'UEFA Champions League & Fútbol en Directo',
         desc: 'Transmisión en directo sin retraso ni cortes. Todos los partidos de las mejores ligas del mundo.',
         badge: '60 FPS ULTRA FLUIDO',
@@ -3037,7 +3057,7 @@
       if (!data) return;
 
       const tvBg = document.getElementById('tv-hero-bg');
-      if (tvBg) tvBg.style.backgroundImage = `linear-gradient(to top, rgba(6, 6, 8, 0.97) 22%, rgba(6, 6, 8, 0.5) 65%, rgba(6, 6, 8, 0.25) 100%), url('${data.bg}')`;
+      if (tvBg) tvBg.style.backgroundImage = `linear-gradient(180deg, rgba(6, 6, 8, 0.3) 0%, rgba(6, 6, 8, 0.65) 50%, rgba(6, 6, 8, 0.95) 100%), url('${data.bg}')`;
 
       document.getElementById('tv-showcase-title').innerText = data.title;
       document.getElementById('tv-showcase-desc').innerText = data.desc;
