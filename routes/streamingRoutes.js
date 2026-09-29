@@ -652,15 +652,14 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.2.0',
-    versionCode: 22,
+    latestVersion: '3.3.0',
+    versionCode: 23,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-28',
+    releaseDate: '2026-09-29',
     releaseNotes: [
-      '📺 ¡Soporte Oficial para Android TV y Google TV! Ya aparece en la pantalla principal de la TV.',
-      '🎮 Control Remoto fluido (D-Pad): solucionado el problema donde el cursor se perdía o se quedaba atascado en una fila.',
-      '✨ Enfoque visual de alto contraste con auto-scroll dual para no perder el lugar donde estás.',
-      '🔥 Soporte D-Pad completo en Continuar Viendo, pestañas superiores, detalles y lista de capítulos.'
+      '🇵🇪 ¡Nueva Sección Exclusiva de Canales Peruanos (América, ATV, Latina, Panamericana, TV Perú, Willax, L1 Max y más)!',
+      '📺 Pestaña directa "🇵🇪 Canales Perú" en la barra principal para acceso instantáneo.',
+      '🎮 Navegación ultra fluida con control remoto para Smart TV.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: true

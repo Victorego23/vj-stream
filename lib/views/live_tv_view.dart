@@ -6,7 +6,8 @@ import '../services/api_service.dart';
 import 'video_player_view.dart';
 
 class LiveTvView extends StatefulWidget {
-  const LiveTvView({super.key});
+  final String? initialCategory;
+  const LiveTvView({super.key, this.initialCategory});
 
   @override
   State<LiveTvView> createState() => _LiveTvViewState();
@@ -22,8 +23,8 @@ class _LiveTvViewState extends State<LiveTvView> {
   List<String> _recentChannelIds = [];
 
   List<LiveChannel> _allChannels = [];
-  List<String> _categories = ['Favoritos', 'Recientes', 'Todos'];
-  String _selectedCategory = 'Todos';
+  List<String> _categories = ['Favoritos', '🇵🇪 Canales Peruanos', 'Todos', 'Recientes'];
+  late String _selectedCategory;
   String _selectedCountry = 'ALL';
   bool _isLoading = true;
   String? _errorMessage;
@@ -116,6 +117,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   @override
   void initState() {
     super.initState();
+    _selectedCategory = widget.initialCategory ?? 'Todos';
     _loadFavoritesAndRecents();
     _loadChannels();
   }
@@ -217,7 +219,10 @@ class _LiveTvViewState extends State<LiveTvView> {
           final cleanCats = categories
               .where((c) => c != 'Todos' && c != 'Favoritos' && c != 'Recientes')
               .toList();
-          _categories = ['Favoritos', 'Recientes', 'Todos', ...cleanCats];
+          final otherCats = cleanCats
+              .where((c) => !c.contains('Peruanos') && !c.contains('Perú'))
+              .toList();
+          _categories = ['Favoritos', '🇵🇪 Canales Peruanos', 'Todos', 'Recientes', ...otherCats];
           _isLoading = false;
           if (_filteredChannels.isNotEmpty) {
             _focusedChannel = _filteredChannels.first;
@@ -251,13 +256,22 @@ class _LiveTvViewState extends State<LiveTvView> {
     }
 
     return _allChannels.where((channel) {
-      final matchesCategory = _selectedCategory == 'Todos' ||
-          (_selectedCategory == 'Favoritos'
-              ? _favoriteChannelIds.contains(channel.id)
-              : channel.category.toLowerCase() == _selectedCategory.toLowerCase());
+      final isPeruCat = _selectedCategory.contains('Peruanos') || _selectedCategory.contains('Perú');
+      final bool matchesCategory;
+      if (_selectedCategory == 'Todos') {
+        matchesCategory = true;
+      } else if (_selectedCategory == 'Favoritos') {
+        matchesCategory = _favoriteChannelIds.contains(channel.id);
+      } else if (isPeruCat) {
+        matchesCategory = channel.category.contains('Perú') ||
+            channel.category.contains('Peruanos') ||
+            getChannelCountry(channel) == 'pe';
+      } else {
+        matchesCategory = channel.category.toLowerCase() == _selectedCategory.toLowerCase();
+      }
 
       final channelCountry = getChannelCountry(channel);
-      final matchesCountry = _selectedCountry == 'ALL' || channelCountry == _selectedCountry;
+      final matchesCountry = isPeruCat || _selectedCountry == 'ALL' || channelCountry == _selectedCountry;
 
       return matchesCategory && matchesCountry;
     }).toList();
@@ -266,6 +280,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   String _getCategoryIcon(String cat) {
     if (cat == 'Favoritos') return '⭐ ';
     if (cat == 'Recientes') return '🕒 ';
+    if (cat.contains('Perú') || cat.contains('Peruanos')) return '🇵🇪 ';
     final lower = cat.toLowerCase();
     if (lower.contains('depor')) return '⚽ ';
     if (lower.contains('cine') || lower.contains('series')) return '🎬 ';

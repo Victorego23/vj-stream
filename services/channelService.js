@@ -82,7 +82,13 @@ class ChannelService {
     this._channels.forEach(c => {
       if (c.category) set.add(c.category);
     });
-    return Array.from(set);
+    const cats = Array.from(set);
+    cats.sort((a, b) => {
+      if (a.includes('Peruanos') || a.includes('Perú')) return -1;
+      if (b.includes('Peruanos') || b.includes('Perú')) return 1;
+      return a.localeCompare(b);
+    });
+    return cats;
   }
 
   /**

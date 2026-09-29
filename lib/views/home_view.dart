@@ -960,8 +960,14 @@ class _HomeViewState extends State<HomeView> {
                       child: _buildYearSelectorBar(isTv),
                     ),
 
+                  // Vista cuando la pestaña activa es "Canales Perú"
+                  if (_activeTab == 'Canales Perú')
+                    const SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: LiveTvView(initialCategory: '🇵🇪 Canales Peruanos'),
+                    )
                   // Vista cuando la pestaña activa es "TV en Vivo"
-                  if (_activeTab == 'TV en Vivo')
+                  else if (_activeTab == 'TV en Vivo')
                     const SliverFillRemaining(
                       hasScrollBody: true,
                       child: LiveTvView(),
@@ -1182,7 +1188,8 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildTabBar(bool isTv) {
     final tabs = [
       {'id': 'Todos', 'label': 'Todos', 'icon': Icons.grid_view_rounded},
-      {'id': 'TV en Vivo', 'label': 'TV en Vivo', 'icon': Icons.live_tv_rounded},
+      {'id': 'Canales Perú', 'label': '🇵🇪 Canales Perú', 'icon': Icons.live_tv_rounded},
+      {'id': 'TV en Vivo', 'label': 'TV en Vivo (1300+)', 'icon': Icons.public_rounded},
       {'id': 'Películas', 'label': 'Películas', 'icon': Icons.movie_rounded},
       {'id': 'Series', 'label': 'Series', 'icon': Icons.tv_rounded},
       {'id': 'Próximamente', 'label': 'Próximamente', 'icon': Icons.upcoming_rounded},
