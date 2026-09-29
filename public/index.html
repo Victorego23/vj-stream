@@ -2421,7 +2421,7 @@
                 <span>Dune 2</span>
               </div>
               <div class="phone-poster-wrap">
-                <img src="https://image.tmdb.org/t/p/w200/fqv8v6A9o7li0q0AsbQIj69JSSu.jpg" alt="Bad Boys" class="phone-mini-poster">
+                <img src="https://image.tmdb.org/t/p/w200/nP6RliHjxsz4irTKsxe8FRhKZYl.jpg" alt="Bad Boys" class="phone-mini-poster">
                 <span>Bad Boys</span>
               </div>
             </div>
@@ -2888,7 +2888,7 @@
 
       <div class="device-card">
         <div class="device-img-wrap">
-          <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02543?q=80&w=600&auto=format&fit=crop" alt="Celulares y Tablets Android" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?q=80&w=600&auto=format&fit=crop" alt="Celulares y Tablets Android" loading="lazy">
           <div class="device-badge-overlay">
             <span>📱</span> MÓVIL FHD
           </div>
@@ -3481,7 +3481,8 @@
     // Filtrar canales de TV por categoría
     function filterChannelsCategory(cat) {
       document.querySelectorAll('.channel-pill').forEach(b => b.classList.remove('active'));
-      const activePill = event ? (event.currentTarget || event.target) : null;
+      const evt = typeof event !== 'undefined' ? event : null;
+      const activePill = evt ? (evt.currentTarget || evt.target) : null;
       if (activePill) activePill.classList.add('active');
 
       const cards = document.querySelectorAll('.channel-card');
@@ -3504,7 +3505,8 @@
 
     function updatePricingScreens(screens) {
       document.querySelectorAll('.calc-screen-pill').forEach(p => p.classList.remove('active'));
-      const activePill = event ? (event.currentTarget || event.target) : null;
+      const evt = typeof event !== 'undefined' ? event : null;
+      const activePill = evt ? (evt.currentTarget || evt.target) : null;
       if (activePill) activePill.classList.add('active');
 
       const prices = pricingMatrix[screens] || pricingMatrix[1];
