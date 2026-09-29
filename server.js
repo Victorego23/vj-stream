@@ -91,9 +91,14 @@ app.get('/get.php', (req, res) => {
 // Servir archivos estáticos de la Web App / PWA pública
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Servir la Web App / PWA oficial de VJ STREAM en la raíz
+// Servir la Landing Page oficial de TOM TV en la raíz
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Servir el Reproductor Web / PWA oficial de TOM TV
+app.get(['/play', '/web', '/app'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'play.html'));
 });
 
 // Servir el Panel de Administrador Web

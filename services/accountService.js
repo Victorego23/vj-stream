@@ -1570,6 +1570,18 @@ class AccountService {
 
     return { valid: true, client };
   }
+
+  /**
+   * Obtiene la configuración pública de la plataforma (WhatsApp, mensajes predeterminados)
+   */
+  getPublicSettings() {
+    const db = this._readDb();
+    const settings = db.settings || {};
+    return {
+      whatsappNumber: settings.whatsappNumber || process.env.WHATSAPP_NUMBER || '+51900000000',
+      whatsappMessage: settings.whatsappMessage || 'Hola, deseo solicitar información de TOM TV'
+    };
+  }
 }
 
 module.exports = new AccountService();

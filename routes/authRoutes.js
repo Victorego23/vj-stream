@@ -63,4 +63,15 @@ router.post('/request-demo', (req, res) => {
   return res.json(result);
 });
 
+/**
+ * @route   GET /api/auth/public-info
+ * @desc    Devuelve configuración pública para WhatsApp y datos de contacto de la landing page
+ */
+router.get('/public-info', (req, res) => {
+  return res.json({
+    success: true,
+    ...accountService.getPublicSettings()
+  });
+});
+
 module.exports = router;
