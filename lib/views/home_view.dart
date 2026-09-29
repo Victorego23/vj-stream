@@ -1218,7 +1218,16 @@ class _HomeViewState extends State<HomeView> {
             label: label,
             icon: icon,
             isSelected: isSelected,
-            onSelected: () => setState(() => _activeTab = id),
+            onSelected: () {
+              setState(() => _activeTab = id);
+              if (_scrollController.hasClients && _scrollController.offset > 0) {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                );
+              }
+            },
           );
         },
       ),

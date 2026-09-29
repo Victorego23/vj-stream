@@ -662,7 +662,7 @@ router.get('/version', (req, res) => {
       '🎮 Navegación ultra fluida con control remoto para Smart TV.'
     ],
     downloadUrl: '/api/streaming/download-apk',
-    forceUpdate: true
+    forceUpdate: false
   });
 });
 

@@ -40,8 +40,8 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para TOM TV
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '3.2.0';
-  static const int currentVersionCode = 22;
+  static const String currentVersion = '3.3.0';
+  static const int currentVersionCode = 23;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
@@ -89,7 +89,7 @@ class UpdateService {
           // Si el código de versión remoto es estrictamente superior al actual
           if (updateInfo.versionCode > currentVersionCode) {
             // Prevención estricta de bucle: si ya se gestionó esta versión en las últimas 24 horas, no insistir en silencio
-            if (silent && !updateInfo.forceUpdate) {
+            if (silent) {
               try {
                 final prefs = await SharedPreferences.getInstance();
                 final lastDismissedCode = prefs.getInt('last_dismissed_update_code') ?? 0;

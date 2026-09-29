@@ -32,6 +32,8 @@ class _LiveTvViewState extends State<LiveTvView> {
   LiveChannel? _focusedChannel;
   final FocusScopeNode _channelGridScopeNode = FocusScopeNode();
   final FocusScopeNode _sidebarScopeNode = FocusScopeNode();
+  final ScrollController _scrollController = ScrollController();
+  bool _showBackToTop = false;
 
   static const List<Map<String, String>> _countryFilters = [
     {'code': 'ALL', 'label': '🌎 Todos'},
@@ -118,12 +120,42 @@ class _LiveTvViewState extends State<LiveTvView> {
   void initState() {
     super.initState();
     _selectedCategory = widget.initialCategory ?? 'Todos';
+    _scrollController.addListener(_onScroll);
     _loadFavoritesAndRecents();
     _loadChannels();
   }
 
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final show = _scrollController.offset > 240;
+    if (show != _showBackToTop) {
+      if (mounted) {
+        setState(() => _showBackToTop = show);
+      }
+    }
+  }
+
+  void _scrollToTop() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.offset > 1200) {
+      _scrollController.jumpTo(300);
+    }
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+    );
+    if (_filteredChannels.isNotEmpty && mounted) {
+      setState(() {
+        _focusedChannel = _filteredChannels.first;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     _channelGridScopeNode.dispose();
     _sidebarScopeNode.dispose();
     super.dispose();
@@ -506,7 +538,7 @@ class _LiveTvViewState extends State<LiveTvView> {
               // Panel Superior Dinámico del Canal Enfocado (TV Banner Preview)
               _buildFocusedChannelBanner(currentFocused),
 
-              // Cuadrícula de Canales con Focus D-Pad
+              // Cuadrícula de Canales con Focus D-Pad y botón Subir Todo
               Expanded(
                 child: _isLoading
                     ? const Center(
@@ -516,40 +548,94 @@ class _LiveTvViewState extends State<LiveTvView> {
                         ? _buildErrorView()
                         : channels.isEmpty
                             ? _buildEmptyView()
-                            : FocusScope(
-                                node: _channelGridScopeNode,
-                                child: GridView.builder(
-                                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 220,
-                                    mainAxisSpacing: 16,
-                                    crossAxisSpacing: 16,
-                                    childAspectRatio: 0.95,
+                            : Stack(
+                                children: [
+                                  FocusScope(
+                                    node: _channelGridScopeNode,
+                                    child: GridView.builder(
+                                      controller: _scrollController,
+                                      cacheExtent: 800,
+                                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                        maxCrossAxisExtent: 220,
+                                        mainAxisSpacing: 16,
+                                        crossAxisSpacing: 16,
+                                        childAspectRatio: 0.95,
+                                      ),
+                                      itemCount: channels.length,
+                                      itemBuilder: (context, index) {
+                                        final channel = channels[index];
+                                        final channelNumber = index + 1;
+                                        final isFirstRow = index < 5;
+                                        return _TvFocusableChannelCard(
+                                          key: ValueKey(channel.id),
+                                          channel: channel,
+                                          channelNumber: channelNumber,
+                                          isFirstRow: isFirstRow,
+                                          isFavorite: _favoriteChannelIds.contains(channel.id),
+                                          onFocusChange: (focused) {
+                                            if (focused) {
+                                              setState(() => _focusedChannel = channel);
+                                            }
+                                          },
+                                          onTap: () => _playChannel(channel),
+                                          onLongPress: () => _toggleFavorite(channel),
+                                          onKeyLeft: (isFirstColumn) {
+                                            if (isFirstColumn) {
+                                              _sidebarScopeNode.requestFocus();
+                                            }
+                                          },
+                                          onKeyUp: _scrollToTop,
+                                          onFastScrollTop: _scrollToTop,
+                                        );
+                                      },
+                                    ),
                                   ),
-                                  itemCount: channels.length,
-                                  itemBuilder: (context, index) {
-                                    final channel = channels[index];
-                                    final channelNumber = index + 1;
-                                    return _TvFocusableChannelCard(
-                                      key: ValueKey(channel.id),
-                                      channel: channel,
-                                      channelNumber: channelNumber,
-                                      isFavorite: _favoriteChannelIds.contains(channel.id),
-                                      onFocusChange: (focused) {
-                                        if (focused) {
-                                          setState(() => _focusedChannel = channel);
-                                        }
-                                      },
-                                      onTap: () => _playChannel(channel),
-                                      onLongPress: () => _toggleFavorite(channel),
-                                      onKeyLeft: (isFirstColumn) {
-                                        if (isFirstColumn) {
-                                          _sidebarScopeNode.requestFocus();
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
+                                  if (_showBackToTop)
+                                    Positioned(
+                                      bottom: 24,
+                                      right: 24,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: _scrollToTop,
+                                          borderRadius: BorderRadius.circular(30),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFFE50914), Color(0xFF990000)],
+                                              ),
+                                              borderRadius: BorderRadius.circular(30),
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  color: Color(0x88E50914),
+                                                  blurRadius: 14,
+                                                  spreadRadius: 2,
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(Icons.keyboard_double_arrow_up_rounded, color: Colors.white, size: 22),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Subir Todo',
+                                                  style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 13,
+                                                    letterSpacing: 0.5,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
               ),
             ],
@@ -768,6 +854,47 @@ class _LiveTvViewState extends State<LiveTvView> {
               ],
             ),
           ),
+
+          // Botón rápido Subir Todo en la cabecera cuando el usuario ha bajado
+          if (_showBackToTop) ...[
+            const SizedBox(width: 14),
+            InkWell(
+              onTap: _scrollToTop,
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFE50914), Color(0xFF990000)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x66E50914),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.keyboard_double_arrow_up_rounded, color: Colors.white, size: 22),
+                    SizedBox(height: 3),
+                    Text(
+                      'Subir Todo',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -779,13 +906,31 @@ class _LiveTvViewState extends State<LiveTvView> {
   Widget _buildMobileLayout() {
     final channels = _filteredChannels;
 
-    return RefreshIndicator(
-      color: const Color(0xFFE50914),
-      backgroundColor: const Color(0xFF16171F),
-      onRefresh: _loadChannels,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
+    return Scaffold(
+      backgroundColor: const Color(0xFF0A0A0C),
+      floatingActionButton: _showBackToTop
+          ? FloatingActionButton.extended(
+              heroTag: 'mobile_live_tv_back_to_top',
+              backgroundColor: const Color(0xFFE50914),
+              foregroundColor: Colors.white,
+              elevation: 8,
+              onPressed: _scrollToTop,
+              icon: const Icon(Icons.keyboard_double_arrow_up_rounded, size: 20),
+              label: const Text(
+                'Subir Todo',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              ),
+            )
+          : null,
+      body: RefreshIndicator(
+        color: const Color(0xFFE50914),
+        backgroundColor: const Color(0xFF16171F),
+        notificationPredicate: (notification) => notification.metrics.pixels <= 0,
+        onRefresh: _loadChannels,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
           // Cabecera Móvil
           SliverToBoxAdapter(
             child: Padding(
@@ -976,7 +1121,8 @@ class _LiveTvViewState extends State<LiveTvView> {
             ),
         ],
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildMobileChannelCard(LiveChannel channel, int channelNumber) {
@@ -1238,8 +1384,8 @@ class _TvCategoryItemState extends State<_TvCategoryItem> {
         Scrollable.ensureVisible(
           context,
           alignment: 0.5,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 70),
+          curve: Curves.easeOut,
         );
       }
     }
@@ -1370,6 +1516,9 @@ class _TvFocusableChannelCard extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
   final ValueChanged<bool> onKeyLeft;
+  final bool isFirstRow;
+  final VoidCallback? onKeyUp;
+  final VoidCallback? onFastScrollTop;
 
   const _TvFocusableChannelCard({
     super.key,
@@ -1380,6 +1529,9 @@ class _TvFocusableChannelCard extends StatefulWidget {
     required this.onTap,
     required this.onLongPress,
     required this.onKeyLeft,
+    this.isFirstRow = false,
+    this.onKeyUp,
+    this.onFastScrollTop,
   });
 
   @override
@@ -1406,9 +1558,9 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
       if (focused) {
         Scrollable.ensureVisible(
           context,
-          alignment: 0.5,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOutCubic,
+          alignment: 0.2,
+          duration: const Duration(milliseconds: 60),
+          curve: Curves.easeOut,
         );
       }
     }
@@ -1439,6 +1591,15 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
             // Notificar si está en la primera columna para regresar al sidebar
             widget.onKeyLeft(true);
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp && widget.isFirstRow) {
+            widget.onKeyUp?.call();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.pageUp ||
+              event.logicalKey == LogicalKeyboardKey.channelUp) {
+            widget.onFastScrollTop?.call();
+            return KeyEventResult.handled;
           }
         } else if (event is KeyUpEvent) {
           if (event.logicalKey == LogicalKeyboardKey.select ||
