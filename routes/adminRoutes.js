@@ -487,5 +487,115 @@ router.delete('/resellers/:id', (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
+/**
+ * ====================================================================
+ * AVISOS Y NOTIFICACIONES A LAS PANTALLAS (SUPER ADMIN)
+ * ====================================================================
+ */
+
+/**
+ * @route   GET /api/admin/announcement
+ * @desc    Obtiene el estado del aviso o notificación en pantalla
+ */
+router.get('/announcement', (req, res) => {
+  try {
+    const announcement = accountService.getAnnouncement();
+    return res.json({
+      success: true,
+      announcement
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/announcement
+ * @desc    Crea, actualiza o desactiva un aviso en pantalla para TVs y móviles
+ */
+router.post('/announcement', (req, res) => {
+  try {
+    const { title, message, type, active, expiresHours } = req.body;
+    const updated = accountService.updateAnnouncement({
+      title,
+      message,
+      type,
+      active,
+      expiresHours
+    });
+    return res.json({
+      success: true,
+      announcement: updated,
+      message: active ? 'Aviso transmitido a todas las pantallas con éxito.' : 'Aviso desactivado.'
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ====================================================================
+ * MONITOR DE PANTALLAS CONECTADAS Y EXPULSIÓN REMOTA
+ * ====================================================================
+ */
+
+/**
+ * @route   GET /api/admin/sessions
+ * @desc    Lista todas las pantallas y dispositivos conectados en tiempo real
+ */
+router.get('/sessions', (req, res) => {
+  try {
+    const sessions = accountService.getAllConnectedSessions();
+    const onlineCount = sessions.filter(s => s.isOnline).length;
+    return res.json({
+      success: true,
+      totalSessions: sessions.length,
+      onlineCount,
+      sessions
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/sessions/disconnect
+ * @desc    Desconecta y expulsa remotamente un dispositivo de la app
+ */
+router.post('/sessions/disconnect', (req, res) => {
+  try {
+    const { clientId, deviceId } = req.body;
+    if (!deviceId) {
+      return res.status(400).json({ success: false, error: 'deviceId es requerido.' });
+    }
+    const result = accountService.disconnectDevice(clientId, deviceId);
+    return res.json(result);
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ====================================================================
+ * TABLERO FINANCIERO Y REPORTES DE INGRESOS
+ * ====================================================================
+ */
+
+/**
+ * @route   GET /api/admin/financial-stats
+ * @desc    Calcula métricas financieras, proyecciones de ingresos y renovaciones
+ */
+router.get('/financial-stats', (req, res) => {
+  try {
+    const price = parseFloat(req.query.price) || 10;
+    const stats = accountService.getFinancialStats(price);
+    return res.json({
+      success: true,
+      stats
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 module.exports = router;

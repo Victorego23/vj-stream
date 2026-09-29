@@ -662,7 +662,20 @@ router.get('/version', (req, res) => {
       '🎮 Navegación ultra fluida con control remoto para Smart TV.'
     ],
     downloadUrl: '/api/streaming/download-apk',
-    forceUpdate: false
+    forceUpdate: false,
+    announcement: accountService.getAnnouncement()
+  });
+});
+
+/**
+ * @route   GET /api/streaming/announcement
+ * @desc    Obtiene el aviso o notificación activa para mostrar en TVs y móviles
+ */
+router.get('/announcement', (req, res) => {
+  const announcement = accountService.getAnnouncement();
+  return res.json({
+    success: true,
+    announcement
   });
 });
 

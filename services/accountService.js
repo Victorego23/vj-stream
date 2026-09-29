@@ -196,6 +196,200 @@ class AccountService {
   }
 
   // -------------------------------------------------------------
+  // GESTIÓN DE AVISOS Y NOTIFICACIONES A LAS PANTALLAS (TV/MÓVIL)
+  // -------------------------------------------------------------
+  getAnnouncement() {
+    const db = this._readDb();
+    const ann = db.settings?.announcement;
+    if (!ann || !ann.active) return null;
+    if (ann.expiresAt && new Date(ann.expiresAt) < new Date()) {
+      return null;
+    }
+    return ann;
+  }
+
+  updateAnnouncement({ title, message, type = 'info', active = true, expiresHours = 24 }) {
+    const db = this._readDb();
+    if (!db.settings) db.settings = {};
+    if (!active || !message || !message.trim()) {
+      db.settings.announcement = {
+        id: crypto.randomUUID(),
+        title: '',
+        message: '',
+        type: 'info',
+        active: false,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      const hours = parseInt(expiresHours, 10) || 24;
+      db.settings.announcement = {
+        id: crypto.randomUUID(),
+        title: (title || 'Aviso de TOM TV').trim(),
+        message: message.trim(),
+        type: ['info', 'warning', 'urgent'].includes(type) ? type : 'info',
+        active: true,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+      };
+    }
+    this._writeDb(db);
+    return db.settings.announcement;
+  }
+
+  // -------------------------------------------------------------
+  // MONITOR DE PANTALLAS CONECTADAS Y EXPULSIÓN REMOTA
+  // -------------------------------------------------------------
+  getAllConnectedSessions() {
+    const db = this._readDb();
+    const now = new Date();
+    const sessions = [];
+
+    (db.clients || []).forEach(client => {
+      const clientExpires = new Date(client.expiresAt);
+      const isClientExpired = clientExpires < now || client.status !== 'active';
+
+      if (Array.isArray(client.devices)) {
+        client.devices.forEach(dev => {
+          const lastSeenDate = dev.lastSeen ? new Date(dev.lastSeen) : null;
+          const diffMinutes = lastSeenDate ? Math.floor((now - lastSeenDate) / 60000) : 9999;
+          const isOnline = diffMinutes <= 30;
+
+          sessions.push({
+            clientId: client.id,
+            clientName: client.name,
+            clientCode: client.code,
+            resellerName: client.resellerName || 'Venta Directa (Admin)',
+            deviceId: dev.deviceId,
+            deviceModel: dev.deviceModel || 'Smart TV / Android',
+            ip: dev.ip || 'Red Remota',
+            lastSeen: dev.lastSeen || client.createdAt,
+            diffMinutes,
+            isOnline,
+            isClientExpired,
+            currentWatching: dev.currentWatching || (isOnline ? '🟢 Navegando en TOM TV' : '⚪ Desconectado')
+          });
+        });
+      }
+    });
+
+    sessions.sort((a, b) => {
+      if (a.isOnline && !b.isOnline) return -1;
+      if (!a.isOnline && b.isOnline) return 1;
+      return new Date(b.lastSeen) - new Date(a.lastSeen);
+    });
+
+    return sessions;
+  }
+
+  disconnectDevice(clientId, deviceId) {
+    const db = this._readDb();
+    const cleanDevId = (deviceId || '').trim();
+
+    let targetClient = (db.clients || []).find(c => c.id === clientId);
+    if (!targetClient && cleanDevId) {
+      targetClient = (db.clients || []).find(c =>
+        Array.isArray(c.devices) && c.devices.some(d => (d.deviceId || '').trim() === cleanDevId)
+      );
+    }
+
+    if (!targetClient) {
+      throw new Error('Cliente o dispositivo no encontrado.');
+    }
+
+    if (!Array.isArray(targetClient.devices)) targetClient.devices = [];
+    if (!Array.isArray(targetClient.revokedDevices)) targetClient.revokedDevices = [];
+
+    targetClient.devices = targetClient.devices.filter(d => (d.deviceId || '').trim() !== cleanDevId);
+    if (!targetClient.revokedDevices.includes(cleanDevId)) {
+      targetClient.revokedDevices.push(cleanDevId);
+    }
+
+    this._writeDb(db);
+    return {
+      success: true,
+      message: `Dispositivo desconectado y expulsado exitosamente.`,
+      remainingDevices: targetClient.devices.length
+    };
+  }
+
+  // -------------------------------------------------------------
+  // TABLERO FINANCIERO Y MÉTRICAS DE VENTAS Y RENOVACIONES
+  // -------------------------------------------------------------
+  getFinancialStats(pricePerClient = 10) {
+    const clients = this.getClients();
+    const resellers = this.getResellers();
+    const now = new Date();
+
+    const activeClients = clients.filter(c => c.status === 'active' && !c.isDemo);
+    const demoClients = clients.filter(c => c.isDemo);
+    const expiredClients = clients.filter(c => c.status === 'expired');
+
+    const expiringToday = activeClients.filter(c => {
+      const exp = new Date(c.expiresAt);
+      const diffHours = (exp - now) / (1000 * 60 * 60);
+      return diffHours >= 0 && diffHours <= 24;
+    });
+
+    const expiringIn3Days = activeClients.filter(c => {
+      const exp = new Date(c.expiresAt);
+      const diffHours = (exp - now) / (1000 * 60 * 60);
+      return diffHours > 24 && diffHours <= 72;
+    });
+
+    const expiringIn7Days = activeClients.filter(c => {
+      const exp = new Date(c.expiresAt);
+      const diffHours = (exp - now) / (1000 * 60 * 60);
+      return diffHours > 72 && diffHours <= 168;
+    });
+
+    const directClients = activeClients.filter(c => !c.resellerId);
+    const resellerClients = activeClients.filter(c => c.resellerId);
+
+    const unitPrice = parseFloat(pricePerClient) || 10;
+    const estimatedMonthlyRevenue = activeClients.length * unitPrice;
+    const directRevenue = directClients.length * unitPrice;
+    const resellerRevenue = resellerClients.length * (unitPrice * 0.6);
+
+    const topResellers = resellers
+      .map(r => ({
+        id: r.id,
+        name: r.name,
+        username: r.username,
+        credits: r.credits,
+        activeClients: r.activeClients || 0,
+        totalClients: r.totalClients || 0
+      }))
+      .sort((a, b) => b.activeClients - a.activeClients)
+      .slice(0, 5);
+
+    return {
+      currency: 'USD',
+      unitPrice,
+      totalClients: clients.length,
+      activeClientsCount: activeClients.length,
+      demoClientsCount: demoClients.length,
+      expiredClientsCount: expiredClients.length,
+      expiringTodayCount: expiringToday.length,
+      expiringIn3DaysCount: expiringIn3Days.length,
+      expiringIn7DaysCount: expiringIn7Days.length,
+      estimatedMonthlyRevenue,
+      directRevenue,
+      resellerRevenue,
+      directClientsCount: directClients.length,
+      resellerClientsCount: resellerClients.length,
+      expiringClients: expiringToday.concat(expiringIn3Days).slice(0, 10).map(c => ({
+        id: c.id,
+        name: c.name,
+        code: c.code,
+        expiresAt: c.expiresAt,
+        daysRemaining: c.daysRemaining,
+        resellerName: c.resellerName
+      })),
+      topResellers
+    };
+  }
+
+  // -------------------------------------------------------------
   // GESTIÓN DE CLIENTES Y SUSCRIPCIONES
   // -------------------------------------------------------------
 
@@ -1195,6 +1389,17 @@ class AccountService {
     const db = this._readDb();
     const now = new Date();
     const cleanDeviceId = (deviceId || '').trim();
+
+    // 0. Verificar si el dispositivo fue explícitamente expulsado por el administrador
+    for (const client of db.clients) {
+      if (Array.isArray(client.revokedDevices) && client.revokedDevices.includes(cleanDeviceId)) {
+        return {
+          active: false,
+          reason: 'revoked',
+          message: 'Este dispositivo ha sido desconectado por el administrador.'
+        };
+      }
+    }
 
     // 1. Búsqueda por deviceId registrado
     for (const client of db.clients) {

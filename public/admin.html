@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --primary: #E50914;
@@ -281,6 +282,275 @@
       from { transform: translateY(20px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
+
+    /* ==========================================================================
+       ESTILOS PARA NUEVAS FUNCIONALIDADES (AVISOS, SESIONES, FINANZAS, MOBILE)
+       ========================================================================== */
+
+    /* TV Announcement Preview Screen */
+    .tv-mockup-frame {
+      background: #000;
+      border: 8px solid #1E222F;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(229,9,20,0.2);
+      position: relative;
+      overflow: hidden;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .tv-stand-base {
+      width: 120px;
+      height: 10px;
+      background: #1E222F;
+      margin: 0 auto;
+      border-radius: 0 0 8px 8px;
+    }
+    .tv-announcement-banner {
+      background: linear-gradient(135deg, rgba(229,9,20,0.95), rgba(153,0,0,0.95));
+      border: 2px solid #fff;
+      border-radius: 14px;
+      padding: 18px 24px;
+      color: #fff;
+      box-shadow: 0 10px 30px rgba(229,9,20,0.5);
+      animation: pulseBanner 2.5s infinite;
+    }
+    .tv-announcement-banner.warning {
+      background: linear-gradient(135deg, rgba(245,158,11,0.95), rgba(180,83,9,0.95));
+      border-color: #FEF08A;
+      box-shadow: 0 10px 30px rgba(245,158,11,0.5);
+    }
+    .tv-announcement-banner.urgent {
+      background: linear-gradient(135deg, rgba(239,68,68,0.95), rgba(185,28,28,0.95));
+      border-color: #FECACA;
+      box-shadow: 0 10px 30px rgba(239,68,68,0.6);
+    }
+    @keyframes pulseBanner {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    /* Charts Container */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .chart-box {
+      background: #090B10;
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+    }
+    .chart-box h4 {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sessions Live Pulse Badge */
+    .live-session-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .live-session-badge.online {
+      background: rgba(34,197,94,0.15);
+      color: var(--success);
+      border: 1px solid rgba(34,197,94,0.4);
+    }
+    .live-session-badge.offline {
+      background: rgba(142,142,147,0.12);
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+    }
+
+    /* Mobile Bottom Navigation Bar */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 12, 17, 0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--card-border);
+      padding: 8px 10px;
+      z-index: 900;
+      justify-content: space-around;
+      align-items: center;
+    }
+    .mob-nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 10px;
+      font-weight: 700;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .mob-nav-item.active {
+      color: #fff;
+      background: rgba(229, 9, 20, 0.2);
+    }
+    .mob-nav-item .icon {
+      font-size: 18px;
+    }
+
+    /* Floating Action Button (FAB) Mobile */
+    .fab-btn {
+      position: fixed;
+      bottom: 74px;
+      right: 18px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      font-size: 22px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 25px var(--primary-glow);
+      border: none;
+      cursor: pointer;
+      z-index: 850;
+      transition: transform 0.2s;
+    }
+    .fab-btn:active {
+      transform: scale(0.92);
+    }
+    .fab-menu {
+      position: fixed;
+      bottom: 136px;
+      right: 18px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 860;
+    }
+    .fab-menu.show {
+      display: flex;
+    }
+    .fab-item {
+      background: #141724;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.85);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .fab-item:hover {
+      border-color: var(--primary);
+    }
+
+    /* Responsive Mobile UI Rules */
+    @media (max-width: 860px) {
+      body {
+        padding-bottom: 75px;
+      }
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      .fab-btn {
+        display: flex;
+      }
+      .navbar {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .nav-brand {
+        justify-content: space-between;
+      }
+      .nav-actions {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .tabs-bar {
+        overflow-x: auto;
+        white-space: nowrap;
+        flex-wrap: nowrap;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+      }
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+      .table-container table,
+      .table-container thead,
+      .table-container tbody,
+      .table-container th,
+      .table-container td,
+      .table-container tr {
+        display: block;
+      }
+      .table-container thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+      }
+      .table-container tr {
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        margin-bottom: 14px;
+        padding: 14px;
+        background: #0B0D14;
+      }
+      .table-container td {
+        border: none;
+        padding: 6px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+      }
+      .table-container td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        margin-right: 12px;
+      }
+      .table-container td.actions-cell {
+        justify-content: flex-end;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid #1A1D2B;
+      }
+      .table-container td.actions-cell::before {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -338,13 +608,22 @@
       <!-- Navegación por Pestañas -->
       <div class="tabs-bar">
         <button class="tab-btn active" id="tab-clients-btn" onclick="switchTab('clients')">
-          <span class="tab-icon">👥</span> Clientes y Pantallas
+          <span class="tab-icon">👥</span> Clientes
+        </button>
+        <button class="tab-btn" id="tab-sessions-btn" onclick="switchTab('sessions')">
+          <span class="tab-icon">📺</span> Pantallas en Vivo
+        </button>
+        <button class="tab-btn" id="tab-announcements-btn" onclick="switchTab('announcements')">
+          <span class="tab-icon">📢</span> Avisos a TVs
+        </button>
+        <button class="tab-btn" id="tab-finances-btn" onclick="switchTab('finances')">
+          <span class="tab-icon">💰</span> Finanzas & Métricas
         </button>
         <button class="tab-btn" id="tab-resellers-btn" onclick="switchTab('resellers')">
-          <span class="tab-icon">💼</span> Revendedores & Créditos
+          <span class="tab-icon">💼</span> Revendedores
         </button>
         <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
-          <span class="tab-icon">📺</span> Canales TV en Vivo
+          <span class="tab-icon">📡</span> Canales TV
         </button>
         <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
           <span class="tab-icon">⚙️</span> Ajustes & WhatsApp
@@ -550,6 +829,195 @@
 
               <button type="submit" class="btn btn-primary" style="margin-top: 10px;">💾 Guardar Ajustes</button>
             </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA: MONITOR DE PANTALLAS CONECTADAS & EXPULSIÓN REMOTA -->
+      <div id="view-sessions" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-title">🟢 Pantallas en Vivo</span>
+            <span class="stat-value" style="color: var(--success);" id="stat-sessions-online">0</span>
+            <span class="stat-sub">Activas en los últimos 30 min</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">📺 Total Dispositivos</span>
+            <span class="stat-value" id="stat-sessions-total">0</span>
+            <span class="stat-sub">Smart TVs & Móviles vinculados</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">🛡️ Control de Pantallas</span>
+            <span class="stat-value" style="color: var(--accent);">Activo</span>
+            <span class="stat-sub">Expulsión remota instantánea</span>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <div>
+              <div class="section-title">📺 Monitor de Pantallas Conectadas en Tiempo Real</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Supervisa qué cliente está conectado y expulsa pantallas con 1 clic si comparten su cuenta</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <button class="btn btn-secondary btn-sm" onclick="fetchSessions()">🔄 Actualizar Pantallas</button>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Dispositivo / Smart TV</th>
+                  <th>Estado en Vivo</th>
+                  <th>Actividad</th>
+                  <th>Última Conexión</th>
+                  <th style="text-align: right;">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="sessions-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando pantallas conectadas...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA: AVISOS Y NOTIFICACIONES A LAS PANTALLAS (SMART TV & MÓVIL) -->
+      <div id="view-announcements" style="display: none;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+          <!-- Panel de Redacción de Aviso -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">📢 Transmitir Aviso a las Pantallas</div>
+            </div>
+            <div style="padding: 24px;">
+              <form id="announcement-form" onsubmit="submitAnnouncement(event)">
+                <div class="form-group">
+                  <label>Título del Aviso:</label>
+                  <input type="text" id="ann-title" class="form-control" placeholder="Ej: ⚽ ¡Transmisión en Vivo Hoy!" required oninput="updateTvMockup()">
+                </div>
+                <div class="form-group">
+                  <label>Mensaje para las Pantallas:</label>
+                  <textarea id="ann-message" class="form-control" rows="4" placeholder="Ej: A las 8:00 PM transmisión exclusiva del partido en Canal 4. ¡No te lo pierdas!" required oninput="updateTvMockup()"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                  <div class="form-group">
+                    <label>Nivel de Importancia:</label>
+                    <select id="ann-type" class="form-control" onchange="updateTvMockup()">
+                      <option value="info">🔵 Informativo (Azul/Rojo)</option>
+                      <option value="warning">🟡 Alerta / Novedad (Dorado)</option>
+                      <option value="urgent">🔴 Urgente / Mantenimiento (Rojo Fuerte)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label>Duración del Aviso:</label>
+                    <select id="ann-hours" class="form-control">
+                      <option value="6">6 Horas</option>
+                      <option value="12">12 Horas</option>
+                      <option value="24" selected>24 Horas (1 Día)</option>
+                      <option value="48">48 Horas (2 Días)</option>
+                      <option value="168">7 Días</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                  <button type="submit" class="btn btn-primary" style="flex: 1;">📢 Transmitir a Todas las TVs</button>
+                  <button type="button" class="btn btn-secondary" onclick="disableAnnouncement()">🚫 Desactivar Aviso</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Vista Previa de Cómo se Ve en el Televisor -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">📺 Vista Previa en Pantalla Smart TV</div>
+              <span id="ann-status-pill" class="badge badge-expired">Inactivo</span>
+            </div>
+            <div style="padding: 24px; text-align: center;">
+              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Así verán este aviso tus clientes en la parte superior de su pantalla al abrir la app:</p>
+              
+              <div class="tv-mockup-frame">
+                <div style="position: absolute; top: 12px; left: 16px; font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 800;">TOM TV • SMART TV</div>
+                <div id="mockup-banner" class="tv-announcement-banner">
+                  <div id="mockup-title" style="font-size: 16px; font-weight: 900; margin-bottom: 6px;">📢 ¡Transmisión en Vivo Hoy!</div>
+                  <div id="mockup-msg" style="font-size: 13px; opacity: 0.95; line-height: 1.4;">A las 8:00 PM transmisión exclusiva en el Canal 4. ¡Disfrútalo!</div>
+                </div>
+              </div>
+              <div class="tv-stand-base"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA: TABLERO FINANCIERO Y GANANCIAS -->
+      <div id="view-finances" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-title">💰 Ingresos Proyectados / Mes</span>
+            <span class="stat-value" style="color: var(--success); font-size: 32px;" id="stat-finance-revenue">$0</span>
+            <span class="stat-sub">Cartera activa recurrente</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">👥 Clientes Pagos Activos</span>
+            <span class="stat-value" style="color: #fff;" id="stat-finance-active-clients">0</span>
+            <span class="stat-sub">Suscripciones vigentes</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">🚨 Vencen Hoy (Cobro Urgente)</span>
+            <span class="stat-value" style="color: var(--danger);" id="stat-finance-exp-today">0</span>
+            <span class="stat-sub">Para renovar de inmediato</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">🟡 Vencen en ≤ 3 Días</span>
+            <span class="stat-value" style="color: var(--warning);" id="stat-finance-exp-3d">0</span>
+            <span class="stat-sub">Oportunidades de cobro</span>
+          </div>
+        </div>
+
+        <!-- Gráficos de Inteligencia Financiera -->
+        <div class="charts-grid">
+          <div class="chart-box">
+            <h4>📊 Distribución de Clientes</h4>
+            <div style="height: 250px; position: relative;">
+              <canvas id="chart-client-dist"></canvas>
+            </div>
+          </div>
+          <div class="chart-box">
+            <h4>📅 Próximas Renovaciones (7 Días)</h4>
+            <div style="height: 250px; position: relative;">
+              <canvas id="chart-renewals"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clientes con Renovación Inminente (Cobro Rápido por WhatsApp) -->
+        <div class="section-card" style="margin-top: 24px;">
+          <div class="section-header">
+            <div>
+              <div class="section-title">⚡ Clientes por Vencer (Enviar Cobro WhatsApp con 1 Clic)</div>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Envía el recordatorio de pago directamente al WhatsApp del cliente con su código ya redactado</p>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Código</th>
+                  <th>Vence</th>
+                  <th>Tiempo Restante</th>
+                  <th>Distribuidor</th>
+                  <th style="text-align: right;">Recordatorio WhatsApp</th>
+                </tr>
+              </thead>
+              <tbody id="finance-expiring-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay renovaciones urgentes por ahora.</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -897,12 +1365,25 @@
       const activeBtn = document.getElementById(`tab-${tab}-btn`);
       if (activeBtn) activeBtn.classList.add('active');
 
+      document.querySelectorAll('.mob-nav-item').forEach(b => b.classList.remove('active'));
+      const mobBtn = document.getElementById(`mob-nav-${tab}`);
+      if (mobBtn) mobBtn.classList.add('active');
+
       document.getElementById('view-clients').style.display = tab === 'clients' ? 'block' : 'none';
+      document.getElementById('view-sessions').style.display = tab === 'sessions' ? 'block' : 'none';
+      document.getElementById('view-announcements').style.display = tab === 'announcements' ? 'block' : 'none';
+      document.getElementById('view-finances').style.display = tab === 'finances' ? 'block' : 'none';
       document.getElementById('view-resellers').style.display = tab === 'resellers' ? 'block' : 'none';
       document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
       document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
 
-      if (tab === 'channels') {
+      if (tab === 'sessions') {
+        fetchSessions();
+      } else if (tab === 'announcements') {
+        fetchAnnouncement();
+      } else if (tab === 'finances') {
+        fetchFinancialStats();
+      } else if (tab === 'channels') {
         fetchChannels();
       } else if (tab === 'resellers') {
         fetchResellers();
@@ -1907,6 +2388,331 @@
       }
     }
 
+    // ==============================================================
+    // MONITOR DE PANTALLAS CONECTADAS & EXPULSIÓN REMOTA
+    // ==============================================================
+
+    async function fetchSessions() {
+      if (!adminToken) return;
+      const tbody = document.getElementById('sessions-tbody');
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Consultando pantallas en tiempo real...</td></tr>';
+
+      try {
+        const res = await fetch('/api/admin/sessions', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('stat-sessions-online').textContent = data.onlineCount || 0;
+          document.getElementById('stat-sessions-total').textContent = data.totalSessions || 0;
+          renderSessions(data.sessions || []);
+        }
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 24px;">Error al cargar sesiones.</td></tr>';
+      }
+    }
+
+    function renderSessions(sessions) {
+      const tbody = document.getElementById('sessions-tbody');
+      if (!sessions || sessions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay pantallas ni dispositivos vinculados aún.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = sessions.map(s => `
+        <tr>
+          <td data-label="Cliente">
+            <div class="client-name">${s.clientName}</div>
+            <div class="client-user">Código: <span style="color:var(--primary); font-family:monospace; font-weight:800;">${s.clientCode}</span> • ${s.resellerName}</div>
+          </td>
+          <td data-label="Dispositivo">
+            <div style="font-weight:700; color:#fff;">📺 ${s.deviceModel}</div>
+            <div style="font-size:11px; color:var(--text-muted); font-family:monospace;">ID: ${s.deviceId.slice(0, 16)}...</div>
+          </td>
+          <td data-label="Estado en Vivo">
+            ${s.isOnline
+              ? '<span class="live-session-badge online"><span style="width:8px; height:8px; border-radius:50%; background:var(--success); display:inline-block;" class="pulse"></span> EN LÍNEA</span>'
+              : '<span class="live-session-badge offline">⚪ Desconectado</span>'
+            }
+          </td>
+          <td data-label="Actividad">
+            <span style="font-size:12px; color:var(--text-main); font-weight:600;">${s.currentWatching}</span>
+          </td>
+          <td data-label="Última Conexión">
+            <span style="font-size:12px; color:var(--text-muted);">${s.diffMinutes <= 1 ? 'Hace un instante' : `Hace ${s.diffMinutes} min`}</span>
+          </td>
+          <td class="actions-cell" style="text-align: right;">
+            <button class="btn btn-danger btn-sm" onclick="disconnectDevice('${s.clientId}', '${s.deviceId}', '${s.clientName}')" title="Desconectar y expulsar esta TV">
+              🚫 Expulsar Pantalla
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function disconnectDevice(clientId, deviceId, clientName) {
+      if (!confirm(`¿Estás seguro de expulsar y desconectar la pantalla del cliente "${clientName}"?\n\nLa TV se cerrará y se le pedirá código nuevamente.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/sessions/disconnect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ clientId, deviceId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Pantalla desconectada y expulsada exitosamente.', 'success');
+          fetchSessions();
+          fetchOverview();
+        } else {
+          showToast(data.error || 'No se pudo desconectar.', 'error');
+        }
+      } catch (err) {
+        showToast('Error al expulsar pantalla.', 'error');
+      }
+    }
+
+    // ==============================================================
+    // AVISOS Y NOTIFICACIONES A LAS PANTALLAS (SMART TV & MÓVIL)
+    // ==============================================================
+
+    async function fetchAnnouncement() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/announcement', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.announcement) {
+          const a = data.announcement;
+          document.getElementById('ann-title').value = a.title || '';
+          document.getElementById('ann-message').value = a.message || '';
+          document.getElementById('ann-type').value = a.type || 'info';
+
+          const pill = document.getElementById('ann-status-pill');
+          if (a.active) {
+            pill.className = 'badge badge-active';
+            pill.textContent = '🟢 Transmitiendo en Vivo';
+          } else {
+            pill.className = 'badge badge-expired';
+            pill.textContent = 'Inactivo';
+          }
+          updateTvMockup();
+        }
+      } catch (err) {
+        console.error('Error fetching announcement:', err);
+      }
+    }
+
+    function updateTvMockup() {
+      const title = document.getElementById('ann-title').value.trim() || 'Aviso de TOM TV';
+      const msg = document.getElementById('ann-message').value.trim() || 'Tu mensaje aparecerá aquí en las pantallas de tus usuarios.';
+      const type = document.getElementById('ann-type').value;
+
+      const titleEl = document.getElementById('mockup-title');
+      const msgEl = document.getElementById('mockup-msg');
+      const bannerEl = document.getElementById('mockup-banner');
+
+      titleEl.textContent = title;
+      msgEl.textContent = msg;
+
+      bannerEl.className = `tv-announcement-banner ${type}`;
+    }
+
+    async function submitAnnouncement(e) {
+      e.preventDefault();
+      const title = document.getElementById('ann-title').value.trim();
+      const message = document.getElementById('ann-message').value.trim();
+      const type = document.getElementById('ann-type').value;
+      const expiresHours = parseInt(document.getElementById('ann-hours').value, 10) || 24;
+
+      try {
+        const res = await fetch('/api/admin/announcement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ title, message, type, active: true, expiresHours })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('¡Aviso transmitido con éxito a todas las pantallas!', 'success');
+          const pill = document.getElementById('ann-status-pill');
+          pill.className = 'badge badge-active';
+          pill.textContent = '🟢 Transmitiendo en Vivo';
+        } else {
+          showToast(data.error || 'Error al transmitir aviso.', 'error');
+        }
+      } catch (err) {
+        showToast('Error de red al transmitir aviso.', 'error');
+      }
+    }
+
+    async function disableAnnouncement() {
+      if (!confirm('¿Deseas retirar el aviso de todas las pantallas ahora?')) return;
+      try {
+        const res = await fetch('/api/admin/announcement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ active: false, message: '' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Aviso retirado de las pantallas.', 'info');
+          const pill = document.getElementById('ann-status-pill');
+          pill.className = 'badge badge-expired';
+          pill.textContent = 'Inactivo';
+        }
+      } catch (err) {
+        showToast('Error al desactivar aviso.', 'error');
+      }
+    }
+
+    // ==============================================================
+    // TABLERO FINANCIERO Y GANANCIAS (CHART.JS & RENOVACIONES)
+    // ==============================================================
+
+    let chartDistInstance = null;
+    let chartRenewalsInstance = null;
+
+    async function fetchFinancialStats() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/financial-stats?price=10', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.stats) {
+          const s = data.stats;
+          document.getElementById('stat-finance-revenue').textContent = `$${s.estimatedMonthlyRevenue.toLocaleString()}`;
+          document.getElementById('stat-finance-active-clients').textContent = s.activeClientsCount;
+          document.getElementById('stat-finance-exp-today').textContent = s.expiringTodayCount;
+          document.getElementById('stat-finance-exp-3d').textContent = s.expiringIn3DaysCount;
+
+          renderFinancialCharts(s);
+          renderExpiringClientsList(s.expiringClients || []);
+        }
+      } catch (err) {
+        console.error('Error fetching financial stats:', err);
+      }
+    }
+
+    function renderFinancialCharts(s) {
+      if (typeof Chart === 'undefined') return;
+
+      // 1. Gráfico de Distribución de Clientes (Doughnut)
+      const distCanvas = document.getElementById('chart-client-dist');
+      if (distCanvas) {
+        if (chartDistInstance) chartDistInstance.destroy();
+        chartDistInstance = new Chart(distCanvas, {
+          type: 'doughnut',
+          data: {
+            labels: ['🟢 Activos Pagos', '🟡 Por Vencer (≤3d)', '🔴 Vencidos', '⚡ Demos (2h)'],
+            datasets: [{
+              data: [
+                Math.max(0, s.activeClientsCount - s.expiringIn3DaysCount),
+                s.expiringIn3DaysCount,
+                s.expiredClientsCount,
+                s.demoClientsCount
+              ],
+              backgroundColor: ['#22C55E', '#F59E0B', '#EF4444', '#38BDF8'],
+              borderColor: '#090B10',
+              borderWidth: 3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { position: 'bottom', labels: { color: '#8E8E93', font: { family: 'Inter', size: 11 } } }
+            }
+          }
+        });
+      }
+
+      // 2. Gráfico de Renovaciones Próximas (Bar)
+      const renewCanvas = document.getElementById('chart-renewals');
+      if (renewCanvas) {
+        if (chartRenewalsInstance) chartRenewalsInstance.destroy();
+        chartRenewalsInstance = new Chart(renewCanvas, {
+          type: 'bar',
+          data: {
+            labels: ['Hoy', 'En 1-3 días', 'En 4-7 días'],
+            datasets: [{
+              label: 'Clientes a Renovar',
+              data: [s.expiringTodayCount, s.expiringIn3DaysCount, s.expiringIn7DaysCount],
+              backgroundColor: ['#EF4444', '#F59E0B', '#38BDF8'],
+              borderRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { ticks: { color: '#8E8E93' }, grid: { display: false } },
+              y: { ticks: { color: '#8E8E93', precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+            },
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+      }
+    }
+
+    function renderExpiringClientsList(expiringList) {
+      const tbody = document.getElementById('finance-expiring-tbody');
+      if (!expiringList || expiringList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay clientes con vencimiento inminente. ¡Todo al día!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = expiringList.map(c => {
+        const days = c.daysRemaining;
+        const urgencyColor = days === 0 ? 'var(--danger)' : 'var(--warning)';
+        const urgencyLabel = days === 0 ? '🚨 Vence Hoy' : `🟡 En ${days} día${days > 1 ? 's' : ''}`;
+        const dateStr = new Date(c.expiresAt).toLocaleDateString('es-ES');
+
+        return `
+          <tr>
+            <td data-label="Cliente">
+              <div class="client-name">${c.name}</div>
+            </td>
+            <td data-label="Código">
+              <span style="font-family:monospace; font-weight:800; color:var(--primary);">${c.code}</span>
+            </td>
+            <td data-label="Vence">${dateStr}</td>
+            <td data-label="Tiempo">
+              <span style="color:${urgencyColor}; font-weight:800;">${urgencyLabel}</span>
+            </td>
+            <td data-label="Distribuidor">${c.resellerName}</td>
+            <td class="actions-cell" style="text-align: right;">
+              <button class="btn btn-whatsapp btn-sm" onclick="sendRenewalWhatsApp('${c.name}', '${days}', '${dateStr}', '${c.code}')">
+                📲 Cobrar por WhatsApp
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function sendRenewalWhatsApp(name, days, dateStr, code) {
+      let defaultMsg = `Hola ${name}, te recordamos que tu suscripción a TOM TV vence ${days === '0' ? 'hoy' : 'en ' + days + ' días'} (${dateStr}). Tu código de cuenta es ${code}. ¿Deseas renovar tu servicio ahora?`;
+      const url = `https://wa.me/?text=${encodeURIComponent(defaultMsg)}`;
+      window.open(url, '_blank');
+    }
+
+    // ==============================================================
+    // CONTROLES MÓVILES (FAB MENU)
+    // ==============================================================
+
+    function toggleFabMenu() {
+      const menu = document.getElementById('fab-menu');
+      if (menu) {
+        menu.classList.toggle('show');
+      }
+    }
+
     // Helpers de Modales
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
@@ -1916,5 +2722,38 @@
       document.getElementById(id).style.display = 'none';
     }
   </script>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR PARA CELULARES (MOBILE BOTTOM NAV) -->
+  <div class="mobile-bottom-nav">
+    <button class="mob-nav-item active" id="mob-nav-clients" onclick="switchTab('clients')">
+      <span class="icon">👥</span>
+      <span>Clientes</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-sessions" onclick="switchTab('sessions')">
+      <span class="icon">📺</span>
+      <span>Pantallas</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-announcements" onclick="switchTab('announcements')">
+      <span class="icon">📢</span>
+      <span>Avisos</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-finances" onclick="switchTab('finances')">
+      <span class="icon">💰</span>
+      <span>Finanzas</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-settings" onclick="switchTab('settings')">
+      <span class="icon">⚙️</span>
+      <span>Ajustes</span>
+    </button>
+  </div>
+
+  <!-- BOTÓN FLOTANTE RÁPIDO PARA CELULARES (FAB) -->
+  <button class="fab-btn" onclick="toggleFabMenu()" title="Acciones Rápidas">⚡</button>
+  <div class="fab-menu" id="fab-menu">
+    <div class="fab-item" onclick="openQuickDemoModal(); toggleFabMenu();">⚡ Generar Demo (2h)</div>
+    <div class="fab-item" onclick="openNewClientModal(); toggleFabMenu();">+ Nuevo Cliente</div>
+    <div class="fab-item" onclick="switchTab('announcements'); toggleFabMenu();">📢 Transmitir Aviso TV</div>
+    <div class="fab-item" onclick="fetchOverview(); toggleFabMenu();">🔄 Refrescar Todo</div>
+  </div>
 </body>
 </html>

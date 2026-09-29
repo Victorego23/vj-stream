@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
@@ -53,6 +55,7 @@ class _HomeViewState extends State<HomeView> {
   int _yearMoviesPage = 1;
   bool _hasMoreYearMovies = true;
   final List<int> _availableYears = List.generate(27, (i) => 2026 - i);
+  Map<String, dynamic>? _activeAnnouncement;
 
   @override
   void initState() {
@@ -163,7 +166,27 @@ class _HomeViewState extends State<HomeView> {
     if (mounted) {
       UpdateService.checkUpdate(context, silent: true);
       _checkComingSoonReleases();
+      _checkServerAnnouncement();
     }
+  }
+
+  Future<void> _checkServerAnnouncement() async {
+    try {
+      final origin = _apiService.serverOrigin;
+      final uri = Uri.parse('$origin/api/streaming/announcement');
+      final res = await http.get(uri).timeout(const Duration(seconds: 4));
+      if (res.statusCode == 200) {
+        final data = json.decode(utf8.decode(res.bodyBytes));
+        if (data['success'] == true && data['announcement'] != null) {
+          final ann = data['announcement'] as Map<String, dynamic>;
+          if (mounted && ann['active'] == true && (ann['message'] ?? '').toString().isNotEmpty) {
+            setState(() {
+              _activeAnnouncement = ann;
+            });
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   /// Comprueba silenciosamente si alguna película guardada en espera de audio en español
@@ -959,6 +982,12 @@ class _HomeViewState extends State<HomeView> {
                     ],
                   ),
 
+                  // Banner de Aviso / Notificación enviado desde el Panel Administrativo (Smart TV y Móvil)
+                  if (_activeAnnouncement != null)
+                    SliverToBoxAdapter(
+                      child: _buildAnnouncementBanner(isTv),
+                    ),
+
                   // Pestañas de Navegación Rápida
                   SliverToBoxAdapter(
                     child: _buildTabBar(isTv),
@@ -1208,6 +1237,86 @@ class _HomeViewState extends State<HomeView> {
       if (movieInTrending.isNotEmpty) return movieInTrending.first;
     }
     return _heroItem;
+  }
+
+  Widget _buildAnnouncementBanner(bool isTv) {
+    if (_activeAnnouncement == null) return const SizedBox.shrink();
+
+    final title = (_activeAnnouncement!['title'] ?? 'Aviso de TOM TV').toString();
+    final message = (_activeAnnouncement!['message'] ?? '').toString();
+    final type = (_activeAnnouncement!['type'] ?? 'info').toString();
+
+    Color bgColor1 = const Color(0xFFE50914);
+    Color bgColor2 = const Color(0xFF990000);
+    IconData iconData = Icons.campaign_rounded;
+
+    if (type == 'warning') {
+      bgColor1 = const Color(0xFFD97706);
+      bgColor2 = const Color(0xFF92400E);
+      iconData = Icons.warning_amber_rounded;
+    } else if (type == 'urgent') {
+      bgColor1 = const Color(0xFFDC2626);
+      bgColor2 = const Color(0xFF7F1D1D);
+      iconData = Icons.report_problem_rounded;
+    }
+
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: isTv ? 48 : 16,
+        vertical: 8,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [bgColor1, bgColor2]),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: bgColor1.withValues(alpha: 0.35),
+            blurRadius: 12,
+            spreadRadius: 1,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(iconData, color: Colors.white, size: isTv ? 28 : 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: isTv ? 14 : 12,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  message,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.95),
+                    fontSize: isTv ? 13 : 11,
+                    height: 1.25,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, color: Colors.white70, size: 20),
+            onPressed: () {
+              setState(() => _activeAnnouncement = null);
+            },
+            tooltip: 'Cerrar aviso',
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildTabBar(bool isTv) {

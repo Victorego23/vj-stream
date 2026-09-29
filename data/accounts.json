@@ -4,7 +4,15 @@
   },
   "settings": {
     "whatsappNumber": "+51999999999",
-    "whatsappMessage": "Hola, mi código de activación de TOM TV es {code}"
+    "whatsappMessage": "Hola, mi código de activación de TOM TV es {code}",
+    "announcement": {
+      "id": "98209da9-7df0-4bee-a3b3-ebe827115eaf",
+      "title": "",
+      "message": "",
+      "type": "info",
+      "active": false,
+      "updatedAt": "2026-09-29T20:50:20.078Z"
+    }
   },
   "clients": [
     {
