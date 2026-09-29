@@ -7,7 +7,8 @@ import 'video_player_view.dart';
 
 class LiveTvView extends StatefulWidget {
   final String? initialCategory;
-  const LiveTvView({super.key, this.initialCategory});
+  final VoidCallback? onBackToMovies;
+  const LiveTvView({super.key, this.initialCategory, this.onBackToMovies});
 
   @override
   State<LiveTvView> createState() => _LiveTvViewState();
@@ -32,6 +33,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   LiveChannel? _focusedChannel;
   final FocusScopeNode _channelGridScopeNode = FocusScopeNode();
   final FocusScopeNode _sidebarScopeNode = FocusScopeNode();
+  final FocusNode _returnToMoviesFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
   bool _showBackToTop = false;
 
@@ -158,6 +160,7 @@ class _LiveTvViewState extends State<LiveTvView> {
     _scrollController.dispose();
     _channelGridScopeNode.dispose();
     _sidebarScopeNode.dispose();
+    _returnToMoviesFocusNode.dispose();
     super.dispose();
   }
 
@@ -349,9 +352,31 @@ class _LiveTvViewState extends State<LiveTvView> {
   Widget build(BuildContext context) {
     final isTv = MediaQuery.of(context).size.width > 700;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0C),
-      body: isTv ? _buildTvLayout() : _buildMobileLayout(),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        widget.onBackToMovies?.call();
+      },
+      child: Focus(
+        autofocus: false,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.escape ||
+                event.logicalKey == LogicalKeyboardKey.goBack) {
+              if (widget.onBackToMovies != null) {
+                widget.onBackToMovies!();
+                return KeyEventResult.handled;
+              }
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFF0A0A0C),
+          body: isTv ? _buildTvLayout() : _buildMobileLayout(),
+        ),
+      ),
     );
   }
 
@@ -473,6 +498,24 @@ class _LiveTvViewState extends State<LiveTvView> {
 
               const SizedBox(height: 6),
 
+              // Botón destacado siempre visible: Regresar a Películas
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                child: _TvCategoryItem(
+                  title: 'Volver a Películas',
+                  icon: '🎬 ',
+                  isSelected: false,
+                  badgeCount: null,
+                  onSelect: () => widget.onBackToMovies?.call(),
+                  onKeyRight: () {
+                    _channelGridScopeNode.requestFocus();
+                  },
+                  onBackToMovies: widget.onBackToMovies,
+                ),
+              ),
+
+              const Divider(color: Color(0xFF1E202C), height: 8),
+
               // Lista de Categorías navegable con Control Remoto
               Expanded(
                 child: FocusScope(
@@ -504,6 +547,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                           // Pasar foco a la cuadrícula de canales
                           _channelGridScopeNode.requestFocus();
                         },
+                        onBackToMovies: widget.onBackToMovies,
                       );
                     },
                   ),
@@ -585,8 +629,14 @@ class _LiveTvViewState extends State<LiveTvView> {
                                               _sidebarScopeNode.requestFocus();
                                             }
                                           },
-                                          onKeyUp: _scrollToTop,
+                                          onKeyUp: () {
+                                            _returnToMoviesFocusNode.requestFocus();
+                                            if (_scrollController.hasClients) {
+                                              _scrollController.animateTo(0, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
+                                            }
+                                          },
                                           onFastScrollTop: _scrollToTop,
+                                          onBackToMovies: widget.onBackToMovies,
                                         );
                                       },
                                     ),
@@ -854,6 +904,83 @@ class _LiveTvViewState extends State<LiveTvView> {
               ],
             ),
           ),
+          // Botón directo a Películas con foco Smart TV
+          const SizedBox(width: 12),
+          Focus(
+            focusNode: _returnToMoviesFocusNode,
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent) {
+                if (event.logicalKey == LogicalKeyboardKey.select ||
+                    event.logicalKey == LogicalKeyboardKey.enter ||
+                    event.logicalKey == LogicalKeyboardKey.space ||
+                    event.logicalKey == LogicalKeyboardKey.arrowUp ||
+                    event.logicalKey == LogicalKeyboardKey.escape ||
+                    event.logicalKey == LogicalKeyboardKey.goBack) {
+                  widget.onBackToMovies?.call();
+                  return KeyEventResult.handled;
+                }
+                if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                  _channelGridScopeNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+                if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                  _sidebarScopeNode.requestFocus();
+                  return KeyEventResult.handled;
+                }
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Builder(
+              builder: (ctx) {
+                final isFocused = Focus.of(ctx).hasFocus;
+                return InkWell(
+                  onTap: widget.onBackToMovies,
+                  borderRadius: BorderRadius.circular(10),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      gradient: isFocused
+                          ? const LinearGradient(
+                              colors: [Color(0xFFE50914), Color(0xFF990000)],
+                            )
+                          : null,
+                      color: isFocused ? null : const Color(0xFF1E202C),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isFocused ? Colors.white : const Color(0xFF33374C),
+                        width: isFocused ? 2.0 : 1.0,
+                      ),
+                      boxShadow: isFocused
+                          ? const [
+                              BoxShadow(
+                                color: Color(0x99E50914),
+                                blurRadius: 14,
+                                spreadRadius: 2,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.movie_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Ver Películas',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: isFocused ? FontWeight.w900 : FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
 
           // Botón rápido Subir Todo en la cabecera cuando el usuario ha bajado
           if (_showBackToTop) ...[
@@ -937,6 +1064,16 @@ class _LiveTvViewState extends State<LiveTvView> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
               child: Row(
                 children: [
+                  if (widget.onBackToMovies != null) ...[
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 24),
+                      onPressed: widget.onBackToMovies,
+                      tooltip: 'Volver a Películas',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -955,27 +1092,41 @@ class _LiveTvViewState extends State<LiveTvView> {
                     child: const Icon(Icons.live_tv_rounded, color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'TV en Vivo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'TV en Vivo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                      Text(
-                        '${_allChannels.length} canales transmitiendo 24/7',
-                        style: const TextStyle(
-                          color: Colors.white54,
-                          fontSize: 12,
+                        Text(
+                          '${_allChannels.length} canales transmitiendo 24/7',
+                          style: const TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  if (widget.onBackToMovies != null)
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        backgroundColor: const Color(0xFF1E202C),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      icon: const Icon(Icons.movie_rounded, color: Color(0xFFE50914), size: 16),
+                      label: const Text('Películas', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      onPressed: widget.onBackToMovies,
+                    ),
                 ],
               ),
             ),
@@ -1353,6 +1504,7 @@ class _TvCategoryItem extends StatefulWidget {
   final int? badgeCount;
   final VoidCallback onSelect;
   final VoidCallback onKeyRight;
+  final VoidCallback? onBackToMovies;
 
   const _TvCategoryItem({
     required this.title,
@@ -1361,6 +1513,7 @@ class _TvCategoryItem extends StatefulWidget {
     this.badgeCount,
     required this.onSelect,
     required this.onKeyRight,
+    this.onBackToMovies,
   });
 
   @override
@@ -1412,6 +1565,11 @@ class _TvCategoryItemState extends State<_TvCategoryItem> {
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
             widget.onKeyRight();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.escape ||
+              event.logicalKey == LogicalKeyboardKey.goBack) {
+            widget.onBackToMovies?.call();
             return KeyEventResult.handled;
           }
         }
@@ -1519,6 +1677,7 @@ class _TvFocusableChannelCard extends StatefulWidget {
   final bool isFirstRow;
   final VoidCallback? onKeyUp;
   final VoidCallback? onFastScrollTop;
+  final VoidCallback? onBackToMovies;
 
   const _TvFocusableChannelCard({
     super.key,
@@ -1532,6 +1691,7 @@ class _TvFocusableChannelCard extends StatefulWidget {
     this.isFirstRow = false,
     this.onKeyUp,
     this.onFastScrollTop,
+    this.onBackToMovies,
   });
 
   @override
@@ -1586,6 +1746,11 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space) {
             _keyDownTime = DateTime.now();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.escape ||
+              event.logicalKey == LogicalKeyboardKey.goBack) {
+            widget.onBackToMovies?.call();
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {

@@ -862,6 +862,16 @@ class _HomeViewState extends State<HomeView> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
+        // Si el usuario está en TV en Vivo, Canales Perú o cualquier otra pestaña, regresar a Películas
+        if (_activeTab != 'Películas') {
+          setState(() {
+            _activeTab = 'Películas';
+          });
+          if (_scrollController.hasClients) {
+            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+          }
+          return;
+        }
         final shouldExit = await _showExitConfirmDialog();
         if (shouldExit == true) {
           await SystemNavigator.pop();
@@ -962,15 +972,30 @@ class _HomeViewState extends State<HomeView> {
 
                   // Vista cuando la pestaña activa es "Canales Perú"
                   if (_activeTab == 'Canales Perú')
-                    const SliverFillRemaining(
+                    SliverFillRemaining(
                       hasScrollBody: true,
-                      child: LiveTvView(initialCategory: '🇵🇪 Canales Peruanos'),
+                      child: LiveTvView(
+                        initialCategory: '🇵🇪 Canales Peruanos',
+                        onBackToMovies: () {
+                          setState(() => _activeTab = 'Películas');
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                          }
+                        },
+                      ),
                     )
                   // Vista cuando la pestaña activa es "TV en Vivo"
                   else if (_activeTab == 'TV en Vivo')
-                    const SliverFillRemaining(
+                    SliverFillRemaining(
                       hasScrollBody: true,
-                      child: LiveTvView(),
+                      child: LiveTvView(
+                        onBackToMovies: () {
+                          setState(() => _activeTab = 'Películas');
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                          }
+                        },
+                      ),
                     )
                   // Vista cuando la pestaña activa es "Mi Lista"
                   else if (_activeTab == 'Mi Lista')
