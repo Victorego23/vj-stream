@@ -936,6 +936,256 @@
       cursor: pointer;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
+
+    /* ========================================================
+       NAVEGACIÓN CON CONTROL REMOTO SMART TV Y MODO ADULTO MAYOR
+       ======================================================== */
+    .focusable {
+      outline: none;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .focusable:focus,
+    .focusable.tv-focused {
+      outline: none !important;
+      transform: scale(1.08) translateY(-4px) !important;
+      border: 3.5px solid #FFD700 !important;
+      box-shadow: 0 0 26px rgba(255, 215, 0, 0.9), 0 12px 32px rgba(0, 0, 0, 0.95) !important;
+      z-index: 120 !important;
+      position: relative;
+    }
+
+    /* BOTÓN TOGGLE MODO ADULTO MAYOR */
+    .senior-toggle-btn {
+      background: linear-gradient(135deg, #FFB800, #E50914);
+      color: #000;
+      font-weight: 900;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      cursor: pointer;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 14px rgba(255, 184, 0, 0.45);
+      transition: all 0.2s;
+    }
+    .senior-toggle-btn:hover, .senior-toggle-btn:focus {
+      transform: scale(1.05);
+      box-shadow: 0 0 22px rgba(255, 184, 0, 0.8);
+    }
+    .senior-toggle-btn.active {
+      background: #22C55E;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(34, 197, 94, 0.6);
+      border-color: #4ade80;
+    }
+
+    /* BANNER HERO EN MODO ADULTO MAYOR / TV SENCILLO */
+    .senior-hero-panel {
+      display: none;
+      background: radial-gradient(circle at 50% 0%, #201a12 0%, #08080a 100%);
+      border-bottom: 2px solid rgba(255, 184, 0, 0.35);
+      padding: 22px 20px 24px;
+      margin-bottom: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    body.senior-mode .senior-hero-panel {
+      display: block;
+    }
+
+    .senior-top-info {
+      text-align: center;
+      max-width: 900px;
+      margin: 0 auto 16px;
+    }
+    .senior-badge {
+      display: inline-block;
+      background: rgba(229, 9, 20, 0.25);
+      border: 1px solid rgba(229, 9, 20, 0.6);
+      color: #FFA5A8;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      letter-spacing: 0.8px;
+    }
+    .senior-headline {
+      font-size: clamp(22px, 3.2vw, 32px);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+    .senior-subtext {
+      font-size: clamp(14px, 1.6vw, 17px);
+      color: #e5e5e5;
+      line-height: 1.5;
+    }
+    .senior-subtext strong {
+      color: #FFD700;
+      background: rgba(255, 215, 0, 0.18);
+      padding: 1px 7px;
+      border-radius: 4px;
+    }
+
+    .senior-big-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      max-width: 1060px;
+      margin: 0 auto;
+    }
+
+    .senior-action-card {
+      background: linear-gradient(145deg, #181924 0%, #0d0e14 100%);
+      border: 2px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      text-align: left;
+      position: relative;
+      transition: all 0.25s ease;
+      color: #fff;
+    }
+    .senior-action-card:hover, .senior-action-card:focus {
+      border-color: #FFD700;
+      background: linear-gradient(145deg, #252636 0%, #161722 100%);
+    }
+    .senior-card-emoji {
+      font-size: 38px;
+      flex-shrink: 0;
+    }
+    .senior-card-details {
+      flex: 1;
+    }
+    .senior-card-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 3px;
+    }
+    .senior-card-desc {
+      font-size: 13px;
+      color: #B3B3B3;
+      line-height: 1.3;
+    }
+    .senior-card-badge {
+      background: var(--primary);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 6px 12px;
+      border-radius: 20px;
+      white-space: nowrap;
+      letter-spacing: 0.5px;
+    }
+
+    /* OSD BANNER AL CAMBIAR DE CANAL CON NÚMERO */
+    .tv-osd-banner {
+      position: fixed;
+      top: 35px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(10, 10, 14, 0.96);
+      border: 3px solid #FFD700;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.98), 0 0 30px rgba(255, 215, 0, 0.55);
+      border-radius: 18px;
+      padding: 16px 26px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tv-osd-banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+    .tv-osd-number {
+      background: #FFD700;
+      color: #000;
+      font-size: 34px;
+      font-weight: 900;
+      width: 58px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+      flex-shrink: 0;
+    }
+    .tv-osd-name {
+      font-size: 22px;
+      font-weight: 900;
+      color: #fff;
+    }
+    .tv-osd-sub {
+      font-size: 13px;
+      color: #22C55E;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+
+    /* ETIQUETA DE NÚMERO DE CANAL PERÚ (CANAL 2, CANAL 4, ETC) */
+    .channel-num-pill {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: #FFD700;
+      color: #000;
+      font-weight: 900;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+      z-index: 2;
+    }
+
+    /* ESTILOS GLOBALES EN MODO ADULTO MAYOR */
+    body.senior-mode {
+      font-size: 16px;
+    }
+    body.senior-mode .tab-item {
+      padding: 10px 22px;
+      font-size: 16px;
+      font-weight: 800;
+    }
+    body.senior-mode .channel-card {
+      min-height: 145px;
+      padding: 16px;
+      border-width: 2px;
+    }
+    body.senior-mode .channel-logo {
+      max-height: 70px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 6px;
+      border-radius: 10px;
+    }
+    body.senior-mode .channel-name {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    body.senior-mode .media-card {
+      min-width: 170px;
+    }
+    body.senior-mode .media-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+    body.senior-mode .act-code-value {
+      font-size: 34px !important;
+      letter-spacing: 6px !important;
+    }
   </style>
 </head>
 <body>
@@ -947,28 +1197,75 @@
       <div class="brand-name">TV</div>
     </div>
     <div class="header-actions">
-      <a href="/" style="color: #aaa; text-decoration: none; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
+      <button class="senior-toggle-btn focusable" id="seniorToggleBtn" onclick="toggleSeniorMode()" title="Modo TV Fácil para Adultos Mayores con control remoto">
+        👓 Modo Fácil TV
+      </button>
+      <a href="/" class="focusable" style="color: #aaa; text-decoration: none; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
         🏠 Web
       </a>
-      <button class="account-btn" id="accountHeaderBtn" onclick="handleAccountBtnClick()">
+      <button class="account-btn focusable" id="accountHeaderBtn" onclick="handleAccountBtnClick()">
         🔒 Activar
       </button>
-      <button class="search-btn" onclick="openSearchModal()">
+      <button class="search-btn focusable" onclick="openSearchModal()">
         🔍 Buscar
       </button>
-      <button class="install-btn" id="iosHelpBtn" onclick="showIosInstallModal()">
+      <button class="install-btn focusable" id="iosHelpBtn" onclick="showIosInstallModal()">
         📱 Instalar en iPhone
       </button>
     </div>
   </header>
 
+  <!-- OSD BANNER AL CAMBIAR DE CANAL CON EL CONTROL REMOTO -->
+  <div class="tv-osd-banner" id="tvOsdBanner">
+    <div class="tv-osd-number" id="tvOsdNumber">4</div>
+    <div class="tv-osd-info">
+      <div class="tv-osd-name" id="tvOsdName">América Televisión HD</div>
+      <div class="tv-osd-sub" id="tvOsdSub">Señal Nacional en Vivo ● Transmitiendo</div>
+    </div>
+  </div>
+
+  <!-- PANEL MODO FÁCIL PARA TELEVISOR Y ADULTOS MAYORES -->
+  <div class="senior-hero-panel" id="seniorHeroPanel">
+    <div class="senior-top-info">
+      <div class="senior-badge">🔴 TELEVISIÓN EN VIVO PERÚ</div>
+      <h2 class="senior-headline">Modo TV Sencillo: Elige con las flechas y presiona OK</h2>
+      <p class="senior-subtext">También puedes pulsar los números en tu control remoto: <strong>[2] Latina</strong>, <strong>[4] América TV</strong>, <strong>[5] Panamericana</strong>, <strong>[7] TV Perú</strong>, <strong>[9] ATV</strong>, <strong>[11] L1 Max Fútbol</strong></p>
+    </div>
+    <div class="senior-big-grid">
+      <button class="senior-action-card focusable" onclick="switchTab('TV en Vivo')">
+        <span class="senior-card-emoji">📡</span>
+        <div class="senior-card-details">
+          <div class="senior-card-title">Canales de TV Perú</div>
+          <div class="senior-card-desc">América, ATV, Latina, Panamericana, Noticias</div>
+        </div>
+        <span class="senior-card-badge">VER CANALES ▶</span>
+      </button>
+      <button class="senior-action-card focusable" onclick="playPeruvianChannelByNumber(11)">
+        <span class="senior-card-emoji">⚽</span>
+        <div class="senior-card-details">
+          <div class="senior-card-title">Fútbol Peruano Liga 1 MAX</div>
+          <div class="senior-card-desc">Partidos en directo de Alianza, U, Cristal</div>
+        </div>
+        <span class="senior-card-badge">VER FÚTBOL ▶</span>
+      </button>
+      <button class="senior-action-card focusable" onclick="switchTab('Películas')">
+        <span class="senior-card-emoji">🍿</span>
+        <div class="senior-card-details">
+          <div class="senior-card-title">Películas en Español</div>
+          <div class="senior-card-desc">Comedias, clásicas, acción y estrenos 4K</div>
+        </div>
+        <span class="senior-card-badge">VER PELÍCULAS ▶</span>
+      </button>
+    </div>
+  </div>
+
   <!-- BARRA DE PESTAÑAS -->
   <div class="tabs-bar">
-    <div class="tab-item active" onclick="switchTab('Todos')">🌟 Todos</div>
-    <div class="tab-item" onclick="switchTab('Películas')">🎬 Películas (2000-2026)</div>
-    <div class="tab-item" onclick="switchTab('Series')">📺 Series</div>
-    <div class="tab-item" onclick="switchTab('TV en Vivo')">📡 TV en Vivo Perú</div>
-    <div class="tab-item" onclick="switchTab('Mi Lista')">⭐ Mi Lista</div>
+    <div class="tab-item focusable active" onclick="switchTab('Todos')" tabindex="0">🌟 Todos</div>
+    <div class="tab-item focusable" onclick="switchTab('Películas')" tabindex="0">🎬 Películas (2000-2026)</div>
+    <div class="tab-item focusable" onclick="switchTab('Series')" tabindex="0">📺 Series</div>
+    <div class="tab-item focusable" onclick="switchTab('TV en Vivo')" tabindex="0">📡 TV en Vivo Perú</div>
+    <div class="tab-item focusable" onclick="switchTab('Mi Lista')" tabindex="0">⭐ Mi Lista</div>
   </div>
 
   <!-- BARRA SELECTORA DE AÑOS (2000 a 2026) -->
@@ -1044,34 +1341,34 @@
     <div class="grid-container" id="searchResults"></div>
   </div>
 
-  <!-- MODAL DE ACTIVACIÓN DE DISPOSITIVO (IPHONE / PWA / WEB) -->
+  <!-- MODAL DE ACTIVACIÓN DE DISPOSITIVO (SMART TV / ANDROID / WEB) -->
   <div class="activation-modal" id="activationModal">
     <div class="activation-card">
-      <button class="btn-close-act-modal" onclick="closeActivationModal()" title="Cerrar ventana">✕</button>
-      <div class="act-brand-badge">⚡ TOM TV ACCESO</div>
-      <h2 class="act-title" id="actTitle">Activar Dispositivo</h2>
-      <p class="act-desc" id="actDesc">Para reproducir películas, series y canales en vivo en tu iPhone, necesitas autorizar este dispositivo.</p>
+      <button class="btn-close-act-modal focusable" onclick="closeActivationModal()" title="Cerrar ventana">✕</button>
+      <div class="act-brand-badge">⚡ TOM TV ACCESO FÁCIL</div>
+      <h2 class="act-title" id="actTitle">Activar tu Televisor o Celular</h2>
+      <p class="act-desc" id="actDesc">Para ver canales en vivo y películas en tu Smart TV, activa tu pantalla con tu código o prueba la demo gratis:</p>
       
       <div class="act-notice" id="actNotice"></div>
 
       <div class="act-code-box">
-        <span class="act-code-label">Tu Código de Activación:</span>
+        <span class="act-code-label">Código de tu Televisor:</span>
         <span class="act-code-value" id="actCodeDisplay">...</span>
-        <button class="btn-copy-code" id="btnCopyCode" onclick="copyActivationCode()">📋 Copiar Código</button>
+        <button class="btn-copy-code focusable" id="btnCopyCode" onclick="copyActivationCode()">📋 Copiar Código</button>
       </div>
 
       <!-- BOTÓN PROBAR DEMO GRATIS 2 HORAS AL INSTANTE -->
-      <button class="btn-demo-instant" id="btnRequestDemo" onclick="requestTrialDemo()" style="
+      <button class="btn-demo-instant focusable" id="btnRequestDemo" onclick="requestTrialDemo()" style="
         display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
-        padding: 13px; background: linear-gradient(135deg, #F59E0B, #D97706); color: #000;
-        font-weight: 900; font-size: 14px; border-radius: 12px; border: none; cursor: pointer;
-        box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4); margin-bottom: 12px; transition: all 0.2s;
+        padding: 14px; background: linear-gradient(135deg, #FFB800, #F59E0B); color: #000;
+        font-weight: 900; font-size: 15px; border-radius: 14px; border: none; cursor: pointer;
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5); margin-bottom: 12px; transition: all 0.2s;
       ">
-        ⚡ Probar Demo Gratis (2 Horas al Instante)
+        ⚡ VER AHORA - Probar 2 Horas Gratis
       </button>
 
-      <a id="actWhatsappBtn" href="#" target="_blank" class="btn-whatsapp-act">
-        <span style="font-size: 18px;">📲</span> Solicitar Activación Oficial por WhatsApp
+      <a id="actWhatsappBtn" href="#" target="_blank" class="btn-whatsapp-act focusable">
+        <span style="font-size: 18px;">📲</span> Enviar Código por WhatsApp a mi Proveedor
       </a>
 
       <div class="act-waiting-status">
@@ -1659,18 +1956,29 @@
 
       if (currentTab === 'TV en Vivo') {
         heroBanner.style.display = 'none';
-        const filteredChannels = selectedTvCategory === 'Todos'
-          ? liveChannels
+        let filteredChannels = selectedTvCategory === 'Todos'
+          ? [...liveChannels]
           : liveChannels.filter(c => c.category === selectedTvCategory);
+
+        // Ordenar para que los canales peruanos principales salgan primero con su número tradicional
+        filteredChannels.sort((a, b) => {
+          const numA = PERU_CHANNELS_MAP[a.id]?.num || a.number || 999;
+          const numB = PERU_CHANNELS_MAP[b.id]?.num || b.number || 999;
+          return numA - numB;
+        });
 
         let html = `<div class="section-title">📡 Canales de TV en Vivo (${filteredChannels.length} disponibles)</div>`;
         html += `<div class="grid-container">`;
         filteredChannels.forEach(ch => {
           const logo = ch.logoUrl || ch.logo || '';
+          const info = PERU_CHANNELS_MAP[ch.id];
+          const chNum = info ? info.num : (ch.number || null);
+          const chDisplay = info ? `${info.label} (Canal ${info.num})` : ch.name;
           html += `
-            <div class="channel-card" onclick='playLiveChannel(${JSON.stringify(ch)})'>
+            <div class="channel-card focusable" tabindex="0" onclick='playLiveChannel(${JSON.stringify(ch)})'>
+              ${chNum ? `<div class="channel-num-pill">CANAL ${chNum}</div>` : ''}
               <img class="channel-logo" src="${logo}" alt="${ch.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 50\\'%3E%3Crect width=\\'100\\' height=\\'50\\' fill=\\'%23222\\'/ %3E%3Ctext x=\\'50%25\\' y=\\'60%25\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'white\\'%3ETV%3C/text%3E%3C/svg%3E'">
-              <div class="channel-name">${ch.name}</div>
+              <div class="channel-name">${chDisplay}</div>
               <div class="channel-badge">● SEÑAL EN VIVO</div>
             </div>
           `;
@@ -1766,7 +2074,7 @@
       const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || '');
       const safeItem = encodeURIComponent(JSON.stringify(item));
       return `
-        <div class="media-card" onclick="openMediaDetail('${safeItem}')">
+        <div class="media-card focusable" tabindex="0" onclick="openMediaDetail('${safeItem}')">
           <div class="media-lang-badge">ESP</div>
           <img class="media-poster" src="${poster}" alt="${item.title}" loading="lazy">
           <div class="media-rating">★ ${rating}</div>
@@ -2007,6 +2315,231 @@
       });
     }
 
+    // ========================================================
+    // MOTOR DE CONTROL REMOTO D-PAD Y MODO ADULTO MAYOR
+    // ========================================================
+    const PERU_CHANNELS_MAP = {
+      'ch_latina_pe': { num: 2, label: 'Latina' },
+      'ch_americatelevision_pe': { num: 4, label: 'América TV' },
+      'ch_panamericanatv_pe': { num: 5, label: 'Panamericana' },
+      'ch_tvperu_pe': { num: 7, label: 'TV Perú' },
+      'ch_canaln_pe': { num: 8, label: 'Canal N' },
+      'ch_atv_pe': { num: 9, label: 'ATV' },
+      'ch_rpptv_pe': { num: 10, label: 'RPP Noticias' },
+      'ch_l1max_pe': { num: 11, label: 'L1 Max Fútbol' },
+      'ch_willaxtv_pe': { num: 12, label: 'Willax' },
+      'ch_exitosatv_pe': { num: 13, label: 'Exitosa TV' }
+    };
+
+    let isSeniorMode = false;
+    let tvOsdTimer = null;
+    let currentFocusedElement = null;
+
+    // MOSTRAR AVISO GIGANTE EN PANTALLA (OSD)
+    function showTvOsd(num, title, subtitle = 'Transmitiendo en Vivo') {
+      const banner = document.getElementById('tvOsdBanner');
+      const numEl = document.getElementById('tvOsdNumber');
+      const nameEl = document.getElementById('tvOsdName');
+      const subEl = document.getElementById('tvOsdSub');
+      if (!banner) return;
+
+      numEl.textContent = num;
+      nameEl.textContent = title;
+      subEl.textContent = subtitle;
+      banner.classList.add('show');
+
+      if (tvOsdTimer) clearTimeout(tvOsdTimer);
+      tvOsdTimer = setTimeout(() => {
+        banner.classList.remove('show');
+      }, 3500);
+    }
+
+    // CAMBIAR A CANAL POR NÚMERO (EJEMPLO: 4 -> AMÉRICA, 9 -> ATV)
+    function playPeruvianChannelByNumber(num) {
+      const targetEntry = Object.entries(PERU_CHANNELS_MAP).find(([id, data]) => data.num === num);
+      if (!targetEntry) {
+        showTvOsd(num, `Canal ${num}`, 'Canal no encontrado');
+        return;
+      }
+      const [channelId, meta] = targetEntry;
+      const ch = liveChannels.find(c => c.id === channelId);
+      if (ch) {
+        showTvOsd(num, `${meta.label} HD`, '● Conectando señal en directo...');
+        playLiveChannel(ch);
+      } else {
+        showTvOsd(num, `${meta.label}`, 'Cargando canales...');
+        loadLiveChannels().then(() => {
+          const reCh = liveChannels.find(c => c.id === channelId);
+          if (reCh) playLiveChannel(reCh);
+        });
+      }
+    }
+
+    // ACTIVAR / DESACTIVAR MODO ADULTO MAYOR
+    function toggleSeniorMode(forceState) {
+      isSeniorMode = typeof forceState === 'boolean' ? forceState : !isSeniorMode;
+      const btn = document.getElementById('seniorToggleBtn');
+      if (isSeniorMode) {
+        document.body.classList.add('senior-mode');
+        if (btn) {
+          btn.classList.add('active');
+          btn.innerHTML = '👓 Modo Fácil TV (Activo)';
+        }
+        localStorage.setItem('tom_tv_senior_mode', 'true');
+        showTvOsd('TV', 'Modo TV Fácil Activado', 'Letras grandes y botones sencillos habilitados');
+      } else {
+        document.body.classList.remove('senior-mode');
+        if (btn) {
+          btn.classList.remove('active');
+          btn.innerHTML = '👓 Modo Fácil TV';
+        }
+        localStorage.setItem('tom_tv_senior_mode', 'false');
+      }
+      if (currentTab === 'TV en Vivo') renderCurrentTab();
+    }
+
+    // MOTOR DE NAVEGACIÓN POR CONTROL REMOTO (D-PAD SPATIAL NAVIGATION)
+    function initTvRemoteNavigation() {
+      const savedPref = localStorage.getItem('tom_tv_senior_mode');
+      const isTv = /SmartTV|Tizen|Web0S|NetCast|HbbTV|BRAVIA|Viera|Android TV|GoogleTV|AppleTV|BOX/i.test(navigator.userAgent);
+      if (savedPref === 'true' || (savedPref === null && (isTv || window.innerWidth >= 1200))) {
+        toggleSeniorMode(true);
+      }
+
+      window.addEventListener('keydown', (e) => {
+        const key = e.key;
+        const code = e.keyCode;
+
+        // TECLAS DE SALIR / ATRÁS (Escape, Back en Samsung 10009, Back en LG 461, Backspace)
+        if (key === 'Escape' || code === 27 || code === 10009 || code === 461 || (key === 'Backspace' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
+          const playerModal = document.getElementById('playerModal');
+          const searchModal = document.getElementById('searchModal');
+          const activationModal = document.getElementById('activationModal');
+
+          if (playerModal && playerModal.style.display === 'flex') {
+            closePlayer();
+            e.preventDefault();
+            return;
+          }
+          if (searchModal && searchModal.style.display === 'flex') {
+            closeSearchModal();
+            e.preventDefault();
+            return;
+          }
+          if (activationModal && activationModal.style.display === 'flex') {
+            closeActivationModal();
+            e.preventDefault();
+            return;
+          }
+        }
+
+        // TECLAS NUMÉRICAS (0 AL 9): ZAP DIRECTO DE CANAL
+        if (!['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+          let numPressed = null;
+          if (code >= 48 && code <= 57) numPressed = code - 48;
+          else if (code >= 96 && code <= 105) numPressed = code - 96;
+
+          if (numPressed !== null) {
+            e.preventDefault();
+            playPeruvianChannelByNumber(numPressed);
+            return;
+          }
+        }
+
+        // FLECHAS DE NAVEGACIÓN D-PAD
+        const isArrow = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key) || [19, 20, 21, 22, 37, 38, 39, 40].includes(code);
+        if (isArrow) {
+          handleSpatialDpad(e);
+          return;
+        }
+
+        // BOTÓN ENTER / OK
+        if ((key === 'Enter' || code === 13 || code === 66 || code === 23) && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+          if (currentFocusedElement) {
+            e.preventDefault();
+            currentFocusedElement.click();
+          }
+        }
+      });
+    }
+
+    function handleSpatialDpad(e) {
+      const focusables = Array.from(document.querySelectorAll('.focusable, .tab-item, .channel-card, .media-card, .btn-play, .senior-action-card, .btn-demo-instant, .btn-whatsapp-act'))
+        .filter(el => {
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0 && el.offsetParent !== null;
+        });
+
+      if (focusables.length === 0) return;
+
+      if (!currentFocusedElement || !document.body.contains(currentFocusedElement)) {
+        currentFocusedElement = focusables[0];
+        setFocusToElement(currentFocusedElement);
+        e.preventDefault();
+        return;
+      }
+
+      const key = e.key;
+      const code = e.keyCode;
+      const currentRect = currentFocusedElement.getBoundingClientRect();
+      const currentCenter = {
+        x: currentRect.left + currentRect.width / 2,
+        y: currentRect.top + currentRect.height / 2
+      };
+
+      let bestTarget = null;
+      let minDistance = Infinity;
+
+      const isRight = key === 'ArrowRight' || code === 39 || code === 22;
+      const isLeft = key === 'ArrowLeft' || code === 37 || code === 21;
+      const isDown = key === 'ArrowDown' || code === 40 || code === 20;
+      const isUp = key === 'ArrowUp' || code === 38 || code === 19;
+
+      focusables.forEach(el => {
+        if (el === currentFocusedElement) return;
+        const r = el.getBoundingClientRect();
+        const center = {
+          x: r.left + r.width / 2,
+          y: r.top + r.height / 2
+        };
+
+        const dx = center.x - currentCenter.x;
+        const dy = center.y - currentCenter.y;
+
+        let isValidDirection = false;
+        if (isRight && dx > 15) isValidDirection = true;
+        if (isLeft && dx < -15) isValidDirection = true;
+        if (isDown && dy > 15) isValidDirection = true;
+        if (isUp && dy < -15) isValidDirection = true;
+
+        if (isValidDirection) {
+          const dist = isRight || isLeft
+            ? Math.abs(dx) + Math.abs(dy) * 2.5
+            : Math.abs(dy) + Math.abs(dx) * 2.5;
+
+          if (dist < minDistance) {
+            minDistance = dist;
+            bestTarget = el;
+          }
+        }
+      });
+
+      if (bestTarget) {
+        e.preventDefault();
+        setFocusToElement(bestTarget);
+      }
+    }
+
+    function setFocusToElement(el) {
+      if (currentFocusedElement) {
+        currentFocusedElement.classList.remove('tv-focused');
+      }
+      currentFocusedElement = el;
+      currentFocusedElement.classList.add('tv-focused');
+      currentFocusedElement.focus({ preventScroll: true });
+      currentFocusedElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    }
+
     // INICIALIZACIÓN
     window.addEventListener('DOMContentLoaded', () => {
       initYearsBar();
@@ -2015,6 +2548,7 @@
       loadLiveChannels();
       checkIosDevice();
       initDeviceAuth();
+      initTvRemoteNavigation();
     });
   </script>
 </body>
