@@ -42,11 +42,99 @@ class StreamResolverService {
   }
 
   /**
-   * Pondera y clasifica un stream según idioma, calidad y compatibilidad.
-   * Garantiza que el Español Latino y Castellano superen a cualquier versión en inglés u otro idioma.
+   * Normaliza texto eliminando acentos, caracteres especiales y espacios redundantes.
+   * @param {string} text
+   * @returns {string}
+   */
+  normalizeText(text) {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  /**
+   * Extrae palabras clave significativas de un título excluyendo stopwords y conectores.
+   * @param {string} title
+   * @returns {string[]}
+   */
+  extractTitleKeywords(title) {
+    if (!title) return [];
+    const STOP_WORDS = new Set([
+      'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
+      'de', 'del', 'al', 'y', 'e', 'o', 'u', 'en', 'a', 'con', 'sin', 'por', 'para',
+      'su', 'sus', 'mi', 'mis', 'tu', 'tus', 'se', 'lo', 'le', 'les', 'me', 'te',
+      'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'as', 'is', 'are', 'was', 'were'
+    ]);
+
+    const normalized = this.normalizeText(title);
+    const words = normalized.split(' ').filter(w => w.length > 0);
+    const meaningful = words.filter(w => !STOP_WORDS.has(w) && w.length >= 2);
+    return meaningful.length > 0 ? meaningful : words.filter(w => w.length >= 2);
+  }
+
+  /**
+   * Valida si un stream o archivo coincide con el título solicitado (evita falsos positivos como
+   * "El Genio de los Deseos" cuando el usuario pidió "El Señor de los Cielos").
+   * @param {string} candidateText - Nombre de archivo o título del torrent
+   * @param {Object} mediaInfo - { title, originalTitle, year, mediaType, season, episode }
+   * @returns {{ isMatch: boolean, matchCount: number, ratio: number, matchedKeywords: string[] }}
+   */
+  validateTitleMatch(candidateText, mediaInfo) {
+    if (!candidateText || !mediaInfo) return { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
+    const { title, originalTitle } = mediaInfo;
+    if (!title && !originalTitle) return { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
+
+    const normCandidate = this.normalizeText(candidateText);
+    const candidateTokens = normCandidate.split(' ').filter(Boolean);
+
+    const kwTitle = this.extractTitleKeywords(title);
+    const kwOrig = this.extractTitleKeywords(originalTitle);
+
+    const matchesKw = (kw) => {
+      if (kw.length <= 3) {
+        const regex = new RegExp(`(^|\\s)${kw}(\\s|$)`, 'i');
+        return regex.test(normCandidate);
+      }
+      if (normCandidate.includes(kw)) return true;
+      return candidateTokens.some(tok => {
+        if (tok.length >= 4 && kw.length >= 4) {
+          if (tok.startsWith(kw.slice(0, 3)) || kw.startsWith(tok.slice(0, 3))) {
+            if (Math.abs(tok.length - kw.length) <= 1) return true;
+          }
+        }
+        return false;
+      });
+    };
+
+    const titleMatches = kwTitle.filter(matchesKw);
+    const origMatches = kwOrig.filter(matchesKw);
+
+    const maxMatches = Math.max(titleMatches.length, origMatches.length);
+    const totalKw = titleMatches.length >= origMatches.length ? kwTitle.length : kwOrig.length;
+    const ratio = totalKw > 0 ? (maxMatches / totalKw) : 0;
+    const isMatch = maxMatches > 0;
+    const matchedKeywords = Array.from(new Set([...titleMatches, ...origMatches]));
+
+    return {
+      isMatch,
+      matchCount: maxMatches,
+      ratio,
+      matchedKeywords
+    };
+  }
+
+  /**
+   * Pondera y clasifica un stream según idioma, calidad, fidelidad al título y compatibilidad.
+   * Garantiza que el Español Latino y Castellano superen a cualquier versión en inglés u otro idioma,
+   * y descarta inmediatamente streams cuyo contenido no coincida con la película o serie solicitada.
    * @private
    */
-  scoreStream(stream) {
+  scoreStream(stream, mediaInfo = null) {
     const rawTitle = stream.title || '';
     const name = (stream.name || '').toLowerCase();
     const titleLines = rawTitle.split('\n');
@@ -55,6 +143,24 @@ class StreamResolverService {
     const langLine = (titleLines[2] || '').toLowerCase();
     const filename = (stream.behaviorHints?.filename || '').toLowerCase();
     const fullText = `${rawTitle.toLowerCase()} ${name} ${filename}`;
+
+    // 0. VALIDACIÓN ESTRICTA DE TÍTULO (Anti-Mismatch / Anti-Falsos Positivos)
+    // Impide que una serie no relacionada (ej: "El Genio de los Deseos") se reproduzca
+    // cuando el usuario pidió "El Señor de los Cielos", protegiendo todo el catálogo.
+    let titleMatch = { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
+    if (mediaInfo && (mediaInfo.title || mediaInfo.originalTitle)) {
+      const candidateToVerify = `${firstLine} ${filename}`;
+      titleMatch = this.validateTitleMatch(candidateToVerify, mediaInfo);
+      if (!titleMatch.isMatch) {
+        return {
+          stream,
+          score: -999999,
+          audioLanguage: 'Título Incorrecto (Mismatch)',
+          isSpanishAudio: false,
+          isTitleMismatch: true
+        };
+      }
+    }
 
     // 1. FILTRO ANTI-CAM ESTRICTO: Descartar de inmediato grabaciones de cine
     if (realDebridService.isCamOrLowQuality(fullText)) {
@@ -135,6 +241,33 @@ class StreamResolverService {
     // Formato de contenedor (MP4 arranca veloz y con soporte directo)
     if (fullText.includes('.mp4') || filename.endsWith('.mp4')) {
       score += 120;
+    }
+
+    // Bonificación por fidelidad de título
+    if (titleMatch.ratio >= 1.0) {
+      score += 400;
+    } else if (titleMatch.ratio >= 0.5) {
+      score += 200;
+    }
+
+    // Bonificación si coincide el año en el nombre del archivo
+    if (mediaInfo?.year && fullText.includes(String(mediaInfo.year))) {
+      score += 100;
+    }
+
+    // Bonificación para series si el archivo contiene la numeración de episodio solicitada
+    if (mediaInfo?.mediaType === 'tv' && mediaInfo?.season && mediaInfo?.episode) {
+      const s = String(mediaInfo.season).padStart(2, '0');
+      const e = String(mediaInfo.episode).padStart(2, '0');
+      const epPatterns = [
+        new RegExp(`s${s}e${e}`, 'i'),
+        new RegExp(`${mediaInfo.season}x${e}`, 'i'),
+        new RegExp(`cap[.\\s_-]*${e}`, 'i'),
+        new RegExp(`ep[.\\s_-]*${e}`, 'i')
+      ];
+      if (epPatterns.some(p => p.test(fullText))) {
+        score += 150;
+      }
     }
 
     let qualityLabel = '1080p FHD';
@@ -265,7 +398,7 @@ class StreamResolverService {
    * Búsqueda instantánea en catálogo con Real-Debrid conectado (devuelve torrents ya cacheados [RD+]).
    * @private
    */
-  async _searchInstantCachedStreams(imdbId, mediaType = 'movie', season = 1, episode = 1) {
+  async _searchInstantCachedStreams(imdbId, mediaType = 'movie', season = 1, episode = 1, mediaInfo = null) {
     const apiKey = process.env.REALDEBRID_API_KEY;
     if (!apiKey || !imdbId) return { latino: [], castellano: [], original: [] };
 
@@ -302,7 +435,7 @@ class StreamResolverService {
       if (streamMap.size === 0) return { latino: [], castellano: [], original: [] };
 
       const scored = Array.from(streamMap.values())
-        .map(s => this.scoreStream(s))
+        .map(s => this.scoreStream(s, mediaInfo))
         .filter(x => x.score > 0);
 
       const latino = scored
@@ -317,7 +450,7 @@ class StreamResolverService {
         .filter(x => !x.isSpanishAudio)
         .sort((a, b) => b.score - a.score);
 
-      console.log(`[VJ STREAM Multi-Scraper Turbo] 🎯 Fuentes combinadas para ${imdbId}: ${latino.length} Latino, ${castellano.length} Castellano, ${original.length} Original (${streamMap.size} totales)`);
+      console.log(`[VJ STREAM Multi-Scraper Turbo] 🎯 Fuentes válidas para ${mediaInfo?.title || imdbId} (${imdbId}): ${latino.length} Latino, ${castellano.length} Castellano, ${original.length} Original (${streamMap.size} totales evaluadas)`);
       return { latino, castellano, original };
     } catch (err) {
       console.warn('[VJ STREAM Multi-Scraper] Error en búsqueda combinada:', err.message);
@@ -446,7 +579,7 @@ class StreamResolverService {
     // 2. PASO 1: BÚSQUEDA INSTANTÁNEA EN CACHÉ DE REAL-DEBRID (TORRENTIO RD)
     // Clasifica fuentes en Latino, Castellano, Original y prepara opciones para el selector
     if (imdbId) {
-      const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode);
+      const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo);
       const totalCandidates = instant.latino.length + instant.castellano.length + instant.original.length;
 
       if (totalCandidates > 0) {
@@ -588,6 +721,11 @@ class StreamResolverService {
             if (st.infoHash) {
               const filename = st.behaviorHints?.filename || st.title?.split('\n')[0] || 'VJ-STREAM';
               if (!realDebridService.isCamOrLowQuality(filename)) {
+                // Validación estricta de título en respaldo para evitar falsos positivos
+                const matchCheck = this.validateTitleMatch(filename, mediaInfo);
+                if (!matchCheck.isMatch) {
+                  continue;
+                }
                 fallbackMagnets.push({
                   magnet: `magnet:?xt=urn:btih:${st.infoHash}&dn=${encodeURIComponent(filename)}&tr=udp://open.demonii.com:1337/announce`,
                   name: filename
@@ -653,6 +791,12 @@ class StreamResolverService {
         if (result && result.streams && result.streams.length > 0) {
           for (const streamOption of result.streams) {
             if (excludeUrls.includes(streamOption.streamUrl)) continue;
+
+            const titleMatch = this.validateTitleMatch(streamOption.filename, mediaInfo);
+            if (!titleMatch.isMatch) {
+              console.warn(`[VJ STREAM Auto-Resolver] ⚠️ Archivo de respaldo descartado por discordancia de título: "${streamOption.filename}".`);
+              continue;
+            }
 
             const isClean = await this.isStreamPlayable(streamOption.streamUrl);
             if (!isClean) {
@@ -786,7 +930,7 @@ class StreamResolverService {
     }
 
     // 3. Consulta rápida en Torrentio / Real-Debrid
-    const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode);
+    const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo);
     const hasLatino = instant.latino && instant.latino.length > 0;
     const hasCastellano = instant.castellano && instant.castellano.length > 0;
 
