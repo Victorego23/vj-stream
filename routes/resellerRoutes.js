@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const accountService = require('../services/accountService');
+const { loginRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
 /**
  * Middleware para autenticar las peticiones de revendedores
@@ -39,7 +40,7 @@ function resellerAuth(req, res, next) {
  * @route   POST /api/reseller/login
  * @desc    Inicio de sesión para revendedores en el Sub-Panel
  */
-router.post('/login', (req, res) => {
+router.post('/login', loginRateLimiter, (req, res) => {
   try {
     const { username, password } = req.body;
     if (!username || !password) {

@@ -10,6 +10,9 @@ const resellerRoutes = require('./routes/resellerRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Ocultar cabecera de fingerprinting de Express por seguridad
+app.disable('x-powered-by');
+
 // ====================================================================
 // CONFIGURACIÓN DE MIDDLEWARES GLOBALES
 // ====================================================================

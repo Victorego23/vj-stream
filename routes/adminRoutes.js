@@ -2,17 +2,18 @@ const express = require('express');
 const router = express.Router();
 const accountService = require('../services/accountService');
 const channelService = require('../services/channelService');
+const { loginRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
-// Middleware para verificar la contraseña del Administrador
+// Middleware para verificar token o contraseña del Administrador
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-password'] || req.headers['authorization'] || req.query.key;
   if (!token) {
-    return res.status(401).json({ success: false, error: 'Se requiere contraseña de administrador.' });
+    return res.status(401).json({ success: false, error: 'Se requiere token o credenciales de administrador.' });
   }
 
   const cleanPass = token.startsWith('Bearer ') ? token.slice(7) : token;
-  if (!accountService.verifyAdminPassword(cleanPass)) {
-    return res.status(403).json({ success: false, error: 'Contraseña de administrador incorrecta.' });
+  if (!accountService.verifyAdminToken(cleanPass)) {
+    return res.status(403).json({ success: false, error: 'Sesión o credenciales de administrador inválidas.' });
   }
 
   next();
@@ -20,17 +21,19 @@ function adminAuth(req, res, next) {
 
 /**
  * @route   POST /api/admin/login
- * @desc    Valida credenciales de acceso al Panel Web de Administrador
+ * @desc    Valida credenciales de acceso al Panel Web y emite token firmado de sesión
  */
-router.post('/login', (req, res) => {
+router.post('/login', loginRateLimiter, (req, res) => {
   const { password } = req.body;
   if (!password || !accountService.verifyAdminPassword(password)) {
     return res.status(401).json({ success: false, error: 'Contraseña de administrador incorrecta.' });
   }
 
+  const sessionToken = accountService.generateAdminToken();
+
   return res.json({
     success: true,
-    token: password,
+    token: sessionToken,
     message: 'Bienvenido al Panel de Administrador VJ STREAM'
   });
 });

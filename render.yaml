@@ -11,6 +11,10 @@ services:
       - key: TMDB_LANGUAGE
         value: es-ES
       - key: TMDB_API_KEY
-        value: d143e75a335a089c1704a6a34577e49f
+        sync: false
       - key: REALDEBRID_API_KEY
-        value: GID5UI3YLCUL6WNPUVPPLY6TKDGCQLE56YZXMVZIP4PGTKSWZYOA
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true

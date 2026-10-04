@@ -10,8 +10,6 @@ build/
 .flutter-plugins-dependencies
 .packages
 *.apk
-!TOM-TV-release.apk
-VJ-STREAM-debug.apk
 android/.gradle/
 android/app/build/
 android/local.properties
@@ -19,4 +17,3 @@ ios/.symlinks/
 *.lock
 *.backup.json
 *backup*.json
-

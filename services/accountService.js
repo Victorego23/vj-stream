@@ -12,6 +12,7 @@ const SIGNING_SECRET = process.env.JWT_SECRET || DEFAULT_ADMIN_PASSWORD + '_vj_s
 
 class AccountService {
   constructor() {
+    this._cache = null;
     this._ensureDb();
   }
 
@@ -100,6 +101,9 @@ class AccountService {
   }
 
   _readDb() {
+    if (this._cache) {
+      return this._cache;
+    }
     this._ensureDb();
     try {
       const content = fs.readFileSync(DB_FILE, 'utf8');
@@ -107,6 +111,7 @@ class AccountService {
       if (!Array.isArray(data.resellers)) {
         data.resellers = [];
       }
+      this._cache = data;
       return data;
     } catch (e) {
       console.error('[AccountService] Error leyendo DB:', e);
@@ -114,15 +119,19 @@ class AccountService {
         try {
           const bData = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
           if (!Array.isArray(bData.resellers)) bData.resellers = [];
+          this._cache = bData;
           return bData;
         } catch (_) {}
       }
-      return { admin: { password: DEFAULT_ADMIN_PASSWORD }, settings: {}, clients: [], pendingActivations: [], resellers: [] };
+      const fallback = { admin: { password: DEFAULT_ADMIN_PASSWORD }, settings: {}, clients: [], pendingActivations: [], resellers: [] };
+      this._cache = fallback;
+      return fallback;
     }
   }
 
   _writeDb(data) {
     try {
+      this._cache = data;
       const jsonStr = JSON.stringify(data, null, 2);
       fs.writeFileSync(DB_FILE, jsonStr, 'utf8');
       // Guardar copia de seguridad redundante simultáneamente
@@ -186,9 +195,48 @@ class AccountService {
   // -------------------------------------------------------------
 
   verifyAdminPassword(password) {
+    if (!password) return false;
     const db = this._readDb();
-    const adminPass = db.admin?.password || DEFAULT_ADMIN_PASSWORD;
+    // La variable de entorno ADMIN_PASSWORD tiene prioridad máxima de seguridad
+    const adminPass = (process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.trim()) || db.admin?.password || DEFAULT_ADMIN_PASSWORD;
     return password === adminPass;
+  }
+
+  generateAdminToken() {
+    const payload = {
+      role: 'admin',
+      iat: Date.now(),
+      exp: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 días de validez
+    };
+    const b64 = Buffer.from(JSON.stringify(payload)).toString('base64url');
+    const sig = crypto.createHmac('sha256', SIGNING_SECRET).update(`adm.${b64}`).digest('base64url');
+    return `vj_adm.${b64}.${sig}`;
+  }
+
+  verifyAdminToken(tokenOrPassword) {
+    if (!tokenOrPassword) return false;
+    const str = String(tokenOrPassword).trim();
+
+    // 1. Validar token de sesión firmado 'vj_adm.<b64>.<sig>'
+    if (str.startsWith('vj_adm.')) {
+      const parts = str.split('.');
+      if (parts.length === 3) {
+        const [, b64, sig] = parts;
+        const expectedSig = crypto.createHmac('sha256', SIGNING_SECRET).update(`adm.${b64}`).digest('base64url');
+        if (expectedSig === sig) {
+          try {
+            const payload = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
+            if (payload && payload.role === 'admin' && payload.exp > Date.now()) {
+              return true;
+            }
+          } catch (_) {}
+        }
+      }
+      return false;
+    }
+
+    // 2. Soporte para verificar contraseña directa (compatibilidad)
+    return this.verifyAdminPassword(str);
   }
 
   updateSettings({ adminPassword, whatsappNumber, whatsappMessage }) {
