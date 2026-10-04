@@ -1796,11 +1796,11 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
           widget.onLongPress();
         },
         child: AnimatedScale(
-          scale: _isFocused ? 1.08 : 1.0,
-          duration: const Duration(milliseconds: 200),
+          scale: _isFocused ? 1.10 : 1.0,
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 220),
             decoration: BoxDecoration(
               color: _isFocused ? const Color(0xFF1F2232) : const Color(0xFF14151E),
               borderRadius: BorderRadius.circular(14),
@@ -1810,19 +1810,23 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
                     : widget.isFavorite
                         ? Colors.amber.withValues(alpha: 0.4)
                         : const Color(0xFF222432),
-                width: _isFocused ? 3.0 : 1.0,
+                width: _isFocused ? 3.5 : 1.0,
               ),
               boxShadow: [
-                if (_isFocused)
+                if (_isFocused) ...[
                   BoxShadow(
-                    color: const Color(0xFFE50914).withValues(alpha: 0.6),
-                    blurRadius: 18,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 4),
-                  )
-                else
+                    color: const Color(0xFFE50914).withValues(alpha: 0.82),
+                    blurRadius: 22,
+                    spreadRadius: 3,
+                  ),
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: Colors.white.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                  ),
+                ] else
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.45),
                     blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),

@@ -102,6 +102,14 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
             }
             return KeyEventResult.handled;
           }
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            final moved = node.focusInDirection(TraversalDirection.left);
+            if (moved) return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            final moved = node.focusInDirection(TraversalDirection.right);
+            if (moved) return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
@@ -111,33 +119,38 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
           widget.onTap();
         },
         child: AnimatedScale(
-          scale: _isFocused ? 1.08 : 1.0,
-          duration: const Duration(milliseconds: 200),
+          scale: _isFocused ? 1.10 : 1.0,
+          duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: const Duration(milliseconds: 220),
             width: widget.width,
             height: widget.height,
-            margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            margin: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               color: const Color(0xFF1E1E1E),
-              // Borde brillante rojo estilo Netflix y sombra cuando está enfocado
+              // Borde brillante rojo estilo Netflix y halo de neón cuando está enfocado
               border: Border.all(
                 color: _isFocused ? const Color(0xFFE50914) : Colors.transparent,
-                width: _isFocused ? 3 : 0,
+                width: _isFocused ? 3.5 : 0,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.5),
-                        blurRadius: 16,
-                        spreadRadius: 2,
-                      )
+                        color: const Color(0xFFE50914).withValues(alpha: 0.82),
+                        blurRadius: 22,
+                        spreadRadius: 3,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.4),
+                        color: Colors.black.withValues(alpha: 0.45),
                         blurRadius: 6,
                         offset: const Offset(0, 3),
                       )
@@ -281,18 +294,43 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
                     bottom: 6,
                     left: 6,
                     right: 6,
-                    child: Text(
-                      widget.item.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: _isFocused ? FontWeight.bold : FontWeight.w500,
-                        shadows: const [
-                          Shadow(color: Colors.black, blurRadius: 4),
-                        ],
-                      ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.item.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _isFocused ? 12.5 : 11.5,
+                            fontWeight: _isFocused ? FontWeight.w900 : FontWeight.w600,
+                            shadows: const [
+                              Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, 1)),
+                              Shadow(color: Colors.black, blurRadius: 12),
+                            ],
+                          ),
+                        ),
+                        if (_isFocused && widget.item.releaseYear.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Text(
+                                  widget.item.releaseYear,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const Spacer(),
+                                const Icon(Icons.play_circle_fill_rounded, color: Color(0xFFE50914), size: 14),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ],

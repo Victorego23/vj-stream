@@ -38,20 +38,36 @@ class MediaRow extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: isTv ? 48.0 : 20.0, vertical: 8.0),
             child: Row(
               children: [
+                Container(
+                  width: 4,
+                  height: isTv ? 22 : 18,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE50914),
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x66E50914),
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   title,
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.95),
-                    fontSize: isTv ? 20 : 17,
+                    color: Colors.white,
+                    fontSize: isTv ? 21 : 17,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.3,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 const Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: Color(0xFFE50914),
-                  size: 14,
+                  size: 13,
                 ),
               ],
             ),
@@ -59,7 +75,7 @@ class MediaRow extends StatelessWidget {
 
           // Carrusel horizontal con margen seguro para la escala de enfoque
           SizedBox(
-            height: rowCardHeight + 36, // Espacio holgado para el efecto de escala (1.08) y márgenes en foco
+            height: rowCardHeight + 46, // Espacio holgado para la escala (1.10) y halo de neón en foco
             child: ListView.builder(
               padding: EdgeInsets.symmetric(horizontal: isTv ? 42.0 : 14.0),
               scrollDirection: Axis.horizontal,

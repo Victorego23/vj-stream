@@ -10,6 +10,7 @@ import '../services/update_service.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/media_row.dart';
 import '../widgets/tv_focusable_card.dart';
+import '../widgets/tv_navigation_sidebar.dart';
 import '../widgets/stream_resolving_dialog.dart';
 import 'detail_view.dart';
 import 'search_view.dart';
@@ -924,323 +925,568 @@ class _HomeViewState extends State<HomeView> {
                 color: Color(0xFFE50914),
               ),
             )
-          : RefreshIndicator(
-              color: const Color(0xFFE50914),
-              backgroundColor: const Color(0xFF0D0D0D),
-              onRefresh: _loadCatalog,
-              child: CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  // App Bar VJ STREAM flotante
-                  SliverAppBar(
-                    backgroundColor: const Color(0xFF000000).withValues(alpha: 0.94),
-                    elevation: 0,
-                    pinned: true,
-                    floating: true,
-                    expandedHeight: 60,
-                    title: Row(
-                      children: [
-                        // Logo TOM TV
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFE50914), Color(0xFF990000)],
-                            ),
-                            borderRadius: BorderRadius.circular(5),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFE50914).withValues(alpha: 0.4),
-                                blurRadius: 10,
-                                spreadRadius: 1,
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            'TOM',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'TV',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 3,
-                          ),
-                        ),
-                      ],
-                    ),
-                    actions: [
-                      IconButton(
-                        tooltip: 'Buscar en TOM TV',
-                        icon: const Icon(Icons.search, color: Colors.white, size: 24),
-                        onPressed: _openSearch,
-                      ),
-                      IconButton(
-                        tooltip: 'Recargar catálogo',
-                        icon: const Icon(Icons.refresh, color: Colors.white70),
-                        onPressed: _loadCatalog,
-                      ),
-                      IconButton(
-                        tooltip: 'Configurar servidor',
-                        icon: const Icon(Icons.settings, color: Colors.white70),
-                        onPressed: _showConfigDialog,
-                      ),
-                      SizedBox(width: isTv ? 24 : 8),
-                    ],
-                  ),
+          : (isTv ? _buildTvLayout() : _buildMobileLayout()),
+      ),
+    );
+  }
 
-                  // Banner de Aviso / Notificación enviado desde el Panel Administrativo (Smart TV y Móvil)
-                  if (_activeAnnouncement != null)
-                    SliverToBoxAdapter(
-                      child: _buildAnnouncementBanner(isTv),
-                    ),
+  // ===========================================================================
+  // LAYOUT PROFESIONAL SMART TV (SIDEBAR LATERAL + CONTENIDO EXPANDIDO 4K)
+  // ===========================================================================
+  Widget _buildTvLayout() {
+    return Row(
+      children: [
+        // Sidebar lateral colapsable estilo Netflix / Android TV
+        TvNavigationSidebar(
+          activeTabId: _activeTab,
+          onSelectTab: (tabId) {
+            setState(() => _activeTab = tabId);
+            if (tabId == 'Niños') _loadKidsCatalog();
+            if (tabId == 'Telenovelas') _loadTelenovelasCatalog();
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                0,
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+              );
+            }
+          },
+          onSearch: _openSearch,
+          onSettings: _showConfigDialog,
+          onRefresh: _loadCatalog,
+        ),
 
-                  // Pestañas de Navegación Rápida
-                  SliverToBoxAdapter(
-                    child: _buildTabBar(isTv),
-                  ),
+        // Área de contenido a pantalla completa
+        Expanded(
+          child: _buildTvContentArea(),
+        ),
+      ],
+    );
+  }
 
-                  // Selector horizontal de Años 2000 - 2026 cuando está en la pestaña "Películas"
-                  if (_activeTab == 'Películas')
-                    SliverToBoxAdapter(
-                      child: _buildYearSelectorBar(isTv),
-                    ),
+  Widget _buildTvContentArea() {
+    // Si la pestaña seleccionada es TV en vivo, ocupar 100% del área con la grilla optimizada
+    if (_activeTab == 'Fútbol & Deportes') {
+      return LiveTvView(
+        initialCategory: 'Deportes',
+        onBackToMovies: () => setState(() => _activeTab = 'Todos'),
+      );
+    }
+    if (_activeTab == 'Canales Perú') {
+      return LiveTvView(
+        initialCategory: '🇵🇪 Canales Peruanos',
+        onBackToMovies: () => setState(() => _activeTab = 'Todos'),
+      );
+    }
+    if (_activeTab == 'TV en Vivo') {
+      return LiveTvView(
+        onBackToMovies: () => setState(() => _activeTab = 'Todos'),
+      );
+    }
+    if (_activeTab == 'TV Infantil') {
+      return LiveTvView(
+        initialCategory: 'Infantil',
+        onBackToMovies: () => setState(() => _activeTab = 'Niños'),
+      );
+    }
+    if (_activeTab == 'TV Telenovelas') {
+      return LiveTvView(
+        initialCategory: 'Telenovelas',
+        onBackToMovies: () => setState(() => _activeTab = 'Telenovelas'),
+      );
+    }
 
-                  // Vista cuando la pestaña activa es "Fútbol & Deportes"
-                  if (_activeTab == 'Fútbol & Deportes')
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: LiveTvView(
-                        initialCategory: 'Deportes',
-                        onBackToMovies: () {
-                          setState(() => _activeTab = 'Todos');
-                          if (_scrollController.hasClients) {
-                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-                          }
-                        },
-                      ),
-                    )
-                  // Vista cuando la pestaña activa es "Canales Perú"
-                  else if (_activeTab == 'Canales Perú')
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: LiveTvView(
-                        initialCategory: '🇵🇪 Canales Peruanos',
-                        onBackToMovies: () {
-                          setState(() => _activeTab = 'Todos');
-                          if (_scrollController.hasClients) {
-                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-                          }
-                        },
-                      ),
-                    )
-                  // Vista cuando la pestaña activa es "TV en Vivo"
-                  else if (_activeTab == 'TV en Vivo')
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: LiveTvView(
-                        onBackToMovies: () {
-                          setState(() => _activeTab = 'Todos');
-                          if (_scrollController.hasClients) {
-                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-                          }
-                        },
-                      ),
-                    )
-                  // Vista cuando la pestaña activa es "TV Infantil" (abierta desde el banner de Niños)
-                  else if (_activeTab == 'TV Infantil')
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: LiveTvView(
-                        initialCategory: 'Infantil',
-                        onBackToMovies: () {
-                          setState(() => _activeTab = 'Niños');
-                          if (_scrollController.hasClients) {
-                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-                          }
-                        },
-                      ),
-                    )
-                  // Vista cuando la pestaña activa es "TV Telenovelas" (abierta desde el banner de Telenovelas)
-                  else if (_activeTab == 'TV Telenovelas')
-                    SliverFillRemaining(
-                      hasScrollBody: true,
-                      child: LiveTvView(
-                        initialCategory: 'Telenovelas',
-                        onBackToMovies: () {
-                          setState(() => _activeTab = 'Telenovelas');
-                          if (_scrollController.hasClients) {
-                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-                          }
-                        },
-                      ),
-                    )
-                  // Vista cuando la pestaña activa es "Niños"
-                  else if (_activeTab == 'Niños')
-                    SliverToBoxAdapter(
-                      child: _buildKidsTab(isTv),
-                    )
-                  // Vista cuando la pestaña activa es "Telenovelas"
-                  else if (_activeTab == 'Telenovelas')
-                    SliverToBoxAdapter(
-                      child: _buildTelenovelasTab(isTv),
-                    )
-                  // Vista cuando la pestaña activa es "Mi Lista"
-                  else if (_activeTab == 'Mi Lista')
-                    SliverToBoxAdapter(
-                      child: _buildMyListTab(isTv),
-                    )
-                  // Vista cuando la pestaña activa es "Próximamente" (Solo Tráilers y Estrenos)
-                  else if (_activeTab == 'Próximamente')
-                    SliverToBoxAdapter(
-                      child: _buildComingSoonTab(isTv),
-                    )
-                  // Vista cuando seleccionó un año específico en Películas (2000 - 2026)
-                  else if (_activeTab == 'Películas' && _selectedMovieYear != null)
-                    SliverToBoxAdapter(
-                      child: _buildYearMoviesGrid(isTv),
-                    )
-                  else ...[
-                    // Hero Banner destacado superior
-                    if (_getHeroItemForTab() != null)
-                      SliverToBoxAdapter(
-                        child: HeroBanner(
-                          item: _getHeroItemForTab()!,
-                          onPlay: () => _playMedia(_getHeroItemForTab()!),
-                          onDetails: () => _openDetail(_getHeroItemForTab()!),
-                        ),
-                      ),
-
-                    // Fila: Continuar Viendo
-                    SliverToBoxAdapter(
-                      child: _buildContinueWatchingRow(isTv),
-                    ),
-
-                    // Fila: Mi Lista (solo en tab Todos si hay favoritos)
-                    if (_activeTab == 'Todos' && _favorites.isNotEmpty)
-                      SliverToBoxAdapter(
-                        child: MediaRow(
-                          title: '⭐ Mi Lista Guardada',
-                          items: _favorites,
-                          onItemTap: _openDetail,
-                        ),
-                      ),
-
-                    // Fila destacada: Próximamente en Español (Solo Tráiler)
-                    if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
-                      SliverToBoxAdapter(
-                        child: MediaRow(
-                          title: '🍿 Próximamente en Español (Solo Tráiler)',
-                          items: _upcomingItems,
-                          onItemTap: _openDetail,
-                        ),
-                      ),
-
-                    // Filas según la pestaña activa
-                    if (_activeTab == 'Todos' || _activeTab == 'Películas') ...[
-                      if (_nowPlayingItems.isNotEmpty)
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: '🍿 Estrenos de Cine (Calidad Limpia)',
-                            items: _nowPlayingItems,
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-                      if (_trendingItems.isNotEmpty)
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: _activeTab == 'Películas'
-                                ? '🔥 Películas en Tendencia'
-                                : '🔥 Tendencias de la Semana',
-                            items: _activeTab == 'Películas'
-                                ? _trendingItems.where((i) => i.mediaType == 'movie').toList()
-                                : _trendingItems,
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-                      if (_actionItems.isNotEmpty)
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: '💥 Acción y Adrenalina',
-                            items: _actionItems,
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-                      if (_scifiItems.isNotEmpty)
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: '🚀 Ciencia Ficción y Fantasía',
-                            items: _scifiItems,
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-                    ],
-
-                    if (_activeTab == 'Todos' || _activeTab == 'Series') ...[
-                      if (_seriesItems.isNotEmpty)
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: '📺 Series Populares (Latino / Castellano)',
-                            items: _seriesItems,
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-                      if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: '🔥 Series en Tendencia',
-                            items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-                    ],
-
-                    // Filas dinámicas infinitas de Cartelera sin fin (tanto para Todos como para Películas)
-                    if (_activeTab == 'Todos' || (_activeTab == 'Películas' && _selectedMovieYear == null))
-                      for (final cat in _extraCategories)
-                        SliverToBoxAdapter(
-                          child: MediaRow(
-                            title: cat['title'] as String,
-                            items: (cat['items'] as List<MediaItem>),
-                            onItemTap: _openDetail,
-                          ),
-                        ),
-
-                    // Indicador de carga infinita al desplazarse al fondo
-                    if (_isLoadingMore && (_activeTab == 'Todos' || _activeTab == 'Películas'))
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: 32,
-                              height: 32,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 3,
-                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-
-                  // Margen inferior holgado para evitar recortes en TV y móvil
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 70),
-                  ),
-                ],
-              ),
+    return RefreshIndicator(
+      color: const Color(0xFFE50914),
+      backgroundColor: const Color(0xFF0D0D0D),
+      onRefresh: _loadCatalog,
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // Banner de Aviso / Notificación enviado desde el Panel Administrativo
+          if (_activeAnnouncement != null)
+            SliverToBoxAdapter(
+              child: _buildAnnouncementBanner(true),
             ),
+
+          // Selector horizontal de Años 2000 - 2026 cuando está en la pestaña "Películas"
+          if (_activeTab == 'Películas')
+            SliverToBoxAdapter(
+              child: _buildYearSelectorBar(true),
+            ),
+
+          if (_activeTab == 'Películas' && _selectedMovieYear != null)
+            SliverToBoxAdapter(
+              child: _buildYearMoviesGrid(true),
+            )
+          else if (_activeTab == 'Niños')
+            SliverToBoxAdapter(
+              child: _buildKidsTab(true),
+            )
+          else if (_activeTab == 'Telenovelas')
+            SliverToBoxAdapter(
+              child: _buildTelenovelasTab(true),
+            )
+          else if (_activeTab == 'Mi Lista')
+            SliverToBoxAdapter(
+              child: _buildMyListTab(true),
+            )
+          else if (_activeTab == 'Próximamente')
+            SliverToBoxAdapter(
+              child: _buildComingSoonTab(true),
+            )
+          else ...[
+            // Hero Banner destacado superior
+            if (_getHeroItemForTab() != null)
+              SliverToBoxAdapter(
+                child: HeroBanner(
+                  item: _getHeroItemForTab()!,
+                  onPlay: () => _playMedia(_getHeroItemForTab()!),
+                  onDetails: () => _openDetail(_getHeroItemForTab()!),
+                ),
+              ),
+
+            // Fila: Continuar Viendo
+            SliverToBoxAdapter(
+              child: _buildContinueWatchingRow(true),
+            ),
+
+            // Fila: Mi Lista (solo en tab Todos si hay favoritos)
+            if (_activeTab == 'Todos' && _favorites.isNotEmpty)
+              SliverToBoxAdapter(
+                child: MediaRow(
+                  title: '⭐ Mi Lista Guardada',
+                  items: _favorites,
+                  onItemTap: _openDetail,
+                ),
+              ),
+
+            // Fila destacada: Próximamente en Español (Solo Tráiler)
+            if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
+              SliverToBoxAdapter(
+                child: MediaRow(
+                  title: '🍿 Próximamente en Español (Solo Tráiler)',
+                  items: _upcomingItems,
+                  onItemTap: _openDetail,
+                ),
+              ),
+
+            // Filas según la pestaña activa
+            if (_activeTab == 'Todos' || _activeTab == 'Películas') ...[
+              if (_nowPlayingItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '🍿 Estrenos de Cine (Calidad Limpia)',
+                    items: _nowPlayingItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_trendingItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: _activeTab == 'Películas'
+                        ? '🔥 Películas en Tendencia'
+                        : '🔥 Tendencias de la Semana',
+                    items: _activeTab == 'Películas'
+                        ? _trendingItems.where((i) => i.mediaType == 'movie').toList()
+                        : _trendingItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_actionItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '💥 Acción y Adrenalina',
+                    items: _actionItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_scifiItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '🚀 Ciencia Ficción y Fantasía',
+                    items: _scifiItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+            ],
+
+            if (_activeTab == 'Todos' || _activeTab == 'Series') ...[
+              if (_seriesItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '📺 Series Populares (Latino / Castellano)',
+                    items: _seriesItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '🔥 Series en Tendencia',
+                    items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
+                    onItemTap: _openDetail,
+                  ),
+                ),
+            ],
+
+            // Filas dinámicas infinitas de Cartelera sin fin
+            if (_activeTab == 'Todos' || (_activeTab == 'Películas' && _selectedMovieYear == null))
+              for (final cat in _extraCategories)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: cat['title'] as String,
+                    items: (cat['items'] as List<MediaItem>),
+                    onItemTap: _openDetail,
+                  ),
+                ),
+
+            // Indicador de carga infinita al desplazarse al fondo
+            if (_isLoadingMore && (_activeTab == 'Todos' || _activeTab == 'Películas'))
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                  child: Center(
+                    child: SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 70),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // LAYOUT MÓVIL (APP BAR FLOTANTE + PESTAÑAS HORIZONTALES TÁCTILES)
+  // ===========================================================================
+  Widget _buildMobileLayout() {
+    return RefreshIndicator(
+      color: const Color(0xFFE50914),
+      backgroundColor: const Color(0xFF0D0D0D),
+      onRefresh: _loadCatalog,
+      child: CustomScrollView(
+        controller: _scrollController,
+        slivers: [
+          // App Bar TOM TV flotante para móvil
+          SliverAppBar(
+            backgroundColor: const Color(0xFF000000).withValues(alpha: 0.94),
+            elevation: 0,
+            pinned: true,
+            floating: true,
+            expandedHeight: 60,
+            title: Row(
+              children: [
+                // Logo TOM TV
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE50914), Color(0xFF990000)],
+                    ),
+                    borderRadius: BorderRadius.circular(5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.4),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: const Text(
+                    'TOM',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 20,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'TV',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              IconButton(
+                tooltip: 'Buscar en TOM TV',
+                icon: const Icon(Icons.search, color: Colors.white, size: 24),
+                onPressed: _openSearch,
+              ),
+              IconButton(
+                tooltip: 'Recargar catálogo',
+                icon: const Icon(Icons.refresh, color: Colors.white70),
+                onPressed: _loadCatalog,
+              ),
+              IconButton(
+                tooltip: 'Configurar servidor',
+                icon: const Icon(Icons.settings, color: Colors.white70),
+                onPressed: _showConfigDialog,
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+
+          // Banner de Aviso / Notificación enviado desde el Panel Administrativo
+          if (_activeAnnouncement != null)
+            SliverToBoxAdapter(
+              child: _buildAnnouncementBanner(false),
+            ),
+
+          // Pestañas de Navegación Rápida
+          SliverToBoxAdapter(
+            child: _buildTabBar(false),
+          ),
+
+          // Selector horizontal de Años 2000 - 2026 cuando está en la pestaña "Películas"
+          if (_activeTab == 'Películas')
+            SliverToBoxAdapter(
+              child: _buildYearSelectorBar(false),
+            ),
+
+          // Vista cuando la pestaña activa es "Fútbol & Deportes"
+          if (_activeTab == 'Fútbol & Deportes')
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: LiveTvView(
+                initialCategory: 'Deportes',
+                onBackToMovies: () {
+                  setState(() => _activeTab = 'Todos');
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                  }
+                },
+              ),
+            )
+          // Vista cuando la pestaña activa es "Canales Perú"
+          else if (_activeTab == 'Canales Perú')
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: LiveTvView(
+                initialCategory: '🇵🇪 Canales Peruanos',
+                onBackToMovies: () {
+                  setState(() => _activeTab = 'Todos');
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                  }
+                },
+              ),
+            )
+          // Vista cuando la pestaña activa es "TV en Vivo"
+          else if (_activeTab == 'TV en Vivo')
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: LiveTvView(
+                onBackToMovies: () {
+                  setState(() => _activeTab = 'Todos');
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                  }
+                },
+              ),
+            )
+          // Vista cuando la pestaña activa es "TV Infantil"
+          else if (_activeTab == 'TV Infantil')
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: LiveTvView(
+                initialCategory: 'Infantil',
+                onBackToMovies: () {
+                  setState(() => _activeTab = 'Niños');
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                  }
+                },
+              ),
+            )
+          // Vista cuando la pestaña activa es "TV Telenovelas"
+          else if (_activeTab == 'TV Telenovelas')
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: LiveTvView(
+                initialCategory: 'Telenovelas',
+                onBackToMovies: () {
+                  setState(() => _activeTab = 'Telenovelas');
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                  }
+                },
+              ),
+            )
+          // Vista cuando la pestaña activa es "Niños"
+          else if (_activeTab == 'Niños')
+            SliverToBoxAdapter(
+              child: _buildKidsTab(false),
+            )
+          // Vista cuando la pestaña activa es "Telenovelas"
+          else if (_activeTab == 'Telenovelas')
+            SliverToBoxAdapter(
+              child: _buildTelenovelasTab(false),
+            )
+          // Vista cuando la pestaña activa es "Mi Lista"
+          else if (_activeTab == 'Mi Lista')
+            SliverToBoxAdapter(
+              child: _buildMyListTab(false),
+            )
+          // Vista cuando la pestaña activa es "Próximamente"
+          else if (_activeTab == 'Próximamente')
+            SliverToBoxAdapter(
+              child: _buildComingSoonTab(false),
+            )
+          // Vista cuando seleccionó un año específico en Películas
+          else if (_activeTab == 'Películas' && _selectedMovieYear != null)
+            SliverToBoxAdapter(
+              child: _buildYearMoviesGrid(false),
+            )
+          else ...[
+            // Hero Banner destacado superior
+            if (_getHeroItemForTab() != null)
+              SliverToBoxAdapter(
+                child: HeroBanner(
+                  item: _getHeroItemForTab()!,
+                  onPlay: () => _playMedia(_getHeroItemForTab()!),
+                  onDetails: () => _openDetail(_getHeroItemForTab()!),
+                ),
+              ),
+
+            // Fila: Continuar Viendo
+            SliverToBoxAdapter(
+              child: _buildContinueWatchingRow(false),
+            ),
+
+            // Fila: Mi Lista (solo en tab Todos si hay favoritos)
+            if (_activeTab == 'Todos' && _favorites.isNotEmpty)
+              SliverToBoxAdapter(
+                child: MediaRow(
+                  title: '⭐ Mi Lista Guardada',
+                  items: _favorites,
+                  onItemTap: _openDetail,
+                ),
+              ),
+
+            // Fila destacada: Próximamente en Español (Solo Tráiler)
+            if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
+              SliverToBoxAdapter(
+                child: MediaRow(
+                  title: '🍿 Próximamente en Español (Solo Tráiler)',
+                  items: _upcomingItems,
+                  onItemTap: _openDetail,
+                ),
+              ),
+
+            // Filas según la pestaña activa
+            if (_activeTab == 'Todos' || _activeTab == 'Películas') ...[
+              if (_nowPlayingItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '🍿 Estrenos de Cine (Calidad Limpia)',
+                    items: _nowPlayingItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_trendingItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: _activeTab == 'Películas'
+                        ? '🔥 Películas en Tendencia'
+                        : '🔥 Tendencias de la Semana',
+                    items: _activeTab == 'Películas'
+                        ? _trendingItems.where((i) => i.mediaType == 'movie').toList()
+                        : _trendingItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_actionItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '💥 Acción y Adrenalina',
+                    items: _actionItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_scifiItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '🚀 Ciencia Ficción y Fantasía',
+                    items: _scifiItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+            ],
+
+            if (_activeTab == 'Todos' || _activeTab == 'Series') ...[
+              if (_seriesItems.isNotEmpty)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '📺 Series Populares (Latino / Castellano)',
+                    items: _seriesItems,
+                    onItemTap: _openDetail,
+                  ),
+                ),
+              if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: '🔥 Series en Tendencia',
+                    items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
+                    onItemTap: _openDetail,
+                  ),
+                ),
+            ],
+
+            // Filas dinámicas infinitas de Cartelera sin fin
+            if (_activeTab == 'Todos' || (_activeTab == 'Películas' && _selectedMovieYear == null))
+              for (final cat in _extraCategories)
+                SliverToBoxAdapter(
+                  child: MediaRow(
+                    title: cat['title'] as String,
+                    items: (cat['items'] as List<MediaItem>),
+                    onItemTap: _openDetail,
+                  ),
+                ),
+
+            // Indicador de carga infinita al desplazarse al fondo
+            if (_isLoadingMore && (_activeTab == 'Todos' || _activeTab == 'Películas'))
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                  child: Center(
+                    child: SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+
+          // Margen inferior holgado para evitar recortes en TV y móvil
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 70),
+          ),
+        ],
       ),
     );
   }

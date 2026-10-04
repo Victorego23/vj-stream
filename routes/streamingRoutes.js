@@ -703,15 +703,16 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.4.0',
-    versionCode: 24,
+    latestVersion: '3.5.0',
+    versionCode: 25,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-04',
     releaseNotes: [
-      '👶 ¡Nueva Sección "Niños & Dibujos": Todas las películas animadas (Disney, Pixar, DreamWorks), caricaturas clásicas, anime familiar y canales infantiles en vivo 24/7 (Cartoon Network, Nickelodeon, Disney, Bob Esponja)!',
-      '🌹 ¡Nueva Sección "Telenovelas": Grandes producciones mexicanas, colombianas, turcas dobladas al español y canales 24/7 (Kanal D Drama, RCN Novelas, TNT Novelas)!',
-      '⚽ ¡Nueva Sección "Fútbol & Deportes": Acceso instantáneo a todos los partidos y canales deportivos en vivo (Liga 1 Max, Champions League, ESPN, Fox Sports, Win Sports)!',
-      '🚀 Navegación y reproducción ultra optimizadas para Smart TV Android y celulares.'
+      '📺 ¡Nueva Interfaz Smart TV (Android TV / Google TV / Firestick)!: Menú lateral colapsable (Sidebar) estilo Netflix con navegación 100% nativa para control remoto (D-Pad).',
+      '🎯 Halo de Neón 4K Ultra-Visible: Borde rojo brillante y difuminado de alta visibilidad para distinguir al instante cada película o canal seleccionado a 3 metros de distancia.',
+      '🎬 Navegación Fluida del Hero Banner: Salto directo con flechas del control a "▶ Reproducir" y "ℹ Más información".',
+      '⚡ Zapping Rápido en TV en Vivo: Cambio de canales instantáneo con flechas Arriba/Abajo (CH+/CH-) y miniguía lateral con tecla OK sin cortar la imagen.',
+      '👶 🌹 ⚽ Catálogos especializados de Niños, Telenovelas y Fútbol optimizados a pantalla completa 16:9.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,

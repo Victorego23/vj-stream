@@ -324,6 +324,18 @@ class _TvHeroButtonState extends State<_TvHeroButton> {
             }
             return KeyEventResult.handled;
           }
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            final moved = node.focusInDirection(TraversalDirection.up);
+            if (moved) return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            final moved = node.focusInDirection(TraversalDirection.left);
+            if (moved) return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            final moved = node.focusInDirection(TraversalDirection.right);
+            if (moved) return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
@@ -333,25 +345,31 @@ class _TvHeroButtonState extends State<_TvHeroButton> {
           widget.onPressed();
         },
         child: AnimatedScale(
-          scale: _isFocused ? 1.08 : 1.0,
-          duration: const Duration(milliseconds: 180),
+          scale: _isFocused ? 1.10 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutCubic,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
             decoration: BoxDecoration(
               color: _isFocused ? const Color(0xFFE50914) : primaryBg,
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: _isFocused ? Colors.white : Colors.transparent,
-                width: 2,
+                width: 2.5,
               ),
               boxShadow: _isFocused
                   ? [
-                      const BoxShadow(
-                        color: Color(0x80E50914),
-                        blurRadius: 14,
-                        spreadRadius: 2,
-                      )
+                      BoxShadow(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.85),
+                        blurRadius: 20,
+                        spreadRadius: 3,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        spreadRadius: 1,
+                      ),
                     ]
                   : null,
             ),
