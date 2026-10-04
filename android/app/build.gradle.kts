@@ -27,11 +27,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("tomtv-release.jks")
+            storePassword = "tomtvpassword123"
+            keyAlias = "tomtv"
+            keyPassword = "tomtvpassword123"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (file("tomtv-release.jks").exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
