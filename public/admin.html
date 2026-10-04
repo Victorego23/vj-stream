@@ -590,13 +590,14 @@
     <nav class="navbar">
       <div class="nav-brand">
         <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 12px;">TOM TV</div>
-        <div class="status-pill"><span>●</span> Super Admin Activo</div>
+        <div class="status-pill" id="nav-system-status"><span>●</span> Servidor Activo (v3.5.0)</div>
         <div class="live-clock" id="live-clock">--:--:--</div>
       </div>
       <div class="nav-actions">
+        <button class="btn btn-whatsapp btn-sm" onclick="openWhatsAppTemplatesModal()" title="Abrir plantillas de WhatsApp para clientes">📲 Plantillas WhatsApp</button>
         <a href="/" target="_blank" class="btn btn-secondary btn-sm" title="Abrir la Web App oficial">🌐 Web App</a>
         <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">💼 Portal Resellers</a>
-        <a href="/api/streaming/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial v3.5.0">📥 APK v3.5.0</a>
+        <a href="/apk" class="btn btn-primary btn-sm" title="Descargar APK oficial v3.5.0">📥 APK v3.5.0 (58 MB)</a>
         <button class="btn btn-secondary btn-sm" onclick="downloadBackup()" title="Descargar copia de seguridad en JSON">💾 Backup</button>
         <button class="btn btn-secondary btn-sm" onclick="openRestoreModal()" title="Restaurar desde JSON">📥 Restaurar</button>
         <button class="btn btn-secondary btn-sm" onclick="fetchOverview()" title="Refrescar datos en vivo">🔄 Refrescar</button>
@@ -624,6 +625,9 @@
         </button>
         <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
           <span class="tab-icon">📡</span> Canales TV
+        </button>
+        <button class="tab-btn" id="tab-server-btn" onclick="switchTab('server')">
+          <span class="tab-icon">🖥️</span> Servidor & CDN
         </button>
         <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
           <span class="tab-icon">⚙️</span> Ajustes & WhatsApp
@@ -786,16 +790,115 @@
           <!-- Filtro de Categorías de Canales -->
           <div style="padding: 16px 20px 0;">
             <div class="filter-chips" id="channel-category-chips">
-              <div class="chip active" onclick="setChannelCategoryFilter('Todos', this)">Todos</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Deportes', this)">⚽ Deportes</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Cine & Series', this)">🎬 Cine & Series</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Infantil', this)">👶 Infantil</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Entretenimiento', this)">🌍 Entretenimiento</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Nacionales', this)">🌎 Nacionales</div>
+              <div class="chip active" onclick="setChannelCategoryFilter('Todos', this)">🌟 Todos</div>
+              <div class="chip" onclick="setChannelCategoryFilter('peru', this)">🇵🇪 Perú TV</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Deportes', this)">⚽ Deportes & Fútbol</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Infantil', this)">👶 Niños & Dibujos</div>
+              <div class="chip" onclick="setChannelCategoryFilter('novelas', this)">🌹 Telenovelas</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Cine & Series', this)">🍿 Cine & Series</div>
+              <div class="chip" onclick="setChannelCategoryFilter('Internacional', this)">🌍 Internacional</div>
             </div>
           </div>
 
           <div class="channels-grid" id="channels-container"></div>
+        </div>
+      </div>
+
+      <!-- VISTA: SERVIDOR, RENDIMIENTO & CDN EN VIVO -->
+      <div id="view-server" style="display: none;">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-title">Estado de Servidor</span>
+            <span class="stat-value" style="color: var(--success);" id="srv-status">ONLINE 🟢</span>
+            <span class="stat-sub" id="srv-platform">Render Cloud Platform</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Tiempo Activo (Uptime)</span>
+            <span class="stat-value" style="color: #fff;" id="srv-uptime">Cargando...</span>
+            <span class="stat-sub">Servidor en ejecución</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">Consumo de Memoria</span>
+            <span class="stat-value" style="color: var(--accent);" id="srv-memory">-- MB</span>
+            <span class="stat-sub" id="srv-heap">Heap: -- MB</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-title">APK Oficial en Servidor</span>
+            <span class="stat-value" style="color: var(--primary);" id="srv-apk-ver">v3.5.0</span>
+            <span class="stat-sub" id="srv-apk-size">58.28 MB (200 OK)</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
+          <!-- Card de Servicios y APIs -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">🔌 Motores de Streaming & Servicios Conectados</div>
+              <button class="btn btn-secondary btn-sm" onclick="fetchServerHealth()">🔄 Actualizar</button>
+            </div>
+            <div style="padding: 20px;">
+              <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
+                  <div>
+                    <div style="font-weight: 700; color: #fff;">Real-Debrid CDN Engine</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Descompresión y aceleración 4K sin buffering</div>
+                  </div>
+                  <span class="badge badge-active" id="srv-rd-badge">🟢 Conectado</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
+                  <div>
+                    <div style="font-weight: 700; color: #fff;">The Movie Database (TMDB)</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Metadatos, posters, sinopsis y audio en español</div>
+                  </div>
+                  <span class="badge badge-active" id="srv-tmdb-badge">🟢 Conectado</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
+                  <div>
+                    <div style="font-weight: 700; color: #fff;">Descarga Directa APK v3.5.0</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">tomtv.lat/apk (58 MB sin redirecciones)</div>
+                  </div>
+                  <span class="badge badge-active">⚡ Directo (HTTP 200)</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
+                  <div>
+                    <div style="font-weight: 700; color: #fff;">Filtro Anti-Grabaciones de Cine (Anti-CAM)</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">Garantiza solo versiones limpias 4K / 1080p</div>
+                  </div>
+                  <span class="badge badge-active">🛡️ Activado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card de Test de Latencia y Ping CDN -->
+          <div class="section-card">
+            <div class="section-header">
+              <div class="section-title">⚡ Diagnóstico & Latencia de Servidores</div>
+              <span class="badge badge-active" id="srv-ping-badge">Latencia: Medir</span>
+            </div>
+            <div style="padding: 20px;">
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+                Mide el tiempo de respuesta de los endpoints de la API central y la entrega de contenidos:
+              </p>
+              <div style="display: flex; flex-direction: column; gap: 10px;" id="server-ping-results">
+                <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #07080B; border-radius: 8px; border: 1px solid #1C1E2A;">
+                  <span>API Principal (/health)</span>
+                  <span id="ping-health" style="font-family: monospace; font-weight: 700; color: var(--success);">-- ms</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #07080B; border-radius: 8px; border: 1px solid #1C1E2A;">
+                  <span>Endpoint OTA (/api/streaming/version)</span>
+                  <span id="ping-version" style="font-family: monospace; font-weight: 700; color: var(--success);">-- ms</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #07080B; border-radius: 8px; border: 1px solid #1C1E2A;">
+                  <span>Descarga Directa APK (/apk)</span>
+                  <span id="ping-apk" style="font-family: monospace; font-weight: 700; color: var(--success);">-- ms</span>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width: 100%; margin-top: 18px;" onclick="testCdnPings()">
+                🚀 Realizar Prueba de Latencia en Tiempo Real
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1292,6 +1395,52 @@
     </div>
   </div>
 
+  <!-- MODAL: CENTRO DE PLANTILLAS DE WHATSAPP -->
+  <div class="modal" id="modal-whatsapp-templates">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 style="font-weight: 900; display: flex; align-items: center; gap: 8px;">
+          <span style="color: #25D366;">📲</span> Plantillas de WhatsApp Automatizadas
+        </h3>
+        <button class="close-btn" onclick="closeModal('modal-whatsapp-templates')">&times;</button>
+      </div>
+
+      <!-- Selector de Tipo de Mensaje -->
+      <div class="filter-chips" style="margin-bottom: 14px;">
+        <div class="chip active" onclick="switchWhatsAppTemplate('welcome', this)">🎉 Bienvenida TV</div>
+        <div class="chip" onclick="switchWhatsAppTemplate('expiring', this)">⏳ Por Vencer (Cobro)</div>
+        <div class="chip" onclick="switchWhatsAppTemplate('expired', this)">⚠️ Cuenta Vencida</div>
+        <div class="chip" onclick="switchWhatsAppTemplate('demo', this)">⚡ Demo 2 Horas</div>
+        <div class="chip" onclick="switchWhatsAppTemplate('downloader', this)">📺 Guía Downloader</div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 11px;">Nombre del Cliente:</label>
+          <input type="text" id="tpl-client-name" class="form-control" placeholder="Ej: Juan Pérez" oninput="renderActiveWhatsAppTemplate()">
+        </div>
+        <div class="form-group" style="margin: 0;">
+          <label style="font-size: 11px;">Código TV (opcional):</label>
+          <input type="text" id="tpl-client-code" class="form-control" placeholder="Ej: VJ-3166" oninput="renderActiveWhatsAppTemplate()" style="text-transform: uppercase;">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label style="font-size: 11px;">Mensaje Listo para Enviar al Cliente:</label>
+        <textarea id="tpl-msg-preview" class="form-control" rows="8" style="font-family: monospace; font-size: 12px; line-height: 1.5;"></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 14px;">
+        <button class="btn btn-whatsapp" style="flex: 1;" onclick="sendWhatsAppTemplateDirect()">
+          <span>📲</span> Abrir en WhatsApp Web / App
+        </button>
+        <button class="btn btn-secondary" onclick="copyWhatsAppTemplateText()">
+          <span>📋</span> Copiar al Portapapeles
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let adminToken = localStorage.getItem('vj_admin_token') || '';
     let allClients = [];
@@ -1375,6 +1524,7 @@
       document.getElementById('view-finances').style.display = tab === 'finances' ? 'block' : 'none';
       document.getElementById('view-resellers').style.display = tab === 'resellers' ? 'block' : 'none';
       document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
+      document.getElementById('view-server').style.display = tab === 'server' ? 'block' : 'none';
       document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
 
       if (tab === 'sessions') {
@@ -1387,6 +1537,8 @@
         fetchChannels();
       } else if (tab === 'resellers') {
         fetchResellers();
+      } else if (tab === 'server') {
+        fetchServerHealth();
       }
     }
 
@@ -1441,8 +1593,12 @@
       document.getElementById('dashboard-view').style.display = 'block';
       fetchOverview();
       fetchChannels();
+      fetchServerHealth();
       if (!refreshInterval) {
-        refreshInterval = setInterval(fetchOverview, 10000);
+        refreshInterval = setInterval(() => {
+          fetchOverview();
+          fetchServerHealth();
+        }, 10000);
       }
     }
 
@@ -1516,18 +1672,54 @@
       }
 
       container.innerHTML = pendingList.map(item => `
-        <div class="pending-item">
+        <div class="pending-item" style="border: 1px solid rgba(229,9,20,0.4); background: linear-gradient(135deg, #0E1018, #08090F); box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 12px; color: var(--text-muted);">📺 ${item.deviceModel}</span>
-            <span style="font-size: 11px; color: var(--warning);">${item.minutesAgo}</span>
+            <span style="font-size: 12px; color: #fff; font-weight: 700;">📺 ${item.deviceModel || 'Smart TV'}</span>
+            <span style="font-size: 11px; color: var(--warning); background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 999px;">${item.minutesAgo || 'Ahora'}</span>
           </div>
-          <div class="code-display">${item.code}</div>
-          <div style="display: flex; gap: 8px; margin-top: 6px;">
-            <button class="btn btn-primary btn-sm" style="flex: 1;" onclick="openActivateModal('${item.code}')">⚡ Activar Pantalla</button>
-            <button class="btn btn-danger btn-sm" title="Descartar solicitud" onclick="rejectPending('${item.code}')">✕</button>
+          <div class="code-display" style="font-size: 26px; box-shadow: 0 0 15px rgba(229,9,20,0.3); letter-spacing: 2px;">${item.code}</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+            <button class="btn btn-gold btn-sm" title="Aprobar Demo 2 Horas inmediato" onclick="quickActivate('${item.code}', '2h')">⚡ Demo 2h</button>
+            <button class="btn btn-primary btn-sm" title="Aprobar 1 Mes (30 días)" onclick="quickActivate('${item.code}', '30d')">📅 1 Mes (30d)</button>
+            <button class="btn btn-success btn-sm" title="Aprobar 3 Meses" onclick="quickActivate('${item.code}', '90d')">📅 3 Meses</button>
+            <button class="btn btn-secondary btn-sm" title="Personalizar nombre y pantallas" onclick="openActivateModal('${item.code}')">⚙️ Más</button>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 4px;">
+            <button class="btn btn-whatsapp btn-sm" style="flex: 1;" title="Abrir plantillas de WhatsApp para esta TV" onclick="openWhatsAppTemplatesModal('Cliente ${item.code}', '${item.code}')">📲 WhatsApp</button>
+            <button class="btn btn-danger btn-sm" title="Descartar solicitud" onclick="rejectPending('${item.code}')">✕ Descartar</button>
           </div>
         </div>
       `).join('');
+    }
+
+    async function quickActivate(code, plan) {
+      try {
+        const res = await fetch('/api/admin/quick-activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ code, plan })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (navigator.clipboard && data.whatsappMsg) {
+            try {
+              await navigator.clipboard.writeText(data.whatsappMsg);
+            } catch (_) {}
+          }
+          showToast(`¡Pantalla ${code} activada con éxito! Ficha de WhatsApp copiada 📋`, 'success');
+          fetchOverview();
+
+          setTimeout(() => {
+            if (confirm(`¿Deseas abrir WhatsApp para enviar la confirmación de activación al cliente ahora?`)) {
+              window.open(data.whatsappUrl, '_blank');
+            }
+          }, 350);
+        } else {
+          showToast(data.error || 'No se pudo activar la pantalla.', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión al activar pantalla.', 'error');
+      }
     }
 
     async function rejectPending(code) {
@@ -1793,21 +1985,22 @@
       const client = allClients.find(c => c.id === clientId);
       if (!client) return;
 
-      const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(client.code)}`;
-      const apkLink = `${getBaseAppUrl()}/api/streaming/download-apk`;
+      const link = `${getBaseAppUrl()}/play`;
+      const apkLink = `${getBaseAppUrl()}/apk`;
       const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
-      let card = `🎬 *BIENVENIDO A TOM TV*\n\n`;
+      let card = `🎬 *¡FICHA OFICIAL DE CLIENTE - TOM TV!*\n\n`;
       card += `👤 *Cliente:* ${client.name}\n`;
-      card += `🔑 *Código de Acceso:* ${client.code}\n`;
+      card += `🔑 *Código de Acceso:* *${client.code}*\n`;
       card += `📅 *Vencimiento:* ${expDate} (${client.daysRemaining} días)\n`;
       card += `📺 *Pantallas Permitidas:* ${client.maxDevices || 1}\n\n`;
-      card += `🌐 *Ver en iPhone / Navegador:* \n${link}\n\n`;
-      card += `📥 *Descargar App para Smart TV / Android TV / Celular:* \n${apkLink}\n\n`;
-      card += `¡Disfruta del mejor entretenimiento en películas, series y TV en vivo sin publicidad!`;
+      card += `📲 *Ver en iPhone, iPad, Celular o PC:*\n${link}\n\n`;
+      card += `📺 *Instalar en Smart TV o Firestick (Downloader):*\nEscribe en Downloader: *tomtv.lat/apk*\n`;
+      card += `📥 *Descarga directa alternativa:* ${apkLink}\n\n`;
+      card += `¡Que disfrutes del mejor entretenimiento en 4K y TV en vivo sin cortes!`;
 
       navigator.clipboard.writeText(card).then(() => {
-        showToast('¡Ficha de bienvenida copiada al portapapeles!', 'success');
+        showToast('¡Ficha de bienvenida copiada al portapapeles! 📋', 'success');
       });
     }
 
@@ -1815,17 +2008,17 @@
       const client = allClients.find(c => c.id === clientId);
       if (!client) return;
 
-      const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(client.code)}`;
-      const apkLink = `${getBaseAppUrl()}/api/streaming/download-apk`;
+      const link = `${getBaseAppUrl()}/play`;
+      const apkLink = `${getBaseAppUrl()}/apk`;
       const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
       
-      let msg = `¡Hola ${client.name}! Tu acceso a TOM TV ya está activo.\n\n`;
-      msg += `🔑 Código de Activación: *${client.code}*\n`;
-      msg += `📅 Vence el: *${expDate}* (${client.daysRemaining} días restantes)\n\n`;
-      msg += `📱 *Para ver en iPhone, iPad o navegador web*, pulsa en este enlace directo:\n${link}\n\n`;
-      msg += `📥 *Para Smart TV o TV Box Android*, descarga la app aquí:\n${apkLink}\n`;
-      msg += `E ingresa tu código: *${client.code}*\n\n`;
-      msg += `¡Que disfrutes de tus películas, series y canales en vivo!`;
+      let msg = `🎬 *¡HOLA ${client.name}! TU ACCESO A TOM TV ESTÁ ACTIVO*\n\n`;
+      msg += `🔑 *Código de Activación:* *${client.code}*\n`;
+      msg += `📅 *Vencimiento:* ${expDate} (${client.daysRemaining} días restantes)\n\n`;
+      msg += `📲 *Para ver en iPhone o navegador web:*\n${link}\n\n`;
+      msg += `📺 *Para instalar en tu Smart TV o Firestick (con Downloader):*\nEscribe en la barra de Downloader: *tomtv.lat/apk*\n`;
+      msg += `📥 *Descarga directa:* ${apkLink}\n\n`;
+      msg += `¡Que disfrutes de tus películas, series y canales en vivo sin publicidad! ⭐`;
 
       const encoded = encodeURIComponent(msg);
       window.open(`https://wa.me/?text=${encoded}`, '_blank');
@@ -2735,6 +2928,206 @@
       }
     }
 
+    // ==============================================================
+    // CENTRO DE PLANTILLAS INTELIGENTES DE WHATSAPP
+    // ==============================================================
+
+    let currentWhatsAppTemplateType = 'welcome';
+    const whatsappTemplateData = {
+      welcome: {
+        title: '🎉 Bienvenida & Activación Oficial',
+        render: (name, code) => {
+          const clientName = name || '[Nombre del Cliente]';
+          const clientCode = code || '[CÓDIGO TV]';
+          return `🎬 *¡BIENVENIDO A TOM TV OFICIAL!*\n\n` +
+            `¡Hola ${clientName}! Tu pantalla ha sido activada con éxito en nuestra plataforma.\n\n` +
+            `🔑 *Código de Activación:* *${clientCode}*\n` +
+            `📅 *Estado:* ACTIVO Y VIGENTE ⭐\n` +
+            `📺 *Calidad:* 4K Ultra HD & 60 FPS sin publicidad\n\n` +
+            `📲 *Para ver en Celular, iPhone o PC:*\nhttps://tomtv.lat/play\n\n` +
+            `📺 *Para Smart TV o Firestick (con Downloader):*\nEscribe en la barra: *tomtv.lat/apk*\n\n` +
+            `¡Que disfrutes del mejor cine, series y todo el fútbol en vivo!`;
+        }
+      },
+      expiring: {
+        title: '⏳ Recordatorio de Vencimiento (≤3 Días)',
+        render: (name, code) => {
+          const clientName = name || '[Nombre del Cliente]';
+          const clientCode = code || '[CÓDIGO TV]';
+          return `⏳ *RECORDATORIO DE RENOVACIÓN - TOM TV*\n\n` +
+            `¡Hola ${clientName}! Esperamos que estés disfrutando del mejor streaming en tu pantalla.\n\n` +
+            `Te recordamos que tu suscripción vence en los próximos días.\n` +
+            `🔑 *Tu Código:* *${clientCode}*\n\n` +
+            `💵 *Planes de Renovación:*\n` +
+            `• 1 Mes (1 Pantalla): S/. 20\n` +
+            `• 3 Meses: S/. 50 (Ahorro especial)\n` +
+            `• 2 Pantallas Simultáneas: S/. 35\n\n` +
+            `📲 *Medios de Pago:*\n` +
+            `Yape / Plin al: 914 598 415\n\n` +
+            `Envíanos tu captura de pago para renovar tu pantalla de inmediato sin cortes. ¡Muchas gracias!`;
+        }
+      },
+      expired: {
+        title: '⚠️ Aviso de Cuenta Vencida & Reactivación',
+        render: (name, code) => {
+          const clientName = name || '[Nombre del Cliente]';
+          const clientCode = code || '[CÓDIGO TV]';
+          return `⚠️ *TU SERVICIO DE TOM TV HA VENCIDO*\n\n` +
+            `¡Hola ${clientName}! Notamos que tu membresía de TOM TV ha caducado.\n` +
+            `🔑 *Código:* *${clientCode}*\n\n` +
+            `Para reactivar tu señal al instante y continuar viendo tus películas y partidos favoritos:\n\n` +
+            `📲 *Paga por Yape / Plin:* 914 598 415\n` +
+            `Envíanos tu comprobante por aquí y tu televisor se desbloqueará en 1 minuto. ¡Te esperamos!`;
+        }
+      },
+      demo: {
+        title: '⚡ Invitación a Demo Gratuito de 2 Horas',
+        render: (name, code) => {
+          const clientName = name || '[Amigo/a]';
+          const clientCode = code || '[CÓDIGO DEMO]';
+          return `🍿 *¡DEMO GRATUITO DE 2 HORAS EN TOM TV!*\n\n` +
+            `¡Hola ${clientName}! Te invitamos a probar gratis nuestro servicio de televisión y cine en 4K.\n\n` +
+            `🔑 *Código Demo:* *${clientCode}*\n` +
+            `⏳ *Duración:* 2 Horas de acceso libre ilimitado\n\n` +
+            `📲 *Ver ahora en iPhone, PC o Celular:*\nhttps://tomtv.lat/play\n\n` +
+            `📺 *Instalar en Smart TV o Firestick con Downloader:*\nEscribe en Downloader: *tomtv.lat/apk*\n\n` +
+            `¡Disfruta de más de 800 canales y 15,000 películas de estreno sin cortes!`;
+        }
+      },
+      downloader: {
+        title: '📺 Guía Paso a Paso para Smart TV (Downloader)',
+        render: (name, code) => {
+          const clientCode = code ? ` y tu código es: *${code}*` : '';
+          return `📺 *GUÍA DE INSTALACIÓN TOM TV EN SMART TV Y FIRESTICK*\n\n` +
+            `Sigue estos sencillos pasos para instalar la app en tu televisor${clientCode}:\n\n` +
+            `1️⃣ Abre la app *Downloader* en tu televisor (descárgala gratis en la tienda de apps de tu TV si no la tienes).\n` +
+            `2️⃣ En la barra de direcciones de Downloader escribe exactamente:\n*tomtv.lat/apk*\n\n` +
+            `3️⃣ Presiona *GO*. El archivo de 58 MB se descargará directamente en segundos.\n` +
+            `4️⃣ Haz clic en *Instalar* y luego abre TOM TV.\n` +
+            `5️⃣ Al abrir la app, te saldrá un código en pantalla. Envíanoslo por WhatsApp para activarte de inmediato.\n\n` +
+            `¡Cualquier consulta estamos a tu servicio por este WhatsApp! 💬`;
+        }
+      }
+    };
+
+    function openWhatsAppTemplatesModal(defaultName = '', defaultCode = '') {
+      if (defaultName && document.getElementById('tpl-client-name')) {
+        document.getElementById('tpl-client-name').value = defaultName;
+      }
+      if (defaultCode && document.getElementById('tpl-client-code')) {
+        document.getElementById('tpl-client-code').value = defaultCode;
+      }
+      renderActiveWhatsAppTemplate();
+      openModal('modal-whatsapp-templates');
+    }
+
+    function switchWhatsAppTemplate(type, el) {
+      currentWhatsAppTemplateType = type;
+      if (el) {
+        el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+      }
+      renderActiveWhatsAppTemplate();
+    }
+
+    function renderActiveWhatsAppTemplate() {
+      const name = document.getElementById('tpl-client-name')?.value.trim() || '';
+      const code = document.getElementById('tpl-client-code')?.value.trim() || '';
+      const tpl = whatsappTemplateData[currentWhatsAppTemplateType];
+      if (!tpl) return;
+      const msg = tpl.render(name, code);
+      const textarea = document.getElementById('tpl-msg-preview');
+      if (textarea) textarea.value = msg;
+    }
+
+    function sendWhatsAppTemplateDirect() {
+      const msg = document.getElementById('tpl-msg-preview')?.value || '';
+      if (!msg) return;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    function copyWhatsAppTemplateText() {
+      const msg = document.getElementById('tpl-msg-preview')?.value || '';
+      if (!msg) return;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(msg).then(() => {
+          showToast('¡Mensaje copiado al portapapeles! 📋', 'success');
+        });
+      }
+    }
+
+    // ==============================================================
+    // SECCIÓN SERVIDOR, DIAGNÓSTICO & CDN EN VIVO
+    // ==============================================================
+
+    async function fetchServerHealth() {
+      if (!adminToken) return;
+      try {
+        const res = await fetch('/api/admin/server-health', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.server) {
+          const s = data.server;
+          const statusEl = document.getElementById('srv-status');
+          if (statusEl) statusEl.textContent = `${s.status} 🟢`;
+          const uptimeEl = document.getElementById('srv-uptime');
+          if (uptimeEl) uptimeEl.textContent = s.uptimeFormatted;
+          const memEl = document.getElementById('srv-memory');
+          if (memEl) memEl.textContent = s.memory.rss;
+          const heapEl = document.getElementById('srv-heap');
+          if (heapEl) heapEl.textContent = `Heap: ${s.memory.heapUsed}`;
+          const apkVerEl = document.getElementById('srv-apk-ver');
+          if (apkVerEl) apkVerEl.textContent = `v${s.apk.version}`;
+          const apkSizeEl = document.getElementById('srv-apk-size');
+          if (apkSizeEl) apkSizeEl.textContent = `${s.apk.size} (200 OK)`;
+          const rdBadge = document.getElementById('srv-rd-badge');
+          if (rdBadge) rdBadge.textContent = s.services.realDebrid ? '🟢 Conectado' : '🔴 Desconectado';
+          const tmdbBadge = document.getElementById('srv-tmdb-badge');
+          if (tmdbBadge) tmdbBadge.textContent = s.services.tmdb ? '🟢 Conectado' : '🔴 Desconectado';
+
+          const statusPill = document.getElementById('nav-system-status');
+          if (statusPill) {
+            statusPill.innerHTML = `<span>●</span> Servidor Activo (v${s.apk.version}) • ${s.uptimeFormatted}`;
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching server health:', e);
+      }
+    }
+
+    async function testCdnPings() {
+      showToast('Midiendo latencia de servidores y CDN...', 'info');
+      const pingHealth = document.getElementById('ping-health');
+      const pingVersion = document.getElementById('ping-version');
+      const pingApk = document.getElementById('ping-apk');
+      const badge = document.getElementById('srv-ping-badge');
+
+      async function measure(url) {
+        const start = performance.now();
+        try {
+          await fetch(url, { method: 'HEAD', cache: 'no-store' });
+          return Math.round(performance.now() - start);
+        } catch (_) {
+          return null;
+        }
+      }
+
+      const t1 = await measure('/health');
+      if (pingHealth) pingHealth.textContent = t1 !== null ? `${t1} ms` : 'Error';
+
+      const t2 = await measure('/api/streaming/version');
+      if (pingVersion) pingVersion.textContent = t2 !== null ? `${t2} ms` : 'Error';
+
+      const t3 = await measure('/apk');
+      if (pingApk) pingApk.textContent = t3 !== null ? `${t3} ms` : 'Error';
+
+      const validPings = [t1, t2, t3].filter(p => p !== null);
+      const avg = validPings.length > 0 ? Math.round(validPings.reduce((a, b) => a + b, 0) / validPings.length) : 0;
+      if (badge) badge.textContent = `Latencia Promedio: ${avg} ms ⚡`;
+      showToast(`Prueba completada: Latencia promedio ${avg} ms`, 'success');
+    }
+
     // Helpers de Modales
     function openModal(id) {
       document.getElementById(id).style.display = 'flex';
@@ -2762,6 +3155,10 @@
     <button class="mob-nav-item" id="mob-nav-finances" onclick="switchTab('finances')">
       <span class="icon">💰</span>
       <span>Finanzas</span>
+    </button>
+    <button class="mob-nav-item" id="mob-nav-server" onclick="switchTab('server')">
+      <span class="icon">🖥️</span>
+      <span>Servidor</span>
     </button>
     <button class="mob-nav-item" id="mob-nav-settings" onclick="switchTab('settings')">
       <span class="icon">⚙️</span>

@@ -617,6 +617,127 @@ router.post('/sessions/disconnect', (req, res) => {
  */
 
 /**
+ * @route   GET /api/admin/server-health
+ * @desc    Monitoreo en tiempo real del servidor, memoria, uptime, APK oficial y CDN
+ */
+router.get('/server-health', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+
+  const mem = process.memoryUsage();
+  const uptimeSec = Math.floor(process.uptime());
+  const hours = Math.floor(uptimeSec / 3600);
+  const minutes = Math.floor((uptimeSec % 3600) / 60);
+  const seconds = uptimeSec % 60;
+  const uptimeFormatted = `${hours}h ${minutes}m ${seconds}s`;
+
+  const apkPath = path.resolve(__dirname, '..', 'TOM-TV-release.apk');
+  let apkSizeMb = '58.28 MB';
+  let apkExists = false;
+  if (fs.existsSync(apkPath)) {
+    apkExists = true;
+    apkSizeMb = (fs.statSync(apkPath).size / (1024 * 1024)).toFixed(2) + ' MB';
+  }
+
+  const sessions = accountService.getAllConnectedSessions();
+  const clients = accountService.getClients();
+
+  return res.json({
+    success: true,
+    server: {
+      status: 'ONLINE',
+      uptimeSeconds: uptimeSec,
+      uptimeFormatted,
+      nodeVersion: process.version,
+      platform: process.platform,
+      memory: {
+        rss: (mem.rss / (1024 * 1024)).toFixed(1) + ' MB',
+        heapUsed: (mem.heapUsed / (1024 * 1024)).toFixed(1) + ' MB',
+        heapTotal: (mem.heapTotal / (1024 * 1024)).toFixed(1) + ' MB'
+      },
+      apk: {
+        version: '3.5.0',
+        exists: apkExists,
+        size: apkSizeMb,
+        endpoint: '/apk'
+      },
+      services: {
+        realDebrid: Boolean(process.env.REALDEBRID_API_KEY),
+        tmdb: Boolean(process.env.TMDB_API_KEY)
+      },
+      stats: {
+        activeClients: clients.filter(c => c.status === 'active').length,
+        onlineSessions: sessions.filter(s => s.isOnline).length,
+        totalSessions: sessions.length
+      }
+    }
+  });
+});
+
+/**
+ * @route   POST /api/admin/quick-activate
+ * @desc    Aprobación express de pantallas pendientes con un solo clic y generación de WhatsApp
+ */
+router.post('/quick-activate', (req, res) => {
+  const { code, plan = '30d', name, maxDevices = 1 } = req.body;
+  if (!code) {
+    return res.status(400).json({ success: false, error: 'Código de activación requerido.' });
+  }
+
+  const cleanCode = code.trim().toUpperCase();
+  const pending = accountService.getPendingActivations().find(p => p.code === cleanCode);
+  const clientName = (name && name.trim()) 
+    ? name.trim() 
+    : (pending ? `TV ${pending.deviceModel || cleanCode}` : `Cliente ${cleanCode}`);
+
+  let planDays = 30;
+  let isDemo = false;
+  if (plan === '2h' || plan === 'demo') {
+    planDays = '2h';
+    isDemo = true;
+  } else if (plan === '90d' || plan === '3m') {
+    planDays = 90;
+  } else if (plan === '365d' || plan === '1y') {
+    planDays = 365;
+  } else {
+    planDays = parseInt(plan, 10) || 30;
+  }
+
+  const result = accountService.activateCode(cleanCode, {
+    name: clientName,
+    planDays,
+    maxDevices: parseInt(maxDevices, 10) || 1,
+    isDemo
+  });
+
+  if (!result.success) {
+    return res.status(404).json(result);
+  }
+
+  const expFormatted = isDemo
+    ? '2 Horas de acceso libre'
+    : `${planDays} Días (hasta el ${new Date(result.client.expiresAt).toLocaleDateString('es-ES')})`;
+
+  const whatsappMsg = `🎬 *¡BIENVENIDO A TOM TV OFICIAL!*\n\n` +
+    `✅ Tu pantalla ha sido activada con éxito.\n` +
+    `👤 *Cliente:* ${result.client.name}\n` +
+    `🔑 *Código TV:* ${result.client.code}\n` +
+    `⏳ *Vigencia:* ${expFormatted}\n` +
+    `📺 *Dispositivos:* ${result.client.deviceCount || 1} de ${result.client.maxDevices || 1} permitidos\n\n` +
+    `📲 *Para ver en Celular o PC:* https://tomtv.lat/play\n` +
+    `📺 *Para Smart TV o Firestick (en Downloader):* tomtv.lat/apk\n\n` +
+    `¡Que disfrutes del mejor cine, series y TV en vivo sin cortes! ⭐`;
+
+  return res.json({
+    success: true,
+    client: result.client,
+    whatsappMsg,
+    whatsappUrl: `https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`,
+    message: `Pantalla ${cleanCode} activada con éxito (${isDemo ? 'Demo 2 Horas' : planDays + ' días'}).`
+  });
+});
+
+/**
  * @route   GET /api/admin/financial-stats
  * @desc    Calcula métricas financieras, proyecciones de ingresos y renovaciones
  */
