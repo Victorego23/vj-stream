@@ -5,6 +5,7 @@ import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
 import '../services/trailer_service.dart';
 import '../services/coming_soon_service.dart';
+import '../widgets/stream_resolving_dialog.dart';
 import 'video_player_view.dart';
 
 /// Pantalla de Detalles de Película / Serie (DetailView) para VJ STREAM.
@@ -259,67 +260,32 @@ class _DetailViewState extends State<DetailView> {
   }
 
   /// Inicia el flujo de reproducción con filtro estricto Anti-CAM y soporte de episodios
-  Future<void> _startPlayback({int season = 1, int episode = 1, String? episodeTitle}) async {
+  Future<void> _startPlayback({
+    int season = 1,
+    int episode = 1,
+    String? episodeTitle,
+    bool selectSourceManually = false,
+  }) async {
     if (_isPreparing) return;
 
     setState(() => _isPreparing = true);
 
     final displayTitle = episodeTitle != null ? '${widget.item.title}: $episodeTitle' : widget.item.title;
 
-    // Diálogo minimalista de carga estilo Netflix / VJ STREAM
+    // Diálogo cinematográfico animado estilo TOM TV
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          backgroundColor: const Color(0xFF141414),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          content: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'TOM TV',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    letterSpacing: 2.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Preparando transmisión en alta definición...',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  displayTitle,
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
+      builder: (dialogContext) => StreamResolvingDialog(
+        title: displayTitle,
+        posterUrl: widget.item.bestPosterUrl,
+        backdropUrl: widget.item.bestBackdropUrl,
+        mediaType: widget.item.mediaType,
+        season: widget.item.isSeries ? season : null,
+        episode: widget.item.isSeries ? episode : null,
+        onCancel: () {
+          setState(() => _isPreparing = false);
+        },
       ),
     );
 
@@ -335,12 +301,25 @@ class _DetailViewState extends State<DetailView> {
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
 
-      // Si hay una transmisión resuelta, reproducir directamente sin diálogos molestos
+      // Si hay una transmisión resuelta
       final streamUrl = streamInfo?['streamUrl'] as String?;
       if (streamUrl != null && streamUrl.isNotEmpty) {
         final available = (streamInfo?['availableStreams'] as List?)
             ?.map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
+
+        // Si el usuario pidió seleccionar fuente manualmente y hay opciones
+        if (selectSourceManually && available != null && available.length > 1) {
+          _showManualSourceSelector(
+            displayTitle: displayTitle,
+            defaultStreamUrl: streamUrl,
+            availableStreams: available,
+            streamInfo: streamInfo!,
+            season: season,
+            episode: episode,
+          );
+          return;
+        }
 
         // Abrir inmediatamente el reproductor multimedia con la transmisión y opciones multicanal
         Navigator.of(context).push(
@@ -897,6 +876,120 @@ class _DetailViewState extends State<DetailView> {
     );
   }
 
+  void _showManualSourceSelector({
+    required String displayTitle,
+    required String defaultStreamUrl,
+    required List<Map<String, dynamic>> availableStreams,
+    required Map<String, dynamic> streamInfo,
+    required int season,
+    required int episode,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF10121A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        side: BorderSide(color: Color(0x33E50914), width: 1.5),
+      ),
+      builder: (bContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.tune_rounded, color: Color(0xFFE50914), size: 24),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Seleccionar Calidad / Servidor',
+                      style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white60),
+                      onPressed: () => Navigator.pop(bContext),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: availableStreams.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, index) {
+                      final s = availableStreams[index];
+                      final quality = s['quality'] ?? s['name'] ?? '1080p';
+                      final audio = s['audioLanguage'] ?? 'Español Latino';
+                      final isSelected = s['url'] == defaultStreamUrl;
+
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? const Color(0x22E50914) : Colors.white.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFFE50914) : Colors.white12,
+                            width: 1.2,
+                          ),
+                        ),
+                        child: ListTile(
+                          title: Text(
+                            '$quality • $audio',
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            s['provider'] ?? 'Servidor Satelital TOM TV Ultra Rápido',
+                            style: const TextStyle(color: Colors.white38, fontSize: 11),
+                          ),
+                          trailing: isSelected
+                              ? const Icon(Icons.check_circle_rounded, color: Color(0xFF22C55E), size: 20)
+                              : const Icon(Icons.play_circle_outline_rounded, color: Colors.white54, size: 20),
+                          onTap: () {
+                            Navigator.pop(bContext);
+                            final targetUrl = (s['url'] as String?) ?? defaultStreamUrl;
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => VideoPlayerView(
+                                  videoUrl: targetUrl,
+                                  title: displayTitle,
+                                  mediaId: widget.item.id,
+                                  posterUrl: widget.item.bestPosterUrl,
+                                  backdropUrl: widget.item.bestBackdropUrl,
+                                  mediaType: widget.item.mediaType,
+                                  season: season,
+                                  episode: episode,
+                                  audioLanguage: audio,
+                                  qualityLabel: quality,
+                                  mediaItem: widget.item,
+                                  availableStreams: availableStreams,
+                                  subtitles: (streamInfo['subtitles'] as List?)
+                                      ?.map((e) => Map<String, dynamic>.from(e as Map))
+                                      .toList(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSecondaryActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -931,6 +1024,18 @@ class _DetailViewState extends State<DetailView> {
             ),
           ],
         ),
+
+        // Botón adicional para elegir calidad o fuente alternativa si no es solo tráiler
+        if (!_isTrailerOnly) ...[
+          const SizedBox(height: 12),
+          _TvDetailActionButton(
+            onPressed: () => _startPlayback(selectSourceManually: true),
+            icon: Icons.tune_rounded,
+            label: 'Elegir Calidad / Servidor Alternativo',
+            activeColor: const Color(0xFF38BDF8),
+            isActive: false,
+          ),
+        ],
 
         // Banner informativo elegante si está en modo Solo Tráiler
         if (_isTrailerOnly) ...[

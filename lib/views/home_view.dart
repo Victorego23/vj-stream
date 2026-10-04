@@ -10,6 +10,7 @@ import '../services/update_service.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/media_row.dart';
 import '../widgets/tv_focusable_card.dart';
+import '../widgets/stream_resolving_dialog.dart';
 import 'detail_view.dart';
 import 'search_view.dart';
 import 'video_player_view.dart';
@@ -305,56 +306,11 @@ class _HomeViewState extends State<HomeView> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          backgroundColor: const Color(0xFF141414),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          content: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'TOM TV',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    letterSpacing: 2.0,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Preparando transmisión en alta definición...',
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  item.title,
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
+      builder: (dialogContext) => StreamResolvingDialog(
+        title: item.title,
+        posterUrl: item.bestPosterUrl,
+        backdropUrl: item.bestBackdropUrl,
+        mediaType: item.mediaType,
       ),
     );
 

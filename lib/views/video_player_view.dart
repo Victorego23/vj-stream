@@ -1864,6 +1864,30 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               _seekRelative(10);
             }
           },
+          onVerticalDragEnd: (details) {
+            if (widget.isLive && _liveChannelsList.length > 1) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity < -250) {
+                // Deslizar hacia arriba: Siguiente canal
+                _switchChannel(_currentChannelIndex + 1);
+              } else if (velocity > 250) {
+                // Deslizar hacia abajo: Canal anterior
+                _switchChannel(_currentChannelIndex - 1);
+              }
+            }
+          },
+          onHorizontalDragEnd: (details) {
+            if (widget.isLive && _liveChannelsList.length > 1) {
+              final velocity = details.primaryVelocity ?? 0;
+              if (velocity > 250 && !_showChannelDrawer) {
+                // Deslizar hacia la derecha: Abrir Guía de Canales
+                setState(() => _showChannelDrawer = true);
+              } else if (velocity < -250 && _showChannelDrawer) {
+                // Deslizar hacia la izquierda: Cerrar Guía
+                setState(() => _showChannelDrawer = false);
+              }
+            }
+          },
           child: Stack(
             fit: StackFit.expand,
             children: [
