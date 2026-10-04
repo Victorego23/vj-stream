@@ -703,16 +703,14 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.5.0',
-    versionCode: 25,
+    latestVersion: '3.5.1',
+    versionCode: 26,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-04',
     releaseNotes: [
-      '📺 ¡Nueva Interfaz Smart TV (Android TV / Google TV / Firestick)!: Menú lateral colapsable (Sidebar) estilo Netflix con navegación 100% nativa para control remoto (D-Pad).',
-      '🎯 Halo de Neón 4K Ultra-Visible: Borde rojo brillante y difuminado de alta visibilidad para distinguir al instante cada película o canal seleccionado a 3 metros de distancia.',
-      '🎬 Navegación Fluida del Hero Banner: Salto directo con flechas del control a "▶ Reproducir" y "ℹ Más información".',
-      '⚡ Zapping Rápido en TV en Vivo: Cambio de canales instantáneo con flechas Arriba/Abajo (CH+/CH-) y miniguía lateral con tecla OK sin cortar la imagen.',
-      '👶 🌹 ⚽ Catálogos especializados de Niños, Telenovelas y Fútbol optimizados a pantalla completa 16:9.'
+      '📺 Flecha Izquierda 100% Corregida en TV en Vivo: Navegación fluida entre canales y retorno suave al menú lateral sin trabarse.',
+      '⚡ Ultra Fluidez a 60 FPS: Respuesta instantánea del control remoto, optimización de VRAM en logos y sin micro-cortes.',
+      '🎯 Mejoras de Rendimiento: Estabilidad total para Smart TVs, Android TV, Google TV y Fire TV Stick.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,
@@ -758,7 +756,7 @@ router.get('/download-apk', (req, res) => {
     return res.sendFile(fileToSend);
   }
 
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.0/TOM-TV-release.apk';
+  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.1/TOM-TV-release.apk';
   return res.redirect(githubReleaseUrl);
 });
 

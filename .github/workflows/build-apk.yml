@@ -50,22 +50,20 @@ jobs:
       - name: Subir Artifact de GitHub Actions
         uses: actions/upload-artifact@v4
         with:
-          name: TOM-TV-v3.5.0-release
+          name: TOM-TV-v3.5.1-release
           path: TOM-TV-release.apk
 
       - name: Publicar Release Oficial en GitHub
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v3.5.0
-          name: TOM TV v3.5.0 Oficial
+          tag_name: v3.5.1
+          name: TOM TV v3.5.1 Oficial
           body: |
-            ## 🚀 TOM TV v3.5.0 Oficial (Build 25)
+            ## 🚀 TOM TV v3.5.1 Oficial (Build 26)
             
-            - 📺 **Nueva Interfaz Smart TV**: Menú lateral dinámico (Sidebar) estilo Netflix, Halo de Neón 4K y D-Pad nativo.
-            - 📱 **Nueva Interfaz Móvil**: Barra inferior flotante de cristal translúcido (Glassmorphism).
-            - 🎬 **Catálogo Infinito**: Exploración continua por año y cartelera sin fin.
-            - 👶 🌹 ⚽ **Categorías Dedicadas**: Niños (dibujos animados), Telenovelas y Fútbol/Deportes en vivo.
-            - ⚡ **Reproducción Continua**: Sin pantallas de error; inicio inmediato en español, subtitulado o tráiler HD nativo.
+            - 📺 **Flecha Izquierda Corregida en TV en Vivo**: Navegación D-Pad fluida entre columnas y regreso natural al menú lateral sin trabarse.
+            - ⚡ **Ultra Fluidez a 60 FPS**: Cero retrasos de control remoto, optimización de memoria VRAM en logos y renderizado suave.
+            - 🎯 **Estabilidad Smart TV**: Compatible al 100% con Android TV, Google TV, Fire TV Stick y TV Box.
           files: |
             TOM-TV-release.apk
         env:
@@ -76,5 +74,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add TOM-TV-release.apk
-          git commit -m "build: auto-compile official TOM-TV-release.apk v3.5.0 (Build 25) [skip ci]" || echo "Sin cambios detectados"
+          git commit -m "build: auto-compile official TOM-TV-release.apk v3.5.1 (Build 26) [skip ci]" || echo "Sin cambios detectados"
           git push origin main || echo "Push omitido"
