@@ -1,0 +1,80 @@
+name: Build TOM TV Release APK
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Compilar APK Oficial TOM TV
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Código Fuente
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Java 17 Temurin
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Descargar Dependencias Flutter
+        run: flutter pub get
+
+      - name: Compilar APK Release Oficial
+        run: flutter build apk --release
+
+      - name: Actualizar Archivo APK Raíz
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk TOM-TV-release.apk
+          ls -lh TOM-TV-release.apk
+
+      - name: Subir Artifact de GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: TOM-TV-v3.5.0-release
+          path: TOM-TV-release.apk
+
+      - name: Publicar Release Oficial en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v3.5.0
+          name: TOM TV v3.5.0 Oficial
+          body: |
+            ## 🚀 TOM TV v3.5.0 Oficial (Build 25)
+            
+            - 📺 **Nueva Interfaz Smart TV**: Menú lateral dinámico (Sidebar) estilo Netflix, Halo de Neón 4K y D-Pad nativo.
+            - 📱 **Nueva Interfaz Móvil**: Barra inferior flotante de cristal translúcido (Glassmorphism).
+            - 🎬 **Catálogo Infinito**: Exploración continua por año y cartelera sin fin.
+            - 👶 🌹 ⚽ **Categorías Dedicadas**: Niños (dibujos animados), Telenovelas y Fútbol/Deportes en vivo.
+            - ⚡ **Reproducción Continua**: Sin pantallas de error; inicio inmediato en español, subtitulado o tráiler HD nativo.
+          files: |
+            TOM-TV-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Guardar APK Compilado en Rama Main
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add TOM-TV-release.apk
+          git commit -m "build: auto-compile official TOM-TV-release.apk v3.5.0 (Build 25) [skip ci]" || echo "Sin cambios detectados"
+          git push origin main || echo "Push omitido"
