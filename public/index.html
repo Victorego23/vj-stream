@@ -76,7 +76,7 @@
           "@type": "PostalAddress",
           "addressCountry": "PE"
         },
-        "priceRange": "S/. 20 - S/. 180",
+        "priceRange": "S/. 10 - S/. 90",
         "url": "https://tomtv.lat"
       }
     ]
@@ -3415,74 +3415,75 @@
 
     <!-- SELECTOR DE PANTALLAS -->
     <div class="calculator-tabs">
-      <div class="calc-screen-pill active" onclick="updatePricingScreens(1)">📺 1 Pantalla</div>
-      <div class="calc-screen-pill" onclick="updatePricingScreens(2)">📺 2 Pantallas (Familiar)</div>
-      <div class="calc-screen-pill" onclick="updatePricingScreens(3)">📺 3 Pantallas (Hogar)</div>
-      <div class="calc-screen-pill" onclick="updatePricingScreens(5)">📺 5 Pantallas (Full)</div>
+      <div class="calc-screen-pill active" onclick="updatePricingScreens(1)">📺 1 Pantalla (S/. 10/mes)</div>
+      <div class="calc-screen-pill" onclick="updatePricingScreens(2)">📺 2 Pantallas (Promo Dúo S/. 18)</div>
+      <div class="calc-screen-pill" onclick="updatePricingScreens(3)">📺 3 Pantallas (Promo Familiar S/. 25)</div>
+      <div class="calc-screen-pill" onclick="updatePricingScreens(5)">📺 5 Pantallas (Promo Full S/. 35)</div>
     </div>
 
     <div class="pricing-grid">
       <!-- PLAN 1 MES -->
       <div class="pricing-card">
         <h3 class="plan-name">Plan 1 Mes</h3>
-        <p class="plan-desc">Sin contratos. Renueva mes a mes con total libertad.</p>
+        <p class="plan-desc">Tarifa mensual económica sin contratos. Todo incluido.</p>
         <div class="plan-price-wrap">
           <span class="plan-currency">S/.</span>
-          <span class="plan-price" id="price-1m">20</span>
+          <span class="plan-price" id="price-1m">10</span>
           <span class="plan-period">/ mes</span>
         </div>
         <ul class="plan-features">
           <li><span class="check-icon">✓</span> <strong id="screens-label-1m">1 Pantalla simultánea</strong></li>
           <li><span class="check-icon">✓</span> +15,000 Películas y Series en 4K</li>
-          <li><span class="check-icon">✓</span> +800 Canales en Vivo sin cortes</li>
-          <li><span class="check-icon">✓</span> Audio Latino y Castellano</li>
-          <li><span class="check-icon">✓</span> Soporte técnico vía WhatsApp 914598415</li>
+          <li><span class="check-icon">✓</span> +1,300 Canales en Vivo sin cortes</li>
+          <li><span class="check-icon">✓</span> Fútbol Liga 1 Max y Audio Latino</li>
+          <li><span class="check-icon">✓</span> Activación inmediata con Yape o Plin</li>
         </ul>
-        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20el%20Plan%20de%201%20Mes%20(1%20Pantalla)%20en%20TOM%20TV" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-plan-1m" style="width: 100%;">
-          Activar por WhatsApp
+        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20el%20Plan%20de%201%20Mes%20(1%20Pantalla)%20en%20TOM%20TV%20por%20S/.%2010" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-plan-1m" style="width: 100%;">
+          Activar Plan 1 Mes (S/. 10)
         </a>
       </div>
 
-      <!-- PLAN 3 MESES (DESTACADO) -->
+      <!-- PLAN 3 MESES (DESTACADO PROMO) -->
       <div class="pricing-card featured">
-        <span class="featured-badge">⭐ MÁS POPULAR</span>
-        <h3 class="plan-name">Plan 3 Meses</h3>
-        <p class="plan-desc">La mejor opción recomendada con ahorro especial.</p>
+        <span class="featured-badge">🔥 SÚPER PROMO (S/. 8.30/MES)</span>
+        <h3 class="plan-name">Promo 3 Meses</h3>
+        <p class="plan-desc">Pagas 3 meses juntos y ahorras en grande con precio especial.</p>
         <div class="plan-price-wrap">
           <span class="plan-currency">S/.</span>
-          <span class="plan-price" id="price-3m">50</span>
+          <span class="plan-price" id="price-3m">25</span>
           <span class="plan-period">/ 3 meses</span>
         </div>
         <ul class="plan-features">
           <li><span class="check-icon">✓</span> <strong id="screens-label-3m">1 Pantalla simultánea</strong></li>
+          <li><span class="check-icon">✓</span> Ahorras pagando solo <strong>S/. 8.30 al mes</strong></li>
           <li><span class="check-icon">✓</span> +15,000 Películas y Series en 4K</li>
-          <li><span class="check-icon">✓</span> +800 Canales en Vivo sin cortes</li>
-          <li><span class="check-icon">✓</span> Acceso exclusivo a estrenos de cartelera</li>
-          <li><span class="check-icon">✓</span> Activación prioritaria en 2 minutos</li>
+          <li><span class="check-icon">✓</span> Liga 1 Max, Champions y Libertadores</li>
+          <li><span class="check-icon">✓</span> Activación prioritaria en 1 minuto</li>
         </ul>
-        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20el%20Plan%20de%203%20Meses%20en%20TOM%20TV" target="_blank" rel="noopener" class="btn btn-primary btn-glow" id="btn-plan-3m" style="width: 100%;">
-          Activar Ahora al 914598415
+        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20la%20Promo%20de%203%20Meses%20en%20TOM%20TV%20por%20S/.%2025" target="_blank" rel="noopener" class="btn btn-primary btn-glow" id="btn-plan-3m" style="width: 100%;">
+          Aprovechar Promo 3 Meses (S/. 25)
         </a>
       </div>
 
-      <!-- PLAN ANUAL -->
+      <!-- PLAN ANUAL VIP -->
       <div class="pricing-card">
+        <span class="featured-badge" style="background: linear-gradient(135deg, #FFD700, #F59E0B); color: #000; font-weight: 900;">👑 MÁXIMO AHORRO VIP</span>
         <h3 class="plan-name">Plan Anual VIP</h3>
-        <p class="plan-desc">Máximo ahorro para disfrutar de entretenimiento todo el año.</p>
+        <p class="plan-desc">Menos de S/. 7.50 al mes para disfrutar todo el año sin cortes.</p>
         <div class="plan-price-wrap">
           <span class="plan-currency">S/.</span>
-          <span class="plan-price" id="price-12m">180</span>
-          <span class="plan-period">/ año</span>
+          <span class="plan-price" id="price-12m">90</span>
+          <span class="plan-period">/ año completo</span>
         </div>
         <ul class="plan-features">
           <li><span class="check-icon">✓</span> <strong id="screens-label-12m">1 Pantalla simultánea</strong></li>
-          <li><span class="check-icon">✓</span> Todo el catálogo ilimitado 4K</li>
+          <li><span class="check-icon">✓</span> Pagas menos de <strong>S/. 7.50 al mes</strong></li>
+          <li><span class="check-icon">✓</span> 12 meses completos sin preocuparte por renovar</li>
           <li><span class="check-icon">✓</span> Soporte VIP directo al 914598415</li>
-          <li><span class="check-icon">✓</span> Olvídate de pagar cada mes</li>
-          <li><span class="check-icon">✓</span> Lista M3U oficial incluida</li>
+          <li><span class="check-icon">✓</span> Lista M3U oficial para Smart TV incluida</li>
         </ul>
-        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20el%20Plan%20Anual%20en%20TOM%20TV" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-plan-12m" style="width: 100%;">
-          Activar por WhatsApp
+        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20el%20Plan%20Anual%20VIP%20en%20TOM%20TV%20por%20S/.%2090" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-plan-12m" style="width: 100%;">
+          Activar Plan Anual VIP (S/. 90)
         </a>
       </div>
     </div>
@@ -3560,7 +3561,7 @@
             <td><strong>Costo Mensual Promedio</strong></td>
             <td><span class="badge-cross">❌ S/. 130 - S/. 180 / mes</span></td>
             <td><span class="badge-cross">❌ Más de S/. 170 / mes</span></td>
-            <td class="highlight-col"><span class="badge-check">✅ Desde S/. 20 / mes</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ Desde S/. 10 / mes (Tarifa Económica)</span></td>
           </tr>
           <tr>
             <td><strong>Contrato de Permanencia</strong></td>
@@ -3973,10 +3974,10 @@
 
     // Calculadora Dinámica de Precios por Pantallas
     const pricingMatrix = {
-      1: { '1m': 20, '3m': 50, '12m': 180 },
-      2: { '1m': 35, '3m': 85, '12m': 300 },
-      3: { '1m': 45, '3m': 110, '12m': 390 },
-      5: { '1m': 65, '3m': 160, '12m': 550 }
+      1: { '1m': 10, '3m': 25, '12m': 90 },
+      2: { '1m': 18, '3m': 45, '12m': 160 },
+      3: { '1m': 25, '3m': 65, '12m': 220 },
+      5: { '1m': 35, '3m': 90, '12m': 300 }
     };
 
     function updatePricingScreens(screens) {
@@ -3997,8 +3998,13 @@
       document.getElementById('screens-label-12m').innerText = screenText;
 
       document.getElementById('btn-plan-1m').href = `https://wa.me/${OFFICIAL_PHONE}?text=${encodeURIComponent(`Hola, deseo activar el Plan de 1 Mes (${screenText}) en TOM TV por S/. ${prices['1m']}`)}`;
-      document.getElementById('btn-plan-3m').href = `https://wa.me/${OFFICIAL_PHONE}?text=${encodeURIComponent(`Hola, deseo activar el Plan de 3 Meses (${screenText}) en TOM TV por S/. ${prices['3m']}`)}`;
-      document.getElementById('btn-plan-12m').href = `https://wa.me/${OFFICIAL_PHONE}?text=${encodeURIComponent(`Hola, deseo activar el Plan Anual (${screenText}) en TOM TV por S/. ${prices['12m']}`)}`;
+      document.getElementById('btn-plan-1m').innerText = `Activar Plan 1 Mes (S/. ${prices['1m']})`;
+
+      document.getElementById('btn-plan-3m').href = `https://wa.me/${OFFICIAL_PHONE}?text=${encodeURIComponent(`Hola, deseo activar la Promo de 3 Meses (${screenText}) en TOM TV por S/. ${prices['3m']}`)}`;
+      document.getElementById('btn-plan-3m').innerText = `Aprovechar Promo 3 Meses (S/. ${prices['3m']})`;
+
+      document.getElementById('btn-plan-12m').href = `https://wa.me/${OFFICIAL_PHONE}?text=${encodeURIComponent(`Hola, deseo activar el Plan Anual VIP (${screenText}) en TOM TV por S/. ${prices['12m']}`)}`;
+      document.getElementById('btn-plan-12m').innerText = `Activar Plan Anual VIP (S/. ${prices['12m']})`;
     }
 
     // FAQ Accordion
