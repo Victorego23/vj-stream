@@ -7,7 +7,7 @@
   
   <!-- SEO Meta Tags -->
   <link rel="canonical" href="https://tomtv.lat/">
-  <meta name="description" content="TOM TV Oficial. Cine de estreno en 4K, series completas y más de 800 canales de televisión en vivo sin cortes para Smart TV, Firestick, TV Box y Android. Activa tu demo gratis al WhatsApp 914598415.">
+  <meta name="description" content="TOM TV Oficial. Cine de estreno en 4K, series completas y más de 1,300 canales de televisión en vivo sin cortes para Smart TV, Firestick, TV Box y Android. Activación inmediata al WhatsApp 914598415.">
   <meta name="keywords" content="TOM TV, TOM TV oficial, activar tom tv, tom tv smart tv, descargar tom tv apk, iptv peru, canales peruanos en vivo, liga 1 max en vivo, tom tv whatsapp 914598415, streaming peru 4k, comprar tom tv yape plin">
   <meta name="author" content="TOM TV Entertainment">
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -397,7 +397,95 @@
       justify-content: center;
       gap: 14px;
       flex-wrap: wrap;
-      margin-bottom: 40px;
+      margin-bottom: 24px;
+    }
+
+    /* BARRA DE 3 PASOS FÁCILES PARA EL USUARIO */
+    .fast-track-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 0 auto 36px;
+      max-width: 920px;
+      background: rgba(18, 20, 28, 0.75);
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      border-radius: 18px;
+      padding: 14px 22px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(229, 9, 20, 0.08);
+      flex-wrap: wrap;
+    }
+
+    .fast-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-align: left;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    .fast-step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), #8F0006);
+      color: #fff;
+      font-weight: 900;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 12px var(--primary-glow);
+      flex-shrink: 0;
+    }
+
+    .fast-step-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .fast-step-text strong {
+      font-size: 13px;
+      color: #fff;
+      font-weight: 800;
+    }
+
+    .fast-step-text span {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    .fast-step-text code {
+      color: #FF5A65;
+      background: rgba(229, 9, 20, 0.15);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 11px;
+    }
+
+    .fast-step-arrow {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    @media (max-width: 768px) {
+      .fast-track-steps {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+      .fast-step-arrow {
+        display: none;
+      }
     }
 
     /* MOCKUP SHOWCASE SMART TV CON INTERFAZ REAL */
@@ -2284,12 +2372,39 @@
         <a href="/apk" class="btn btn-primary btn-lg btn-glow" id="btn-hero-apk" download>
           <span>📥</span> Descargar APK v3.5.0 (58 MB)
         </a>
-        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20solicitar%20mi%20demo%20gratis%20de%202%20horas%20de%20TOM%20TV" target="_blank" rel="noopener" class="btn btn-whatsapp btn-lg" id="btn-hero-demo">
-          <span>💬</span> Pedir Demo Gratis (WhatsApp 914598415)
+        <a href="https://wa.me/51914598415?text=Hola,%20deseo%20activar%20mi%20servicio%20de%20TOM%20TV" target="_blank" rel="noopener" class="btn btn-whatsapp btn-lg" id="btn-hero-whatsapp">
+          <span>💬</span> Activar por WhatsApp (914 598 415)
         </a>
         <a href="#downloader" class="btn btn-secondary btn-lg" id="btn-hero-activate">
-          <span>📺</span> Instalar en Smart TV (Downloader)
+          <span>📺</span> Guía Smart TV (Downloader)
         </a>
+      </div>
+
+      <!-- INICIO RÁPIDO EN 3 PASOS FÁCILES -->
+      <div class="fast-track-steps">
+        <div class="fast-step">
+          <div class="fast-step-num">1</div>
+          <div class="fast-step-text">
+            <strong>Instala en tu Smart TV</strong>
+            <span>Escribe <code>tomtv.lat/apk</code> en la app Downloader</span>
+          </div>
+        </div>
+        <div class="fast-step-arrow">➔</div>
+        <div class="fast-step">
+          <div class="fast-step-num">2</div>
+          <div class="fast-step-text">
+            <strong>Mira tu Código en Pantalla</strong>
+            <span>La app te mostrará tu código (ej: VJ-3166)</span>
+          </div>
+        </div>
+        <div class="fast-step-arrow">➔</div>
+        <div class="fast-step">
+          <div class="fast-step-num">3</div>
+          <div class="fast-step-text">
+            <strong>Envía al WhatsApp 914 598 415</strong>
+            <span>Activación en 1 minuto vía Yape o Plin</span>
+          </div>
+        </div>
       </div>
 
       <!-- MOCKUP SMART TV CON LOGO Y CANALES INTERACTIVOS -->
@@ -2998,8 +3113,9 @@
 
       <div class="code-box" style="text-align: center;">
         <div class="code-label">URL DIRECTA PARA SMART TV</div>
-        <div style="font-family: var(--font-display); font-size: 26px; font-weight: 900; color: #fff; background: rgba(0,0,0,0.6); padding: 12px 20px; border-radius: 12px; border: 1px dashed rgba(229,9,20,0.6); letter-spacing: 1px; margin: 10px 0;">
-          tomtv.lat/apk
+        <div style="font-family: var(--font-display); font-size: 26px; font-weight: 900; color: #fff; background: rgba(0,0,0,0.6); padding: 12px 20px; border-radius: 12px; border: 1px dashed rgba(229,9,20,0.6); letter-spacing: 1px; margin: 10px 0; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;">
+          <span id="tv-apk-url-text">tomtv.lat/apk</span>
+          <button type="button" onclick="navigator.clipboard.writeText('https://tomtv.lat/apk'); alert('¡URL tomtv.lat/apk copiada al portapapeles!');" style="background: rgba(229,9,20,0.25); border: 1px solid rgba(229,9,20,0.6); color: #fff; font-size: 12px; font-weight: 800; padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: all 0.2s;">📋 Copiar</button>
         </div>
         <a href="/apk" class="btn btn-primary btn-glow" download style="margin-top: 8px; width: 100%; justify-content: center;">
           <span>📥</span> Descargar APK v3.5.0 (58 MB)
@@ -3191,10 +3307,10 @@
             <td class="highlight-col"><span class="badge-check">✅ +15,000 Películas y Series en 4K</span></td>
           </tr>
           <tr>
-            <td><strong>Prueba Gratis (Demo)</strong></td>
-            <td><span class="badge-cross">❌ Ninguna (te cobran instalación)</span></td>
-            <td><span class="badge-cross">❌ Sin pruebas gratuitas</span></td>
-            <td class="highlight-col"><span class="badge-check">✅ Demo Gratis de 2 Horas Disponible</span></td>
+            <td><strong>Activación Inmediata</strong></td>
+            <td><span class="badge-cross">❌ Demora de 2 a 5 días con técnico</span></td>
+            <td><span class="badge-cross">❌ Trámites y llamadas lentas</span></td>
+            <td class="highlight-col"><span class="badge-check">✅ En 1 Minuto vía WhatsApp (914 598 415)</span></td>
           </tr>
         </tbody>
       </table>
@@ -3293,7 +3409,7 @@
       <div class="testimonial-card">
         <div class="stars-row">★★★★★</div>
         <p class="testimonial-quote">
-          "Me dieron una prueba gratis de 2 horas para probar en mi televisor TCL y quedé encantada con la calidad de audio en español latino. Compré el plan familiar al instante."
+          "Instalé la app en mi televisor TCL en 2 minutos escribiendo tomtv.lat/apk en Downloader. Me activaron al instante por WhatsApp y la calidad en 4K con audio latino es increíble."
         </p>
         <div class="testimonial-author">
           <div class="author-avatar" style="background: #2563eb;">SP</div>
@@ -3317,11 +3433,11 @@
     <div class="faq-container">
       <div class="faq-item">
         <div class="faq-question">
-          <span>¿Cómo solicito una prueba gratis (demo)?</span>
+          <span>¿Cómo adquiero y activo mi suscripción de TOM TV?</span>
           <span class="faq-icon">+</span>
         </div>
         <div class="faq-answer">
-          Solo haz clic en el botón de WhatsApp o escríbenos directamente al <strong>914 598 415</strong>. Te enviamos un acceso de demostración de 2 horas para que pruebes la fluidez y calidad directamente en tu Smart TV sin compromiso.
+          Es súper rápido en 3 pasos: 1) Instala la app en tu Smart TV desde la app Downloader escribiendo <strong>tomtv.lat/apk</strong> (o ábrela en tomtv.lat/play). 2) La pantalla te mostrará tu código VJ. 3) Escríbenos directamente a nuestro WhatsApp oficial <strong>914 598 415</strong> o paga por Yape/Plin, y tu pantalla se activará en menos de 1 minuto.
         </div>
       </div>
 
