@@ -637,7 +637,7 @@ class _LiveTvViewState extends State<LiveTvView> {
           colors: [Color(0xF2141522), Color(0xEB0A0B12)],
         ),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.08), width: 1.0),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
         ),
         boxShadow: const [
           BoxShadow(
@@ -656,7 +656,7 @@ class _LiveTvViewState extends State<LiveTvView> {
             decoration: BoxDecoration(
               color: const Color(0xFF07080D),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.12)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x33E50914),
@@ -845,7 +845,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.12),
+                        color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -1411,6 +1411,7 @@ class _TvCategoryItem extends StatefulWidget {
   final FocusNode? focusNode;
 
   const _TvCategoryItem({
+    super.key,
     required this.title,
     required this.icon,
     required this.isSelected,
