@@ -1557,7 +1557,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          adminToken = pass;
+          adminToken = data.token || pass;
           localStorage.setItem('vj_admin_token', adminToken);
           showToast('Bienvenido Super Administrador', 'success');
           showDashboard();
