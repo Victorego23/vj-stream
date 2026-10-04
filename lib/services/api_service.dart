@@ -26,8 +26,8 @@ class ApiService {
 
   static const String _prefKey = 'vj_stream_backend_url';
 
-  /// URL oficial fija del servidor VJ STREAM en la nube (activo 24/7 sin IPs)
-  static const String defaultCloudUrl = 'https://vj-stream-m9sa.onrender.com/api/streaming';
+  /// URL oficial fija del servidor TOM TV en la nube (activo 24/7 sin IPs)
+  static const String defaultCloudUrl = 'https://tomtv.lat/api/streaming';
 
   /// URL base por defecto del backend.
   String baseUrl = defaultCloudUrl;
