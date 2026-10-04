@@ -226,14 +226,34 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
           : (downloadPath.startsWith('/') ? '$origin$downloadPath' : '$origin/$downloadPath');
 
       final client = http.Client();
-      final request = http.Request('GET', Uri.parse(fullUrl));
-      final response = await client.send(request);
+      var currentUri = Uri.parse(fullUrl);
+      http.StreamedResponse? response;
+      int redirectCount = 0;
 
-      if (response.statusCode >= 400) {
+      while (redirectCount < 5) {
+        final request = http.Request('GET', currentUri);
+        final res = await client.send(request);
+        if (res.statusCode == 301 ||
+            res.statusCode == 302 ||
+            res.statusCode == 303 ||
+            res.statusCode == 307 ||
+            res.statusCode == 308) {
+          final location = res.headers['location'];
+          if (location != null && location.isNotEmpty) {
+            currentUri = currentUri.resolve(location);
+            redirectCount++;
+            continue;
+          }
+        }
+        response = res;
+        break;
+      }
+
+      if (response == null || response.statusCode != 200) {
         if (mounted) {
           setState(() {
             _isDownloading = false;
-            _downloadMessage = 'No fue posible iniciar la descarga (código HTTP ${response.statusCode}).';
+            _downloadMessage = 'No fue posible iniciar la descarga (código HTTP ${response?.statusCode ?? 0}).';
           });
         }
         return;
@@ -241,7 +261,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
 
       final totalBytes = (response.contentLength != null && response.contentLength! > 0)
           ? response.contentLength!
-          : 154 * 1024 * 1024;
+          : 58284866; // 58 MB (TOM-TV-release.apk v3.5.0)
       int receivedBytes = 0;
 
       // Guardar el APK en el almacenamiento temporal/caché local del dispositivo
@@ -274,6 +294,18 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
             await sink?.close();
             sink = null;
           } catch (_) {}
+
+          // Protección contra descargas vacías o interrumpidas
+          if (receivedBytes < 1024 * 1024) {
+            if (mounted) {
+              setState(() {
+                _isDownloading = false;
+                _downloadFinished = false;
+                _downloadMessage = 'La descarga fue incompleta. Por favor descarga directamente desde tomtv.lat/apk';
+              });
+            }
+            return;
+          }
 
           if (mounted) {
             setState(() {

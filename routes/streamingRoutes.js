@@ -699,51 +699,20 @@ router.get('/vod/movie/:id', async (req, res) => {
  * @route   GET /api/streaming/version
  * @desc    Devuelve los metadatos de la última versión y notas de la versión para OTA
  */
-router.get('/version', async (req, res) => {
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.0/TOM-TV-release.apk';
-
-  let has350Release = false;
-  try {
-    const headCheck = await fetch(githubReleaseUrl, { method: 'HEAD', redirect: 'manual' });
-    if (headCheck.status === 302 || headCheck.status === 200) {
-      has350Release = true;
-    }
-  } catch (_) {}
-
-  // Si ya existe el APK compilado de la versión 3.5.0 en GitHub Releases, anunciarla
-  if (has350Release) {
-    return res.json({
-      success: true,
-      app: 'TOM TV',
-      latestVersion: '3.5.0',
-      versionCode: 25,
-      minSupportedVersion: '1.0.0',
-      releaseDate: '2026-10-04',
-      releaseNotes: [
-        '📺 ¡Nueva Interfaz Smart TV (Android TV / Google TV / Firestick)!: Menú lateral colapsable (Sidebar) estilo Netflix con navegación 100% nativa para control remoto (D-Pad).',
-        '🎯 Halo de Neón 4K Ultra-Visible: Borde rojo brillante y difuminado de alta visibilidad para distinguir al instante cada película o canal seleccionado a 3 metros de distancia.',
-        '🎬 Navegación Fluida del Hero Banner: Salto directo con flechas del control a "▶ Reproducir" y "ℹ Más información".',
-        '⚡ Zapping Rápido en TV en Vivo: Cambio de canales instantáneo con flechas Arriba/Abajo (CH+/CH-) y miniguía lateral con tecla OK sin cortar la imagen.',
-        '👶 🌹 ⚽ Catálogos especializados de Niños, Telenovelas y Fútbol optimizados a pantalla completa 16:9.'
-      ],
-      downloadUrl: '/api/streaming/download-apk',
-      forceUpdate: false,
-      announcement: accountService.getAnnouncement()
-    });
-  }
-
-  // De lo contrario, reportar la versión real del APK actual (v3.3.0) para prevenir bucles de actualización
+router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.3.0',
-    versionCode: 23,
+    latestVersion: '3.5.0',
+    versionCode: 25,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-29',
+    releaseDate: '2026-10-04',
     releaseNotes: [
-      '📺 TOM TV v3.3.0 Estable',
-      '⚡ Servidores CDN de alta velocidad activos.',
-      '🎬 Catálogo VOD y TV en Vivo 24/7 sincronizado.'
+      '📺 ¡Nueva Interfaz Smart TV (Android TV / Google TV / Firestick)!: Menú lateral colapsable (Sidebar) estilo Netflix con navegación 100% nativa para control remoto (D-Pad).',
+      '🎯 Halo de Neón 4K Ultra-Visible: Borde rojo brillante y difuminado de alta visibilidad para distinguir al instante cada película o canal seleccionado a 3 metros de distancia.',
+      '🎬 Navegación Fluida del Hero Banner: Salto directo con flechas del control a "▶ Reproducir" y "ℹ Más información".',
+      '⚡ Zapping Rápido en TV en Vivo: Cambio de canales instantáneo con flechas Arriba/Abajo (CH+/CH-) y miniguía lateral con tecla OK sin cortar la imagen.',
+      '👶 🌹 ⚽ Catálogos especializados de Niños, Telenovelas y Fútbol optimizados a pantalla completa 16:9.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,
@@ -767,35 +736,30 @@ router.get('/announcement', (req, res) => {
  * @route   GET /api/streaming/download-apk
  * @desc    Descarga directa del APK de TOM TV para actualización OTA
  */
-router.get('/download-apk', async (req, res) => {
+router.get('/download-apk', (req, res) => {
   const path = require('path');
   const fs = require('fs');
 
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.0/TOM-TV-release.apk';
   const tomReleasePath = path.resolve(__dirname, '..', 'TOM-TV-release.apk');
   const releasePath = path.resolve(__dirname, '..', 'VJ-STREAM-release.apk');
   const apkPath = path.resolve(__dirname, '..', 'VJ-STREAM-debug.apk');
   const fallbackPath = path.resolve(__dirname, '..', 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
 
-  // Si existe la release oficial v3.5.0 en GitHub, redirigir allí para máxima velocidad CDN
-  try {
-    const headCheck = await fetch(githubReleaseUrl, { method: 'HEAD', redirect: 'manual' });
-    if (headCheck.status === 302 || headCheck.status === 200) {
-      return res.redirect(githubReleaseUrl);
-    }
-  } catch (_) {}
-
   const fileToSend = fs.existsSync(tomReleasePath)
     ? tomReleasePath
     : (fs.existsSync(releasePath) ? releasePath : (fs.existsSync(apkPath) ? apkPath : fallbackPath));
 
-  if (!fs.existsSync(fileToSend)) {
-    return res.redirect(githubReleaseUrl);
+  if (fs.existsSync(fileToSend)) {
+    const stat = fs.statSync(fileToSend);
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.sendFile(fileToSend);
   }
 
-  res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-  res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
-  return res.download(fileToSend, 'TOM-TV.apk');
+  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.0/TOM-TV-release.apk';
+  return res.redirect(githubReleaseUrl);
 });
 
 module.exports = router;

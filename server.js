@@ -63,19 +63,33 @@ app.get('/api/version', (req, res) => {
   res.redirect('/api/streaming/version');
 });
 
-// Endpoints universales directos de descarga de APK
-app.get('/download-apk', (req, res) => {
-  res.redirect('/api/streaming/download-apk');
-});
-app.get('/api/download-apk', (req, res) => {
-  res.redirect('/api/streaming/download-apk');
-});
-app.get('/apk', (req, res) => {
-  res.redirect('/api/streaming/download-apk');
-});
-app.get('/tv', (req, res) => {
-  res.redirect('/api/streaming/download-apk');
-});
+// Controlador unificado para servir el APK directamente sin redirecciones intermedias
+const serveApkDirect = (req, res) => {
+  const fs = require('fs');
+  const tomReleasePath = path.resolve(__dirname, 'TOM-TV-release.apk');
+  const releasePath = path.resolve(__dirname, 'VJ-STREAM-release.apk');
+  const apkPath = path.resolve(__dirname, 'VJ-STREAM-debug.apk');
+  const fallbackPath = path.resolve(__dirname, 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
+
+  const fileToSend = fs.existsSync(tomReleasePath)
+    ? tomReleasePath
+    : (fs.existsSync(releasePath) ? releasePath : (fs.existsSync(apkPath) ? apkPath : fallbackPath));
+
+  if (fs.existsSync(fileToSend)) {
+    const stat = fs.statSync(fileToSend);
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
+    res.setHeader('Cache-Control', 'public, max-age=300');
+    return res.sendFile(fileToSend);
+  }
+
+  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.0/TOM-TV-release.apk';
+  return res.redirect(githubReleaseUrl);
+};
+
+// Endpoints universales directos de descarga de APK (200 OK directo para Downloader TV y Navegadores)
+app.get(['/download-apk', '/api/download-apk', '/apk', '/tv'], serveApkDirect);
 
 // Endpoints universales de lista M3U para Smart TV / IBO Player / IPTV Smarters
 app.get('/playlist.m3u', (req, res) => {
