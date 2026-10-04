@@ -2286,11 +2286,289 @@
       color: #fff;
       font-size: 26px;
       cursor: pointer;
+      padding: 6px;
     }
 
     @media (max-width: 900px) {
       .nav-links { display: none; }
       .mobile-menu-btn { display: block; }
+    }
+
+    /* ================================================================
+       ESTILOS RESPONSIVOS COMPLETOS PARA CELULAR (MOBILE VIEWPORT)
+       ================================================================ */
+    @media (max-width: 768px) {
+      /* CONTENEDOR & ESPACIADOS */
+      .container {
+        padding: 0 16px;
+      }
+
+      /* TOP PROMO BAR */
+      .top-promo-bar {
+        font-size: 11px;
+        padding: 6px 12px;
+        flex-direction: column;
+        gap: 6px;
+        line-height: 1.3;
+      }
+      .top-promo-bar a {
+        font-size: 11px;
+        padding: 3px 10px;
+      }
+
+      /* CABECERA & NAVEGACIÓN */
+      .nav-inner {
+        height: 60px;
+      }
+      .brand-logo-img {
+        height: 36px;
+      }
+      .nav-actions {
+        gap: 6px;
+      }
+      /* Ocultar botón 'Vista Celular' cuando ya estás navegando en un celular */
+      .nav-actions a[href="/mobile-preview"] {
+        display: none !important;
+      }
+      /* Botón APK compacto en la cabecera móvil */
+      .nav-actions #btn-download-nav {
+        padding: 7px 12px;
+        font-size: 12px;
+      }
+      .nav-actions #btn-web-player {
+        padding: 7px 10px;
+        font-size: 12px;
+      }
+
+      /* HERO SECTION */
+      .hero {
+        padding: 24px 0 20px;
+      }
+      .hero-badge {
+        font-size: 10px;
+        padding: 5px 12px;
+        letter-spacing: 0.3px;
+        margin-bottom: 14px;
+        max-width: 100%;
+        line-height: 1.35;
+      }
+      .hero-title {
+        font-size: clamp(24px, 6.5vw, 32px);
+        line-height: 1.15;
+        margin-bottom: 12px;
+      }
+      .hero-subtitle {
+        font-size: 14px;
+        line-height: 1.45;
+        margin-bottom: 20px;
+      }
+      .hero-buttons {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .hero-buttons .btn {
+        width: 100%;
+        justify-content: center;
+        padding: 13px 18px;
+        font-size: 14px;
+      }
+
+      /* BARRA DE 3 PASOS FÁCILES */
+      .fast-track-steps {
+        flex-direction: column;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+      }
+      .fast-step {
+        width: 100%;
+        min-width: auto;
+      }
+      .fast-step-arrow {
+        display: none;
+      }
+
+      /* MOCKUP SHOWCASE SMART TV ADAPTADO */
+      .mockup-wrapper {
+        margin-top: 15px;
+        width: 100%;
+      }
+      .tv-frame {
+        height: auto !important;
+        aspect-ratio: 16 / 9;
+        min-height: 200px;
+        max-height: 250px;
+        border: 4px solid #20222a !important;
+        border-radius: 14px !important;
+      }
+      .tv-screen-content {
+        padding: 10px 12px;
+      }
+      .tv-top-bar {
+        gap: 4px;
+      }
+      .tv-screen-logo {
+        height: 22px;
+      }
+      .tv-pill {
+        font-size: 8px;
+        padding: 2px 5px;
+      }
+      .tv-interactive-nav {
+        display: none; /* En celular no cabe la barra de tabs dentro de la mini TV */
+      }
+      .tv-screen-body {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      .tv-bottom-info {
+        max-width: 100%;
+      }
+      .tv-bottom-title {
+        font-size: 15px;
+        margin-bottom: 2px;
+      }
+      .tv-bottom-meta {
+        font-size: 10px;
+        margin-bottom: 2px;
+      }
+      .tv-bottom-desc {
+        display: none; /* Ocultar sinopsis larga para no tapar en pantalla de celular */
+      }
+      .tv-mini-posters-strip {
+        display: none; /* En celular no caben los mini posters dentro del marco */
+      }
+      .tv-bezel-bottom {
+        padding: 4px 10px;
+      }
+      .tv-bezel-brand {
+        font-size: 8px;
+      }
+      .tv-base {
+        width: 110px;
+        height: 10px;
+      }
+
+      /* Ocultar el mockup flotante secundario para que la página sea ligera y directa */
+      .mobile-floating-mockup {
+        display: none !important;
+      }
+
+      /* SECCIÓN ACTIVACIÓN INSTANTÁNEA */
+      .activation-card-wide {
+        grid-template-columns: 1fr;
+        padding: 20px 16px;
+        gap: 18px;
+      }
+      .activation-text h2 {
+        font-size: 20px;
+      }
+      .activation-visual-guide {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .btn-activate-submit {
+        font-size: 13px;
+        padding: 12px 14px;
+      }
+
+      /* GRILLA DE CANALES */
+      .channels-logo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+        gap: 8px;
+      }
+      .channel-logo-item {
+        padding: 8px 4px;
+      }
+      .channel-logo-item img {
+        height: 28px;
+      }
+      .channel-logo-item span {
+        font-size: 10px;
+      }
+
+      /* CAJA DE DOWNLOADER */
+      .downloader-box {
+        padding: 20px 16px;
+      }
+      .downloader-steps h3 {
+        font-size: 18px;
+        line-height: 1.3;
+      }
+      .code-box {
+        margin-top: 16px;
+      }
+      .code-box div[style*="font-size: 26px"] {
+        font-size: 19px !important;
+        padding: 10px 12px !important;
+      }
+
+      /* PLANES / TARJETAS DE PRECIOS */
+      .plans-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .plan-card {
+        padding: 20px 16px;
+      }
+      .plan-card.featured {
+        transform: none;
+      }
+
+      /* TABLA COMPARATIVA */
+      .comparison-table-wrap {
+        border-radius: 12px;
+      }
+      .table-swipe-hint {
+        display: block !important;
+        font-size: 11px;
+        color: #FFD700;
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: 700;
+      }
+
+      /* BOTÓN FLOTANTE DE WHATSAPP */
+      .whatsapp-float-btn {
+        width: 52px;
+        height: 52px;
+        font-size: 26px;
+        bottom: 20px;
+        right: 18px;
+      }
+
+      /* TESTIMONIOS */
+      .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      /* ENCABEZADOS DE SECCIÓN */
+      .section-header h2, .section-title {
+        font-size: 22px;
+      }
+      .section-header p, .section-desc {
+        font-size: 13px;
+      }
+      section.container {
+        padding: 24px 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 24px;
+      }
+      .brand-logo-img {
+        height: 32px;
+      }
+      .nav-actions #btn-web-player {
+        display: none; /* En celulares ultra pequeños mostrar solo el botón principal de descarga */
+      }
     }
   </style>
 </head>
@@ -3265,6 +3543,8 @@
       <p class="section-desc">¿Por qué pagar más de S/. 200 al mes en múltiples servicios cuando puedes tener todo en una sola aplicación?</p>
     </div>
 
+    <div class="table-swipe-hint" style="display: none;">👈 Desliza la tabla hacia los lados para comparar 👉</div>
+
     <div class="comparison-table-wrap">
       <table class="comparison-table">
         <thead>
@@ -3744,13 +4024,24 @@
           nav.style.display = 'flex';
           nav.style.flexDirection = 'column';
           nav.style.position = 'absolute';
-          nav.style.top = '76px';
+          nav.style.top = '60px';
           nav.style.left = '0';
           nav.style.width = '100%';
           nav.style.background = '#0a0a0e';
           nav.style.padding = '20px';
           nav.style.borderBottom = '1px solid #222';
+          nav.style.boxShadow = '0 15px 30px rgba(0,0,0,0.9)';
+          nav.style.zIndex = '999';
         }
+      });
+
+      document.querySelectorAll('.nav-links a').forEach(a => {
+        a.addEventListener('click', () => {
+          const nav = document.querySelector('.nav-links');
+          if (window.innerWidth <= 900 && nav) {
+            nav.style.display = 'none';
+          }
+        });
       });
     }
 
