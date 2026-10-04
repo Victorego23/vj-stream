@@ -40,22 +40,22 @@
         "offers": {
           "@type": "AggregateOffer",
           "priceCurrency": "PEN",
-          "lowPrice": "20",
-          "highPrice": "180",
+          "lowPrice": "10",
+          "highPrice": "90",
           "offerCount": "4",
           "offers": [
             {
               "@type": "Offer",
               "name": "Plan 1 Mes TOM TV",
-              "price": "20",
+              "price": "10",
               "priceCurrency": "PEN",
               "availability": "https://schema.org/InStock",
               "url": "https://tomtv.lat/#planes"
             },
             {
               "@type": "Offer",
-              "name": "Plan 3 Meses TOM TV",
-              "price": "50",
+              "name": "Promo 3 Meses TOM TV",
+              "price": "25",
               "priceCurrency": "PEN",
               "availability": "https://schema.org/InStock",
               "url": "https://tomtv.lat/#planes"
@@ -128,6 +128,9 @@
 
     html {
       scroll-behavior: smooth;
+      overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
     }
 
     body {
@@ -135,25 +138,31 @@
       color: var(--text);
       font-family: var(--font-body);
       overflow-x: hidden;
+      width: 100%;
+      max-width: 100vw;
       line-height: 1.6;
       position: relative;
+      margin: 0;
+      padding: 0;
     }
 
-    /* LUCES AMBIENTALES DE FONDO */
+    /* LUCES AMBIENTALES DE FONDO (PROTEGIDAS DE DESBORDE) */
     .ambient-glow {
       position: absolute;
-      width: 600px;
-      height: 600px;
+      width: 500px;
+      height: 500px;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(229, 9, 20, 0.18) 0%, rgba(0, 0, 0, 0) 70%);
+      background: radial-gradient(circle, rgba(229, 9, 20, 0.16) 0%, rgba(0, 0, 0, 0) 70%);
       pointer-events: none;
       z-index: 0;
       filter: blur(90px);
+      max-width: 100vw;
+      overflow: hidden;
     }
     .glow-1 { top: -120px; left: 50%; transform: translateX(-50%); }
-    .glow-2 { top: 1100px; right: -150px; background: radial-gradient(circle, rgba(229, 9, 20, 0.12) 0%, rgba(0,0,0,0) 70%); }
-    .glow-3 { top: 2200px; left: -150px; }
-    .glow-4 { top: 3400px; right: -100px; }
+    .glow-2 { top: 1100px; right: 0; background: radial-gradient(circle, rgba(229, 9, 20, 0.12) 0%, rgba(0,0,0,0) 70%); }
+    .glow-3 { top: 2200px; left: 0; }
+    .glow-4 { top: 3400px; right: 0; }
 
     .container {
       max-width: 1240px;
@@ -161,36 +170,44 @@
       padding: 0 24px;
       position: relative;
       z-index: 1;
+      box-sizing: border-box;
     }
 
-    /* TOP PROMO BAR CON NÚMERO DIRECTO */
+    /* TOP PROMO BAR CON NÚMERO DIRECTO (ANCHO COMPLETO 100% PARA TV Y MÓVIL) */
     .top-promo-bar {
       background: linear-gradient(90deg, #990000 0%, #E50914 50%, #990000 100%);
       color: #fff;
-      padding: 8px 16px;
+      padding: 10px 18px;
       font-size: 13px;
       font-weight: 700;
       text-align: center;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
+      gap: 14px;
+      flex-wrap: wrap;
       letter-spacing: 0.2px;
       border-bottom: 1px solid rgba(255,255,255,0.15);
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 101;
     }
 
     .top-promo-bar a {
       color: #fff;
       background: rgba(0,0,0,0.3);
-      padding: 2px 10px;
+      padding: 4px 12px;
       border-radius: 20px;
       text-decoration: none;
       font-size: 12px;
       font-weight: 800;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       transition: all 0.2s;
+      white-space: nowrap;
     }
     .top-promo-bar a:hover {
       background: #fff;
@@ -214,6 +231,10 @@
       align-items: center;
       justify-content: space-between;
       height: 76px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      gap: 14px;
     }
 
     .brand-logo-img {
@@ -221,6 +242,7 @@
       display: block;
       filter: drop-shadow(0 0 16px rgba(229, 9, 20, 0.5));
       transition: transform 0.25s ease;
+      flex-shrink: 0;
     }
     .brand-logo-img:hover {
       transform: scale(1.03);
@@ -229,15 +251,17 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 24px;
+      gap: 14px;
       list-style: none;
+      flex-wrap: nowrap;
     }
 
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
+      white-space: nowrap;
       transition: color 0.2s ease;
     }
 
@@ -248,7 +272,8 @@
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
     }
 
     /* BOTONES */
@@ -822,7 +847,7 @@
     @media (min-width: 980px) {
       .mobile-floating-mockup {
         position: absolute;
-        right: -10px;
+        right: 12px;
         bottom: 15px;
         width: 215px;
         height: 435px;
@@ -2289,9 +2314,17 @@
       padding: 6px;
     }
 
-    @media (max-width: 900px) {
-      .nav-links { display: none; }
-      .mobile-menu-btn { display: block; }
+    /* Ocultar enlaces de cabecera en pantallas intermedias y TV (Downloader, Firestick, Silk, WebOS, Tizen) */
+    @media (max-width: 1180px) {
+      .nav-links { display: none !important; }
+      .mobile-menu-btn { display: block !important; }
+    }
+
+    /* Ocultar botón 'Vista Celular' en televisores y pantallas menores a 1280px */
+    @media (max-width: 1280px) {
+      .nav-actions a[href="/mobile-preview"] {
+        display: none !important;
+      }
     }
 
     /* ================================================================
@@ -2568,6 +2601,63 @@
       }
       .nav-actions #btn-web-player {
         display: none; /* En celulares ultra pequeños mostrar solo el botón principal de descarga */
+      }
+    }
+
+    /* ================================================================
+       OPTIMIZACIÓN COMPLETA PARA SMART TV, FIRESTICK, TV BOX Y NAVEGADORES DE TELEVISOR
+       (Downloader Browser, Amazon Silk, Samsung Tizen, LG WebOS, Android TV)
+       ================================================================ */
+    @media screen and (min-width: 769px) and (max-width: 1366px) {
+      /* Adaptación para TV y pantallas medianas */
+      .container {
+        max-width: 100% !important;
+        padding: 0 24px !important;
+        box-sizing: border-box !important;
+      }
+      .top-promo-bar {
+        padding: 10px 20px;
+        font-size: 13px;
+        line-height: 1.4;
+      }
+      .hero {
+        padding: 30px 0 20px;
+      }
+      .hero-title {
+        font-size: clamp(28px, 3.8vw, 42px);
+      }
+      .hero-subtitle {
+        font-size: 15px;
+        max-width: 700px;
+      }
+      .fast-track-steps {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .mockup-wrapper {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .pricing-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      }
+      .downloader-box {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .activation-card-wide {
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+    @media screen and (min-width: 1367px) {
+      /* Pantallas Grandes Full HD 1080p y 4K */
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 32px;
+        box-sizing: border-box;
       }
     }
   </style>
