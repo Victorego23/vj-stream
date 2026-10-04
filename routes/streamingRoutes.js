@@ -703,14 +703,14 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.5.2',
-    versionCode: 27,
+    latestVersion: '3.5.3',
+    versionCode: 28,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-04',
     releaseNotes: [
-      '📺 Retroceso y Navegación D-Pad Perfeccionada: Tecla Atrás regresa limpiamente a categorías y flecha Izquierda conecta al menú lateral sin trabarse.',
-      '✨ Interfaz Limpia y Optimizada: Eliminados selectores redundantes de países en TV y celular para mayor velocidad y orden visual.',
-      '⚡ Ultra Fluidez a 60 FPS: Respuesta instantánea del control remoto y navegación suave en Smart TVs y móviles.'
+      '📺 Navegación Smart TV 100% Fluida: Corrección total del foco hacia la izquierda desde cualquier fila o canal sin trabarse en la cuadrícula.',
+      '🎬 Rediseño Cinemático 16:9: Tarjetas panorámicas de transmisión en vivo con efecto halo de foco y visualización moderna estilo Smart TV de última generación.',
+      '📱 Sincronización Total TV y Móvil: Interfaz limpia sin selectores redundantes de países, máxima ligereza y carga instantánea.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,
@@ -756,7 +756,7 @@ router.get('/download-apk', (req, res) => {
     return res.sendFile(fileToSend);
   }
 
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.2/TOM-TV-release.apk';
+  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.3/TOM-TV-release.apk';
   return res.redirect(githubReleaseUrl);
 });
 

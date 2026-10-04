@@ -84,6 +84,25 @@ class _LiveTvViewState extends State<LiveTvView> {
     }
   }
 
+  void _jumpToSidebar() {
+    final catNode = _categoryFocusNodes[_selectedCategory];
+    if (catNode != null && catNode.canRequestFocus) {
+      catNode.requestFocus();
+      return;
+    }
+    if (_backToMoviesSidebarFocusNode.canRequestFocus) {
+      _backToMoviesSidebarFocusNode.requestFocus();
+      return;
+    }
+    for (final node in _categoryFocusNodes.values) {
+      if (node.canRequestFocus) {
+        node.requestFocus();
+        return;
+      }
+    }
+    _sidebarScopeNode.requestFocus();
+  }
+
   @override
   void dispose() {
     _scrollController.removeListener(_onScroll);
@@ -399,42 +418,43 @@ class _LiveTvViewState extends State<LiveTvView> {
 
               const Divider(color: Color(0xFF1E202C), height: 8),
 
-              // Lista de Categorías navegable con Control Remoto
+              // Lista de Categorías navegable con Control Remoto (100% montadas en memoria para foco instantáneo)
               Expanded(
                 child: FocusScope(
                   node: _sidebarScopeNode,
-                  child: ListView.builder(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    itemCount: _categories.length,
-                    itemBuilder: (context, index) {
-                      final cat = _categories[index];
-                      final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
-                      int? count;
-                      if (cat == 'Favoritos') count = _favoriteChannelIds.length;
-                      if (cat == 'Recientes') count = _recentChannelIds.length;
-                      final catNode = _getCategoryFocusNode(cat);
+                    child: Column(
+                      children: _categories.map((cat) {
+                        final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
+                        int? count;
+                        if (cat == 'Favoritos') count = _favoriteChannelIds.length;
+                        if (cat == 'Recientes') count = _recentChannelIds.length;
+                        final catNode = _getCategoryFocusNode(cat);
 
-                      return _TvCategoryItem(
-                        title: cat,
-                        icon: _getCategoryIcon(cat),
-                        isSelected: isSelected,
-                        badgeCount: count,
-                        focusNode: catNode,
-                        onSelect: () {
-                          setState(() {
-                            _selectedCategory = cat;
-                            if (_filteredChannels.isNotEmpty) {
-                              _focusedChannelNotifier.value = _filteredChannels.first;
-                            }
-                          });
-                        },
-                        onKeyRight: () {
-                          // Pasar foco a la cuadrícula de canales
-                          _channelGridScopeNode.requestFocus();
-                        },
-                        onBackToMovies: widget.onBackToMovies,
-                      );
-                    },
+                        return _TvCategoryItem(
+                          key: ValueKey('cat_$cat'),
+                          title: cat,
+                          icon: _getCategoryIcon(cat),
+                          isSelected: isSelected,
+                          badgeCount: count,
+                          focusNode: catNode,
+                          onSelect: () {
+                            setState(() {
+                              _selectedCategory = cat;
+                              if (_filteredChannels.isNotEmpty) {
+                                _focusedChannelNotifier.value = _filteredChannels.first;
+                              }
+                            });
+                          },
+                          onKeyRight: () {
+                            // Pasar foco a la cuadrícula de canales
+                            _channelGridScopeNode.requestFocus();
+                          },
+                          onBackToMovies: widget.onBackToMovies,
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),
@@ -492,10 +512,10 @@ class _LiveTvViewState extends State<LiveTvView> {
                                       cacheExtent: 1200,
                                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                                       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 220,
+                                        maxCrossAxisExtent: 240,
                                         mainAxisSpacing: 16,
                                         crossAxisSpacing: 16,
-                                        childAspectRatio: 0.95,
+                                        childAspectRatio: 1.35,
                                       ),
                                       itemCount: channels.length,
                                       itemBuilder: (context, index) {
@@ -516,14 +536,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                                           onTap: () => _playChannel(channel),
                                           onLongPress: () => _toggleFavorite(channel),
                                           onKeyLeft: (isFirstColumn) {
-                                            if (isFirstColumn) {
-                                              final catNode = _categoryFocusNodes[_selectedCategory] ?? _categoryFocusNodes.values.firstOrNull;
-                                              if (catNode != null) {
-                                                catNode.requestFocus();
-                                              } else {
-                                                _sidebarScopeNode.requestFocus();
-                                              }
-                                            }
+                                            _jumpToSidebar();
                                           },
                                           onKeyUp: () {
                                             _returnToMoviesFocusNode.requestFocus();
@@ -617,11 +630,22 @@ class _LiveTvViewState extends State<LiveTvView> {
     return Container(
       height: 104,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF11121A),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFF1E202C), width: 1.2),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF2141522), Color(0xEB0A0B12)],
         ),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.08), width: 1.0),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 14,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -630,9 +654,16 @@ class _LiveTvViewState extends State<LiveTvView> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: const Color(0xFF090A0E),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              color: const Color(0xFF07080D),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33E50914),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
             padding: const EdgeInsets.all(8),
             child: channel.logoUrl.isNotEmpty
@@ -807,6 +838,25 @@ class _LiveTvViewState extends State<LiveTvView> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 5),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '⬅ / ATRÁS',
+                        style: TextStyle(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Text('Menú Lateral', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                  ],
+                ),
               ],
             ),
           ),
@@ -830,12 +880,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                   return KeyEventResult.handled;
                 }
                 if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                  final catNode = _categoryFocusNodes[_selectedCategory] ?? _categoryFocusNodes.values.firstOrNull;
-                  if (catNode != null) {
-                    catNode.requestFocus();
-                  } else {
-                    _sidebarScopeNode.requestFocus();
-                  }
+                  _jumpToSidebar();
                   return KeyEventResult.handled;
                 }
               }
@@ -1117,7 +1162,7 @@ class _LiveTvViewState extends State<LiveTvView> {
                   maxCrossAxisExtent: 200,
                   mainAxisSpacing: 14,
                   crossAxisSpacing: 14,
-                  childAspectRatio: 0.95,
+                  childAspectRatio: 1.18,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
@@ -1488,6 +1533,19 @@ class _TvCategoryItemState extends State<_TvCategoryItem> {
             ),
             child: Row(
               children: [
+                if (widget.isSelected && !_isFocused)
+                  Container(
+                    width: 3.5,
+                    height: 14,
+                    margin: const EdgeInsets.only(right: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE50914),
+                      borderRadius: BorderRadius.circular(2),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0xAAE50914), blurRadius: 4),
+                      ],
+                    ),
+                  ),
                 Text(widget.icon, style: const TextStyle(fontSize: 14)),
                 const SizedBox(width: 8),
                 Expanded(
