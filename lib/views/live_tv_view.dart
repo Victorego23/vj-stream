@@ -57,6 +57,11 @@ class _LiveTvViewState extends State<LiveTvView> {
     _scrollController.addListener(_onScroll);
     _loadFavoritesAndRecents();
     _loadChannels();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _channelGridScopeNode.requestFocus();
+      }
+    });
   }
 
   void _onScroll() {
@@ -85,22 +90,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   void _jumpToSidebar() {
-    final catNode = _categoryFocusNodes[_selectedCategory];
-    if (catNode != null && catNode.canRequestFocus) {
-      catNode.requestFocus();
-      return;
-    }
-    if (_backToMoviesSidebarFocusNode.canRequestFocus) {
-      _backToMoviesSidebarFocusNode.requestFocus();
-      return;
-    }
-    for (final node in _categoryFocusNodes.values) {
-      if (node.canRequestFocus) {
-        node.requestFocus();
-        return;
-      }
-    }
-    _sidebarScopeNode.requestFocus();
+    widget.onBackToMovies?.call();
   }
 
   @override
@@ -215,6 +205,11 @@ class _LiveTvViewState extends State<LiveTvView> {
           _isLoading = false;
           if (_filteredChannels.isNotEmpty) {
             _focusedChannelNotifier.value = _filteredChannels.first;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _channelGridScopeNode.requestFocus();
+              }
+            });
           }
         });
       }
@@ -330,226 +325,76 @@ class _LiveTvViewState extends State<LiveTvView> {
   Widget _buildTvLayout() {
     final channels = _filteredChannels;
 
-    return Row(
+    return Column(
       children: [
-        // Sidebar lateral de Categorías y Países para Smart TV
-        Container(
-          width: 250,
-          decoration: const BoxDecoration(
-            color: Color(0xFF0F1017),
-            border: Border(
-              right: BorderSide(color: Color(0xFF1E202C), width: 1.2),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Cabecera Sidebar con Badge EN VIVO
-              Padding(
-                padding: const EdgeInsets.fromLTRB(18, 20, 18, 14),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFE50914), Color(0xFF990000)],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x66E50914),
-                            blurRadius: 10,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(Icons.live_tv_rounded, color: Colors.white, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'TV EN VIVO',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          Text(
-                            '${_allChannels.length} canales 24/7',
-                            style: const TextStyle(
-                              color: Colors.white54,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Divider(color: Color(0xFF1A1C27), height: 1),
-
-              const SizedBox(height: 4),
-
-              // Botón destacado siempre visible: Regresar a Películas
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                child: _TvCategoryItem(
-                  title: 'Volver a Películas',
-                  icon: '🎬 ',
-                  isSelected: false,
-                  badgeCount: null,
-                  focusNode: _backToMoviesSidebarFocusNode,
-                  onSelect: () => widget.onBackToMovies?.call(),
-                  onKeyRight: () {
-                    _channelGridScopeNode.requestFocus();
-                  },
-                  onBackToMovies: widget.onBackToMovies,
-                ),
-              ),
-
-              const Divider(color: Color(0xFF1E202C), height: 8),
-
-              // Lista de Categorías navegable con Control Remoto (100% montadas en memoria para foco instantáneo)
-              Expanded(
-                child: FocusScope(
-                  node: _sidebarScopeNode,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    child: Column(
-                      children: _categories.map((cat) {
-                        final isSelected = cat.toLowerCase() == _selectedCategory.toLowerCase();
-                        int? count;
-                        if (cat == 'Favoritos') count = _favoriteChannelIds.length;
-                        if (cat == 'Recientes') count = _recentChannelIds.length;
-                        final catNode = _getCategoryFocusNode(cat);
-
-                        return _TvCategoryItem(
-                          key: ValueKey('cat_$cat'),
-                          title: cat,
-                          icon: _getCategoryIcon(cat),
-                          isSelected: isSelected,
-                          badgeCount: count,
-                          focusNode: catNode,
-                          onSelect: () {
-                            setState(() {
-                              _selectedCategory = cat;
-                              if (_filteredChannels.isNotEmpty) {
-                                _focusedChannelNotifier.value = _filteredChannels.first;
-                              }
-                            });
-                          },
-                          onKeyRight: () {
-                            // Pasar foco a la cuadrícula de canales
-                            _channelGridScopeNode.requestFocus();
-                          },
-                          onBackToMovies: widget.onBackToMovies,
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-              ),
-
-              // Indicador inferior de ayuda para el control remoto
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: const Color(0xFF0B0C12),
-                child: const Row(
-                  children: [
-                    Icon(Icons.settings_remote_rounded, color: Colors.white38, size: 16),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Flecha Der: Ver Canales',
-                        style: TextStyle(color: Colors.white38, fontSize: 11),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        // Panel Superior Dinámico del Canal Enfocado (TV Banner Preview)
+        ValueListenableBuilder<LiveChannel?>(
+          valueListenable: _focusedChannelNotifier,
+          builder: (context, currentFocused, _) {
+            final channelToShow = currentFocused ?? (channels.isNotEmpty ? channels.first : null);
+            return _buildFocusedChannelBanner(channelToShow);
+          },
         ),
 
-        // Área Principal: Banner de Información + Cuadrícula de Canales
+        // Cuadrícula de Canales a Pantalla Completa con Focus D-Pad
         Expanded(
-          child: Column(
-            children: [
-              // Panel Superior Dinámico del Canal Enfocado (TV Banner Preview)
-              ValueListenableBuilder<LiveChannel?>(
-                valueListenable: _focusedChannelNotifier,
-                builder: (context, currentFocused, _) {
-                  final channelToShow = currentFocused ?? (channels.isNotEmpty ? channels.first : null);
-                  return _buildFocusedChannelBanner(channelToShow);
-                },
-              ),
-
-              // Cuadrícula de Canales con Focus D-Pad y botón Subir Todo
-              Expanded(
-                child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Color(0xFFE50914)),
-                      )
-                    : _errorMessage != null
-                        ? _buildErrorView()
-                        : channels.isEmpty
-                            ? _buildEmptyView()
-                            : Stack(
-                                children: [
-                                  FocusScope(
-                                    node: _channelGridScopeNode,
-                                    child: GridView.builder(
-                                      controller: _scrollController,
-                                      cacheExtent: 1200,
-                                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                                      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                        maxCrossAxisExtent: 240,
-                                        mainAxisSpacing: 16,
-                                        crossAxisSpacing: 16,
-                                        childAspectRatio: 1.35,
-                                      ),
-                                      itemCount: channels.length,
-                                      itemBuilder: (context, index) {
-                                        final channel = channels[index];
-                                        final channelNumber = index + 1;
-                                        final isFirstRow = index < 5;
-                                        return _TvFocusableChannelCard(
-                                          key: ValueKey(channel.id),
-                                          channel: channel,
-                                          channelNumber: channelNumber,
-                                          isFirstRow: isFirstRow,
-                                          isFavorite: _favoriteChannelIds.contains(channel.id),
-                                          onFocusChange: (focused) {
-                                            if (focused) {
-                                              _focusedChannelNotifier.value = channel;
-                                            }
-                                          },
-                                          onTap: () => _playChannel(channel),
-                                          onLongPress: () => _toggleFavorite(channel),
-                                          onKeyLeft: (isFirstColumn) {
-                                            _jumpToSidebar();
-                                          },
-                                          onKeyUp: () {
-                                            _returnToMoviesFocusNode.requestFocus();
-                                            if (_scrollController.hasClients) {
-                                              _scrollController.animateTo(0, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
-                                            }
-                                          },
-                                          onFastScrollTop: _scrollToTop,
-                                          onBackToMovies: widget.onBackToMovies,
-                                        );
-                                      },
-                                    ),
-                                  ),
+          child: _isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(color: Color(0xFFE50914)),
+                )
+              : _errorMessage != null
+                  ? _buildErrorView()
+                  : channels.isEmpty
+                      ? _buildEmptyView()
+                      : Stack(
+                          children: [
+                            FocusScope(
+                              node: _channelGridScopeNode,
+                              autofocus: true,
+                              child: GridView.builder(
+                                controller: _scrollController,
+                                cacheExtent: 1200,
+                                padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
+                                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                                  maxCrossAxisExtent: 260,
+                                  mainAxisSpacing: 18,
+                                  crossAxisSpacing: 18,
+                                  childAspectRatio: 1.35,
+                                ),
+                                itemCount: channels.length,
+                                itemBuilder: (context, index) {
+                                  final channel = channels[index];
+                                  final channelNumber = index + 1;
+                                  final isFirstRow = index < 6;
+                                  return _TvFocusableChannelCard(
+                                    key: ValueKey(channel.id),
+                                    channel: channel,
+                                    channelNumber: channelNumber,
+                                    isFirstRow: isFirstRow,
+                                    autofocus: index == 0,
+                                    isFavorite: _favoriteChannelIds.contains(channel.id),
+                                    onFocusChange: (focused) {
+                                      if (focused) {
+                                        _focusedChannelNotifier.value = channel;
+                                      }
+                                    },
+                                    onTap: () => _playChannel(channel),
+                                    onLongPress: () => _toggleFavorite(channel),
+                                    onKeyLeft: (isFirstColumn) {
+                                      _jumpToSidebar();
+                                    },
+                                    onKeyUp: () {
+                                      _returnToMoviesFocusNode.requestFocus();
+                                      if (_scrollController.hasClients) {
+                                        _scrollController.animateTo(0, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
+                                      }
+                                    },
+                                    onFastScrollTop: _scrollToTop,
+                                    onBackToMovies: widget.onBackToMovies,
+                                  );
+                                },
+                              ),
+                            ),
                                   if (_showBackToTop)
                                     Positioned(
                                       bottom: 24,
@@ -1604,6 +1449,7 @@ class _TvFocusableChannelCard extends StatefulWidget {
   final VoidCallback onLongPress;
   final ValueChanged<bool> onKeyLeft;
   final bool isFirstRow;
+  final bool autofocus;
   final VoidCallback? onKeyUp;
   final VoidCallback? onFastScrollTop;
   final VoidCallback? onBackToMovies;
@@ -1618,6 +1464,7 @@ class _TvFocusableChannelCard extends StatefulWidget {
     required this.onLongPress,
     required this.onKeyLeft,
     this.isFirstRow = false,
+    this.autofocus = false,
     this.onKeyUp,
     this.onFastScrollTop,
     this.onBackToMovies,
@@ -1636,6 +1483,13 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
   void initState() {
     super.initState();
     _focusNode.addListener(_handleFocus);
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _focusNode.requestFocus();
+        }
+      });
+    }
   }
 
   void _handleFocus() {
@@ -1666,6 +1520,7 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _focusNode,
+      autofocus: widget.autofocus,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
           if (event.logicalKey == LogicalKeyboardKey.select ||

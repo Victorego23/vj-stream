@@ -35,12 +35,20 @@ class TvNavigationSidebar extends StatefulWidget {
   });
 
   @override
-  State<TvNavigationSidebar> createState() => _TvNavigationSidebarState();
+  State<TvNavigationSidebar> createState() => TvNavigationSidebarState();
 }
 
-class _TvNavigationSidebarState extends State<TvNavigationSidebar> {
+class TvNavigationSidebarState extends State<TvNavigationSidebar> {
   bool _isExpanded = false;
   final Map<String, FocusNode> _focusNodes = {};
+
+  void requestFocus([String? tabId]) {
+    final targetId = tabId ?? widget.activeTabId;
+    final node = _focusNodes[targetId] ?? _focusNodes['TV en Vivo'] ?? _focusNodes.values.firstOrNull;
+    if (node != null && node.canRequestFocus) {
+      node.requestFocus();
+    }
+  }
 
   List<TvSidebarItemData> get _items => [
         TvSidebarItemData(
@@ -362,6 +370,16 @@ class _TvSidebarItemState extends State<_TvSidebarItem> {
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space) {
             widget.onTap();
+            if (widget.item.onAction == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (node.context != null) {
+                  final moved = node.focusInDirection(TraversalDirection.right);
+                  if (!moved) {
+                    node.nextFocus();
+                  }
+                }
+              });
+            }
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowRight) {

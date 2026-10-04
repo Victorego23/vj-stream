@@ -73,6 +73,15 @@ class _HomeViewState extends State<HomeView> {
   bool _hasMoreYearMovies = true;
   final List<int> _availableYears = List.generate(27, (i) => 2026 - i);
   Map<String, dynamic>? _activeAnnouncement;
+  final GlobalKey<TvNavigationSidebarState> _tvSidebarKey = GlobalKey<TvNavigationSidebarState>();
+
+  void _returnFocusToTvSidebar(String tabId) {
+    if (_tvSidebarKey.currentState != null) {
+      _tvSidebarKey.currentState!.requestFocus(tabId);
+    } else {
+      setState(() => _activeTab = 'Todos');
+    }
+  }
 
   @override
   void initState() {
@@ -1013,6 +1022,7 @@ class _HomeViewState extends State<HomeView> {
       children: [
         // Sidebar lateral colapsable estilo Netflix / Android TV
         TvNavigationSidebar(
+          key: _tvSidebarKey,
           activeTabId: _activeTab,
           onSelectTab: (tabId) {
             setState(() {
@@ -1047,30 +1057,30 @@ class _HomeViewState extends State<HomeView> {
     if (_activeTab == 'Fútbol & Deportes') {
       return LiveTvView(
         initialCategory: 'Deportes',
-        onBackToMovies: () => setState(() => _activeTab = 'Todos'),
+        onBackToMovies: () => _returnFocusToTvSidebar('Fútbol & Deportes'),
       );
     }
     if (_activeTab == 'Canales Perú') {
       return LiveTvView(
         initialCategory: '🇵🇪 Canales Peruanos',
-        onBackToMovies: () => setState(() => _activeTab = 'Todos'),
+        onBackToMovies: () => _returnFocusToTvSidebar('Canales Perú'),
       );
     }
     if (_activeTab == 'TV en Vivo') {
       return LiveTvView(
-        onBackToMovies: () => setState(() => _activeTab = 'Todos'),
+        onBackToMovies: () => _returnFocusToTvSidebar('TV en Vivo'),
       );
     }
     if (_activeTab == 'TV Infantil') {
       return LiveTvView(
         initialCategory: 'Infantil',
-        onBackToMovies: () => setState(() => _activeTab = 'Niños'),
+        onBackToMovies: () => _returnFocusToTvSidebar('Niños'),
       );
     }
     if (_activeTab == 'TV Telenovelas') {
       return LiveTvView(
         initialCategory: 'Telenovelas',
-        onBackToMovies: () => setState(() => _activeTab = 'Telenovelas'),
+        onBackToMovies: () => _returnFocusToTvSidebar('Telenovelas'),
       );
     }
 
