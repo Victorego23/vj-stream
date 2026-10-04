@@ -83,9 +83,21 @@ class ChannelService {
       if (c.category) set.add(c.category);
     });
     const cats = Array.from(set);
+    const orderPriority = {
+      '🇵🇪 Canales Peruanos': 1,
+      'Deportes': 2,
+      'Infantil': 3,
+      'Telenovelas': 4,
+      'Cine & Series': 5,
+      'Entretenimiento': 6,
+      'Noticias': 7,
+      'Música': 8,
+      'Cultura': 9
+    };
     cats.sort((a, b) => {
-      if (a.includes('Peruanos') || a.includes('Perú')) return -1;
-      if (b.includes('Peruanos') || b.includes('Perú')) return 1;
+      const pA = orderPriority[a] || 99;
+      const pB = orderPriority[b] || 99;
+      if (pA !== pB) return pA - pB;
       return a.localeCompare(b);
     });
     return cats;

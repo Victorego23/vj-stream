@@ -2312,9 +2312,11 @@
                 </div>
                 <div class="tv-interactive-nav">
                   <button class="tv-nav-tab active" onclick="switchTvTab('movies')">🍿 Películas</button>
+                  <button class="tv-nav-tab" onclick="switchTvTab('sports')">⚽ Fútbol</button>
+                  <button class="tv-nav-tab" onclick="switchTvTab('kids')">👶 Niños & Dibujos</button>
+                  <button class="tv-nav-tab" onclick="switchTvTab('novelas')">🌹 Telenovelas</button>
                   <button class="tv-nav-tab" onclick="switchTvTab('series')">📺 Series</button>
-                  <button class="tv-nav-tab" onclick="switchTvTab('sports')">⚽ Deportes</button>
-                  <button class="tv-nav-tab" onclick="switchTvTab('peru')">🇵🇪 Canales Perú</button>
+                  <button class="tv-nav-tab" onclick="switchTvTab('peru')">🇵🇪 Perú TV</button>
                 </div>
               </div>
 
@@ -2343,16 +2345,24 @@
                 <!-- Miniaturas reales en la TV -->
                 <div class="tv-mini-posters-strip">
                   <div class="tv-mini-poster active" id="mini-tab-movies" onclick="switchTvTab('movies')">
-                    <img src="https://image.tmdb.org/t/p/w200/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg" alt="Deadpool">
+                    <img src="https://image.tmdb.org/t/p/w200/yDHYTfA3R0jFYba16jBB1ef8oIt.jpg" alt="Películas">
                     <span>Películas</span>
-                  </div>
-                  <div class="tv-mini-poster" id="mini-tab-series" onclick="switchTvTab('series')">
-                    <img src="https://image.tmdb.org/t/p/w200/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" alt="Intensamente 2">
-                    <span>Series</span>
                   </div>
                   <div class="tv-mini-poster" id="mini-tab-sports" onclick="switchTvTab('sports')">
                     <img src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&w=200&auto=format&fit=crop" alt="Deportes">
-                    <span>Deportes</span>
+                    <span>Fútbol</span>
+                  </div>
+                  <div class="tv-mini-poster" id="mini-tab-kids" onclick="switchTvTab('kids')">
+                    <img src="https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=200&auto=format&fit=crop" alt="Niños">
+                    <span>Niños</span>
+                  </div>
+                  <div class="tv-mini-poster" id="mini-tab-novelas" onclick="switchTvTab('novelas')">
+                    <img src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?q=80&w=200&auto=format&fit=crop" alt="Telenovelas">
+                    <span>Novelas</span>
+                  </div>
+                  <div class="tv-mini-poster" id="mini-tab-series" onclick="switchTvTab('series')">
+                    <img src="https://image.tmdb.org/t/p/w200/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" alt="Series">
+                    <span>Series</span>
                   </div>
                   <div class="tv-mini-poster" id="mini-tab-peru" onclick="switchTvTab('peru')">
                     <img src="https://images.unsplash.com/photo-1526392060635-9d6019884377?q=80&w=200&auto=format&fit=crop" alt="Canales Perú">
@@ -2584,8 +2594,9 @@
       <button class="channel-pill active" onclick="filterChannelsCategory('todos')">🌟 Todos los Canales</button>
       <button class="channel-pill" onclick="filterChannelsCategory('peru')">🇵🇪 Canales Perú</button>
       <button class="channel-pill" onclick="filterChannelsCategory('deportes')">⚽ Deportes & Fútbol</button>
+      <button class="channel-pill" onclick="filterChannelsCategory('infantil')">👶 Niños & Dibujos</button>
+      <button class="channel-pill" onclick="filterChannelsCategory('novelas')">🌹 Telenovelas</button>
       <button class="channel-pill" onclick="filterChannelsCategory('cine')">🍿 Cine & Series Premium</button>
-      <button class="channel-pill" onclick="filterChannelsCategory('infantil')">👶 Infantiles</button>
     </div>
 
     <!-- Cuadrícula de Logos de Canales -->
@@ -2730,6 +2741,37 @@
         <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #10B981, #047857); font-size: 16px;">DK</div>
         <div class="channel-card-name">Discovery Kids</div>
         <span class="channel-live-badge badge-live-blue">👶 DIVERSIÓN</span>
+      </div>
+
+      <div class="channel-card" data-cat="infantil">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #FBBF24, #D97706); font-size: 15px;">BOB</div>
+        <div class="channel-card-name">Bob Esponja 24/7</div>
+        <span class="channel-live-badge badge-live-blue">👶 CARICATURAS</span>
+      </div>
+
+      <!-- Telenovelas -->
+      <div class="channel-card" data-cat="novelas">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #BE185D, #881337); font-size: 15px;">KANAL</div>
+        <div class="channel-card-name">Kanal D Drama</div>
+        <span class="channel-live-badge badge-live-red">🇹🇷 NOVELAS TURCAS</span>
+      </div>
+
+      <div class="channel-card" data-cat="novelas">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #E11D48, #9F1239); font-size: 15px;">RCN</div>
+        <div class="channel-card-name">RCN Novelas</div>
+        <span class="channel-live-badge badge-live-red">🌹 NOVELAS COLOMBIA</span>
+      </div>
+
+      <div class="channel-card" data-cat="novelas">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #9333EA, #6B21A8); font-size: 15px;">TNT</div>
+        <div class="channel-card-name">TNT Novelas HD</div>
+        <span class="channel-live-badge badge-live-blue">💖 DRAMA & PASIÓN</span>
+      </div>
+
+      <div class="channel-card" data-cat="novelas">
+        <div class="channel-icon-emblem" style="background: linear-gradient(135deg, #DB2777, #9D174D); font-size: 14px;">PLUTO</div>
+        <div class="channel-card-name">Pluto TV Novelas</div>
+        <span class="channel-live-badge badge-live-blue">🌹 NOVELAS 24/7</span>
       </div>
     </div>
   </section>
@@ -3442,6 +3484,24 @@
         audio: 'Transmisión en Vivo HD',
         rating: '⭐ 9.9/10',
         status: '● DIRECTO'
+      },
+      kids: {
+        bg: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1280&auto=format&fit=crop',
+        title: '👶 Dibujos Animados y Películas Infantiles',
+        desc: 'Todas las caricaturas, Disney, Pixar, Cartoon Network, Nickelodeon, Bob Esponja 24/7 y anime familiar en español.',
+        badge: 'CONTENIDO FAMILIAR',
+        audio: 'Doblaje Latino Oficial',
+        rating: '⭐ 9.9/10',
+        status: '● EN VIVO'
+      },
+      novelas: {
+        bg: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?q=80&w=1280&auto=format&fit=crop',
+        title: '🌹 Telenovelas de Todo Tipo (Latinas y Turcas)',
+        desc: 'Las novelas más apasionantes: Betty la fea, Pasión de Gavilanes, novelas turcas Kanal D Drama y grandes éxitos 24/7.',
+        badge: 'TELENOVELAS 24/7',
+        audio: 'Audio Español Latino',
+        rating: '⭐ 9.8/10',
+        status: '● EN VIVO'
       },
       peru: {
         bg: 'https://images.unsplash.com/photo-1526392060635-9d6019884377?q=80&w=1280&auto=format&fit=crop',

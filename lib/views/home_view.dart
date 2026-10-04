@@ -39,9 +39,21 @@ class _HomeViewState extends State<HomeView> {
   List<MediaItem> _seriesItems = [];
 
   // Pestañas de categoría rápida
-  String _activeTab = 'Todos'; // 'Todos', 'TV en Vivo', 'Películas', 'Series', 'Próximamente', 'Mi Lista'
+  String _activeTab = 'Todos'; // 'Todos', 'Fútbol & Deportes', 'Niños', 'Telenovelas', 'Canales Perú', 'Películas', 'Series', 'TV en Vivo', 'Próximamente', 'Mi Lista'
   List<WatchHistoryItem> _continueWatching = [];
   List<MediaItem> _favorites = [];
+
+  // Categorías especializadas para Niños y Telenovelas
+  List<MediaItem> _kidsMovies = [];
+  List<MediaItem> _kidsCartoons = [];
+  List<MediaItem> _kidsAnime = [];
+  List<MediaItem> _kidsClassics = [];
+  bool _isLoadingKids = false;
+
+  List<MediaItem> _latamNovelas = [];
+  List<MediaItem> _turkishNovelas = [];
+  List<MediaItem> _kdramas = [];
+  bool _isLoadingTelenovelas = false;
 
   // Cartelera Infinita dinámica sin fin
   final List<Map<String, dynamic>> _extraCategories = [];
@@ -157,10 +169,12 @@ class _HomeViewState extends State<HomeView> {
     // Autodescubrimiento y persistencia de IP en segundo plano
     await _apiService.initBaseUrl();
 
-    // Cargar catálogo principal e historial/favoritos en paralelo
+    // Cargar catálogo principal, historial/favoritos y categorías especializadas en paralelo
     await Future.wait([
       _loadCatalog(),
       _loadHistoryAndFavorites(),
+      _loadKidsCatalog(),
+      _loadTelenovelasCatalog(),
     ]);
 
     // Comprobación automática de actualización OTA en segundo plano al iniciar
@@ -239,6 +253,43 @@ class _HomeViewState extends State<HomeView> {
         });
       }
     } catch (_) {}
+  }
+
+  Future<void> _loadKidsCatalog() async {
+    if (_kidsMovies.isNotEmpty && _kidsCartoons.isNotEmpty) return;
+    setState(() => _isLoadingKids = true);
+    try {
+      final res = await _apiService.fetchKidsCatalog();
+      if (mounted) {
+        setState(() {
+          _kidsMovies = res['movies'] ?? [];
+          _kidsCartoons = res['cartoons'] ?? [];
+          _kidsAnime = res['anime'] ?? [];
+          _kidsClassics = res['classics'] ?? [];
+          _isLoadingKids = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingKids = false);
+    }
+  }
+
+  Future<void> _loadTelenovelasCatalog() async {
+    if (_latamNovelas.isNotEmpty && _turkishNovelas.isNotEmpty) return;
+    setState(() => _isLoadingTelenovelas = true);
+    try {
+      final res = await _apiService.fetchTelenovelasCatalog();
+      if (mounted) {
+        setState(() {
+          _latamNovelas = res['latamNovelas'] ?? [];
+          _turkishNovelas = res['turkishNovelas'] ?? [];
+          _kdramas = res['kdramas'] ?? [];
+          _isLoadingTelenovelas = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingTelenovelas = false);
+    }
   }
 
   Future<void> _loadCatalog() async {
@@ -841,10 +892,19 @@ class _HomeViewState extends State<HomeView> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        // Si el usuario está en TV en Vivo, Canales Perú o cualquier otra pestaña, regresar a Películas
-        if (_activeTab != 'Películas') {
+        // Si el usuario está en una subvista de TV en vivo, regresar a su pestaña principal
+        if (_activeTab == 'TV Infantil') {
+          setState(() => _activeTab = 'Niños');
+          return;
+        }
+        if (_activeTab == 'TV Telenovelas') {
+          setState(() => _activeTab = 'Telenovelas');
+          return;
+        }
+        // Si el usuario está en cualquier otra pestaña, regresar a Todos
+        if (_activeTab != 'Películas' && _activeTab != 'Todos') {
           setState(() {
-            _activeTab = 'Películas';
+            _activeTab = 'Todos';
           });
           if (_scrollController.hasClients) {
             _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
@@ -955,14 +1015,28 @@ class _HomeViewState extends State<HomeView> {
                       child: _buildYearSelectorBar(isTv),
                     ),
 
+                  // Vista cuando la pestaña activa es "Fútbol & Deportes"
+                  if (_activeTab == 'Fútbol & Deportes')
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: LiveTvView(
+                        initialCategory: 'Deportes',
+                        onBackToMovies: () {
+                          setState(() => _activeTab = 'Todos');
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                          }
+                        },
+                      ),
+                    )
                   // Vista cuando la pestaña activa es "Canales Perú"
-                  if (_activeTab == 'Canales Perú')
+                  else if (_activeTab == 'Canales Perú')
                     SliverFillRemaining(
                       hasScrollBody: true,
                       child: LiveTvView(
                         initialCategory: '🇵🇪 Canales Peruanos',
                         onBackToMovies: () {
-                          setState(() => _activeTab = 'Películas');
+                          setState(() => _activeTab = 'Todos');
                           if (_scrollController.hasClients) {
                             _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
                           }
@@ -975,12 +1049,50 @@ class _HomeViewState extends State<HomeView> {
                       hasScrollBody: true,
                       child: LiveTvView(
                         onBackToMovies: () {
-                          setState(() => _activeTab = 'Películas');
+                          setState(() => _activeTab = 'Todos');
                           if (_scrollController.hasClients) {
                             _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
                           }
                         },
                       ),
+                    )
+                  // Vista cuando la pestaña activa es "TV Infantil" (abierta desde el banner de Niños)
+                  else if (_activeTab == 'TV Infantil')
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: LiveTvView(
+                        initialCategory: 'Infantil',
+                        onBackToMovies: () {
+                          setState(() => _activeTab = 'Niños');
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                          }
+                        },
+                      ),
+                    )
+                  // Vista cuando la pestaña activa es "TV Telenovelas" (abierta desde el banner de Telenovelas)
+                  else if (_activeTab == 'TV Telenovelas')
+                    SliverFillRemaining(
+                      hasScrollBody: true,
+                      child: LiveTvView(
+                        initialCategory: 'Telenovelas',
+                        onBackToMovies: () {
+                          setState(() => _activeTab = 'Telenovelas');
+                          if (_scrollController.hasClients) {
+                            _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
+                          }
+                        },
+                      ),
+                    )
+                  // Vista cuando la pestaña activa es "Niños"
+                  else if (_activeTab == 'Niños')
+                    SliverToBoxAdapter(
+                      child: _buildKidsTab(isTv),
+                    )
+                  // Vista cuando la pestaña activa es "Telenovelas"
+                  else if (_activeTab == 'Telenovelas')
+                    SliverToBoxAdapter(
+                      child: _buildTelenovelasTab(isTv),
                     )
                   // Vista cuando la pestaña activa es "Mi Lista"
                   else if (_activeTab == 'Mi Lista')
@@ -1183,7 +1295,13 @@ class _HomeViewState extends State<HomeView> {
   }
 
   MediaItem? _getHeroItemForTab() {
-    if (_activeTab == 'Series') {
+    if (_activeTab == 'Niños') {
+      if (_kidsMovies.isNotEmpty) return _kidsMovies.first;
+      if (_kidsCartoons.isNotEmpty) return _kidsCartoons.first;
+    } else if (_activeTab == 'Telenovelas') {
+      if (_latamNovelas.isNotEmpty) return _latamNovelas.first;
+      if (_turkishNovelas.isNotEmpty) return _turkishNovelas.first;
+    } else if (_activeTab == 'Series') {
       if (_seriesItems.isNotEmpty) return _seriesItems.first;
       final seriesInTrending = _trendingItems.where((i) => i.mediaType == 'tv');
       if (seriesInTrending.isNotEmpty) return seriesInTrending.first;
@@ -1278,10 +1396,13 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildTabBar(bool isTv) {
     final tabs = [
       {'id': 'Todos', 'label': 'Todos', 'icon': Icons.grid_view_rounded},
+      {'id': 'Fútbol & Deportes', 'label': '⚽ Fútbol & Deportes', 'icon': Icons.sports_soccer_rounded},
+      {'id': 'Niños', 'label': '👶 Niños & Dibujos', 'icon': Icons.child_care_rounded},
+      {'id': 'Telenovelas', 'label': '🌹 Telenovelas', 'icon': Icons.favorite_rounded},
       {'id': 'Canales Perú', 'label': '🇵🇪 Canales Perú', 'icon': Icons.live_tv_rounded},
-      {'id': 'TV en Vivo', 'label': 'TV en Vivo (1300+)', 'icon': Icons.public_rounded},
       {'id': 'Películas', 'label': 'Películas', 'icon': Icons.movie_rounded},
       {'id': 'Series', 'label': 'Series', 'icon': Icons.tv_rounded},
+      {'id': 'TV en Vivo', 'label': 'TV en Vivo (1300+)', 'icon': Icons.public_rounded},
       {'id': 'Próximamente', 'label': 'Próximamente', 'icon': Icons.upcoming_rounded},
       {'id': 'Mi Lista', 'label': 'Mi Lista', 'icon': Icons.star_rounded},
     ];
@@ -1310,6 +1431,8 @@ class _HomeViewState extends State<HomeView> {
             isSelected: isSelected,
             onSelected: () {
               setState(() => _activeTab = id);
+              if (id == 'Niños') _loadKidsCatalog();
+              if (id == 'Telenovelas') _loadTelenovelasCatalog();
               if (_scrollController.hasClients && _scrollController.offset > 0) {
                 _scrollController.animateTo(
                   0,
@@ -1595,6 +1718,233 @@ class _HomeViewState extends State<HomeView> {
           const SizedBox(height: 40),
         ],
       ),
+    );
+  }
+
+  Widget _buildLiveTvShortcutBanner({
+    required String title,
+    required String subtitle,
+    required String badgeText,
+    required IconData icon,
+    required LinearGradient gradient,
+    required VoidCallback onTap,
+    required bool isTv,
+  }) {
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isTv ? 48.0 : 16.0,
+        vertical: 12.0,
+      ),
+      child: _TvActionCard(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: EdgeInsets.symmetric(
+            horizontal: isTv ? 24.0 : 16.0,
+            vertical: isTv ? 18.0 : 14.0,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: Colors.white, size: isTv ? 32 : 26),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isTv ? 18 : 15,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.3,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            badgeText,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: isTv ? 13 : 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.play_arrow_rounded, color: Colors.black, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      'VER EN VIVO',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w900,
+                        fontSize: isTv ? 12 : 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKidsTab(bool isTv) {
+    if (_isLoadingKids && _kidsMovies.isEmpty && _kidsCartoons.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 80),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFFE50914)),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLiveTvShortcutBanner(
+          title: 'Canales Infantiles en Vivo 24/7',
+          subtitle: 'Cartoon Network, Nickelodeon, Disney, Bob Esponja, Hey Arnold, Rugrats...',
+          badgeText: 'EN VIVO',
+          icon: Icons.tv_rounded,
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0284C7), Color(0xFF0369A1)],
+          ),
+          onTap: () {
+            setState(() => _activeTab = 'TV Infantil');
+          },
+          isTv: isTv,
+        ),
+        if (_kidsMovies.isNotEmpty)
+          MediaRow(
+            title: '🎨 Películas Animadas y Familiares (Disney, Pixar, DreamWorks)',
+            items: _kidsMovies,
+            onItemTap: _openDetail,
+          ),
+        if (_kidsCartoons.isNotEmpty)
+          MediaRow(
+            title: '📺 Dibujos Animados y Caricaturas Populares',
+            items: _kidsCartoons,
+            onItemTap: _openDetail,
+          ),
+        if (_kidsAnime.isNotEmpty)
+          MediaRow(
+            title: '⚡ Anime Infantil y Aventuras',
+            items: _kidsAnime,
+            onItemTap: _openDetail,
+          ),
+        if (_kidsClassics.isNotEmpty)
+          MediaRow(
+            title: '👑 Grandes Clásicos de la Animación',
+            items: _kidsClassics,
+            onItemTap: _openDetail,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTelenovelasTab(bool isTv) {
+    if (_isLoadingTelenovelas && _latamNovelas.isEmpty && _turkishNovelas.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 80),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFFE50914)),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLiveTvShortcutBanner(
+          title: 'Canales de Telenovelas 24/7 en Vivo',
+          subtitle: 'Kanal D Drama, RCN Novelas, TNT Novelas, Pluto TV Novelas...',
+          badgeText: 'EN VIVO',
+          icon: Icons.favorite_rounded,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFBE185D), Color(0xFF881337)],
+          ),
+          onTap: () {
+            setState(() => _activeTab = 'TV Telenovelas');
+          },
+          isTv: isTv,
+        ),
+        if (_latamNovelas.isNotEmpty)
+          MediaRow(
+            title: '🌹 Grandes Telenovelas Latinoamericanas',
+            items: _latamNovelas,
+            onItemTap: _openDetail,
+          ),
+        if (_turkishNovelas.isNotEmpty)
+          MediaRow(
+            title: '🇹🇷 Novelas Turcas en Español (Dobladas)',
+            items: _turkishNovelas,
+            onItemTap: _openDetail,
+          ),
+        if (_kdramas.isNotEmpty)
+          MediaRow(
+            title: '💖 Dramas Románticos y K-Dramas',
+            items: _kdramas,
+            onItemTap: _openDetail,
+          ),
+      ],
     );
   }
 
@@ -2129,6 +2479,91 @@ class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tarjeta de acción interactiva enfocable en Android TV y táctil en móviles
+class _TvActionCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final BorderRadius borderRadius;
+
+  const _TvActionCard({
+    required this.child,
+    required this.onTap,
+    required this.borderRadius,
+  });
+
+  @override
+  State<_TvActionCard> createState() => _TvActionCardState();
+}
+
+class _TvActionCardState extends State<_TvActionCard> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      if (mounted) setState(() => _isFocused = _focusNode.hasFocus);
+      if (_focusNode.hasFocus) {
+        Scrollable.ensureVisible(
+          context,
+          alignment: 0.35,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      focusNode: _focusNode,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter ||
+              event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+            widget.onTap();
+            return KeyEventResult.handled;
+          }
+        }
+        return KeyEventResult.ignored;
+      },
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _isFocused ? 1.02 : 1.0,
+          duration: const Duration(milliseconds: 180),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            decoration: BoxDecoration(
+              borderRadius: widget.borderRadius,
+              boxShadow: _isFocused
+                  ? [
+                      BoxShadow(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        blurRadius: 14,
+                        spreadRadius: 2,
+                      )
+                    ]
+                  : [],
+            ),
+            child: widget.child,
           ),
         ),
       ),

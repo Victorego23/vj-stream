@@ -34,6 +34,57 @@ router.get('/catalog', async (req, res, next) => {
 });
 
 /**
+ * @route   GET /api/streaming/catalog/kids
+ * @desc    Obtiene el catálogo especializado para Niños (Películas animadas, dibujos animados y anime infantil)
+ */
+router.get('/catalog/kids', async (req, res, next) => {
+  try {
+    const catalog = await tmdbService.getKidsCatalog();
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      data: catalog
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   GET /api/streaming/catalog/telenovelas
+ * @desc    Obtiene el catálogo especializado de Telenovelas (Latinas, Turcas y K-Dramas)
+ */
+router.get('/catalog/telenovelas', async (req, res, next) => {
+  try {
+    const catalog = await tmdbService.getTelenovelasCatalog();
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      data: catalog
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   GET /api/streaming/catalog/action-sports
+ * @desc    Obtiene el catálogo de Películas de Acción y Deportes para el público general
+ */
+router.get('/catalog/action-sports', async (req, res, next) => {
+  try {
+    const catalog = await tmdbService.getActionSportsCatalog();
+    return res.json({
+      success: true,
+      app: 'VJ STREAM',
+      data: catalog
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * @route   GET /api/streaming/catalog/infinite
  * @desc    Obtiene nuevas filas y colecciones de películas dinámicas para scroll infinito
  * @query   page {number} - Página actual de scroll infinito (default 1)

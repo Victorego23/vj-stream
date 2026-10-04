@@ -374,6 +374,115 @@ class ApiService {
     return fetchFullCatalog();
   }
 
+  /// Obtiene el catálogo especializado para Niños (Películas animadas, dibujos animados, anime y clásicos)
+  Future<Map<String, List<MediaItem>>> fetchKidsCatalog() async {
+    try {
+      final uri = Uri.parse('$baseUrl/catalog/kids');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['data'] != null) {
+          final catalogData = data['data'] as Map<String, dynamic>;
+
+          List<MediaItem> parseList(dynamic raw) {
+            if (raw is List) {
+              return raw
+                  .map((item) => MediaItem.fromJson(item as Map<String, dynamic>))
+                  .where((m) => m.bestPosterUrl.isNotEmpty)
+                  .toList();
+            }
+            return [];
+          }
+
+          return {
+            'movies': parseList(catalogData['movies']),
+            'cartoons': parseList(catalogData['cartoons']),
+            'anime': parseList(catalogData['anime']),
+            'classics': parseList(catalogData['classics']),
+          };
+        }
+      }
+      return {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Obtiene el catálogo especializado de Telenovelas (Latinas, Turcas y K-Dramas)
+  Future<Map<String, List<MediaItem>>> fetchTelenovelasCatalog() async {
+    try {
+      final uri = Uri.parse('$baseUrl/catalog/telenovelas');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['data'] != null) {
+          final catalogData = data['data'] as Map<String, dynamic>;
+
+          List<MediaItem> parseList(dynamic raw) {
+            if (raw is List) {
+              return raw
+                  .map((item) => MediaItem.fromJson(item as Map<String, dynamic>))
+                  .where((m) => m.bestPosterUrl.isNotEmpty)
+                  .toList();
+            }
+            return [];
+          }
+
+          return {
+            'latamNovelas': parseList(catalogData['latamNovelas']),
+            'turkishNovelas': parseList(catalogData['turkishNovelas']),
+            'kdramas': parseList(catalogData['kdramas']),
+          };
+        }
+      }
+      return {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Obtiene el catálogo de Películas de Acción y Deportes
+  Future<Map<String, List<MediaItem>>> fetchActionSportsCatalog() async {
+    try {
+      final uri = Uri.parse('$baseUrl/catalog/action-sports');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 12));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['data'] != null) {
+          final catalogData = data['data'] as Map<String, dynamic>;
+
+          List<MediaItem> parseList(dynamic raw) {
+            if (raw is List) {
+              return raw
+                  .map((item) => MediaItem.fromJson(item as Map<String, dynamic>))
+                  .where((m) => m.bestPosterUrl.isNotEmpty)
+                  .toList();
+            }
+            return [];
+          }
+
+          return {
+            'actionMovies': parseList(catalogData['actionMovies']),
+            'thrillers': parseList(catalogData['thrillers']),
+            'sportsMovies': parseList(catalogData['sportsMovies']),
+          };
+        }
+      }
+      return {};
+    } catch (_) {
+      return {};
+    }
+  }
+
   /// Obtiene nuevas colecciones y filas temáticas para el scroll infinito de la Cartelera VJ STREAM
   Future<List<Map<String, dynamic>>> fetchInfiniteCategories(int page) async {
     try {

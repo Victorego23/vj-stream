@@ -131,6 +131,7 @@ class TmdbService {
       mediaType: item.media_type || (isMovie ? 'movie' : isTv ? 'tv' : 'unknown'),
       title: item.title || item.name || item.original_title || item.original_name,
       originalTitle: item.original_title || item.original_name,
+      originalLanguage: item.original_language || null,
       synopsis: item.overview || 'Sin descripción disponible.',
       releaseDate: item.release_date || item.first_air_date || null,
       rating: item.vote_average || 0,
@@ -719,6 +720,202 @@ class TmdbService {
       { id: 18, name: 'Drama', icon: '🎭' },
       { id: 80, name: 'Crimen', icon: '🕶️' }
     ];
+  }
+
+  /**
+   * Descubre series con parámetros personalizados de TMDB.
+   */
+  async discoverTv(params = {}) {
+    try {
+      const client = this.getAxiosClient();
+      const response = await client.get('/discover/tv', {
+        params: {
+          language: 'es-ES',
+          sort_by: 'popularity.desc',
+          include_adult: false,
+          page: 1,
+          ...params
+        }
+      });
+      return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'tv' }));
+    } catch (error) {
+      console.warn('[TmdbService] Error en discoverTv:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Descubre películas con parámetros personalizados de TMDB.
+   */
+  async discoverMovie(params = {}) {
+    try {
+      const client = this.getAxiosClient();
+      const response = await client.get('/discover/movie', {
+        params: {
+          language: 'es-ES',
+          sort_by: 'popularity.desc',
+          include_adult: false,
+          page: 1,
+          ...params
+        }
+      });
+      return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'movie' }));
+    } catch (error) {
+      console.warn('[TmdbService] Error en discoverMovie:', error.message);
+      return [];
+    }
+  }
+
+  /**
+   * Catálogo especializado para Niños y Familia (Dibujos animados, caricaturas, películas y anime infantil)
+   */
+  async getKidsCatalog() {
+    try {
+      const [moviesRaw, cartoonsRaw, animeRaw, classicsRaw] = await Promise.all([
+        // 1. Películas animadas y familiares (Disney, Pixar, Dreamworks, Illumination)
+        this.discoverMovie({
+          with_genres: '16,10751',
+          'vote_count.gte': 40
+        }),
+        // 2. Dibujos animados y series de caricaturas populares
+        this.discoverTv({
+          with_genres: '16',
+          'vote_count.gte': 20
+        }),
+        // 3. Anime familiar y aventuras
+        this.discoverTv({
+          with_genres: '16',
+          with_original_language: 'ja',
+          'vote_count.gte': 25
+        }),
+        // 4. Clásicos inolvidables de la animación infantil (1990 - 2015)
+        this.discoverMovie({
+          with_genres: '16',
+          'primary_release_date.gte': '1990-01-01',
+          'primary_release_date.lte': '2015-12-31',
+          'vote_count.gte': 80
+        })
+      ]);
+
+      const seen = new Set();
+      const dedupe = (items) => (items || []).filter(item => {
+        if (!item || !item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+
+      return {
+        movies: dedupe(moviesRaw),
+        cartoons: dedupe(cartoonsRaw),
+        anime: dedupe(animeRaw),
+        classics: dedupe(classicsRaw)
+      };
+    } catch (error) {
+      console.warn('[TmdbService] Error en getKidsCatalog:', error.message);
+      return { movies: [], cartoons: [], anime: [], classics: [] };
+    }
+  }
+
+  /**
+   * Catálogo especializado de Telenovelas (Mexicanas, Colombianas, Turcas, K-Dramas y Dramas Románticos)
+   */
+  async getTelenovelasCatalog() {
+    try {
+      // IDs de grandes telenovelas históricas y queridas por la audiencia
+      const iconicShowIds = [16286, 11250, 80240, 124124, 12926, 18059, 65555, 104877, 87623];
+
+      const [iconicShows, latamRaw, turkishRaw, kdramaRaw] = await Promise.all([
+        Promise.all(iconicShowIds.map(async id => {
+          try {
+            return await this.getTvShowDetails(id);
+          } catch (_) { return null; }
+        })).then(list => list.filter(Boolean)),
+        // 1. Telenovelas latinoamericanas en emisión / populares
+        this.discoverTv({
+          with_original_language: 'es',
+          with_genres: '10766',
+          'vote_count.gte': 5
+        }),
+        // 2. Grandes novelas turcas dobladas al español
+        this.discoverTv({
+          with_original_language: 'tr',
+          'vote_count.gte': 10
+        }),
+        // 3. Dramas coreanos y romance aclamados
+        this.discoverTv({
+          with_original_language: 'ko',
+          with_genres: '18',
+          'vote_count.gte': 30
+        })
+      ]);
+
+      const seen = new Set();
+      const dedupe = (items) => (items || []).filter(item => {
+        if (!item || !item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+
+      const combinedLatam = dedupe([
+        ...iconicShows.filter(s => s.originalLanguage === 'es' || ['16286','11250','80240','124124','12926','18059'].includes(String(s.id))),
+        ...latamRaw
+      ]);
+      const combinedTurkish = dedupe([
+        ...iconicShows.filter(s => s.originalLanguage === 'tr' || ['65555','104877','87623'].includes(String(s.id))),
+        ...turkishRaw
+      ]);
+
+      return {
+        latamNovelas: combinedLatam,
+        turkishNovelas: combinedTurkish,
+        kdramas: dedupe(kdramaRaw)
+      };
+    } catch (error) {
+      console.warn('[TmdbService] Error en getTelenovelasCatalog:', error.message);
+      return { latamNovelas: [], turkishNovelas: [], kdramas: [] };
+    }
+  }
+
+  /**
+   * Catálogo especializado de Cine de Acción, Adrenalina y Deportes
+   */
+  async getActionSportsCatalog() {
+    try {
+      const [actionRaw, thrillersRaw, sportsRaw] = await Promise.all([
+        // 1. Películas de pura acción y adrenalina
+        this.discoverMovie({
+          with_genres: '28',
+          'vote_count.gte': 80
+        }),
+        // 2. Crimen, suspenso y mafia
+        this.discoverMovie({
+          with_genres: '80,53',
+          'vote_count.gte': 60
+        }),
+        // 3. Películas de deportes / fútbol / artes marciales
+        this.discoverMovie({
+          with_genres: '28,18',
+          with_keywords: '6075|207884|9840',
+          'vote_count.gte': 20
+        })
+      ]);
+
+      const seen = new Set();
+      const dedupe = (items) => (items || []).filter(item => {
+        if (!item || !item.id || seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+
+      return {
+        actionMovies: dedupe(actionRaw),
+        thrillers: dedupe(thrillersRaw),
+        sportsMovies: dedupe(sportsRaw.length > 0 ? sportsRaw : actionRaw.slice(10))
+      };
+    } catch (error) {
+      console.warn('[TmdbService] Error en getActionSportsCatalog:', error.message);
+      return { actionMovies: [], thrillers: [], sportsMovies: [] };
+    }
   }
 
   /**
