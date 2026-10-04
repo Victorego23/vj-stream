@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOM TV - Simulador & Vista Previa Móvil Interactiva</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #07080B;
+      --panel-bg: rgba(17, 19, 25, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
+      --primary: #E50914;
+      --primary-glow: rgba(229, 9, 20, 0.4);
+      --gold: #FFD700;
+      --text: #FFFFFF;
+      --text-muted: #8E8E93;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(229, 9, 20, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(255, 215, 0, 0.06) 0%, transparent 45%),
+        linear-gradient(180deg, #07080B 0%, #0d0e14 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* TOP BAR CONTROLS */
+    .top-nav {
+      height: 70px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #E50914, #B20710);
+      color: #fff;
+      font-weight: 900;
+      font-size: 15px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 1.5px;
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .studio-pill {
+      background: rgba(229, 9, 20, 0.15);
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      color: #FF5A65;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #e5e5e5;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .control-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+      box-shadow: 0 0 12px var(--primary-glow);
+    }
+
+    .select-route {
+      background: rgba(20, 22, 30, 0.9);
+      border: 1px solid var(--border);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .select-route:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* MAIN STAGE */
+    .simulator-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      position: relative;
+    }
+
+    /* PHONE CONTAINER */
+    .phone-wrapper {
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-origin: center center;
+    }
+
+    /* IPHONE 16 PRO FRAME */
+    .device-iphone {
+      width: 393px;
+      height: 852px;
+      background: #000;
+      border-radius: 54px;
+      padding: 12px;
+      position: relative;
+      box-shadow: 
+        0 0 0 4px #2c2d35,
+        0 0 0 6px #15161c,
+        0 30px 80px -15px rgba(0, 0, 0, 0.9),
+        0 0 50px rgba(229, 9, 20, 0.25);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* LANDSCAPE MODE */
+    .device-landscape {
+      width: 852px !important;
+      height: 393px !important;
+      border-radius: 50px !important;
+    }
+
+    /* GALAXY S24 ULTRA FRAME */
+    .device-galaxy {
+      width: 412px;
+      height: 915px;
+      background: #000;
+      border-radius: 36px;
+      padding: 10px;
+      position: relative;
+      box-shadow: 
+        0 0 0 4px #333540,
+        0 0 0 6px #101116,
+        0 30px 80px -15px rgba(0, 0, 0, 0.9),
+        0 0 45px rgba(255, 215, 0, 0.2);
+    }
+
+    /* SCREEN INNER */
+    .phone-screen {
+      flex: 1;
+      background: #000;
+      border-radius: 44px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .device-landscape .phone-screen {
+      border-radius: 40px;
+    }
+
+    .device-galaxy .phone-screen {
+      border-radius: 28px;
+    }
+
+    /* DYNAMIC ISLAND */
+    .dynamic-island {
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 34px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .device-landscape .dynamic-island {
+      top: 50%;
+      left: 14px;
+      transform: translateY(-50%) rotate(90deg);
+    }
+
+    .camera-lens {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #0a0c16;
+      border: 1px solid #1f2233;
+      box-shadow: inset 0 0 3px #05070e;
+    }
+
+    .sensor-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #080a14;
+    }
+
+    /* STATUS BAR */
+    .phone-status-bar {
+      height: 48px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    }
+
+    .device-landscape .phone-status-bar {
+      display: none;
+    }
+
+    .status-icons {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    /* IFRAME VIEWPORT */
+    .simulator-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* HOME INDICATOR */
+    .home-indicator {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.65);
+      border-radius: 10px;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    .device-landscape .home-indicator {
+      bottom: 6px;
+      width: 160px;
+    }
+
+    /* SIDE FLOATING PANEL / METRICS */
+    .floating-info-card {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      max-width: 320px;
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .info-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-metric {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #d1d1d1;
+    }
+
+    .info-metric strong {
+      color: #fff;
+    }
+
+    .qr-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qr-card {
+      background: #111319;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 32px;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 30px var(--primary-glow);
+      position: relative;
+    }
+
+    .qr-code-img {
+      width: 200px;
+      height: 200px;
+      border-radius: 16px;
+      background: #fff;
+      padding: 12px;
+      margin: 20px auto;
+      display: block;
+    }
+
+    .close-modal-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-weight: 800;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR DE CONTROL DEL SIMULADOR -->
+  <header class="top-nav">
+    <div class="brand-wrap">
+      <div class="brand-badge">TOM TV</div>
+      <div class="brand-title">
+        Simulador Móvil
+        <span class="studio-pill">Live Device Preview</span>
+      </div>
+    </div>
+
+    <!-- CONTROLES CENTRALES -->
+    <div class="controls-group">
+      <!-- Selector de Destino -->
+      <label for="routeSelect" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Vista:</label>
+      <select id="routeSelect" class="select-route" onchange="changeIframeRoute(this.value)">
+        <option value="/play">🍿 Web App Streaming (/play)</option>
+        <option value="/">🌐 Web Principal / Landing (/)</option>
+        <option value="/admin">🔑 Panel de Super Admin (/admin)</option>
+        <option value="/reseller">💼 Portal Revendedores (/reseller)</option>
+      </select>
+
+      <!-- Selector de Dispositivo -->
+      <button class="control-btn active" id="btn-device-iphone" onclick="switchDevice('iphone')">
+        <span>📱</span> iPhone 16 Pro
+      </button>
+      <button class="control-btn" id="btn-device-galaxy" onclick="switchDevice('galaxy')">
+        <span>🤖</span> Galaxy S24 Ultra
+      </button>
+
+      <!-- Botón Rotar Orientación -->
+      <button class="control-btn" id="btn-rotate" onclick="toggleOrientation()">
+        <span>🔄</span> <span id="lbl-orient">Horizontal (Cine)</span>
+      </button>
+
+      <!-- Selector de Escala Zoom -->
+      <select id="zoomSelect" class="select-route" onchange="applyZoom(this.value)" style="width: 100px;">
+        <option value="1">100%</option>
+        <option value="0.9" selected>90%</option>
+        <option value="0.8">80%</option>
+        <option value="0.75">75%</option>
+      </select>
+
+      <!-- Recargar Iframe -->
+      <button class="control-btn" onclick="reloadIframe()" title="Recargar pantalla">
+        <span>🔃</span> Recargar
+      </button>
+
+      <!-- Botón QR para Celular Real -->
+      <button class="control-btn" style="border-color: rgba(255, 215, 0, 0.4); color: #FFD700;" onclick="openQrModal()">
+        <span>📲</span> Abrir en mi Móvil Real
+      </button>
+
+      <!-- Abrir directo en nueva pestaña -->
+      <a id="btn-external-link" href="/play" target="_blank" class="control-btn" style="background: var(--primary); border-color: var(--primary); color: #fff; text-decoration: none;">
+        <span>↗️</span> Pestaña Completa
+      </a>
+    </div>
+  </header>
+
+  <!-- ESCENARIO CENTRAL DEL SIMULADOR -->
+  <main class="simulator-stage">
+    <div class="phone-wrapper" id="phoneWrapper" style="transform: scale(0.9);">
+      
+      <!-- CARCASA DEL SMARTPHONE (IPHONE POR DEFECTO) -->
+      <div class="device-iphone" id="deviceFrame">
+        
+        <!-- PANTALLA TÁCTIL OLEDBOARD -->
+        <div class="phone-screen">
+          
+          <!-- BARRA DE ESTADO SUPERIOR CON HORA EN VIVO -->
+          <div class="phone-status-bar" id="statusBar">
+            <span id="liveClock">09:30</span>
+            <div class="status-icons">
+              <span style="font-size: 11px;">5G</span>
+              <span>📶</span>
+              <span>🔋 100%</span>
+            </div>
+          </div>
+
+          <!-- ISLA DINÁMICA (DYNAMIC ISLAND) -->
+          <div class="dynamic-island" id="island" onclick="animateIsland()">
+            <div class="camera-lens"></div>
+            <div class="sensor-dot"></div>
+          </div>
+
+          <!-- IFRAME CON LA APLICACIÓN REAL DE TOM TV -->
+          <iframe 
+            id="appIframe" 
+            class="simulator-iframe" 
+            src="/play" 
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            loading="eager">
+          </iframe>
+
+          <!-- INDICADOR HOME DE GESTOS -->
+          <div class="home-indicator"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TARJETA LATERAL FLOTANTE DE INFORMACIÓN Y MÉTRICAS -->
+  <div class="floating-info-card">
+    <div class="info-title">
+      <span>📐</span> Métricas del Viewport
+    </div>
+    <div class="info-metric">
+      <span>Dispositivo:</span>
+      <strong id="metricDevice">Apple iPhone 16 Pro</strong>
+    </div>
+    <div class="info-metric">
+      <span>Resolución Render:</span>
+      <strong id="metricRes">393 × 852 px</strong>
+    </div>
+    <div class="info-metric">
+      <span>Orientación:</span>
+      <strong id="metricOrient">Vertical (Portrait)</strong>
+    </div>
+    <div class="info-metric">
+      <span>PWA Touch Engine:</span>
+      <strong style="color: #4ade80;">Habilitado (Nativo)</strong>
+    </div>
+    <div style="font-size: 11px; color: #8E8E93; line-height: 1.4; border-top: 1px solid var(--border); padding-top: 8px;">
+      💡 <strong>Tip:</strong> Puedes hacer clic y arrastrar dentro del teléfono como si tocaras la pantalla con el dedo.
+    </div>
+  </div>
+
+  <!-- MODAL DE CÓDIGO QR PARA PROBAR EN SMARTPHONE REAL -->
+  <div class="qr-modal" id="qrModal" onclick="closeQrModal(event)">
+    <div class="qr-card" onclick="event.stopPropagation()">
+      <button class="close-modal-btn" onclick="closeQrModal()">✕</button>
+      <div style="font-size: 32px; margin-bottom: 8px;">📲</div>
+      <h3 style="font-size: 20px; font-weight: 800; margin-bottom: 6px;">Escanear con tu Celular</h3>
+      <p style="font-size: 13px; color: #8E8E93; line-height: 1.4;">
+        Apunta la cámara de tu iPhone o Android a este código QR para abrir TOM TV al instante en tu teléfono:
+      </p>
+
+      <img 
+        id="qrImg" 
+        class="qr-code-img" 
+        src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://tomtv.lat/play" 
+        alt="QR TOM TV">
+
+      <div style="background: rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; color: #FFD700; word-break: break-all;">
+        https://tomtv.lat/play
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentDevice = 'iphone';
+    let isLandscape = false;
+
+    // Reloj digital en la barra de estado
+    function updateClock() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      const el = document.getElementById('liveClock');
+      if (el) el.textContent = `${h}:${m}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Cambiar ruta del iframe
+    function changeIframeRoute(route) {
+      const iframe = document.getElementById('appIframe');
+      iframe.src = route;
+      const externalLink = document.getElementById('btn-external-link');
+      if (externalLink) externalLink.href = route;
+      
+      const fullUrl = `${window.location.origin}${route}`;
+      const qr = document.getElementById('qrImg');
+      if (qr) qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(fullUrl)}`;
+    }
+
+    // Recargar el iframe
+    function reloadIframe() {
+      const iframe = document.getElementById('appIframe');
+      const currentSrc = iframe.src;
+      iframe.src = 'about:blank';
+      setTimeout(() => { iframe.src = currentSrc; }, 100);
+    }
+
+    // Alternar dispositivo (iPhone vs Galaxy)
+    function switchDevice(dev) {
+      currentDevice = dev;
+      const frame = document.getElementById('deviceFrame');
+      const btnIphone = document.getElementById('btn-device-iphone');
+      const btnGalaxy = document.getElementById('btn-device-galaxy');
+      const island = document.getElementById('island');
+      const metricDev = document.getElementById('metricDevice');
+
+      btnIphone.classList.toggle('active', dev === 'iphone');
+      btnGalaxy.classList.toggle('active', dev === 'galaxy');
+
+      if (dev === 'galaxy') {
+        frame.classList.remove('device-iphone');
+        frame.classList.add('device-galaxy');
+        island.style.display = 'none';
+        metricDev.textContent = 'Samsung Galaxy S24 Ultra';
+      } else {
+        frame.classList.remove('device-galaxy');
+        frame.classList.add('device-iphone');
+        island.style.display = 'flex';
+        metricDev.textContent = 'Apple iPhone 16 Pro';
+      }
+      updateMetrics();
+    }
+
+    // Alternar orientación (Vertical vs Horizontal)
+    function toggleOrientation() {
+      isLandscape = !isLandscape;
+      const frame = document.getElementById('deviceFrame');
+      const lbl = document.getElementById('lbl-orient');
+
+      frame.classList.toggle('device-landscape', isLandscape);
+      lbl.textContent = isLandscape ? 'Vertical (Portrait)' : 'Horizontal (Cine)';
+      updateMetrics();
+    }
+
+    // Actualizar métricas mostradas
+    function updateMetrics() {
+      const metricRes = document.getElementById('metricRes');
+      const metricOrient = document.getElementById('metricOrient');
+
+      if (isLandscape) {
+        metricRes.textContent = currentDevice === 'iphone' ? '852 × 393 px' : '915 × 412 px';
+        metricOrient.textContent = 'Horizontal (Cine 16:9)';
+      } else {
+        metricRes.textContent = currentDevice === 'iphone' ? '393 × 852 px' : '412 × 915 px';
+        metricOrient.textContent = 'Vertical (Portrait)';
+      }
+    }
+
+    // Zoom interactivo
+    function applyZoom(scaleVal) {
+      const wrapper = document.getElementById('phoneWrapper');
+      wrapper.style.transform = `scale(${scaleVal})`;
+    }
+
+    // Efecto interactivo al tocar la Dynamic Island
+    function animateIsland() {
+      const island = document.getElementById('island');
+      island.style.width = '200px';
+      island.style.height = '42px';
+      setTimeout(() => {
+        island.style.width = '120px';
+        island.style.height = '34px';
+      }, 1200);
+    }
+
+    // Modales de QR
+    function openQrModal() {
+      document.getElementById('qrModal').style.display = 'flex';
+    }
+
+    function closeQrModal(e) {
+      document.getElementById('qrModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>

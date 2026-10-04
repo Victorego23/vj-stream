@@ -1186,6 +1186,80 @@
       font-size: 34px !important;
       letter-spacing: 6px !important;
     }
+
+    /* BARRA DE NAVEGACIÓN INFERIOR PARA MÓVILES (NETFLIX STYLE) */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 62px;
+      background: rgba(10, 11, 16, 0.94);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+      align-items: center;
+      justify-content: space-around;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.85);
+    }
+
+    @media (max-width: 768px) {
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      body {
+        padding-bottom: calc(75px + env(safe-area-inset-bottom, 0px));
+      }
+      .tabs-bar {
+        padding: 8px 14px;
+      }
+      header {
+        padding: 10px 14px;
+      }
+    }
+
+    .mob-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 6px 10px;
+      flex: 1;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .mob-tab-icon {
+      font-size: 19px;
+      transition: transform 0.2s ease;
+    }
+
+    .mob-tab-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .mob-tab-btn.active {
+      color: #fff;
+    }
+
+    .mob-tab-btn.active .mob-tab-icon {
+      transform: translateY(-2px) scale(1.18);
+      filter: drop-shadow(0 0 10px rgba(229, 9, 20, 0.8));
+    }
+
+    .mob-tab-btn.active .mob-tab-label {
+      color: #FF4D58;
+      font-weight: 800;
+    }
   </style>
 </head>
 <body>
@@ -1200,6 +1274,9 @@
       <button class="senior-toggle-btn focusable" id="seniorToggleBtn" onclick="toggleSeniorMode()" title="Modo TV Fácil para Adultos Mayores con control remoto">
         👓 Modo Fácil TV
       </button>
+      <a href="/mobile-preview" target="_blank" class="focusable" style="color: #FFD700; text-decoration: none; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.35);" title="Abrir simulador de celular en pestaña aparte">
+        📱 Celular
+      </a>
       <a href="/" class="focusable" style="color: #aaa; text-decoration: none; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
         🏠 Web
       </a>
@@ -1414,6 +1491,30 @@
       <button class="btn-logout-device" onclick="logoutDevice()">Desvincular Dispositivo</button>
     </div>
   </div>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR PARA CELULARES (MOBILE BOTTOM NAV) -->
+  <nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <button class="mob-tab-btn active focusable" id="mob-tab-home" onclick="switchTab('Todos')">
+      <span class="mob-tab-icon">🌟</span>
+      <span class="mob-tab-label">Inicio</span>
+    </button>
+    <button class="mob-tab-btn focusable" id="mob-tab-tv" onclick="switchTab('TV en Vivo')">
+      <span class="mob-tab-icon">📡</span>
+      <span class="mob-tab-label">En Vivo</span>
+    </button>
+    <button class="mob-tab-btn focusable" id="mob-tab-movies" onclick="switchTab('Películas')">
+      <span class="mob-tab-icon">🍿</span>
+      <span class="mob-tab-label">Películas</span>
+    </button>
+    <button class="mob-tab-btn focusable" id="mob-tab-series" onclick="switchTab('Series')">
+      <span class="mob-tab-icon">🎬</span>
+      <span class="mob-tab-label">Series</span>
+    </button>
+    <button class="mob-tab-btn focusable" id="mob-tab-search" onclick="openSearchModal()">
+      <span class="mob-tab-icon">🔍</span>
+      <span class="mob-tab-label">Buscar</span>
+    </button>
+  </nav>
 
   <script>
     // ESTADO DE LA APLICACIÓN Y AUTENTICACIÓN ULTRA-PERSISTENTE (LOCALSTORAGE + COOKIES)
@@ -1894,6 +1995,20 @@
       document.querySelectorAll('.tab-item').forEach(el => {
         el.classList.toggle('active', el.textContent.includes(tab));
       });
+
+      // Sincronizar barra de navegación inferior móvil
+      const mobTabMap = {
+        'Todos': 'mob-tab-home',
+        'TV en Vivo': 'mob-tab-tv',
+        'Películas': 'mob-tab-movies',
+        'Series': 'mob-tab-series'
+      };
+      document.querySelectorAll('.mob-tab-btn').forEach(b => b.classList.remove('active'));
+      const activeMobId = mobTabMap[tab];
+      if (activeMobId) {
+        const mobEl = document.getElementById(activeMobId);
+        if (mobEl) mobEl.classList.add('active');
+      }
 
       const yearsBar = document.getElementById('yearsBar');
       const genresBar = document.getElementById('genresBar');

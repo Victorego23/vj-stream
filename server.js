@@ -128,6 +128,11 @@ app.get('/reseller', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'reseller.html'));
 });
 
+// Servir el Simulador y Vista Previa Móvil interactiva
+app.get(['/mobile-preview', '/preview', '/celular', '/movil'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'mobile-preview.html'));
+});
+
 // Rutas de autenticación de dispositivos y licencias
 app.use('/api/auth', authRoutes);
 
