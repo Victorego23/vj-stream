@@ -26,7 +26,6 @@ class _LiveTvViewState extends State<LiveTvView> {
   List<LiveChannel> _allChannels = [];
   List<String> _categories = ['Favoritos', '🇵🇪 Canales Peruanos', 'Todos', 'Recientes'];
   late String _selectedCategory;
-  String _selectedCountry = 'ALL';
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -43,85 +42,12 @@ class _LiveTvViewState extends State<LiveTvView> {
     return _categoryFocusNodes.putIfAbsent(cat, () => FocusNode(debugLabel: 'TvCat_$cat'));
   }
 
-  static const List<Map<String, String>> _countryFilters = [
-    {'code': 'ALL', 'label': '🌎 Todos'},
-    {'code': 'pe', 'label': '🇵🇪 Perú'},
-    {'code': 'mx', 'label': '🇲🇽 México'},
-    {'code': 'ar', 'label': '🇦🇷 Argentina'},
-    {'code': 'co', 'label': '🇨🇴 Colombia'},
-    {'code': 'cl', 'label': '🇨🇱 Chile'},
-    {'code': 'es', 'label': '🇪🇸 España'},
-    {'code': 'us', 'label': '🇺🇸 USA'},
-    {'code': 'do', 'label': '🇩🇴 Dominicana'},
-    {'code': 'ec', 'label': '🇪🇨 Ecuador'},
-    {'code': 've', 'label': '🇻🇪 Venezuela'},
-    {'code': 'bo', 'label': '🇧🇴 Bolivia'},
-    {'code': 'cr', 'label': '🇨🇷 Costa Rica'},
-    {'code': 'py', 'label': '🇵🇾 Paraguay'},
-    {'code': 'gt', 'label': '🇬🇹 Guatemala'},
-    {'code': 'hn', 'label': '🇭🇳 Honduras'},
-    {'code': 'sv', 'label': '🇸🇻 El Salvador'},
-    {'code': 'pr', 'label': '🇵🇷 Puerto Rico'},
-    {'code': 'pa', 'label': '🇵🇦 Panamá'},
-    {'code': 'uy', 'label': '🇺🇾 Uruguay'},
-  ];
-
   static String getChannelCountry(LiveChannel channel) {
     final match = RegExp(r'_([a-z]{2})$', caseSensitive: false).firstMatch(channel.id);
     if (match != null) {
       return match.group(1)!.toLowerCase();
     }
     return 'other';
-  }
-
-  static String getCountryFlag(String code) {
-    switch (code.toLowerCase()) {
-      case 'pe': return '🇵🇪';
-      case 'mx': return '🇲🇽';
-      case 'ar': return '🇦🇷';
-      case 'co': return '🇨🇴';
-      case 'cl': return '🇨🇱';
-      case 'es': return '🇪🇸';
-      case 'us': return '🇺🇸';
-      case 'do': return '🇩🇴';
-      case 'ec': return '🇪🇨';
-      case 've': return '🇻🇪';
-      case 'bo': return '🇧🇴';
-      case 'cr': return '🇨🇷';
-      case 'py': return '🇵🇾';
-      case 'gt': return '🇬🇹';
-      case 'hn': return '🇭🇳';
-      case 'sv': return '🇸🇻';
-      case 'pr': return '🇵🇷';
-      case 'pa': return '🇵🇦';
-      case 'uy': return '🇺🇾';
-      default: return '🌐';
-    }
-  }
-
-  static String getCountryName(String code) {
-    switch (code.toLowerCase()) {
-      case 'pe': return 'Perú';
-      case 'mx': return 'México';
-      case 'ar': return 'Argentina';
-      case 'co': return 'Colombia';
-      case 'cl': return 'Chile';
-      case 'es': return 'España';
-      case 'us': return 'Estados Unidos';
-      case 'do': return 'República Dominicana';
-      case 'ec': return 'Ecuador';
-      case 've': return 'Venezuela';
-      case 'bo': return 'Bolivia';
-      case 'cr': return 'Costa Rica';
-      case 'py': return 'Paraguay';
-      case 'gt': return 'Guatemala';
-      case 'hn': return 'Honduras';
-      case 'sv': return 'El Salvador';
-      case 'pr': return 'Puerto Rico';
-      case 'pa': return 'Panamá';
-      case 'uy': return 'Uruguay';
-      default: return 'Internacional';
-    }
   }
 
   @override
@@ -289,11 +215,7 @@ class _LiveTvViewState extends State<LiveTvView> {
       final list = <LiveChannel>[];
       for (final id in _recentChannelIds) {
         if (map.containsKey(id)) {
-          final ch = map[id]!;
-          final chCountry = getChannelCountry(ch);
-          if (_selectedCountry == 'ALL' || chCountry == _selectedCountry) {
-            list.add(ch);
-          }
+          list.add(map[id]!);
         }
       }
       return list;
@@ -301,23 +223,17 @@ class _LiveTvViewState extends State<LiveTvView> {
 
     return _allChannels.where((channel) {
       final isPeruCat = _selectedCategory.contains('Peruanos') || _selectedCategory.contains('Perú');
-      final bool matchesCategory;
       if (_selectedCategory == 'Todos') {
-        matchesCategory = true;
+        return true;
       } else if (_selectedCategory == 'Favoritos') {
-        matchesCategory = _favoriteChannelIds.contains(channel.id);
+        return _favoriteChannelIds.contains(channel.id);
       } else if (isPeruCat) {
-        matchesCategory = channel.category.contains('Perú') ||
+        return channel.category.contains('Perú') ||
             channel.category.contains('Peruanos') ||
             getChannelCountry(channel) == 'pe';
       } else {
-        matchesCategory = channel.category.toLowerCase() == _selectedCategory.toLowerCase();
+        return channel.category.toLowerCase() == _selectedCategory.toLowerCase();
       }
-
-      final channelCountry = getChannelCountry(channel);
-      final matchesCountry = isPeruCat || _selectedCountry == 'ALL' || channelCountry == _selectedCountry;
-
-      return matchesCategory && matchesCountry;
     }).toList();
   }
 
@@ -462,49 +378,7 @@ class _LiveTvViewState extends State<LiveTvView> {
 
               const Divider(color: Color(0xFF1A1C27), height: 1),
 
-              // Selector rápido de País en TV
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                child: Container(
-                  height: 38,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF161722),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF232535)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedCountry,
-                      isExpanded: true,
-                      dropdownColor: const Color(0xFF161722),
-                      icon: const Icon(Icons.arrow_drop_down_rounded, color: Colors.white70),
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      items: _countryFilters.map((c) {
-                        return DropdownMenuItem<String>(
-                          value: c['code'],
-                          child: Text(
-                            c['label']!,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedCountry = val;
-                            if (_filteredChannels.isNotEmpty) {
-                              _focusedChannelNotifier.value = _filteredChannels.first;
-                            }
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
 
               // Botón destacado siempre visible: Regresar a Películas
               Padding(
@@ -855,14 +729,22 @@ class _LiveTvViewState extends State<LiveTvView> {
                 ),
                 const SizedBox(height: 3),
 
-                // País y Fuentes
+                // Categoría y Fuentes
                 Row(
                   children: [
-                    Text(
-                      '${getCountryFlag(country)} ${getCountryName(country)}',
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE50914).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: const Color(0xFFE50914), width: 0.8),
+                      ),
+                      child: Text(
+                        channel.category.toUpperCase(),
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                      ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Text(
                       '⚡ ${channel.sources.length} ${channel.sources.length == 1 ? "señal" : "señales"} disponible${channel.sources.length == 1 ? "" : "s"}',
                       style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w700),
@@ -1216,58 +1098,6 @@ class _LiveTvViewState extends State<LiveTvView> {
             ),
           ),
 
-          // Países Móvil
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 12),
-              child: SizedBox(
-                height: 32,
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _countryFilters.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (context, index) {
-                    final c = _countryFilters[index];
-                    final code = c['code']!;
-                    final label = c['label']!;
-                    final isSelected = _selectedCountry == code;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() => _selectedCountry = code);
-                      },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? const Color(0xFFE50914).withValues(alpha: 0.22)
-                              : const Color(0xFF13141C),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: isSelected ? const Color(0xFFE50914) : const Color(0xFF222432),
-                            width: isSelected ? 1.2 : 0.8,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white60,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                              fontSize: 11.5,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ),
-
           // Cuadrícula Móvil
           if (_isLoading)
             const SliverFillRemaining(
@@ -1281,7 +1111,7 @@ class _LiveTvViewState extends State<LiveTvView> {
             SliverFillRemaining(child: _buildEmptyView())
           else
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                   maxCrossAxisExtent: 200,
@@ -1356,9 +1186,9 @@ class _LiveTvViewState extends State<LiveTvView> {
                         color: const Color(0xFFE50914),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(
-                        getCountryFlag(getChannelCountry(channel)),
-                        style: const TextStyle(fontSize: 9),
+                      child: const Text(
+                        'EN VIVO',
+                        style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ],
@@ -1512,7 +1342,6 @@ class _LiveTvViewState extends State<LiveTvView> {
             onPressed: () {
               setState(() {
                 _selectedCategory = 'Todos';
-                _selectedCountry = 'ALL';
               });
             },
             child: const Text('Ver todos los canales', style: TextStyle(color: Color(0xFFE50914))),
@@ -1776,9 +1605,6 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
 
   @override
   Widget build(BuildContext context) {
-    final country = _LiveTvViewState.getChannelCountry(widget.channel);
-    final flag = _LiveTvViewState.getCountryFlag(country);
-
     return Focus(
       focusNode: _focusNode,
       onKeyEvent: (node, event) {
@@ -1791,7 +1617,8 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
           }
           if (event.logicalKey == LogicalKeyboardKey.escape ||
               event.logicalKey == LogicalKeyboardKey.goBack) {
-            widget.onBackToMovies?.call();
+            // Presionar Atrás/Retroceso en la cuadrícula regresa al menú lateral de categorías
+            widget.onKeyLeft(true);
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
@@ -1919,7 +1746,22 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(flag, style: const TextStyle(fontSize: 10)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE50914).withValues(alpha: 0.22),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0xFFE50914), width: 0.6),
+                          ),
+                          child: const Text(
+                            'EN VIVO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
                         if (widget.isFavorite) ...[
                           const SizedBox(width: 4),
                           const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
