@@ -703,14 +703,15 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.3.0',
-    versionCode: 23,
+    latestVersion: '3.4.0',
+    versionCode: 24,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-09-29',
+    releaseDate: '2026-10-04',
     releaseNotes: [
-      '🇵🇪 ¡Nueva Sección Exclusiva de Canales Peruanos (América, ATV, Latina, Panamericana, TV Perú, Willax, L1 Max y más)!',
-      '📺 Pestaña directa "🇵🇪 Canales Perú" en la barra principal para acceso instantáneo.',
-      '🎮 Navegación ultra fluida con control remoto para Smart TV.'
+      '👶 ¡Nueva Sección "Niños & Dibujos": Todas las películas animadas (Disney, Pixar, DreamWorks), caricaturas clásicas, anime familiar y canales infantiles en vivo 24/7 (Cartoon Network, Nickelodeon, Disney, Bob Esponja)!',
+      '🌹 ¡Nueva Sección "Telenovelas": Grandes producciones mexicanas, colombianas, turcas dobladas al español y canales 24/7 (Kanal D Drama, RCN Novelas, TNT Novelas)!',
+      '⚽ ¡Nueva Sección "Fútbol & Deportes": Acceso instantáneo a todos los partidos y canales deportivos en vivo (Liga 1 Max, Champions League, ESPN, Fox Sports, Win Sports)!',
+      '🚀 Navegación y reproducción ultra optimizadas para Smart TV Android y celulares.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,
