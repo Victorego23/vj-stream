@@ -68,6 +68,7 @@ class StreamResolverService {
       'el', 'la', 'los', 'las', 'un', 'una', 'unos', 'unas',
       'de', 'del', 'al', 'y', 'e', 'o', 'u', 'en', 'a', 'con', 'sin', 'por', 'para',
       'su', 'sus', 'mi', 'mis', 'tu', 'tus', 'se', 'lo', 'le', 'les', 'me', 'te',
+      'yo', 'tu', 'el', 'ella', 'nosotros', 'ellos', 'soy', 'eres', 'es', 'somos', 'son',
       'the', 'a', 'an', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from', 'as', 'is', 'are', 'was', 'were'
     ]);
 
@@ -79,7 +80,7 @@ class StreamResolverService {
 
   /**
    * Valida si un stream o archivo coincide con el título solicitado (evita falsos positivos como
-   * "El Genio de los Deseos" cuando el usuario pidió "El Señor de los Cielos").
+   * "El Genio de los Deseos" o "El señor de la casa" cuando el usuario pidió "El Señor de los Cielos").
    * @param {string} candidateText - Nombre de archivo o título del torrent
    * @param {Object} mediaInfo - { title, originalTitle, year, mediaType, season, episode }
    * @returns {{ isMatch: boolean, matchCount: number, ratio: number, matchedKeywords: string[] }}
@@ -88,6 +89,12 @@ class StreamResolverService {
     if (!candidateText || !mediaInfo) return { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
     const { title, originalTitle } = mediaInfo;
     if (!title && !originalTitle) return { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
+
+    const GENERIC_TITLE_WORDS = new Set([
+      'senor', 'senora', 'don', 'dona', 'doctor', 'dra', 'casa', 'vida', 'mundo',
+      'hombre', 'mujer', 'historia', 'tierra', 'amor', 'nuevo', 'nueva', 'gran', 'grande',
+      'primer', 'primera', 'san', 'santa', 'rey', 'reina'
+    ]);
 
     const normCandidate = this.normalizeText(candidateText);
     const candidateTokens = normCandidate.split(' ').filter(Boolean);
@@ -117,8 +124,30 @@ class StreamResolverService {
     const maxMatches = Math.max(titleMatches.length, origMatches.length);
     const totalKw = titleMatches.length >= origMatches.length ? kwTitle.length : kwOrig.length;
     const ratio = totalKw > 0 ? (maxMatches / totalKw) : 0;
-    const isMatch = maxMatches > 0;
     const matchedKeywords = Array.from(new Set([...titleMatches, ...origMatches]));
+
+    const distinctiveTitleKw = kwTitle.filter(k => !GENERIC_TITLE_WORDS.has(k));
+    const distinctiveOrigKw = kwOrig.filter(k => !GENERIC_TITLE_WORDS.has(k));
+    const matchedDistinctive = matchedKeywords.filter(k => !GENERIC_TITLE_WORDS.has(k));
+
+    let isMatch = false;
+    if (distinctiveTitleKw.length > 0 || distinctiveOrigKw.length > 0) {
+      // Si el título contiene palabras distintivas (ej: "cielos" en "El Señor de los Cielos", "papel" en "La Casa de Papel"),
+      // AL MENOS UNA palabra distintiva DEBE coincidir obligatoriamente.
+      // Coincidir únicamente con una palabra genérica ("señor", "casa") se rechaza como falso positivo.
+      const hasDistinctiveMatch = matchedDistinctive.length > 0;
+      if (hasDistinctiveMatch) {
+        if (totalKw >= 2 && maxMatches < 2 && (distinctiveTitleKw.length >= 2 || distinctiveOrigKw.length >= 2)) {
+          isMatch = ratio >= 0.5;
+        } else {
+          isMatch = true;
+        }
+      } else {
+        isMatch = false;
+      }
+    } else {
+      isMatch = totalKw > 1 ? (maxMatches >= 2 || ratio >= 0.6) : (maxMatches >= 1);
+    }
 
     return {
       isMatch,
