@@ -10,6 +10,7 @@ class TvFocusableCard extends StatefulWidget {
   final double width;
   final double height;
   final bool autoFocus;
+  final ValueChanged<bool>? onFocusChange;
 
   const TvFocusableCard({
     super.key,
@@ -18,6 +19,7 @@ class TvFocusableCard extends StatefulWidget {
     this.width = 140,
     this.height = 210,
     this.autoFocus = false,
+    this.onFocusChange,
   });
 
   @override
@@ -40,6 +42,7 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
       setState(() {
         _isFocused = _focusNode.hasFocus;
       });
+      widget.onFocusChange?.call(_focusNode.hasFocus);
       // Si el elemento adquiere foco por navegación D-Pad en Android TV, asegurar visibilidad
       if (_focusNode.hasFocus) {
         // 1. Visibilidad en el carrusel horizontal

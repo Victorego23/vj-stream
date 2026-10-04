@@ -28,8 +28,16 @@ class HeroBanner extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Imagen de fondo (Backdrop)
-          _buildBackdropImage(),
+          // Imagen de fondo con transición suave de cross-fade (Backdrop)
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 350),
+            switchInCurve: Curves.easeIn,
+            switchOutCurve: Curves.easeOut,
+            child: KeyedSubtree(
+              key: ValueKey('hero_bg_${item.id}'),
+              child: SizedBox.expand(child: _buildBackdropImage()),
+            ),
+          ),
 
           // Gradiente vertical oscuro para fundir con la lista de contenidos
           Positioned.fill(
@@ -74,10 +82,14 @@ class HeroBanner extends StatelessWidget {
             left: isTvOrDesktop ? 48 : 20,
             right: isTvOrDesktop ? size.width * 0.4 : 20,
             bottom: 24,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: KeyedSubtree(
+                key: ValueKey('hero_text_${item.id}'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                 // Etiqueta destacada VJ STREAM
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -246,7 +258,9 @@ class HeroBanner extends StatelessWidget {
               ],
             ),
           ),
-        ],
+        ),
+      ),
+    ],
       ),
     );
   }

@@ -8,6 +8,7 @@ class MediaRow extends StatelessWidget {
   final String title;
   final List<MediaItem> items;
   final Function(MediaItem) onItemTap;
+  final Function(MediaItem)? onItemFocus;
   final double cardWidth;
   final double cardHeight;
 
@@ -16,6 +17,7 @@ class MediaRow extends StatelessWidget {
     required this.title,
     required this.items,
     required this.onItemTap,
+    this.onItemFocus,
     this.cardWidth = 140,
     this.cardHeight = 210,
   });
@@ -89,6 +91,9 @@ class MediaRow extends StatelessWidget {
                   width: rowCardWidth,
                   height: rowCardHeight,
                   onTap: () => onItemTap(item),
+                  onFocusChange: (focused) {
+                    if (focused) onItemFocus?.call(item);
+                  },
                 );
               },
             ),

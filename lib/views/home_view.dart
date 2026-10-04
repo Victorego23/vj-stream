@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,7 @@ import '../models/media_item.dart';
 import '../services/api_service.dart';
 import '../services/playback_history_service.dart';
 import '../services/coming_soon_service.dart';
+import '../services/trailer_service.dart';
 import '../services/update_service.dart';
 import '../widgets/hero_banner.dart';
 import '../widgets/media_row.dart';
@@ -32,6 +34,7 @@ class _HomeViewState extends State<HomeView> {
 
   bool _isLoading = true;
   MediaItem? _heroItem;
+  MediaItem? _hoveredItem;
   List<MediaItem> _trendingItems = [];
   List<MediaItem> _nowPlayingItems = [];
   List<MediaItem> _upcomingItems = [];
@@ -374,52 +377,32 @@ class _HomeViewState extends State<HomeView> {
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
 
-    // Filtro Anti-CAM estricto
-    if (streamInfo?['isCinemaOnly'] == true) {
-      showDialog(
-        context: context,
-        builder: (dContext) => AlertDialog(
-          backgroundColor: const Color(0xFF141414),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-            side: const BorderSide(color: Color(0x33E50914)),
-          ),
-          title: const Row(
-            children: [
-              Icon(Icons.verified_user_rounded, color: Colors.amber, size: 22),
-              SizedBox(width: 8),
-              Text(
-                'Filtro Anti-CAM Activo',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          content: Text(
-            streamInfo?['message'] ??
-                'Esta película solo cuenta actualmente con grabaciones de sala de cine. TOM TV protege la calidad de tus clientes bloqueando grabaciones de baja calidad. Estará disponible en 4K/1080p en su lanzamiento digital oficial.',
-            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
-          ),
-          actions: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE50914)),
-              onPressed: () => Navigator.pop(dContext),
-              child: const Text('Entendido', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
-      );
-      return;
+    String? streamUrl = streamInfo?['streamUrl'] as String?;
+    String audioLang = (streamInfo?['audioLanguage'] as String?) ?? 'Español Latino';
+    String quality = (streamInfo?['qualityLabel'] as String?) ?? '1080p Full HD';
+    bool isTrailer = false;
+
+    // Si aún no hay stream completo (ej. estreno mundial de cine), resolver tráiler HD nativo y reproducir de inmediato
+    if (streamUrl == null || streamUrl.isEmpty) {
+      final trailerKey = streamInfo?['trailerKey'] ?? item.trailerKey ?? item.trailerUrl;
+      if (trailerKey != null && trailerKey.toString().isNotEmpty) {
+        try {
+          streamUrl = await TrailerService().resolveDirectStreamUrl(trailerKey.toString());
+          if (streamUrl != null && streamUrl.isNotEmpty) {
+            isTrailer = true;
+            audioLang = 'Tráiler Oficial';
+            quality = '1080p Tráiler';
+          }
+        } catch (_) {}
+      }
     }
 
-    final streamUrl = streamInfo?['streamUrl'] as String?;
     if (streamUrl == null || streamUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'No se encontró una transmisión estable para "${item.title}". Intenta nuevamente.',
-          ),
+          content: Text('Conectando con servidores para "${item.title}"...'),
           backgroundColor: const Color(0xFFE50914),
-          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
@@ -432,14 +415,14 @@ class _HomeViewState extends State<HomeView> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => VideoPlayerView(
-          videoUrl: streamUrl,
-          title: item.title,
+          videoUrl: streamUrl!,
+          title: isTrailer ? '${item.title} (Tráiler Oficial)' : item.title,
           mediaId: item.id,
           posterUrl: item.bestPosterUrl,
           backdropUrl: item.bestBackdropUrl,
           mediaType: item.mediaType,
-          audioLanguage: streamInfo?['audioLanguage'] as String?,
-          qualityLabel: streamInfo?['qualityLabel'] as String?,
+          audioLanguage: audioLang,
+          qualityLabel: quality,
           mediaItem: item,
           availableStreams: available,
           subtitles: (streamInfo?['subtitles'] as List?)
@@ -918,14 +901,106 @@ class _HomeViewState extends State<HomeView> {
         }
       },
       child: Scaffold(
-      backgroundColor: const Color(0xFF000000), // Negro absoluto OLED
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFFE50914),
-              ),
-            )
-          : (isTv ? _buildTvLayout() : _buildMobileLayout()),
+        backgroundColor: const Color(0xFF000000), // Negro absoluto OLED
+        bottomNavigationBar: isTv ? null : _buildMobileBottomBar(),
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFFE50914),
+                ),
+              )
+            : (isTv ? _buildTvLayout() : _buildMobileLayout()),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // BARRA DE NAVEGACIÓN INFERIOR FLOTANTE DE CRISTAL (MÓVIL / TABLET)
+  // ===========================================================================
+  Widget _buildMobileBottomBar() {
+    final navItems = [
+      {'id': 'Todos', 'label': 'Inicio', 'icon': Icons.home_rounded},
+      {'id': 'TV en Vivo', 'label': 'TV & Deportes', 'icon': Icons.live_tv_rounded},
+      {'id': 'Niños', 'label': 'Niños', 'icon': Icons.child_care_rounded},
+      {'id': 'Telenovelas', 'label': 'Novelas', 'icon': Icons.favorite_rounded},
+      {'id': 'Mi Lista', 'label': 'Mi Lista', 'icon': Icons.star_rounded},
+    ];
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      height: 60,
+      decoration: BoxDecoration(
+        color: const Color(0xE60E1017),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: const Color(0x33FFFFFF), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.6),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: navItems.map((item) {
+              final id = item['id'] as String;
+              final label = item['label'] as String;
+              final icon = item['icon'] as IconData;
+              final isSelected = _activeTab == id;
+
+              return GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  setState(() {
+                    _activeTab = id;
+                    _hoveredItem = null;
+                  });
+                  if (id == 'Niños') _loadKidsCatalog();
+                  if (id == 'Telenovelas') _loadTelenovelasCatalog();
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0x33E50914) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        color: isSelected ? const Color(0xFFE50914) : Colors.white60,
+                        size: 22,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.white60,
+                          fontSize: 10,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }
@@ -940,7 +1015,10 @@ class _HomeViewState extends State<HomeView> {
         TvNavigationSidebar(
           activeTabId: _activeTab,
           onSelectTab: (tabId) {
-            setState(() => _activeTab = tabId);
+            setState(() {
+              _activeTab = tabId;
+              _hoveredItem = null;
+            });
             if (tabId == 'Niños') _loadKidsCatalog();
             if (tabId == 'Telenovelas') _loadTelenovelasCatalog();
             if (_scrollController.hasClients) {
@@ -1036,13 +1114,13 @@ class _HomeViewState extends State<HomeView> {
               child: _buildComingSoonTab(true),
             )
           else ...[
-            // Hero Banner destacado superior
+            // Hero Banner destacado superior dinámico
             if (_getHeroItemForTab() != null)
               SliverToBoxAdapter(
                 child: HeroBanner(
-                  item: _getHeroItemForTab()!,
-                  onPlay: () => _playMedia(_getHeroItemForTab()!),
-                  onDetails: () => _openDetail(_getHeroItemForTab()!),
+                  item: _hoveredItem ?? _getHeroItemForTab()!,
+                  onPlay: () => _playMedia(_hoveredItem ?? _getHeroItemForTab()!),
+                  onDetails: () => _openDetail(_hoveredItem ?? _getHeroItemForTab()!),
                 ),
               ),
 
@@ -1058,6 +1136,7 @@ class _HomeViewState extends State<HomeView> {
                   title: '⭐ Mi Lista Guardada',
                   items: _favorites,
                   onItemTap: _openDetail,
+                  onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                 ),
               ),
 
@@ -1068,6 +1147,7 @@ class _HomeViewState extends State<HomeView> {
                   title: '🍿 Próximamente en Español (Solo Tráiler)',
                   items: _upcomingItems,
                   onItemTap: _openDetail,
+                  onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                 ),
               ),
 
@@ -1079,6 +1159,7 @@ class _HomeViewState extends State<HomeView> {
                     title: '🍿 Estrenos de Cine (Calidad Limpia)',
                     items: _nowPlayingItems,
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
               if (_trendingItems.isNotEmpty)
@@ -1091,6 +1172,7 @@ class _HomeViewState extends State<HomeView> {
                         ? _trendingItems.where((i) => i.mediaType == 'movie').toList()
                         : _trendingItems,
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
               if (_actionItems.isNotEmpty)
@@ -1099,6 +1181,7 @@ class _HomeViewState extends State<HomeView> {
                     title: '💥 Acción y Adrenalina',
                     items: _actionItems,
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
               if (_scifiItems.isNotEmpty)
@@ -1107,6 +1190,7 @@ class _HomeViewState extends State<HomeView> {
                     title: '🚀 Ciencia Ficción y Fantasía',
                     items: _scifiItems,
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
             ],
@@ -1118,6 +1202,7 @@ class _HomeViewState extends State<HomeView> {
                     title: '📺 Series Populares (Latino / Castellano)',
                     items: _seriesItems,
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
               if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
@@ -1126,6 +1211,7 @@ class _HomeViewState extends State<HomeView> {
                     title: '🔥 Series en Tendencia',
                     items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
             ],
@@ -1138,6 +1224,7 @@ class _HomeViewState extends State<HomeView> {
                     title: cat['title'] as String,
                     items: (cat['items'] as List<MediaItem>),
                     onItemTap: _openDetail,
+                    onItemFocus: (focused) => setState(() => _hoveredItem = focused),
                   ),
                 ),
 

@@ -302,14 +302,33 @@ class _DetailViewState extends State<DetailView> {
       setState(() => _isPreparing = false);
 
       // Si hay una transmisión resuelta
-      final streamUrl = streamInfo?['streamUrl'] as String?;
+      String? streamUrl = streamInfo?['streamUrl'] as String?;
+      String audioLang = (streamInfo?['audioLanguage'] as String?) ?? 'Español Latino';
+      String quality = (streamInfo?['qualityLabel'] as String?) ?? '1080p Full HD';
+      bool isTrailer = false;
+
+      // Si aún no hay stream completo (ej. estreno mundial de cine), resolver tráiler HD nativo y reproducir de inmediato
+      if (streamUrl == null || streamUrl.isEmpty) {
+        final trailerKey = streamInfo?['trailerKey'] ?? widget.item.trailerKey ?? widget.item.trailerUrl;
+        if (trailerKey != null && trailerKey.toString().isNotEmpty) {
+          try {
+            streamUrl = await TrailerService().resolveDirectStreamUrl(trailerKey.toString());
+            if (streamUrl != null && streamUrl.isNotEmpty) {
+              isTrailer = true;
+              audioLang = 'Tráiler Oficial (HD)';
+              quality = 'HD 720p / 1080p';
+            }
+          } catch (_) {}
+        }
+      }
+
       if (streamUrl != null && streamUrl.isNotEmpty) {
         final available = (streamInfo?['availableStreams'] as List?)
             ?.map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
 
         // Si el usuario pidió seleccionar fuente manualmente y hay opciones
-        if (selectSourceManually && available != null && available.length > 1) {
+        if (selectSourceManually && available != null && available.length > 1 && !isTrailer) {
           _showManualSourceSelector(
             displayTitle: displayTitle,
             defaultStreamUrl: streamUrl,
@@ -325,16 +344,16 @@ class _DetailViewState extends State<DetailView> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => VideoPlayerView(
-              videoUrl: streamUrl,
-              title: displayTitle,
+              videoUrl: streamUrl!,
+              title: isTrailer ? '$displayTitle (Tráiler Oficial)' : displayTitle,
               mediaId: widget.item.id,
               posterUrl: widget.item.bestPosterUrl,
               backdropUrl: widget.item.bestBackdropUrl,
               mediaType: widget.item.mediaType,
               season: season,
               episode: episode,
-              audioLanguage: streamInfo?['audioLanguage'] as String?,
-              qualityLabel: streamInfo?['qualityLabel'] as String?,
+              audioLanguage: audioLang,
+              qualityLabel: quality,
               mediaItem: widget.item,
               availableStreams: available,
               subtitles: (streamInfo?['subtitles'] as List?)
@@ -357,6 +376,31 @@ class _DetailViewState extends State<DetailView> {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
+
+      // Intentar reproducir tráiler antes de mostrar cualquier modal en caso de error de red
+      final trailerKey = widget.item.trailerKey ?? widget.item.trailerUrl;
+      if (trailerKey != null && trailerKey.toString().isNotEmpty) {
+        try {
+          final directStreamUrl = await TrailerService().resolveDirectStreamUrl(trailerKey.toString());
+          if (mounted && directStreamUrl != null && directStreamUrl.isNotEmpty) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => VideoPlayerView(
+                  videoUrl: directStreamUrl,
+                  title: '$displayTitle (Tráiler Oficial)',
+                  posterUrl: widget.item.bestPosterUrl,
+                  backdropUrl: widget.item.bestBackdropUrl,
+                  mediaType: widget.item.mediaType,
+                  audioLanguage: 'Tráiler Oficial (HD)',
+                  qualityLabel: 'HD 720p',
+                  mediaItem: widget.item,
+                ),
+              ),
+            );
+            return;
+          }
+        } catch (_) {}
+      }
 
       _showStreamUnavailableModal(
         displayTitle,
@@ -533,215 +577,104 @@ class _DetailViewState extends State<DetailView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Título principal
-                  Text(
-                    widget.item.title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isTv ? 34 : 24,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Metadatos (Puntuación, año, calidad comercial, audio español o modo tráiler)
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 6,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      if (_currentItem.rating > 0) ...[
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              _currentItem.formattedRating,
-                              style: const TextStyle(
-                                color: Colors.amber,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      if (_currentItem.releaseYear.isNotEmpty) ...[
-                        Text(
-                          _currentItem.releaseYear,
-                          style: const TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                      ],
-                      if (_isTrailerOnly) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
+                  if (isTv)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildTvPosterCard(),
+                        const SizedBox(width: 36),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.movie_creation_rounded, color: Colors.black, size: 12),
-                              SizedBox(width: 4),
                               Text(
-                                'SOLO TRÁILER',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 10,
+                                widget.item.title,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 34,
                                   fontWeight: FontWeight.w900,
+                                  letterSpacing: -0.5,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1705),
-                            border: Border.all(color: const Color(0xFFF59E0B), width: 0.8),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (_isCheckingAvailability) ...[
-                                const SizedBox(
-                                  width: 10,
-                                  height: 10,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 1.5,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+                              const SizedBox(height: 12),
+                              _buildMetadataBadges(),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 260,
+                                    child: _buildAutoPlayButton(),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
-                              ],
+                                  const SizedBox(width: 14),
+                                  SizedBox(
+                                    width: 320,
+                                    child: _buildSecondaryActions(),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              _buildGenresWrap(),
+                              const SizedBox(height: 16),
                               const Text(
-                                'PRÓXIMAMENTE EN ESPAÑOL',
+                                'Sinopsis',
                                 style: TextStyle(
-                                  color: Color(0xFFF59E0B),
-                                  fontSize: 10,
+                                  color: Colors.white,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                widget.item.synopsis,
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1A1A1A),
-                            border: Border.all(color: Colors.white24, width: 0.8),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'ORIGINAL (CINE / INGLÉS)',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE50914).withValues(alpha: 0.2),
-                            border: Border.all(color: const Color(0xFFE50914), width: 0.8),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: const Text(
-                            'CALIDAD 4K / 1080p',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.2),
-                            border: Border.all(color: Colors.greenAccent, width: 0.8),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: const Text(
-                            'ANTI-CAM CERTIFICADO',
-                            style: TextStyle(
-                              color: Colors.greenAccent,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1E1E),
-                            border: Border.all(color: Colors.white30, width: 0.6),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: const Text(
-                            'AUDIO ESPAÑOL',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
                       ],
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Botón principal de reproducción automática con D-Pad focus
-                  _buildAutoPlayButton(),
-                  const SizedBox(height: 12),
-
-                  // Botones secundarios: Mi Lista y Ver Tráiler
-                  _buildSecondaryActions(),
-                  const SizedBox(height: 20),
-
-                  // Géneros
-                  if (widget.item.genres.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: widget.item.genres.map((genre) {
-                        return Chip(
-                          backgroundColor: const Color(0xFF161616),
-                          label: Text(genre, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                        );
-                      }).toList(),
+                    )
+                  else ...[
+                    // Título principal Móvil
+                    Text(
+                      widget.item.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
                     ),
-                  const SizedBox(height: 16),
-
-                  // Sinopsis
-                  const Text(
-                    'Sinopsis',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 10),
+                    _buildMetadataBadges(),
+                    const SizedBox(height: 20),
+                    _buildAutoPlayButton(),
+                    const SizedBox(height: 12),
+                    _buildSecondaryActions(),
+                    const SizedBox(height: 20),
+                    _buildGenresWrap(),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Sinopsis',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    widget.item.synopsis,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                      height: 1.5,
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.item.synopsis,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
                     ),
-                  ),
+                  ],
                   const SizedBox(height: 24),
 
                   // Selector de Temporadas y Capítulos (Solo para Series de TV)
@@ -751,41 +684,246 @@ class _DetailViewState extends State<DetailView> {
                   ],
 
                   // Características de transmisión VJ STREAM
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0D0D0D),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF1F1F1F)),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildFeatureRow(
-                          icon: Icons.high_quality_rounded,
-                          title: 'Máxima Calidad Garantizada',
-                          subtitle: 'Filtro Anti-CAM estricto. Fuentes en 4K UHD, HDR y 1080p BluRay / WEB-DL.',
-                        ),
-                        const Divider(color: Color(0xFF1E1E1E), height: 20),
-                        _buildFeatureRow(
-                          icon: Icons.language_rounded,
-                          title: 'Prioridad de Audio en Español',
-                          subtitle: 'Preferente en Español Latino y Castellano con subtítulos sincronizados.',
-                        ),
-                        const Divider(color: Color(0xFF1E1E1E), height: 20),
-                        _buildFeatureRow(
-                          icon: Icons.speed_rounded,
-                          title: 'Servidores CDN Ultrarrápidos',
-                          subtitle: 'Sin esperas ni buffering mediante desbridado en la nube de alta velocidad.',
-                        ),
-                      ],
-                    ),
-                  ),
+                  _buildFeaturesSection(),
 
                   // Margen inferior seguro
                   const SizedBox(height: 60),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTvPosterCard() {
+    return Container(
+      width: 220,
+      height: 330,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0x66E50914), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE50914).withValues(alpha: 0.3),
+            blurRadius: 24,
+            spreadRadius: 2,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Image.network(
+          widget.item.bestPosterUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            color: const Color(0xFF161616),
+            child: const Icon(Icons.movie_rounded, color: Colors.white24, size: 64),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataBadges() {
+    return Wrap(
+      spacing: 10,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        if (_currentItem.rating > 0) ...[
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.star, color: Colors.amber, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                _currentItem.formattedRating,
+                style: const TextStyle(
+                  color: Colors.amber,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (_currentItem.releaseYear.isNotEmpty) ...[
+          Text(
+            _currentItem.releaseYear,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ],
+        if (_isTrailerOnly) ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.movie_creation_rounded, color: Colors.black, size: 12),
+                SizedBox(width: 4),
+                Text(
+                  'SOLO TRÁILER',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1705),
+              border: Border.all(color: const Color(0xFFF59E0B), width: 0.8),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_isCheckingAvailability) ...[
+                  const SizedBox(
+                    width: 10,
+                    height: 10,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.5,
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                ],
+                const Text(
+                  'PRÓXIMAMENTE EN ESPAÑOL',
+                  style: TextStyle(
+                    color: Color(0xFFF59E0B),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1A1A),
+              border: Border.all(color: Colors.white24, width: 0.8),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text(
+              'ORIGINAL (CINE / INGLÉS)',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE50914).withValues(alpha: 0.2),
+              border: Border.all(color: const Color(0xFFE50914), width: 0.8),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text(
+              'CALIDAD 4K / 1080p',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.2),
+              border: Border.all(color: Colors.greenAccent, width: 0.8),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text(
+              'ANTI-CAM CERTIFICADO',
+              style: TextStyle(
+                color: Colors.greenAccent,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              border: Border.all(color: Colors.white30, width: 0.6),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text(
+              'AUDIO ESPAÑOL',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGenresWrap() {
+    if (widget.item.genres.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      children: widget.item.genres.map((genre) {
+        return Chip(
+          backgroundColor: const Color(0xFF161616),
+          label: Text(genre, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildFeaturesSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D0D0D),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF1F1F1F)),
+      ),
+      child: Column(
+        children: [
+          _buildFeatureRow(
+            icon: Icons.high_quality_rounded,
+            title: 'Máxima Calidad Garantizada',
+            subtitle: 'Filtro Anti-CAM estricto. Fuentes en 4K UHD, HDR y 1080p BluRay / WEB-DL.',
+          ),
+          const Divider(color: Color(0xFF1E1E1E), height: 20),
+          _buildFeatureRow(
+            icon: Icons.language_rounded,
+            title: 'Prioridad de Audio en Español',
+            subtitle: 'Preferente en Español Latino y Castellano con subtítulos sincronizados.',
+          ),
+          const Divider(color: Color(0xFF1E1E1E), height: 20),
+          _buildFeatureRow(
+            icon: Icons.speed_rounded,
+            title: 'Servidores CDN Ultrarrápidos',
+            subtitle: 'Sin esperas ni buffering mediante desbridado en la nube de alta velocidad.',
           ),
         ],
       ),

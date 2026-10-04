@@ -611,13 +611,17 @@ class StreamResolverService {
       }
     }
 
-    // Filtrar estrictamente magnets de respaldo que contengan audio en español
-    fallbackMagnets = fallbackMagnets.filter(m => {
+    // Priorizar magnets que contengan audio en español; si no los hay, conservar los de alta calidad para subtítulos en español
+    const spanishMagnets = fallbackMagnets.filter(m => {
       const mName = (m.name || '').toLowerCase();
       return /cinecalidad|latino|dual[\s.-]*lat|mejortorrent|wolfmax4k|castellano|español|\b(lat|cast)\b/i.test(mName);
     });
 
-    // Ordenar magnets de respaldo priorizando español latino sobre castellano
+    if (spanishMagnets.length > 0) {
+      fallbackMagnets = spanishMagnets;
+    }
+
+    // Ordenar magnets de respaldo: 1° Latino, 2° Castellano, 3° 1080p Original
     fallbackMagnets.sort((a, b) => {
       const aName = (a.name || '').toLowerCase();
       const bName = (b.name || '').toLowerCase();
@@ -630,6 +634,12 @@ class StreamResolverService {
       const bEsp = /castellano|español|\bcast\b/i.test(bName);
       if (aEsp && !bEsp) return -1;
       if (!aEsp && bEsp) return 1;
+
+      const a1080 = aName.includes('1080p');
+      const b1080 = bName.includes('1080p');
+      if (a1080 && !b1080) return -1;
+      if (!a1080 && b1080) return 1;
+
       return 0;
     });
 
@@ -650,24 +660,33 @@ class StreamResolverService {
               continue;
             }
 
-            console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión de respaldo verificada: "${streamOption.filename}"`);
+            const isLatino = /cinecalidad|latino|dual[\s.-]*lat|\blat\b/i.test(streamOption.filename);
+            const isCastellano = /mejortorrent|wolfmax4k|castellano|español|\bcast\b/i.test(streamOption.filename);
+            const isSpanish = isLatino || isCastellano;
+            const langLabel = isLatino
+              ? 'Español Latino'
+              : (isCastellano ? 'Castellano' : 'Audio Original (Subtitulado al Español)');
+
+            console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión de respaldo verificada: [${langLabel}] "${streamOption.filename}"`);
             const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
             const streamData = {
               success: true,
               streamUrl: streamOption.streamUrl,
-              qualityLabel: streamOption.qualityLabel,
-              audioLanguage: streamOption.audioLanguage,
-              isSpanishAudio: true,
+              qualityLabel: streamOption.qualityLabel || '1080p Full HD',
+              audioLanguage: langLabel,
+              isSpanishAudio: isSpanish,
               filename: streamOption.filename,
               title: title,
               availableStreams: [
                 {
-                  id: 'latino',
-                  label: 'Español Latino (Estéreo 2.0 🎧 🇲🇽)',
-                  language: 'Español Latino Estéreo',
+                  id: isLatino ? 'latino' : (isCastellano ? 'castellano' : 'original_sub'),
+                  label: isLatino
+                    ? 'Español Latino (Estéreo 2.0 🎧 🇲🇽)'
+                    : (isCastellano ? 'Castellano (Estéreo 🇪🇸)' : 'Audio Original (Subtítulos en Español 🇲🇽)'),
+                  language: langLabel,
                   audioChannels: 'Estéreo 2.0',
                   streamUrl: streamOption.streamUrl,
-                  qualityLabel: streamOption.qualityLabel,
+                  qualityLabel: streamOption.qualityLabel || '1080p',
                   filename: streamOption.filename,
                   isBackup: false
                 }
