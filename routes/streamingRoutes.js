@@ -703,14 +703,15 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.5.4',
-    versionCode: 29,
+    latestVersion: '3.5.5',
+    versionCode: 30,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-04',
     releaseNotes: [
       '📺 Acceso Directo a Canales en Smart TV: Eliminada la columna intermedia de submenús; al elegir TV en Vivo entras de inmediato a la cuadrícula de canales a pantalla completa con foco automático.',
       '⚡ Navegación Fluida TV a Sidebar: Flecha Izquierda o tecla Atrás regresa de forma natural al menú lateral principal sin pasos intermedios.',
-      '🎬 Experiencia Cinemática 16:9 Panorámica: Cuadrícula expandida que aprovecha el 100% del ancho de tu televisor.'
+      '🎬 Experiencia Cinemática 16:9 Panorámica: Cuadrícula expandida que aprovecha el 100% del ancho de tu televisor.',
+      '🚀 Instalador Automático Optimizado: Corrección del gestor de permisos en Android TV para actualización en 1 clic.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,
@@ -756,7 +757,7 @@ router.get('/download-apk', (req, res) => {
     return res.sendFile(fileToSend);
   }
 
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.4/TOM-TV-release.apk';
+  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.5/TOM-TV-release.apk';
   return res.redirect(githubReleaseUrl);
 });
 

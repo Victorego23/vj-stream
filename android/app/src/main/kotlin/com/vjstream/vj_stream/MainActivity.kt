@@ -56,58 +56,117 @@ class MainActivity : FlutterActivity() {
         }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, APK_CHANNEL).setMethodCallHandler { call, result ->
-            if (call.method == "installApk") {
-                val filePath = call.argument<String>("filePath")
-                if (filePath != null) {
-                    try {
-                        val file = File(filePath).absoluteFile
-                        if (file.exists()) {
-                            // En Android 8.0+, verificar si la app tiene permiso para instalar paquetes
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                if (!packageManager.canRequestPackageInstalls()) {
-                                    val settingsIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
-                                        data = Uri.parse("package:$packageName")
-                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    }
-                                    startActivity(settingsIntent)
-                                }
-                            }
-
-                            val authority = "${applicationContext.packageName}.fileprovider"
-                            val uri: Uri = FileProvider.getUriForFile(
-                                applicationContext,
-                                authority,
-                                file
-                            )
-                            val intent = Intent(Intent.ACTION_VIEW).apply {
-                                setDataAndType(uri, "application/vnd.android.package-archive")
-                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            when (call.method) {
+                "canRequestPackageInstalls" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        result.success(packageManager.canRequestPackageInstalls())
+                    } else {
+                        result.success(true)
+                    }
+                }
+                "openInstallSettings" -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        try {
+                            val settingsIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                data = Uri.parse("package:$packageName")
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             }
-
-                            // Otorgar permisos de lectura explícitos a todos los gestores de instalación de paquetes
-                            val resInfoList = packageManager.queryIntentActivities(intent, 0)
-                            for (resolveInfo in resInfoList) {
-                                grantUriPermission(
-                                    resolveInfo.activityInfo.packageName,
-                                    uri,
-                                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                )
-                            }
-
-                            startActivity(intent)
+                            startActivity(settingsIntent)
                             result.success(true)
-                        } else {
-                            result.error("FILE_NOT_FOUND", "El archivo APK no existe en $filePath", null)
+                        } catch (e1: Exception) {
+                            try {
+                                val fallbackIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                                startActivity(fallbackIntent)
+                                result.success(true)
+                            } catch (e2: Exception) {
+                                try {
+                                    val secIntent = Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    startActivity(secIntent)
+                                    result.success(true)
+                                } catch (e3: Exception) {
+                                    result.error("SETTINGS_ERROR", e3.message, null)
+                                }
+                            }
                         }
-                    } catch (e: Exception) {
-                        result.error("INSTALL_ERROR", e.message, null)
+                    } else {
+                        result.success(true)
                     }
-                } else {
-                    result.error("INVALID_PATH", "Ruta de archivo nula", null)
                 }
-            } else {
-                result.notImplemented()
+                "installApk" -> {
+                    val filePath = call.argument<String>("filePath")
+                    if (filePath != null) {
+                        try {
+                            val file = File(filePath).absoluteFile
+                            if (file.exists()) {
+                                // En Android 8.0+, verificar si la app tiene permiso para instalar paquetes
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    if (!packageManager.canRequestPackageInstalls()) {
+                                        // Abrir la pantalla de ajustes con fallbacks para Android TV / Fire TV
+                                        try {
+                                            val settingsIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                                data = Uri.parse("package:$packageName")
+                                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                            }
+                                            startActivity(settingsIntent)
+                                        } catch (e1: Exception) {
+                                            try {
+                                                val fallbackIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
+                                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                }
+                                                startActivity(fallbackIntent)
+                                            } catch (e2: Exception) {
+                                                try {
+                                                    val secIntent = Intent(Settings.ACTION_SECURITY_SETTINGS).apply {
+                                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                                    }
+                                                    startActivity(secIntent)
+                                                } catch (_: Exception) {}
+                                            }
+                                        }
+                                        result.error("PERMISSION_REQUIRED", "Se requiere permiso para instalar aplicaciones desconocidas", null)
+                                        return@setMethodCallHandler
+                                    }
+                                }
+
+                                val authority = "${applicationContext.packageName}.fileprovider"
+                                val uri: Uri = FileProvider.getUriForFile(
+                                    applicationContext,
+                                    authority,
+                                    file
+                                )
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(uri, "application/vnd.android.package-archive")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+
+                                // Otorgar permisos de lectura explícitos a todos los gestores de instalación de paquetes
+                                val resInfoList = packageManager.queryIntentActivities(intent, 0)
+                                for (resolveInfo in resInfoList) {
+                                    grantUriPermission(
+                                        resolveInfo.activityInfo.packageName,
+                                        uri,
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                    )
+                                }
+
+                                startActivity(intent)
+                                result.success(true)
+                            } else {
+                                result.error("FILE_NOT_FOUND", "El archivo APK no existe en $filePath", null)
+                            }
+                        } catch (e: Exception) {
+                            result.error("INSTALL_ERROR", e.message, null)
+                        }
+                    } else {
+                        result.error("INVALID_PATH", "Ruta de archivo nula", null)
+                    }
+                }
+                else -> result.notImplemented()
             }
         }
 

@@ -441,9 +441,6 @@ class _LiveTvViewState extends State<LiveTvView> {
                                     ),
                                 ],
                               ),
-              ),
-            ],
-          ),
         ),
       ],
     );

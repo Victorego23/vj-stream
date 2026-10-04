@@ -50,20 +50,22 @@ jobs:
       - name: Subir Artifact de GitHub Actions
         uses: actions/upload-artifact@v4
         with:
-          name: TOM-TV-v3.5.4-release
+          name: TOM-TV-v3.5.5-release
           path: TOM-TV-release.apk
 
       - name: Publicar Release Oficial en GitHub
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v3.5.4
-          name: TOM TV v3.5.4 Oficial
+          tag_name: v3.5.5
+          name: TOM TV v3.5.5 Oficial
+          make_latest: true
           body: |
-            ## 🚀 TOM TV v3.5.4 Oficial (Build 29)
+            ## 🚀 TOM TV v3.5.5 Oficial (Build 30)
             
             - 📺 **Acceso Directo a Canales Smart TV**: Eliminada la columna intermedia de submenús; al elegir TV en Vivo entras de inmediato a la cuadrícula de canales con foco automático.
             - ⚡ **Navegación Fluida TV a Sidebar**: Flecha Izquierda o tecla Atrás regresa de forma natural al menú lateral principal sin pasos intermedios.
             - 🎬 **Experiencia Cinemática 16:9 Panorámica**: Cuadrícula expandida que aprovecha el 100% del ancho de tu televisor.
+            - 🚀 **Instalador Automático Optimizado**: Permisos de fuentes desconocidas corregidos para Smart TV y móviles con reintento automático.
           files: |
             TOM-TV-release.apk
         env:
@@ -74,5 +76,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add TOM-TV-release.apk
-          git commit -m "build: auto-compile official TOM-TV-release.apk v3.5.4 (Build 29) [skip ci]" || echo "Sin cambios detectados"
+          git commit -m "build: auto-compile official TOM-TV-release.apk v3.5.5 (Build 30) [skip ci]" || echo "Sin cambios detectados"
           git push origin main || echo "Push omitido"

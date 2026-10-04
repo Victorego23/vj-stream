@@ -28,8 +28,8 @@ class AppUpdateInfo {
       notes = (json['releaseNotes'] as List).map((e) => e.toString()).toList();
     }
     return AppUpdateInfo(
-      latestVersion: json['latestVersion'] ?? '2.4.8',
-      versionCode: json['versionCode'] ?? 15,
+      latestVersion: json['latestVersion'] ?? '3.5.5',
+      versionCode: json['versionCode'] ?? 30,
       releaseNotes: notes,
       downloadUrl: json['downloadUrl'] ?? '/api/streaming/download-apk',
       forceUpdate: json['forceUpdate'] ?? false,
@@ -40,8 +40,8 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para TOM TV
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '3.5.4';
-  static const int currentVersionCode = 29;
+  static const String currentVersion = '3.5.5';
+  static const int currentVersionCode = 30;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
@@ -131,7 +131,6 @@ class UpdateService {
       builder: (dialogCtx) => _UpdateDialogWidget(updateInfo: info),
     ).then((_) {
       _isDialogVisible = false;
-      markDismissed(info.versionCode);
     });
   }
 }
@@ -171,9 +170,6 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
   }
 
   Future<void> _launchInstaller(String filePath) async {
-    // Marcar como gestionado de inmediato para evitar que reaparezca en bucle
-    await UpdateService.markDismissed(widget.updateInfo.versionCode);
-
     if (!Platform.isAndroid) {
       if (mounted) {
         setState(() {
@@ -189,22 +185,34 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
         {'filePath': filePath},
       );
       if (success == true) {
+        // Solo marcamos como gestionado cuando la instalación fue lanzada con éxito
+        await UpdateService.markDismissed(widget.updateInfo.versionCode);
         if (mounted) {
           setState(() {
             _downloadMessage = 'Abriendo instalador del sistema Android... Por favor confirma en pantalla.';
           });
           // Cerrar diálogo tras breve espera para dar paso a la pantalla de instalación nativa
-          Future.delayed(const Duration(milliseconds: 1200), () {
+          Future.delayed(const Duration(milliseconds: 1500), () {
             if (mounted) {
               Navigator.of(context).pop();
             }
           });
         }
       }
+    } on PlatformException catch (pe) {
+      if (mounted) {
+        setState(() {
+          if (pe.code == 'PERMISSION_REQUIRED') {
+            _downloadMessage = '⚠️ Permiso requerido: Activa "Instalar apps desconocidas" para TOM TV en Ajustes y luego presiona "Reintentar Instalación".';
+          } else {
+            _downloadMessage = 'Aviso: ${pe.message ?? pe.code}\nPuedes presionar "Reintentar Instalación".';
+          }
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _downloadMessage = 'Archivo descargado en:\n$filePath\nPuedes abrirlo con un explorador de archivos para instalarlo.';
+          _downloadMessage = 'Archivo descargado en:\n$filePath\nPuedes presionar "Reintentar Instalación" o instalarlo con un explorador de archivos.';
         });
       }
     }
@@ -230,8 +238,9 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
       http.StreamedResponse? response;
       int redirectCount = 0;
 
-      while (redirectCount < 5) {
+      while (redirectCount < 10) {
         final request = http.Request('GET', currentUri);
+        request.headers['User-Agent'] = 'TOM-TV-App/3.5.5';
         final res = await client.send(request);
         if (res.statusCode == 301 ||
             res.statusCode == 302 ||
@@ -253,7 +262,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
         if (mounted) {
           setState(() {
             _isDownloading = false;
-            _downloadMessage = 'No fue posible iniciar la descarga (código HTTP ${response?.statusCode ?? 0}).';
+            _downloadMessage = 'No fue posible iniciar la descarga (código HTTP ${response?.statusCode ?? 0}). El archivo se está preparando en el servidor.';
           });
         }
         return;
@@ -553,7 +562,9 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
                       ),
                       label: Text(
                         _downloadFinished
-                            ? 'Instalar Ahora'
+                            ? (_downloadMessage != null && _downloadMessage!.contains('⚠️')
+                                ? 'Reintentar Instalación'
+                                : 'Instalar Ahora')
                             : (_isDownloading ? 'Descargando...' : 'Actualizar Ahora'),
                         style: const TextStyle(
                           color: Colors.white,
