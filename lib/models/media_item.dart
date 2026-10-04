@@ -132,6 +132,9 @@ class MediaItem {
     return posterMedium ?? posterOriginal ?? posterThumbnail ?? '';
   }
 
+  /// Retorna si el contenido es una serie de televisión
+  bool get isSeries => mediaType == 'tv';
+
   /// Retorna la mejor URL de fondo disponible para banners
   String get bestBackdropUrl {
     return backdropLarge ?? backdropOriginal ?? backdropMedium ?? bestPosterUrl;
