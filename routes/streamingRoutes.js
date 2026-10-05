@@ -700,11 +700,29 @@ router.get('/vod/movie/:id', async (req, res) => {
  * @desc    Devuelve los metadatos de la última versión y notas de la versión para OTA
  */
 router.get('/version', (req, res) => {
+  const path = require('path');
+  const fs = require('fs');
+
+  let latestVersion = '3.5.6';
+  let versionCode = 31;
+
+  try {
+    const pubspecPath = path.resolve(__dirname, '..', 'pubspec.yaml');
+    if (fs.existsSync(pubspecPath)) {
+      const content = fs.readFileSync(pubspecPath, 'utf8');
+      const match = content.match(/version:\s*([0-9.]+)\+(\d+)/);
+      if (match) {
+        latestVersion = match[1];
+        versionCode = parseInt(match[2], 10);
+      }
+    }
+  } catch (_) {}
+
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.5.6',
-    versionCode: 31,
+    latestVersion,
+    versionCode,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-04',
     releaseNotes: [
