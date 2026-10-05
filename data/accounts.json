@@ -32,60 +32,6 @@
   "pendingActivations": [],
   "resellers": [
     {
-      "id": "res-distribuidor-1",
-      "name": "Distribuidor 1",
-      "username": "distribuidor1",
-      "password": "123",
-      "whatsapp": "+51914598415",
-      "credits": 20,
-      "status": "active",
-      "createdAt": "2026-10-04T00:00:00.000Z",
-      "history": [
-        {
-          "type": "initial_deposit",
-          "amount": 20,
-          "date": "2026-10-04T00:00:00.000Z",
-          "note": "Créditos iniciales"
-        }
-      ]
-    },
-    {
-      "id": "res-distribuidor-2",
-      "name": "Distribuidor 2",
-      "username": "distribuidor2",
-      "password": "123",
-      "whatsapp": "+51914598415",
-      "credits": 20,
-      "status": "active",
-      "createdAt": "2026-10-04T00:00:00.000Z",
-      "history": [
-        {
-          "type": "initial_deposit",
-          "amount": 20,
-          "date": "2026-10-04T00:00:00.000Z",
-          "note": "Créditos iniciales"
-        }
-      ]
-    },
-    {
-      "id": "res-distribuidor-3",
-      "name": "Distribuidor 3",
-      "username": "distribuidor3",
-      "password": "123",
-      "whatsapp": "+51914598415",
-      "credits": 20,
-      "status": "active",
-      "createdAt": "2026-10-04T00:00:00.000Z",
-      "history": [
-        {
-          "type": "initial_deposit",
-          "amount": 20,
-          "date": "2026-10-04T00:00:00.000Z",
-          "note": "Créditos iniciales"
-        }
-      ]
-    },
-    {
       "id": "80723ae7-e8d9-4e8a-b128-073bcfd9cade",
       "name": "Jesus Daniel Guevara Quispe",
       "username": "usuario1",

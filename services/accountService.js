@@ -139,6 +139,35 @@ class AccountService {
       if (!Array.isArray(data.resellers)) {
         data.resellers = [];
       }
+      // Auto-recuperación garantizada: Jesus Daniel siempre presente
+      const hasJesus = data.resellers.some(r => 
+        (r.username || '').toLowerCase() === 'usuario1' || 
+        r.id === '80723ae7-e8d9-4e8a-b128-073bcfd9cade' ||
+        (r.password || '').trim() === '2233'
+      );
+      if (!hasJesus) {
+        data.resellers.push({
+          id: '80723ae7-e8d9-4e8a-b128-073bcfd9cade',
+          name: 'Jesus Daniel Guevara Quispe',
+          username: 'usuario1',
+          password: '2233',
+          whatsapp: '+51 904 416 154',
+          credits: 15,
+          status: 'active',
+          createdAt: '2026-10-04T18:00:00.000Z',
+          history: [
+            {
+              type: 'initial_deposit',
+              amount: 15,
+              date: '2026-10-04T18:00:00.000Z',
+              note: 'Créditos iniciales asignados'
+            }
+          ]
+        });
+        try {
+          fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+        } catch (_) {}
+      }
       this._cache = data;
       return data;
     } catch (e) {
