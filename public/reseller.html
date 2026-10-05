@@ -601,7 +601,8 @@
         if (meRes.status === 200) {
           const meData = await meRes.json();
           currentReseller = meData.reseller;
-          document.getElementById('display-credits').textContent = currentReseller.credits || 0;
+          const credEl = document.getElementById('display-credits');
+          if (credEl) credEl.textContent = currentReseller.credits || 0;
         }
 
         if (clientsRes.status === 200) {
