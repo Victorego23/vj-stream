@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TOM TV - Sub-Panel de Revendedor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
   <style>
     :root {
       --bg-dark: #07080B;
@@ -26,166 +28,489 @@
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
-    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
     /* Pantalla de Login */
     #login-view {
-      display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
       background: radial-gradient(circle at center, #1B0E12 0%, #07080B 75%);
     }
+
     .login-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; padding: 40px; width: 100%; max-width: 440px; text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px var(--primary-glow);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px var(--primary-glow);
     }
+
     .brand-badge {
-      display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 20px; letter-spacing: 2px;
-      margin-bottom: 16px; box-shadow: 0 4px 15px var(--primary-glow);
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      padding: 6px 16px;
+      border-radius: 10px;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 15px var(--primary-glow);
     }
+
     .reseller-tag {
-      display: inline-block; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4);
-      color: var(--accent); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800;
-      letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px;
+      display: inline-block;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
     }
-    .form-group { margin-bottom: 18px; text-align: left; }
-    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+
+    .form-group {
+      margin-bottom: 18px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
     .form-control {
-      width: 100%; background: #090A0D; border: 1px solid var(--card-border); border-radius: 10px;
-      padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s;
+      width: 100%;
+      background: #090A0D;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
     }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
 
     /* Botones */
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
-      cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      text-decoration: none;
     }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
-    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 4px 14px var(--primary-glow); }
-    .btn-gold { background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 900; }
-    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--credit-glow); }
-    .btn-whatsapp { background: #128C7E; color: #fff; }
-    .btn-whatsapp:hover { background: #25D366; }
-    .btn-secondary { background: #1E222D; color: #E2E8F0; }
-    .btn-secondary:hover { background: #2B303F; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
-    .btn-danger { background: #991B1B; color: #fff; }
-    .btn-danger:hover { background: #DC2626; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px var(--primary-glow);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: #000;
+      font-weight: 900;
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px var(--credit-glow);
+    }
+
+    .btn-whatsapp {
+      background: #128C7E;
+      color: #fff;
+    }
+
+    .btn-whatsapp:hover {
+      background: #25D366;
+    }
+
+    .btn-secondary {
+      background: #1E222D;
+      color: #E2E8F0;
+    }
+
+    .btn-secondary:hover {
+      background: #2B303F;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 8px;
+    }
+
+    .btn-danger {
+      background: #991B1B;
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #DC2626;
+    }
 
     /* Dashboard Layout */
-    #dashboard-view { display: none; }
-    .navbar {
-      background: rgba(17, 19, 25, 0.92); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
-      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
+    #dashboard-view {
+      display: none;
     }
-    .nav-brand { display: flex; align-items: center; gap: 12px; }
-    .nav-actions { display: flex; align-items: center; gap: 12px; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    .navbar {
+      background: rgba(17, 19, 25, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+    }
 
     /* Hero Banner de Créditos */
     .credit-hero-card {
       background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(17, 19, 25, 0.95) 70%);
-      border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 18px; padding: 28px;
-      margin-bottom: 28px; display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      border-radius: 18px;
+      padding: 28px;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
+
     .credit-badge-large {
-      display: inline-flex; align-items: baseline; gap: 10px; margin-bottom: 8px;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
     }
+
     .credit-number {
-      font-size: 48px; font-weight: 900; color: var(--credit-gold); text-shadow: 0 0 20px var(--credit-glow);
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--credit-gold);
+      text-shadow: 0 0 20px var(--credit-glow);
     }
-    .credit-unit { font-size: 18px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; }
+
+    .credit-unit {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
     .rules-pill {
-      display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 10px;
     }
+
     .rule-item {
-      font-size: 12px; background: rgba(0,0,0,0.4); padding: 5px 12px; border-radius: 6px;
-      border: 1px solid rgba(255,255,255,0.08); color: #D1D5DB;
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #D1D5DB;
     }
 
     /* KPI Grid */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 28px; }
-    .stat-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px;
-      padding: 16px; display: flex; flex-direction: column; gap: 4px;
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
     }
-    .stat-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-    .stat-value { font-size: 26px; font-weight: 900; color: #fff; }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .stat-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+    }
 
     /* Sección de Clientes */
     .section-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
-      overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
     }
+
     .section-header {
-      padding: 18px 24px; border-bottom: 1px solid var(--card-border);
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
     }
-    .section-title { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
     /* Filtros */
-    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 16px 24px 0; }
-    .chip {
-      background: #141720; border: 1px solid var(--card-border); padding: 6px 14px;
-      border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text-muted);
+    .filter-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 16px 24px 0;
     }
-    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .chip {
+      background: #141720;
+      border: 1px solid var(--card-border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
 
     /* Tabla */
-    .table-responsive { width: 100%; overflow-x: auto; padding: 16px 24px 24px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-    th { padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--card-border); }
-    td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      padding: 16px 24px 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      padding: 12px 14px;
+      color: var(--text-muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      vertical-align: middle;
+    }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
 
     .badge {
-      display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
     }
-    .badge-active { background: rgba(34, 197, 94, 0.15); color: #22C55E; border: 1px solid rgba(34, 197, 94, 0.3); }
-    .badge-pending { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-expired { background: rgba(239, 68, 68, 0.15); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .badge-active {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22C55E;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.15);
+      color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-expired {
+      background: rgba(239, 68, 68, 0.15);
+      color: #EF4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
 
     /* Modales */
     .modal {
-      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
-    .modal.active { display: flex; }
+
+    .modal.active {
+      display: flex;
+    }
+
     .modal-content {
-      background: #141720; border: 1px solid var(--card-border); border-radius: 20px;
-      padding: 30px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.9); position: relative;
+      background: #141720;
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+      position: relative;
     }
+
     .modal-header {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
     }
-    .close-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
-    .close-btn:hover { color: #fff; }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #fff;
+    }
 
     /* Calculadora de créditos */
     .credit-calc-box {
-      background: #0B0D12; border: 1px solid var(--card-border); border-radius: 12px;
-      padding: 16px; margin: 16px 0; font-size: 13px;
+      background: #0B0D12;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 16px 0;
+      font-size: 13px;
     }
+
     .credit-calc-row {
-      display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: var(--text-muted);
     }
+
     .credit-calc-row.highlight {
-      color: #fff; font-weight: 700; border-top: 1px solid var(--card-border); padding-top: 8px; margin-top: 8px;
+      color: #fff;
+      font-weight: 700;
+      border-top: 1px solid var(--card-border);
+      padding-top: 8px;
+      margin-top: 8px;
     }
 
     /* Tarjeta de Código Generado */
     .code-hero-box {
       background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(17, 19, 25, 0.95));
-      border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 16px; padding: 24px; text-align: center; margin: 20px 0;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      margin: 20px 0;
     }
+
     .code-hero-val {
-      font-size: 32px; font-weight: 900; letter-spacing: 3px; color: #22C55E; margin: 10px 0;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #22C55E;
+      margin: 10px 0;
       font-family: monospace;
     }
 
@@ -197,6 +522,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- PANTALLA DE INICIO DE SESIÓN -->
@@ -205,26 +531,34 @@
       <div class="brand-badge">TOM TV</div><br>
       <div class="reseller-tag">💼 Sub-Panel de Revendedores</div>
       <h2 style="margin-bottom: 6px; font-weight: 900; font-size: 22px;">Acceso de Distribuidor</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Ingresa con tus credenciales asignadas</p>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Ingresa con tus credenciales asignadas
+      </p>
 
       <!-- Contenedor de error visible en pantalla -->
-      <div id="reseller-login-error" style="display:none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; padding: 12px 14px; border-radius: 12px; font-size: 13px; margin-bottom: 18px; text-align: left; line-height: 1.4;"></div>
+      <div id="reseller-login-error"
+        style="display:none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; padding: 12px 14px; border-radius: 12px; font-size: 13px; margin-bottom: 18px; text-align: left; line-height: 1.4;">
+      </div>
 
       <form id="reseller-login-form" onsubmit="handleResellerLogin(event)">
         <div class="form-group">
           <label>Usuario o Teléfono (Opcional si usas tu clave única):</label>
-          <input type="text" id="reseller-user-input" class="form-control" placeholder="Ej: usuario1 o 904416154" autocomplete="username" autofocus>
+          <input type="text" id="reseller-user-input" class="form-control" placeholder="Ej: usuario1 o 904416154"
+            autocomplete="username" autofocus>
         </div>
         <div class="form-group">
           <label>Contraseña:</label>
           <div style="position: relative; display: flex; align-items: center;">
-            <input type="password" id="reseller-pass-input" class="form-control" placeholder="••••••••" autocomplete="current-password" required style="padding-right: 44px;">
-            <button type="button" id="toggle-pass-btn" onclick="toggleResellerPasswordVisibility()" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center;" title="Mostrar u ocultar contraseña">
+            <input type="password" id="reseller-pass-input" class="form-control" placeholder="••••••••"
+              autocomplete="current-password" required style="padding-right: 44px;">
+            <button type="button" id="toggle-pass-btn" onclick="toggleResellerPasswordVisibility()"
+              style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center;"
+              title="Mostrar u ocultar contraseña">
               👁️
             </button>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary" id="reseller-login-btn" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 14px;">
+        <button type="submit" class="btn btn-primary" id="reseller-login-btn"
+          style="width: 100%; padding: 12px; margin-top: 10px; font-size: 14px;">
           Entrar a Mi Panel
         </button>
       </form>
@@ -255,7 +589,9 @@
       <!-- HERO DE SALDO DE CRÉDITOS -->
       <div class="credit-hero-card">
         <div>
-          <span style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tu Saldo de Prepago</span>
+          <span
+            style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Tu
+            Saldo de Prepago</span>
           <div class="credit-badge-large">
             <span class="credit-number" id="display-credits">0</span>
             <span class="credit-unit">Créditos</span>
@@ -303,10 +639,13 @@
         <div class="section-header">
           <div>
             <div class="section-title">👥 Cartera de Clientes & Pantallas</div>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Clientes gestionados exclusivamente por tu cuenta de revendedor</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Clientes gestionados exclusivamente
+              por tu cuenta de revendedor</p>
           </div>
           <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="client-search" class="form-control" style="width: 220px; padding: 8px 12px; font-size: 13px;" placeholder="Buscar cliente..." onkeyup="filterClientsTable()">
+            <input type="text" id="client-search" class="form-control"
+              style="width: 220px; padding: 8px 12px; font-size: 13px;" placeholder="Buscar cliente..."
+              onkeyup="filterClientsTable()">
             <button class="btn btn-primary btn-sm" onclick="openNewClientModal()">+ Nuevo Cliente</button>
           </div>
         </div>
@@ -334,7 +673,8 @@
             </thead>
             <tbody id="reseller-clients-tbody">
               <tr>
-                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Cargando tus clientes...</td>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Cargando tus
+                  clientes...</td>
               </tr>
             </tbody>
           </table>
@@ -394,7 +734,8 @@
           </div>
         </div>
 
-        <div id="credit-warning" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #FCA5A5;">
+        <div id="credit-warning"
+          style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #FCA5A5;">
           ⚠️ No tienes suficientes créditos para este plan. Por favor recarga créditos con el administrador.
         </div>
 
@@ -410,7 +751,8 @@
     <div class="modal-content" style="text-align: center;">
       <div style="font-size: 48px; margin-bottom: 8px;">🎉</div>
       <h3 style="font-weight: 800; font-size: 20px;">¡Cliente Creado con Éxito!</h3>
-      <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Comparte el código con tu cliente para que disfrute de TOM TV</p>
+      <p style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Comparte el código con tu cliente para que
+        disfrute de TOM TV</p>
 
       <div class="code-hero-box">
         <span style="font-size: 12px; color: var(--text-muted); text-transform: uppercase;">Código de Activación:</span>
@@ -418,10 +760,12 @@
         <button class="btn btn-secondary btn-sm" onclick="copySuccessCode()">📋 Copiar Código</button>
       </div>
 
-      <a id="success-whatsapp-btn" href="#" target="_blank" class="btn btn-whatsapp" style="width: 100%; padding: 12px; margin-bottom: 10px;">
+      <a id="success-whatsapp-btn" href="#" target="_blank" class="btn btn-whatsapp"
+        style="width: 100%; padding: 12px; margin-bottom: 10px;">
         📲 Enviar Datos por WhatsApp al Cliente
       </a>
-      <button class="btn btn-secondary" style="width: 100%;" onclick="closeModal('modal-success-client')">Cerrar</button>
+      <button class="btn btn-secondary" style="width: 100%;"
+        onclick="closeModal('modal-success-client')">Cerrar</button>
     </div>
   </div>
 
@@ -464,7 +808,8 @@
           </div>
         </div>
 
-        <div id="renew-credit-warning" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #FCA5A5;">
+        <div id="renew-credit-warning"
+          style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: #FCA5A5;">
           ⚠️ Saldo insuficiente para esta renovación.
         </div>
 
@@ -755,241 +1100,242 @@
       }
     }
 
-    function openRechargeWhatsApp() {
-      const cleanPhone = adminWhatsapp.replace(/[^0-9+]/g, '');
-      const msg = `¡Hola! Soy *${currentReseller?.name || 'Distribuidor'}* (Usuario: ${currentReseller?.username}). Deseo recargar un paquete de créditos para TOM TV.`;
-      window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
+      function openRechargeWhatsApp() {
+        const cleanPhone = adminWhatsapp.replace(/[^0-9+]/g, '');
+        const msg = `¡Hola! Soy *${currentReseller?.name || 'Distribuidor'}* (Usuario: ${currentReseller?.username}). Deseo recargar un paquete de créditos para TOM TV.`;
+        window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+      }
 
-    function openNewClientModal() {
-      document.getElementById('client-name').value = '';
-      document.getElementById('client-plan-days').value = '30';
-      updateCreditCalc();
-      openModal('modal-new-client');
-    }
+      function openNewClientModal() {
+        document.getElementById('client-name').value = '';
+        document.getElementById('client-plan-days').value = '30';
+        updateCreditCalc();
+        openModal('modal-new-client');
+      }
 
-    function updateCreditCalc() {
-      const rawVal = document.getElementById('client-plan-days').value;
-      let cost = 1;
-      if (rawVal === '2h') {
-        cost = 0; // Demo de 2 horas es gratuito para el revendedor
-      } else {
-        const days = parseInt(rawVal, 10);
+      function updateCreditCalc() {
+        const rawVal = document.getElementById('client-plan-days').value;
+        let cost = 1;
+        if (rawVal === '2h') {
+          cost = 0; // Demo de 2 horas es gratuito para el revendedor
+        } else {
+          const days = parseInt(rawVal, 10);
+          if (days <= 31) cost = 1;
+          else if (days <= 93) cost = 3;
+          else if (days <= 186) cost = 6;
+          else cost = 12;
+        }
+
+        const current = currentReseller ? (currentReseller.credits || 0) : 0;
+        const remaining = current - cost;
+
+        document.getElementById('calc-current-credits').textContent = current;
+        document.getElementById('calc-cost-credits').textContent = cost === 0 ? '0 Créditos (Demo Gratis)' : `-${cost} Crédito${cost > 1 ? 's' : ''}`;
+        document.getElementById('calc-remaining-credits').textContent = remaining;
+
+        const warning = document.getElementById('credit-warning');
+        const submitBtn = document.getElementById('btn-submit-client');
+        if (remaining < 0) {
+          warning.style.display = 'block';
+          submitBtn.disabled = true;
+          submitBtn.style.opacity = '0.5';
+        } else {
+          warning.style.display = 'none';
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
+        }
+      }
+
+      async function submitNewClient(e) {
+        e.preventDefault();
+        const name = document.getElementById('client-name').value.trim();
+        const rawPlan = document.getElementById('client-plan-days').value;
+        const planDays = rawPlan === '2h' ? '2h' : parseInt(rawPlan, 10);
+        const maxDevices = parseInt(document.getElementById('client-max-devices').value, 10);
+        const btn = document.getElementById('btn-submit-client');
+
+        btn.textContent = 'Creando Cliente...';
+        btn.disabled = true;
+
+        try {
+          const res = await fetch('/api/reseller/clients', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${resellerToken}`
+            },
+            body: JSON.stringify({ name, planDays, maxDevices })
+          });
+          const data = await res.json();
+          if (data.success) {
+            closeModal('modal-new-client');
+            refreshResellerData();
+
+            // Mostrar modal con código y enlace WhatsApp
+            document.getElementById('success-code-display').textContent = data.client.code;
+            const origin = window.location.origin;
+            const expDate = new Date(data.client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            let msg = `¡Hola ${data.client.name}! Tu acceso a TOM TV ya está activo.\n\n`;
+            msg += `🔑 Tu Código de Activación: *${data.client.code}*\n`;
+            msg += `📅 Vence el: *${expDate}*\n\n`;
+            msg += `📱 *Para ver en iPhone, iPad o Web*:\n${origin}/?code=${encodeURIComponent(data.client.code)}\n\n`;
+            msg += `📺 *Para Smart TV o Android TV*:\nAbre la app TOM TV e ingresa tu código: *${data.client.code}*\n\n`;
+            msg += `¡Que lo disfrutes!`;
+
+            document.getElementById('success-whatsapp-btn').href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+            openModal('modal-success-client');
+          } else {
+            alert('Error: ' + (data.error || 'No se pudo crear el cliente'));
+          }
+        } catch (err) {
+          alert('Error de conexión con el servidor.');
+        } finally {
+          btn.textContent = 'Confirmar y Crear Cliente';
+          btn.disabled = false;
+        }
+      }
+
+      function copySuccessCode() {
+        const code = document.getElementById('success-code-display').textContent;
+        navigator.clipboard.writeText(code);
+        alert(`Código ${code} copiado al portapapeles.`);
+      }
+
+      function sendClientWhatsApp(clientId) {
+        const c = resellerClients.find(cli => cli.id === clientId);
+        if (!c) return;
+        const origin = window.location.origin;
+        const expDate = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        let msg = `¡Hola ${c.name}! Te comparto tu acceso a TOM TV.\n\n`;
+        msg += `🔑 Código de Activación: *${c.code}*\n`;
+        msg += `📅 Vence el: *${expDate}* (${c.daysRemaining} días restantes)\n\n`;
+        msg += `📱 *Para iPhone o Navegador Web*:\n${origin}/?code=${encodeURIComponent(c.code)}\n\n`;
+        msg += `📺 *Para Smart TV o Android TV*:\nAbre la app TOM TV e ingresa tu código: *${c.code}*\n\n`;
+        msg += `Cualquier consulta me avisas directamente por aquí.`;
+
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+      }
+
+      function openRenewModal(clientId) {
+        const c = resellerClients.find(cli => cli.id === clientId);
+        if (!c) return;
+        document.getElementById('renew-client-id').value = c.id;
+        document.getElementById('renew-client-name').textContent = `${c.name} (Código: ${c.code})`;
+        document.getElementById('renew-plan-days').value = '30';
+        updateRenewCalc();
+        openModal('modal-renew-client');
+      }
+
+      function updateRenewCalc() {
+        const days = parseInt(document.getElementById('renew-plan-days').value, 10);
+        let cost = 1;
         if (days <= 31) cost = 1;
         else if (days <= 93) cost = 3;
         else if (days <= 186) cost = 6;
         else cost = 12;
-      }
 
-      const current = currentReseller ? (currentReseller.credits || 0) : 0;
-      const remaining = current - cost;
+        const current = currentReseller ? (currentReseller.credits || 0) : 0;
+        const remaining = current - cost;
 
-      document.getElementById('calc-current-credits').textContent = current;
-      document.getElementById('calc-cost-credits').textContent = cost === 0 ? '0 Créditos (Demo Gratis)' : `-${cost} Crédito${cost > 1 ? 's' : ''}`;
-      document.getElementById('calc-remaining-credits').textContent = remaining;
+        document.getElementById('renew-calc-current').textContent = current;
+        document.getElementById('renew-calc-cost').textContent = `-${cost} Crédito${cost > 1 ? 's' : ''}`;
+        document.getElementById('renew-calc-remaining').textContent = remaining;
 
-      const warning = document.getElementById('credit-warning');
-      const submitBtn = document.getElementById('btn-submit-client');
-      if (remaining < 0) {
-        warning.style.display = 'block';
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.5';
-      } else {
-        warning.style.display = 'none';
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-      }
-    }
-
-    async function submitNewClient(e) {
-      e.preventDefault();
-      const name = document.getElementById('client-name').value.trim();
-      const rawPlan = document.getElementById('client-plan-days').value;
-      const planDays = rawPlan === '2h' ? '2h' : parseInt(rawPlan, 10);
-      const maxDevices = parseInt(document.getElementById('client-max-devices').value, 10);
-      const btn = document.getElementById('btn-submit-client');
-
-      btn.textContent = 'Creando Cliente...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/reseller/clients', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${resellerToken}`
-          },
-          body: JSON.stringify({ name, planDays, maxDevices })
-        });
-        const data = await res.json();
-        if (data.success) {
-          closeModal('modal-new-client');
-          refreshResellerData();
-
-          // Mostrar modal con código y enlace WhatsApp
-          document.getElementById('success-code-display').textContent = data.client.code;
-          const origin = window.location.origin;
-          const expDate = new Date(data.client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-          
-          let msg = `¡Hola ${data.client.name}! Tu acceso a TOM TV ya está activo.\n\n`;
-          msg += `🔑 Tu Código de Activación: *${data.client.code}*\n`;
-          msg += `📅 Vence el: *${expDate}*\n\n`;
-          msg += `📱 *Para ver en iPhone, iPad o Web*:\n${origin}/?code=${encodeURIComponent(data.client.code)}\n\n`;
-          msg += `📺 *Para Smart TV o Android TV*:\nAbre la app TOM TV e ingresa tu código: *${data.client.code}*\n\n`;
-          msg += `¡Que lo disfrutes!`;
-
-          document.getElementById('success-whatsapp-btn').href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-          openModal('modal-success-client');
+        const warning = document.getElementById('renew-credit-warning');
+        const submitBtn = document.getElementById('btn-submit-renew');
+        if (remaining < 0) {
+          warning.style.display = 'block';
+          submitBtn.disabled = true;
+          submitBtn.style.opacity = '0.5';
         } else {
-          alert('Error: ' + (data.error || 'No se pudo crear el cliente'));
+          warning.style.display = 'none';
+          submitBtn.disabled = false;
+          submitBtn.style.opacity = '1';
         }
-      } catch (err) {
-        alert('Error de conexión con el servidor.');
-      } finally {
-        btn.textContent = 'Confirmar y Crear Cliente';
-        btn.disabled = false;
       }
-    }
 
-    function copySuccessCode() {
-      const code = document.getElementById('success-code-display').textContent;
-      navigator.clipboard.writeText(code);
-      alert(`Código ${code} copiado al portapapeles.`);
-    }
+      async function submitRenewClient(e) {
+        e.preventDefault();
+        const id = document.getElementById('renew-client-id').value;
+        const additionalDays = parseInt(document.getElementById('renew-plan-days').value, 10);
+        const btn = document.getElementById('btn-submit-renew');
 
-    function sendClientWhatsApp(clientId) {
-      const c = resellerClients.find(cli => cli.id === clientId);
-      if (!c) return;
-      const origin = window.location.origin;
-      const expDate = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        btn.textContent = 'Renovando...';
+        btn.disabled = true;
 
-      let msg = `¡Hola ${c.name}! Te comparto tu acceso a TOM TV.\n\n`;
-      msg += `🔑 Código de Activación: *${c.code}*\n`;
-      msg += `📅 Vence el: *${expDate}* (${c.daysRemaining} días restantes)\n\n`;
-      msg += `📱 *Para iPhone o Navegador Web*:\n${origin}/?code=${encodeURIComponent(c.code)}\n\n`;
-      msg += `📺 *Para Smart TV o Android TV*:\nAbre la app TOM TV e ingresa tu código: *${c.code}*\n\n`;
-      msg += `Cualquier consulta me avisas directamente por aquí.`;
-
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    function openRenewModal(clientId) {
-      const c = resellerClients.find(cli => cli.id === clientId);
-      if (!c) return;
-      document.getElementById('renew-client-id').value = c.id;
-      document.getElementById('renew-client-name').textContent = `${c.name} (Código: ${c.code})`;
-      document.getElementById('renew-plan-days').value = '30';
-      updateRenewCalc();
-      openModal('modal-renew-client');
-    }
-
-    function updateRenewCalc() {
-      const days = parseInt(document.getElementById('renew-plan-days').value, 10);
-      let cost = 1;
-      if (days <= 31) cost = 1;
-      else if (days <= 93) cost = 3;
-      else if (days <= 186) cost = 6;
-      else cost = 12;
-
-      const current = currentReseller ? (currentReseller.credits || 0) : 0;
-      const remaining = current - cost;
-
-      document.getElementById('renew-calc-current').textContent = current;
-      document.getElementById('renew-calc-cost').textContent = `-${cost} Crédito${cost > 1 ? 's' : ''}`;
-      document.getElementById('renew-calc-remaining').textContent = remaining;
-
-      const warning = document.getElementById('renew-credit-warning');
-      const submitBtn = document.getElementById('btn-submit-renew');
-      if (remaining < 0) {
-        warning.style.display = 'block';
-        submitBtn.disabled = true;
-        submitBtn.style.opacity = '0.5';
-      } else {
-        warning.style.display = 'none';
-        submitBtn.disabled = false;
-        submitBtn.style.opacity = '1';
-      }
-    }
-
-    async function submitRenewClient(e) {
-      e.preventDefault();
-      const id = document.getElementById('renew-client-id').value;
-      const additionalDays = parseInt(document.getElementById('renew-plan-days').value, 10);
-      const btn = document.getElementById('btn-submit-renew');
-
-      btn.textContent = 'Renovando...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch(`/api/reseller/clients/${id}/renew`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${resellerToken}`
-          },
-          body: JSON.stringify({ additionalDays })
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert(`¡Cliente renovado con éxito! Se descontaron los créditos correspondientes.`);
-          closeModal('modal-renew-client');
-          refreshResellerData();
-        } else {
-          alert('Error: ' + (data.error || 'No se pudo renovar'));
+        try {
+          const res = await fetch(`/api/reseller/clients/${id}/renew`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${resellerToken}`
+            },
+            body: JSON.stringify({ additionalDays })
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert(`¡Cliente renovado con éxito! Se descontaron los créditos correspondientes.`);
+            closeModal('modal-renew-client');
+            refreshResellerData();
+          } else {
+            alert('Error: ' + (data.error || 'No se pudo renovar'));
+          }
+        } catch (err) {
+          alert('Error de conexión.');
+        } finally {
+          btn.textContent = 'Confirmar Renovación';
+          btn.disabled = false;
         }
-      } catch (err) {
-        alert('Error de conexión.');
-      } finally {
-        btn.textContent = 'Confirmar Renovación';
-        btn.disabled = false;
-      }
-    }
-
-    async function deleteResellerClient(clientId) {
-      const c = resellerClients.find(cli => cli.id === clientId);
-      if (!c) return;
-      if (!confirm(`¿Estás seguro de que deseas eliminar al cliente "${c.name}"? Esta acción no se puede deshacer.`)) {
-        return;
       }
 
-      try {
-        const res = await fetch(`/api/reseller/clients/${clientId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${resellerToken}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          refreshResellerData();
-        } else {
-          alert('Error al eliminar cliente.');
+      async function deleteResellerClient(clientId) {
+        const c = resellerClients.find(cli => cli.id === clientId);
+        if (!c) return;
+        if (!confirm(`¿Estás seguro de que deseas eliminar al cliente "${c.name}"? Esta acción no se puede deshacer.`)) {
+          return;
         }
-      } catch (err) {
-        alert('Error de conexión.');
+
+        try {
+          const res = await fetch(`/api/reseller/clients/${clientId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${resellerToken}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            refreshResellerData();
+          } else {
+            alert('Error al eliminar cliente.');
+          }
+        } catch (err) {
+          alert('Error de conexión.');
+        }
       }
-    }
 
-    function openModal(id) {
-      document.getElementById(id).classList.add('active');
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('active');
-    }
-
-    function showToast(msg, type = 'info') {
-      const toast = document.getElementById('toast');
-      if (!toast) {
-        alert(msg);
-        return;
+      function openModal(id) {
+        document.getElementById(id).classList.add('active');
       }
-      toast.textContent = msg;
-      toast.style.display = 'block';
-      if (type === 'success') toast.style.borderColor = 'var(--success)';
-      else if (type === 'error') toast.style.borderColor = 'var(--danger)';
-      else toast.style.borderColor = 'var(--card-border)';
-      setTimeout(() => { toast.style.display = 'none'; }, 3500);
-    }
+
+      function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+      }
+
+      function showToast(msg, type = 'info') {
+        const toast = document.getElementById('toast');
+        if (!toast) {
+          alert(msg);
+          return;
+        }
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        if (type === 'success') toast.style.borderColor = 'var(--success)';
+        else if (type === 'error') toast.style.borderColor = 'var(--danger)';
+        else toast.style.borderColor = 'var(--card-border)';
+        setTimeout(() => { toast.style.display = 'none'; }, 3500);
+      }
   </script>
   <div id="toast"></div>
 </body>
+
 </html>
