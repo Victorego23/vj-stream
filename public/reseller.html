@@ -698,6 +698,12 @@
         </div>
 
         <div class="form-group">
+          <label>Código de Pantalla TV / Móvil (Opcional):</label>
+          <input type="text" id="client-custom-code" class="form-control" placeholder="Ej: VJ-8745 (déjalo vacío si es cliente nuevo)">
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Si el cliente ya tiene la app abierta en su televisor o celular, escribe su código aquí para desbloquearlo al instante.</div>
+        </div>
+
+        <div class="form-group">
           <label>Plan / Tiempo de Suscripción:</label>
           <select id="client-plan-days" class="form-control" onchange="updateCreditCalc()">
             <option value="2h">⚡ Demo Gratuito (2 Horas) - Costo: 0 Créditos</option>
@@ -1108,6 +1114,7 @@
 
       function openNewClientModal() {
         document.getElementById('client-name').value = '';
+        if (document.getElementById('client-custom-code')) document.getElementById('client-custom-code').value = '';
         document.getElementById('client-plan-days').value = '30';
         updateCreditCalc();
         openModal('modal-new-client');
@@ -1149,6 +1156,7 @@
       async function submitNewClient(e) {
         e.preventDefault();
         const name = document.getElementById('client-name').value.trim();
+        const customCode = document.getElementById('client-custom-code') ? document.getElementById('client-custom-code').value.trim() : '';
         const rawPlan = document.getElementById('client-plan-days').value;
         const planDays = rawPlan === '2h' ? '2h' : parseInt(rawPlan, 10);
         const maxDevices = parseInt(document.getElementById('client-max-devices').value, 10);
@@ -1164,7 +1172,7 @@
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${resellerToken}`
             },
-            body: JSON.stringify({ name, planDays, maxDevices })
+            body: JSON.stringify({ name, planDays, maxDevices, customCode: customCode || undefined })
           });
           const data = await res.json();
           if (data.success) {

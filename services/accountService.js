@@ -1223,6 +1223,22 @@ class AccountService {
       date: now.toISOString()
     });
 
+    // Si el código corresponde a un dispositivo pendiente de activación, vincularlo y activarlo de inmediato
+    if (finalCode && Array.isArray(db.pendingActivations)) {
+      const pendingMatch = db.pendingActivations.find(p => (p.code || '').toUpperCase() === finalCode.toUpperCase() && p.status === 'pending');
+      if (pendingMatch) {
+        pendingMatch.status = 'activated';
+        pendingMatch.clientId = newClient.id;
+        if (pendingMatch.deviceId) {
+          newClient.devices.push({
+            deviceId: pendingMatch.deviceId,
+            deviceModel: pendingMatch.deviceModel,
+            lastSeen: now.toISOString()
+          });
+        }
+      }
+    }
+
     db.clients.push(newClient);
     this._writeDb(db);
 
@@ -1660,11 +1676,8 @@ class AccountService {
    */
   activateCode(code, { name, planDays = 30, maxDevices = 1, isDemo = false, planHours = null }) {
     const db = this._readDb();
-    const pending = db.pendingActivations.find(p => p.code === code && p.status === 'pending');
-
-    if (!pending) {
-      return { success: false, error: 'Código de activación no encontrado o ya utilizado.' };
-    }
+    const cleanCode = (code || '').toString().trim().toUpperCase();
+    const pending = (db.pendingActivations || []).find(p => (p.code || '').toUpperCase() === cleanCode && p.status === 'pending');
 
     const now = new Date();
     const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h' || planHours === 2;
@@ -1677,6 +1690,39 @@ class AccountService {
     } else {
       parsedDays = parseInt(planDays, 10) || 30;
       expiresAt = new Date(now.getTime() + (parsedDays * 24 * 60 * 60 * 1000));
+    }
+
+    if (!pending) {
+      // Verificar si ya existe un cliente con este código exacto
+      const existing = (db.clients || []).find(c => (c.code || '').toUpperCase() === cleanCode);
+      if (existing) {
+        return { success: false, error: 'Este código ya pertenece a un cliente activo.' };
+      }
+
+      // El código no está en pending: crearlo de forma segura con el código solicitado
+      const newClient = {
+        id: crypto.randomUUID(),
+        name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+        username: (name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
+        code: cleanCode || ('TOM-' + Math.floor(1000 + Math.random() * 9000)),
+        status: 'active',
+        isDemo: isTwoHourDemo,
+        planHours: isTwoHourDemo ? 2 : null,
+        planDays: parsedDays,
+        planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
+        maxDevices: parseInt(maxDevices, 10) || 1,
+        createdAt: now.toISOString(),
+        expiresAt: expiresAt.toISOString(),
+        devices: []
+      };
+
+      if (Array.isArray(db.revokedClients)) {
+        db.revokedClients = db.revokedClients.filter(r => (r.code || '').toUpperCase() !== newClient.code.toUpperCase());
+      }
+
+      db.clients.push(newClient);
+      this._writeDb(db);
+      return { success: true, client: newClient };
     }
 
     // Crear el nuevo cliente asociado al dispositivo que generó el código

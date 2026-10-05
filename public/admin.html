@@ -180,6 +180,37 @@
       border-radius: 8px; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 6px;
     }
 
+    /* Live Pending Activations */
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7); }
+      70% { box-shadow: 0 0 0 9px rgba(229, 9, 20, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); }
+    }
+    .pulse-dot {
+      display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+      background: #E50914; animation: pulse-glow 1.5s infinite;
+    }
+    .pending-banner {
+      background: linear-gradient(135deg, rgba(229, 9, 20, 0.12), rgba(15, 17, 26, 0.98));
+      border: 1.5px solid rgba(229, 9, 20, 0.6);
+      border-radius: var(--radius); padding: 20px;
+      box-shadow: 0 0 30px rgba(229, 9, 20, 0.22);
+      margin-bottom: 24px;
+    }
+    .pending-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 14px; margin-top: 14px;
+    }
+    .pending-card {
+      background: #090B12; border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px; padding: 16px; display: flex; flex-direction: column;
+      gap: 12px; transition: all 0.2s;
+    }
+    .pending-card:hover {
+      border-color: rgba(229, 9, 20, 0.8);
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.25);
+    }
+
     /* Reseller Cards Grid */
     .resellers-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -293,6 +324,7 @@
     <nav class="tabs-bar">
       <button class="tab-pill active" onclick="switchTab('clients')" id="tab-btn-clients">
         📱 Clientes & Activaciones <span class="tab-badge" id="badge-clients-count">0</span>
+        <span class="tab-badge" id="badge-pending-count" style="display: none; background: #E50914; color: #fff; font-weight: 900; animation: pulse-glow 1.5s infinite; margin-left: 4px;">🔴 0 Nuevas</span>
       </button>
       <button class="tab-pill" onclick="switchTab('resellers')" id="tab-btn-resellers">
         💼 Revendedores (Distribuidores) <span class="tab-badge" id="badge-resellers-count">0</span>
@@ -312,6 +344,8 @@
       <!-- SECCIÓN 1: CLIENTES & ACTIVACIONES -->
       <!-- ============================================================== -->
       <section id="section-clients">
+        <!-- CONTENEDOR EN VIVO: NUEVAS DESCARGAS / PANTALLAS PENDIENTES DE ACTIVACIÓN -->
+        <div id="pending-activations-container"></div>
         <div class="stats-row">
           <div class="stat-card">
             <div class="stat-label">👥 Clientes Totales</div>
@@ -749,7 +783,9 @@
         if (data.success) {
           clientsData = data.clients || [];
           resellersData = data.resellers || [];
+          pendingData = data.pending || [];
           renderStats(data.stats);
+          renderPending();
           renderClients();
           renderResellers();
 
@@ -765,6 +801,209 @@
         console.error('Error al cargar datos:', e);
       }
     }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function escapeJs(str) {
+      return (str || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`¡Código ${text} copiado al portapapeles!`, 'success');
+        }).catch(() => {
+          prompt('Copia este código:', text);
+        });
+      } else {
+        prompt('Copia este código:', text);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // GESTIÓN DE PANTALLAS PENDIENTES EN TIEMPO REAL
+    // -------------------------------------------------------------
+    function renderPending() {
+      const container = document.getElementById('pending-activations-container');
+      const badge = document.getElementById('badge-pending-count');
+      if (!container) return;
+
+      const count = pendingData.length;
+      if (badge) {
+        if (count > 0) {
+          badge.textContent = `🔴 ${count} NUEVA${count > 1 ? 'S' : ''}`;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+
+      if (count === 0) {
+        container.innerHTML = `
+          <div style="background: rgba(14, 16, 23, 0.6); border: 1px dashed rgba(255,255,255,0.12); border-radius: 12px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-muted); flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 16px;">🟢</span>
+              <span><strong>Radar de Descargas Activo 24/7:</strong> Cualquier persona que descargue la app en <code style="color: #FF4D4D; background: rgba(229,9,20,0.1); padding: 2px 6px; border-radius: 4px; font-weight: bold;">tomtv.lat</code> y la abra aparecerá aquí en tiempo real con su código de activación.</span>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="fetchData()" title="Consultar descargas ahora">🔄 Refrescar</button>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="pending-banner">
+          <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="pulse-dot"></span>
+              <h3 style="margin: 0; font-size: 15px; font-weight: 900; color: #fff; letter-spacing: 0.5px;">
+                ⚡ PANTALLAS NUEVAS ESPERANDO ACTIVACIÓN (${count})
+              </h3>
+              <span style="font-size: 11px; color: #FFF; background: #E50914; padding: 2px 8px; border-radius: 20px; font-weight: 800;">
+                Descargaron la app y tienen el código en pantalla
+              </span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 11px; color: #22C55E; font-weight: 700;">🟢 En Vivo</span>
+              <button class="btn btn-secondary btn-sm" onclick="fetchData()">🔄 Actualizar</button>
+            </div>
+          </div>
+
+          <div class="pending-grid">
+            ${pendingData.map(item => {
+              const model = item.deviceModel || 'Dispositivo TOM TV';
+              const isTv = model.toLowerCase().includes('tv') || model.toLowerCase().includes('fire');
+              const icon = isTv ? '📺' : '📱';
+              return `
+                <div class="pending-card">
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <span style="font-size: 22px;">${icon}</span>
+                      <div>
+                        <div style="font-weight: 800; font-size: 13px; color: #fff;">${escapeHtml(model)}</div>
+                        <div style="font-size: 11px; color: var(--text-muted);">${escapeHtml(item.minutesAgo || 'Hace un instante')}</div>
+                      </div>
+                    </div>
+                    <span class="code-pill" style="font-size: 15px; padding: 5px 12px; cursor: pointer; border-color: rgba(34, 197, 94, 0.6);" onclick="copyToClipboard('${item.code}')" title="Clic para copiar código">
+                      🔑 <strong>${item.code}</strong> 📋
+                    </span>
+                  </div>
+
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <button class="btn btn-gold btn-sm" onclick="quickActivate('${item.code}', '2h', '${escapeJs(model)}')" title="Activa 2 horas de prueba gratis al instante">
+                      ⚡ Demo 2 Horas
+                    </button>
+                    <button class="btn btn-success btn-sm" onclick="quickActivate('${item.code}', '30d', '${escapeJs(model)}')" title="Activa 30 días de suscripción">
+                      🟢 1 Mes (30d)
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="quickActivate('${item.code}', '365d', '${escapeJs(model)}')" title="Activa 1 año">
+                      💎 1 Año
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="openCustomActivateModal('${item.code}', '${escapeJs(model)}')" title="Personalizar nombre y plan">
+                      ✏️ Personalizar
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="rejectPending('${item.code}')" title="Descartar esta pantalla">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    async function quickActivate(code, plan, defaultModel) {
+      const planLabel = plan === '2h' ? 'Demo 2 Horas Gratis' : (plan === '30d' ? '1 Mes (30 días)' : '1 Año (365 días)');
+      const clientName = prompt(`Ingresa el nombre del cliente para la pantalla ${code}:`, `Cliente ${defaultModel || code}`);
+      if (clientName === null) return;
+      const name = clientName.trim() || `Cliente ${code}`;
+
+      try {
+        const res = await fetch('/api/admin/quick-activate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ code, plan, name })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`¡Pantalla ${code} activada exitosamente con ${planLabel}!`, 'success');
+          fetchData();
+          if (data.whatsappLink) {
+            const sendWsp = confirm(`¡Pantalla activada con éxito!\n\n¿Deseas abrir WhatsApp para enviarle la confirmación con los datos de acceso al cliente?`);
+            if (sendWsp) {
+              window.open(data.whatsappLink, '_blank');
+            }
+          }
+        } else {
+          showToast('Error al activar: ' + (data.error || 'No se pudo activar'), 'error');
+        }
+      } catch (e) {
+        showToast('Error de red al activar pantalla.', 'error');
+      }
+    }
+
+    function openCustomActivateModal(code, defaultModel) {
+      document.getElementById('new-client-name').value = `Cliente ${defaultModel || code}`.trim();
+      document.getElementById('new-client-code').value = code;
+      document.getElementById('modal-client').style.display = 'flex';
+    }
+
+    async function rejectPending(code) {
+      if (!confirm(`¿Estás seguro de descartar la pantalla pendiente ${code}?`)) return;
+      try {
+        const res = await fetch(`/api/admin/pending/${code}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Pantalla ${code} descartada correctamente.`, 'info');
+          fetchData();
+        } else {
+          showToast('Error al descartar: ' + (data.error || 'Error'), 'error');
+        }
+      } catch (e) {
+        showToast('Error de red al descartar pantalla.', 'error');
+      }
+    }
+
+    async function fetchDataSilently() {
+      if (!adminToken || document.getElementById('dashboard-view').style.display === 'none') return;
+      try {
+        const res = await fetch('/api/admin/overview', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        if (res.status === 200) {
+          const data = await res.json();
+          if (data.success) {
+            const oldPendingCount = pendingData.length;
+            clientsData = data.clients || [];
+            resellersData = data.resellers || [];
+            pendingData = data.pending || [];
+            renderStats(data.stats);
+            renderPending();
+
+            if (pendingData.length > oldPendingCount) {
+              const diff = pendingData.length - oldPendingCount;
+              showToast(`🔔 ¡${diff} nueva${diff > 1 ? 's' : ''} pantalla${diff > 1 ? 's' : ''} esperando activación!`, 'warning');
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Sondeo en vivo cada 5 segundos para que cualquier descarga aparezca sola
+    setInterval(fetchDataSilently, 5000);
 
     function renderStats(stats = {}) {
       document.getElementById('stat-total-clients').textContent = stats.totalClients || clientsData.length;
@@ -880,7 +1119,8 @@
       btn.disabled = true;
 
       try {
-        const res = await fetch('/api/admin/activate-code', {
+        const endpoint = code ? '/api/admin/activate-code' : '/api/admin/create-client';
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
           body: JSON.stringify({ name, code: code || undefined, planDays, maxDevices })
