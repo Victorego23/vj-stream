@@ -656,6 +656,20 @@
         });
         const data = await res.json();
         if (data.success) {
+          if (data.isReseller) {
+            localStorage.setItem('tom_reseller_token', data.token);
+            if (errBox) {
+              errBox.style.background = 'rgba(16, 185, 129, 0.2)';
+              errBox.style.border = '1px solid #10B981';
+              errBox.style.color = '#6EE7B7';
+              errBox.innerHTML = `✅ <strong>¡Hola ${data.resellerName}!</strong> Has ingresado con tu cuenta de revendedor.<br>Redirigiéndote a tu Sub-Panel en un segundo...`;
+              errBox.style.display = 'block';
+            }
+            setTimeout(() => {
+              window.location.href = data.redirectUrl || `/reseller?token=${encodeURIComponent(data.token)}`;
+            }, 600);
+            return;
+          }
           adminToken = data.token || pass;
           localStorage.setItem('vj_admin_token', adminToken);
           showDashboard();
@@ -664,7 +678,7 @@
             errBox.style.background = 'rgba(245, 158, 11, 0.15)';
             errBox.style.border = '1px solid #F59E0B';
             errBox.style.color = '#FCD34D';
-            errBox.innerHTML = `⚠️ <strong>¡Esta contraseña es de un Revendedor!</strong><br>${data.error}<br><br><a href="/reseller" class="btn btn-gold btn-sm" style="display:inline-block; margin-top: 6px; text-decoration: none;">Ir al Sub-Panel de Revendedores</a>`;
+            errBox.innerHTML = `⚠️ <strong>¡Cuenta de Revendedor!</strong><br>${data.error}<br><br><a href="/reseller" class="btn btn-gold btn-sm" style="display:inline-block; margin-top: 6px; text-decoration: none;">Ir al Sub-Panel de Revendedores</a>`;
             errBox.style.display = 'block';
           } else {
             alert(data.error);
@@ -1130,8 +1144,11 @@
 
     function sendResellerAccess(name, username, password, credits) {
       const origin = window.location.origin;
-      const msg = `¡Hola *${name}*! Aquí tienes tus credenciales para acceder a tu Sub-Panel de Distribuidor en TOM TV:\n\n🌐 *Portal:* ${origin}/reseller\n👤 *Usuario:* ${username}\n🔑 *Contraseña:* ${password}\n⚡ *Tus Créditos Disponibles:* ${credits}\n📥 *Descarga APK para tus clientes:* ${origin}/download-apk\n\nDesde allí puedes crear clientes en 1 clic y emitir pruebas gratuitas. ¡Éxitos con las ventas!`;
-      copyText(msg, '¡Mensaje copiado! Ahora pégalo en el chat de WhatsApp de tu revendedor.');
+      const cleanUser = encodeURIComponent(username);
+      const cleanPass = encodeURIComponent(password);
+      const magicLoginUrl = `${origin}/reseller?u=${cleanUser}&p=${cleanPass}`;
+      const msg = `¡Hola *${name}*! 🎉 Aquí tienes tu acceso al Sub-Panel de Distribuidor en TOM TV:\n\n🚀 *ENTRADA RÁPIDA (1 solo clic, entra directo sin escribir):*\n👉 ${magicLoginUrl}\n\nO si prefieres ingresar manualmente:\n🌐 *Portal:* ${origin}/reseller\n👤 *Usuario:* ${username}\n🔑 *Contraseña:* ${password}\n⚡ *Tus Créditos:* ${credits}\n📥 *Descarga APK para tus clientes:* ${origin}/download-apk\n\nDesde tu panel puedes crear clientes en 1 clic y emitir pruebas gratuitas. ¡Éxitos con las ventas!`;
+      copyText(msg, '¡Mensaje copiado con enlace mágico directo! Pégalo en el chat de WhatsApp de tu revendedor.');
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
 

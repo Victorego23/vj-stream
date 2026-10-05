@@ -24,20 +24,47 @@ function adminAuth(req, res, next) {
  * @desc    Valida credenciales de acceso al Panel Web y emite token firmado de sesión
  */
 router.post('/login', loginRateLimiter, (req, res) => {
-  const { password } = req.body;
+  const { password, username } = req.body;
   if (!password || !accountService.verifyAdminPassword(password)) {
-    const clean = String(password || '').trim();
+    const cleanPass = String(password || '').trim();
+    const cleanUser = String(username || '').trim().replace(/^@+/, '');
+    const cleanPassDigits = cleanPass.replace(/\D/g, '');
+    const cleanUserDigits = cleanUser.replace(/\D/g, '');
+
     const db = accountService._readDb();
-    const matchingReseller = (db.resellers || []).find(r => (r.password || '').trim() === clean);
+    const matchingReseller = (db.resellers || []).find(r => {
+      const rPass = (r.password || '').trim();
+      const rUser = (r.username || '').trim().toLowerCase().replace(/^@+/, '');
+      const rPhone = (r.whatsapp || '').replace(/\D/g, '');
+
+      return rPass === cleanPass ||
+             (cleanUser && rUser === cleanUser.toLowerCase() && (rPass === cleanPass || !cleanPass)) ||
+             (cleanPass && rUser === cleanPass.toLowerCase() && cleanUser && rPass === cleanUser) ||
+             (cleanPassDigits.length >= 7 && rPhone.includes(cleanPassDigits)) ||
+             (cleanUserDigits.length >= 7 && rPhone.includes(cleanUserDigits) && rPass === cleanPass);
+    });
+
     if (matchingReseller) {
-      return res.status(401).json({
-        success: false,
+      if (matchingReseller.status === 'suspended') {
+        return res.status(403).json({
+          success: false,
+          isReseller: true,
+          error: `La cuenta de revendedor "${matchingReseller.name}" se encuentra suspendida temporalmente.`
+        });
+      }
+
+      const resellerToken = accountService.generateResellerToken(matchingReseller);
+      return res.json({
+        success: true,
         isReseller: true,
         resellerUsername: matchingReseller.username,
         resellerName: matchingReseller.name,
-        error: `Esta contraseña pertenece al revendedor "${matchingReseller.name}". Debes ingresar en el portal de revendedores: tomtv.lat/reseller`
+        token: resellerToken,
+        redirectUrl: `/reseller?token=${encodeURIComponent(resellerToken)}`,
+        message: `¡Bienvenido ${matchingReseller.name}! Redirigiéndote a tu Sub-Panel de Revendedor...`
       });
     }
+
     return res.status(401).json({ success: false, error: 'Contraseña de administrador incorrecta.' });
   }
 

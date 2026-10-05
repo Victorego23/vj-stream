@@ -477,6 +477,41 @@
 
     // Inicio
     window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // 1. Acceso directo por Token (?token=...)
+      const urlToken = urlParams.get('token');
+      if (urlToken) {
+        resellerToken = urlToken;
+        localStorage.setItem('tom_reseller_token', resellerToken);
+        window.history.replaceState({}, document.title, window.location.pathname);
+        verifySession();
+        return;
+      }
+
+      // 2. Acceso directo por Enlace Mágico WhatsApp (?u=...&p=...)
+      const urlUser = urlParams.get('u') || urlParams.get('user') || urlParams.get('usuario');
+      const urlPass = urlParams.get('p') || urlParams.get('pass') || urlParams.get('password') || urlParams.get('clave');
+      if (urlPass) {
+        if (urlUser) {
+          const uInput = document.getElementById('reseller-user-input');
+          if (uInput) uInput.value = decodeURIComponent(urlUser).trim();
+        }
+        const pInput = document.getElementById('reseller-pass-input');
+        if (pInput) pInput.value = decodeURIComponent(urlPass).trim();
+
+        // Ocultar parámetros de la URL para mayor seguridad visual
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        // Disparar autenticación automática en 1 clic
+        const form = document.getElementById('reseller-login-form');
+        if (form) {
+          form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+        return;
+      }
+
+      // 3. Sesión activa previa en este dispositivo
       if (resellerToken) {
         verifySession();
       }

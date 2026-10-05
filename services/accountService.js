@@ -861,6 +861,10 @@ class AccountService {
     return `rst.${b64}.${sig}`;
   }
 
+  generateResellerToken(reseller) {
+    return this._generateResellerToken(reseller);
+  }
+
   _verifyResellerToken(token) {
     if (!token || typeof token !== 'string') return null;
     if (!token.startsWith('rst.')) return null;
@@ -933,13 +937,13 @@ class AccountService {
   createReseller({ name, username, password, whatsapp, initialCredits = 10 }) {
     if (!name || !name.trim()) throw new Error('El nombre del revendedor es obligatorio.');
     if (!username || !username.trim()) throw new Error('El nombre de usuario es obligatorio.');
-    if (!password || password.trim().length < 4) throw new Error('La contraseña debe tener al menos 4 caracteres.');
+    if (!password || !password.trim()) throw new Error('La contraseña es obligatoria.');
 
-    const cleanUsername = username.trim().toLowerCase();
+    const cleanUsername = username.trim().toLowerCase().replace(/^@+/, '');
     const db = this._readDb();
     if (!Array.isArray(db.resellers)) db.resellers = [];
 
-    if (db.resellers.some(r => r.username.toLowerCase() === cleanUsername)) {
+    if (db.resellers.some(r => (r.username || '').toLowerCase() === cleanUsername)) {
       throw new Error(`El nombre de usuario "${cleanUsername}" ya está registrado.`);
     }
 
@@ -987,7 +991,7 @@ class AccountService {
     if (name && name.trim()) reseller.name = name.trim();
     if (whatsapp !== undefined) reseller.whatsapp = whatsapp.trim();
     if (status && ['active', 'suspended'].includes(status)) reseller.status = status;
-    if (password && password.trim().length >= 4) reseller.password = password.trim();
+    if (password && password.trim().length >= 1) reseller.password = password.trim();
 
     this._writeDb(db);
     return {
@@ -1044,43 +1048,78 @@ class AccountService {
   }
 
   authenticateReseller(username, password) {
-    if (!password) throw new Error('Contraseña de revendedor requerida.');
+    if (!password || !String(password).trim()) {
+      throw new Error('Contraseña de revendedor requerida.');
+    }
     const db = this._readDb();
-    const cleanUser = String(username || '').trim().toLowerCase();
+    let cleanUser = String(username || '').trim().toLowerCase();
     const cleanPass = String(password).trim();
-    const cleanUserDigits = cleanUser.replace(/\D/g, '');
 
-    // 1. Buscar revendedor con máxima tolerancia: por username, nombre completo o teléfono WhatsApp
+    // Eliminar @ si el revendedor lo antepuso (ej: @usuario1 -> usuario1)
+    cleanUser = cleanUser.replace(/^@+/, '');
+    const cleanUserDigits = cleanUser.replace(/\D/g, '');
+    const cleanPassDigits = cleanPass.replace(/\D/g, '');
+
+    // 1. Buscar revendedor por coincidencia directa o flexible
     let reseller = (db.resellers || []).find(r => {
-      const rUser = (r.username || '').trim().toLowerCase();
+      const rUser = (r.username || '').trim().toLowerCase().replace(/^@+/, '');
       const rName = (r.name || '').trim().toLowerCase();
+      const rPass = (r.password || '').trim();
       const rPhoneDigits = (r.whatsapp || '').replace(/\D/g, '');
 
-      // Coincidencia directa por username
-      if (cleanUser && rUser === cleanUser) return true;
+      // Coincidencia directa por username o ID
+      if (cleanUser && (rUser === cleanUser || r.id === cleanUser)) return true;
 
       // Coincidencia por nombre completo o parcial
       if (cleanUser && rName === cleanUser) return true;
       if (cleanUser && cleanUser.length >= 3 && (rName.includes(cleanUser) || cleanUser.includes(rName))) return true;
 
-      // Coincidencia por teléfono / WhatsApp (al menos 6 dígitos numéricos)
+      // Coincidencia por teléfono / WhatsApp
       if (cleanUserDigits.length >= 6 && rPhoneDigits.length >= 6) {
-        if (rPhoneDigits.endsWith(cleanUserDigits) || cleanUserDigits.endsWith(rPhoneDigits)) return true;
+        if (rPhoneDigits.includes(cleanUserDigits) || cleanUserDigits.includes(rPhoneDigits)) return true;
+      }
+
+      // Caso accidental: El revendedor escribió el usuario en el campo contraseña y viceversa
+      if (cleanPass && rUser === cleanPass && cleanUser && rPass === cleanUser) {
+        return true;
       }
 
       return false;
     });
 
-    // 2. Si no se especificó usuario o no coincidió con el nombre/teléfono, buscar por contraseña única
+    // 2. Si no se encontró por usuario/teléfono, o el campo usuario vino vacío:
+    // Buscar si la contraseña ingresada pertenece a algún revendedor
     if (!reseller) {
       const matchingByPass = (db.resellers || []).filter(r => (r.password || '').trim() === cleanPass);
       if (matchingByPass.length === 1) {
         reseller = matchingByPass[0];
+      } else if (matchingByPass.length > 1 && cleanUser) {
+        // Si hay varios revendedores con la misma clave, desempatar por similitud
+        const refined = matchingByPass.find(r => 
+          (r.username || '').toLowerCase().includes(cleanUser) || 
+          (r.name || '').toLowerCase().includes(cleanUser)
+        );
+        if (refined) reseller = refined;
       }
     }
 
-    if (!reseller || (reseller.password || '').trim() !== cleanPass) {
-      throw new Error('Credenciales incorrectas. Verifica tu usuario o contraseña en tomtv.lat/reseller.');
+    // 3. Caso especial: Usuario tipeó el teléfono en el campo de contraseña
+    if (!reseller && cleanPassDigits.length >= 6) {
+      reseller = (db.resellers || []).find(r => {
+        const rPhone = (r.whatsapp || '').replace(/\D/g, '');
+        return rPhone.length >= 6 && (rPhone.includes(cleanPassDigits) || cleanPassDigits.includes(rPhone));
+      });
+    }
+
+    if (!reseller) {
+      throw new Error('Revendedor no encontrado. Verifica tu usuario o solicita el enlace de acceso directo al administrador.');
+    }
+
+    // Comprobar contraseña (o caso donde se intercambiaron campos)
+    const validPass = (reseller.password || '').trim();
+    const isPassMatch = validPass === cleanPass || validPass === cleanUser;
+    if (!isPassMatch) {
+      throw new Error(`Contraseña incorrecta para el usuario "${reseller.username}".`);
     }
 
     if (reseller.status === 'suspended') {
