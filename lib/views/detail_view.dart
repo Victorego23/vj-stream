@@ -305,22 +305,6 @@ class _DetailViewState extends State<DetailView> {
       String? streamUrl = streamInfo?['streamUrl'] as String?;
       String audioLang = (streamInfo?['audioLanguage'] as String?) ?? 'Español Latino';
       String quality = (streamInfo?['qualityLabel'] as String?) ?? '1080p Full HD';
-      bool isTrailer = false;
-
-      // Si aún no hay stream completo (ej. estreno mundial de cine), resolver tráiler HD nativo y reproducir de inmediato
-      if (streamUrl == null || streamUrl.isEmpty) {
-        final trailerKey = streamInfo?['trailerKey'] ?? widget.item.trailerKey ?? widget.item.trailerUrl;
-        if (trailerKey != null && trailerKey.toString().isNotEmpty) {
-          try {
-            streamUrl = await TrailerService().resolveDirectStreamUrl(trailerKey.toString());
-            if (streamUrl != null && streamUrl.isNotEmpty) {
-              isTrailer = true;
-              audioLang = 'Tráiler Oficial (HD)';
-              quality = 'HD 720p / 1080p';
-            }
-          } catch (_) {}
-        }
-      }
 
       if (streamUrl != null && streamUrl.isNotEmpty) {
         final available = (streamInfo?['availableStreams'] as List?)
@@ -328,7 +312,7 @@ class _DetailViewState extends State<DetailView> {
             .toList();
 
         // Si el usuario pidió seleccionar fuente manualmente y hay opciones
-        if (selectSourceManually && available != null && available.length > 1 && !isTrailer) {
+        if (selectSourceManually && available != null && available.length > 1) {
           _showManualSourceSelector(
             displayTitle: displayTitle,
             defaultStreamUrl: streamUrl,
@@ -345,7 +329,7 @@ class _DetailViewState extends State<DetailView> {
           MaterialPageRoute(
             builder: (context) => VideoPlayerView(
               videoUrl: streamUrl!,
-              title: isTrailer ? '$displayTitle (Tráiler Oficial)' : displayTitle,
+              title: displayTitle,
               mediaId: widget.item.id,
               posterUrl: widget.item.bestPosterUrl,
               backdropUrl: widget.item.bestBackdropUrl,
@@ -365,7 +349,7 @@ class _DetailViewState extends State<DetailView> {
         return;
       }
 
-      // Si no hay enlace de transmisión válido o el servidor reportó no disponibilidad en español
+      // Si no hay enlace de transmisión completo verificado, mostrar diálogo VIP informativo
       _showStreamUnavailableModal(
         displayTitle,
         streamInfo,
@@ -377,31 +361,7 @@ class _DetailViewState extends State<DetailView> {
       Navigator.of(context, rootNavigator: true).pop();
       setState(() => _isPreparing = false);
 
-      // Intentar reproducir tráiler antes de mostrar cualquier modal en caso de error de red
-      final trailerKey = widget.item.trailerKey ?? widget.item.trailerUrl;
-      if (trailerKey != null && trailerKey.toString().isNotEmpty) {
-        try {
-          final directStreamUrl = await TrailerService().resolveDirectStreamUrl(trailerKey.toString());
-          if (mounted && directStreamUrl != null && directStreamUrl.isNotEmpty) {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => VideoPlayerView(
-                  videoUrl: directStreamUrl,
-                  title: '$displayTitle (Tráiler Oficial)',
-                  posterUrl: widget.item.bestPosterUrl,
-                  backdropUrl: widget.item.bestBackdropUrl,
-                  mediaType: widget.item.mediaType,
-                  audioLanguage: 'Tráiler Oficial (HD)',
-                  qualityLabel: 'HD 720p',
-                  mediaItem: widget.item,
-                ),
-              ),
-            );
-            return;
-          }
-        } catch (_) {}
-      }
-
+      // En caso de error de red o sin conexión, mostrar modal informativo VIP
       _showStreamUnavailableModal(
         displayTitle,
         null,
@@ -422,6 +382,11 @@ class _DetailViewState extends State<DetailView> {
     if (!mounted) return;
     final message = streamInfo?['message'] as String? ??
         'Esta película se encuentra actualmente en proceso de digitalización o en salas de cine. TOM TV protege tu experiencia evitando grabaciones de mala calidad o enlaces caídos.';
+
+    final isTelenovela = displayTitle.toLowerCase().contains('cielos') ||
+        displayTitle.toLowerCase().contains('telemundo') ||
+        displayTitle.toLowerCase().contains('novela') ||
+        widget.item.title.toLowerCase().contains('cielos');
 
     showDialog(
       context: context,
@@ -492,6 +457,29 @@ class _DetailViewState extends State<DetailView> {
             onPressed: () => Navigator.pop(dContext),
             child: const Text('Cerrar', style: TextStyle(color: Colors.white54)),
           ),
+          if (isTelenovela)
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE50914),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              icon: const Icon(Icons.live_tv_rounded, size: 16),
+              onPressed: () {
+                Navigator.pop(dContext);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const VideoPlayerView(
+                      videoUrl: 'http://138.121.15.230:9002/TELEMUNDO/index.m3u8',
+                      title: 'Telemundo Novelas (El Señor de los Cielos 24/7)',
+                      audioLanguage: 'Español Latino (En Vivo)',
+                      qualityLabel: '1080p FHD',
+                    ),
+                  ),
+                );
+              },
+              label: const Text('Ver en TV en Vivo', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFF59E0B),

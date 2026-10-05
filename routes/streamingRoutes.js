@@ -703,15 +703,14 @@ router.get('/version', (req, res) => {
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion: '3.5.5',
-    versionCode: 30,
+    latestVersion: '3.5.6',
+    versionCode: 31,
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-04',
     releaseNotes: [
-      '📺 Acceso Directo a Canales en Smart TV: Eliminada la columna intermedia de submenús; al elegir TV en Vivo entras de inmediato a la cuadrícula de canales a pantalla completa con foco automático.',
-      '⚡ Navegación Fluida TV a Sidebar: Flecha Izquierda o tecla Atrás regresa de forma natural al menú lateral principal sin pasos intermedios.',
-      '🎬 Experiencia Cinemática 16:9 Panorámica: Cuadrícula expandida que aprovecha el 100% del ancho de tu televisor.',
-      '🚀 Instalador Automático Optimizado: Corrección del gestor de permisos en Android TV para actualización en 1 clic.'
+      '🎯 Protección Total de Enlaces: Nuevo filtro de integridad que garantiza que cada película o serie reproduzca exactamente el contenido solicitado, bloqueando cualquier transmisión ajena o mal etiquetada.',
+      '📺 Canales de Telenovelas 24/7 en TV en Vivo: Nuevos canales agregados (Telemundo Novelas - El Señor de los Cielos 24/7 y TNT Novelas HD) listos para ver en alta definición.',
+      '✨ Diálogo Informativo VIP: Si un título está en proceso de digitalización, ahora muestra un aviso claro con opción directa de ver en TV en vivo o disfrutar del tráiler oficial sin reproducirlo a ciegas.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,

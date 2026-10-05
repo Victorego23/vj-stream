@@ -1,5 +1,33 @@
 [
   {
+    "id": "ch_telemundo_novelas_247",
+    "name": "Telemundo Novelas (El Señor de los Cielos 24/7)",
+    "category": "Cine & Series",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Telemundo_logo_2018.svg/1200px-Telemundo_logo_2018.svg.png",
+    "streamUrl": "http://138.121.15.230:9002/TELEMUNDO/index.m3u8",
+    "sources": [
+      "http://138.121.15.230:9002/TELEMUNDO/index.m3u8",
+      "https://nbculocallive.akamaized.net/hls/live/2037499/puertorico/stream1/master.m3u8",
+      "http://190.60.46.156:8089/TELEMUNDO/index.m3u8"
+    ],
+    "quality": "1080p FHD",
+    "isActive": true,
+    "order": 1
+  },
+  {
+    "id": "ch_tnt_novelas_hd",
+    "name": "TNT Novelas HD",
+    "category": "Cine & Series",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/TNT_Novelas_2025.svg/1920px-TNT_Novelas_2025.svg.png",
+    "streamUrl": "http://190.93.224.42/TNT-NOVELAS/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/TNT-NOVELAS/index.m3u8"
+    ],
+    "quality": "1080p FHD",
+    "isActive": true,
+    "order": 2
+  },
+  {
     "id": "ch_americatelevision_pe",
     "name": "América TV HD",
     "category": "🇵🇪 Canales Peruanos",

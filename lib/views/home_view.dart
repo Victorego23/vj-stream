@@ -389,31 +389,8 @@ class _HomeViewState extends State<HomeView> {
     String? streamUrl = streamInfo?['streamUrl'] as String?;
     String audioLang = (streamInfo?['audioLanguage'] as String?) ?? 'Español Latino';
     String quality = (streamInfo?['qualityLabel'] as String?) ?? '1080p Full HD';
-    bool isTrailer = false;
-
-    // Si aún no hay stream completo (ej. estreno mundial de cine), resolver tráiler HD nativo y reproducir de inmediato
     if (streamUrl == null || streamUrl.isEmpty) {
-      final trailerKey = streamInfo?['trailerKey'] ?? item.trailerKey ?? item.trailerUrl;
-      if (trailerKey != null && trailerKey.toString().isNotEmpty) {
-        try {
-          streamUrl = await TrailerService().resolveDirectStreamUrl(trailerKey.toString());
-          if (streamUrl != null && streamUrl.isNotEmpty) {
-            isTrailer = true;
-            audioLang = 'Tráiler Oficial';
-            quality = '1080p Tráiler';
-          }
-        } catch (_) {}
-      }
-    }
-
-    if (streamUrl == null || streamUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Conectando con servidores para "${item.title}"...'),
-          backgroundColor: const Color(0xFFE50914),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      _openDetail(item);
       return;
     }
 
@@ -425,7 +402,7 @@ class _HomeViewState extends State<HomeView> {
       MaterialPageRoute(
         builder: (context) => VideoPlayerView(
           videoUrl: streamUrl!,
-          title: isTrailer ? '${item.title} (Tráiler Oficial)' : item.title,
+          title: item.title,
           mediaId: item.id,
           posterUrl: item.bestPosterUrl,
           backdropUrl: item.bestBackdropUrl,
