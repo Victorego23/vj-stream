@@ -44,7 +44,27 @@ class AccountService {
           devices: []
         }
       ],
-      pendingActivations: []
+      pendingActivations: [],
+      resellers: [
+        {
+          id: '80723ae7-e8d9-4e8a-b128-073bcfd9cade',
+          name: 'Jesus Daniel Guevara Quispe',
+          username: 'usuario1',
+          password: '2233',
+          whatsapp: '+51 904 416 154',
+          credits: 15,
+          status: 'active',
+          createdAt: '2026-10-04T18:00:00.000Z',
+          history: [
+            {
+              type: 'initial_deposit',
+              amount: 15,
+              date: '2026-10-04T18:00:00.000Z',
+              note: 'Créditos iniciales asignados'
+            }
+          ]
+        }
+      ]
     };
 
     // Auto-recuperación desde Backup si el archivo principal no existe o se reseteó
@@ -91,8 +111,9 @@ class AccountService {
           dbData.clients = Array.from(clientMap.values());
           dbData.revokedClients = Array.from(new Map([...dbData.revokedClients, ...backupData.revokedClients].map(r => [r.id, r])).values());
 
-          // Fusionar revendedores entre DB y Backup para que NUNCA se pierdan
+          // Fusionar revendedores entre DB, Backup e initialData para que NUNCA se pierdan
           const resellerMap = new Map();
+          (initialData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
           (backupData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
           (dbData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
           dbData.resellers = Array.from(resellerMap.values());
