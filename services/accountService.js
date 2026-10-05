@@ -190,14 +190,126 @@ class AccountService {
     try {
       this._cache = data;
       const jsonStr = JSON.stringify(data, null, 2);
-      fs.writeFileSync(DB_FILE, jsonStr, 'utf8');
+      const tmpFile = DB_FILE + '.tmp';
+      fs.writeFileSync(tmpFile, jsonStr, 'utf8');
+      fs.renameSync(tmpFile, DB_FILE);
       // Guardar copia de seguridad redundante simultáneamente
-      fs.writeFileSync(BACKUP_FILE, jsonStr, 'utf8');
+      const tmpBackup = BACKUP_FILE + '.tmp';
+      fs.writeFileSync(tmpBackup, jsonStr, 'utf8');
+      fs.renameSync(tmpBackup, BACKUP_FILE);
       return true;
     } catch (e) {
       console.error('[AccountService] Error escribiendo en DB:', e);
       return false;
     }
+  }
+
+  // -------------------------------------------------------------
+  // SINCRONIZACIÓN EN LA NUBE: CONTINUAR VIENDO Y FAVORITOS
+  // -------------------------------------------------------------
+
+  _findClientByCodeOrId(codeOrId) {
+    if (!codeOrId) return null;
+    const clean = String(codeOrId).trim().toUpperCase();
+    const db = this._readDb();
+    return (db.clients || []).find(c => 
+      (c.code && c.code.toUpperCase() === clean) || 
+      (c.id && c.id.toUpperCase() === clean) ||
+      (c.username && c.username.toUpperCase() === clean)
+    ) || null;
+  }
+
+  getUserSyncData(codeOrId) {
+    const client = this._findClientByCodeOrId(codeOrId);
+    if (!client) {
+      return { history: [], favorites: [] };
+    }
+    return {
+      history: Array.isArray(client.playbackHistory) ? client.playbackHistory : [],
+      favorites: Array.isArray(client.favorites) ? client.favorites : []
+    };
+  }
+
+  savePlaybackProgress(codeOrId, item) {
+    if (!item || !item.id) return [];
+    const db = this._readDb();
+    const clean = String(codeOrId).trim().toUpperCase();
+    const client = (db.clients || []).find(c => 
+      (c.code && c.code.toUpperCase() === clean) || 
+      (c.id && c.id.toUpperCase() === clean) ||
+      (c.username && c.username.toUpperCase() === clean)
+    );
+    if (!client) return [];
+
+    if (!Array.isArray(client.playbackHistory)) {
+      client.playbackHistory = [];
+    }
+
+    // Filtrar si ya existe el mismo elemento
+    client.playbackHistory = client.playbackHistory.filter(h => String(h.id) !== String(item.id));
+    
+    // Si la posición es muy cercana al final (> 95%), no guardarlo como pendiente
+    const duration = Number(item.durationSeconds) || 0;
+    const position = Number(item.positionSeconds) || 0;
+    const isCompleted = duration > 0 && (position / duration) >= 0.95;
+
+    if (!isCompleted && position >= 10) {
+      client.playbackHistory.unshift({
+        id: item.id,
+        title: item.title || 'Sin título',
+        posterUrl: item.posterUrl || '',
+        backdropUrl: item.backdropUrl || '',
+        mediaType: item.mediaType || 'movie',
+        positionSeconds: position,
+        durationSeconds: duration,
+        season: item.season != null ? Number(item.season) : null,
+        episode: item.episode != null ? Number(item.episode) : null,
+        lastWatched: new Date().toISOString()
+      });
+      // Limitar a los últimos 50 elementos para optimizar tamaño
+      if (client.playbackHistory.length > 50) {
+        client.playbackHistory = client.playbackHistory.slice(0, 50);
+      }
+    }
+
+    this._writeDb(db);
+    return client.playbackHistory;
+  }
+
+  toggleFavorite(codeOrId, item) {
+    if (!item || !item.id) return [];
+    const db = this._readDb();
+    const clean = String(codeOrId).trim().toUpperCase();
+    const client = (db.clients || []).find(c => 
+      (c.code && c.code.toUpperCase() === clean) || 
+      (c.id && c.id.toUpperCase() === clean) ||
+      (c.username && c.username.toUpperCase() === clean)
+    );
+    if (!client) return [];
+
+    if (!Array.isArray(client.favorites)) {
+      client.favorites = [];
+    }
+
+    const existingIndex = client.favorites.findIndex(f => String(f.id) === String(item.id));
+    if (existingIndex >= 0) {
+      client.favorites.splice(existingIndex, 1);
+    } else {
+      client.favorites.unshift({
+        id: item.id,
+        title: item.title || 'Sin título',
+        posterUrl: item.posterUrl || item.posterMedium || '',
+        backdropUrl: item.backdropUrl || item.backdropLarge || '',
+        mediaType: item.mediaType || 'movie',
+        addedAt: new Date().toISOString()
+      });
+      if (client.favorites.length > 100) {
+        client.favorites = client.favorites.slice(0, 100);
+      }
+    }
+
+    this._writeDb(db);
+    return client.favorites;
   }
 
   // -------------------------------------------------------------

@@ -374,6 +374,9 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
     return Image.network(
       posterUrl,
       fit: BoxFit.cover,
+      cacheWidth: 320,
+      cacheHeight: 480,
+      filterQuality: FilterQuality.low,
       errorBuilder: (context, error, stackTrace) {
         return Container(
           color: const Color(0xFF2A2A2A),

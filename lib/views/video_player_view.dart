@@ -95,6 +95,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   String? _currentSubtitleUrl;
   List<_SubtitleItem> _parsedSubtitles = [];
   String? _activeSubtitleText;
+  double _subtitleDelaySeconds = 0.0;
 
   bool _isInitialized = false;
   bool _hasError = false;
@@ -408,9 +409,11 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     // Actualizar subtítulo activo según la posición de reproducción
     if (_subtitlesEnabled && _parsedSubtitles.isNotEmpty) {
       final pos = _controller!.value.position;
+      final adjustedMillis = pos.inMilliseconds + (_subtitleDelaySeconds * 1000).round();
+      final adjustedPos = Duration(milliseconds: adjustedMillis < 0 ? 0 : adjustedMillis);
       String? foundText;
       for (final sub in _parsedSubtitles) {
-        if (pos >= sub.start && pos <= sub.end) {
+        if (adjustedPos >= sub.start && adjustedPos <= sub.end) {
           foundText = sub.text;
           break;
         }
@@ -1537,6 +1540,77 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                           style: TextStyle(color: Colors.white54, fontSize: 13),
                         ),
                       ),
+                    if (_subtitlesEnabled) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.amber.withOpacity(0.35), width: 1.2),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.sync_rounded, color: Colors.amber, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Sincronización: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const Spacer(),
+                                if (_subtitleDelaySeconds != 0.0)
+                                  TextButton(
+                                    onPressed: () {
+                                      setState(() => _subtitleDelaySeconds = 0.0);
+                                      setSheetState(() {});
+                                      _showFeedbackIndicator('Subtítulos restablecidos (0.0s)');
+                                    },
+                                    child: const Text('Restablecer', style: TextStyle(color: Colors.amber, fontSize: 12)),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.fast_rewind_rounded, size: 16),
+                                  label: const Text('-0.5s (Adelantar)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2C2C2C),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  onPressed: () {
+                                    setState(() => _subtitleDelaySeconds -= 0.5);
+                                    setSheetState(() {});
+                                    _showFeedbackIndicator('Subtítulos: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s');
+                                  },
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.fast_forward_rounded, size: 16),
+                                  label: const Text('+0.5s (Retrasar)'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF2C2C2C),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  onPressed: () {
+                                    setState(() => _subtitleDelaySeconds += 0.5);
+                                    setSheetState(() {});
+                                    _showFeedbackIndicator('Subtítulos: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s');
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                   ],
                 ),

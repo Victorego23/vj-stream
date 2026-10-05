@@ -55,16 +55,138 @@ class ChannelService {
   }
 
   /**
-   * Obtiene la lista de canales activos para los clientes de la app
-   * Opcionalmente filtrados por categoría
+   * Genera dinámicamente la información EPG (programa actual y siguiente)
+   * calculada según la hora del día y la temática del canal.
    */
-  getChannels(category = null) {
+  getChannelEpg(channel) {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTotalMinutes = currentHour * 60 + currentMinute;
+
+    const cat = (channel.category || '').toLowerCase();
+    const name = (channel.name || '').toLowerCase();
+
+    let schedules = [];
+
+    if (name.includes('telemundo') || name.includes('novela')) {
+      schedules = [
+        { start: '00:00', end: '03:00', title: 'El Señor de los Cielos - Maratón Nocturna' },
+        { start: '03:00', end: '06:00', title: 'Telenovela: Pasión de Gavilanes' },
+        { start: '06:00', end: '09:00', title: 'Doctor Milagro - Episodios Matutinos' },
+        { start: '09:00', end: '12:00', title: 'La Reina del Sur - Temporada Completa' },
+        { start: '12:00', end: '15:00', title: 'El Señor de los Cielos - Temporada 9' },
+        { start: '15:00', end: '18:00', title: 'Café con Aroma de Mujer' },
+        { start: '18:00', end: '21:00', title: 'Tierra Amarga (Telenovela Estelar)' },
+        { start: '21:00', end: '24:00', title: 'El Señor de los Cielos - Emisión Central' }
+      ];
+    } else if (cat.includes('peru') || name.includes('america') || name.includes('atv') || name.includes('latina') || name.includes('panamericana')) {
+      schedules = [
+        { start: '00:00', end: '05:30', title: 'Programación de Madrugada / Lo Mejor del Día' },
+        { start: '05:30', end: '09:30', title: 'Edición Matinal en Vivo (Noticias del Perú)' },
+        { start: '09:30', end: '12:30', title: 'Magacín Matutino en Directo' },
+        { start: '12:30', end: '14:30', title: 'El Noticiero del Mediodía en Vivo' },
+        { start: '14:30', end: '17:00', title: 'Telenovela de la Tarde' },
+        { start: '17:00', end: '19:00', title: 'Programa de Entretenimiento y Concursos' },
+        { start: '19:00', end: '20:30', title: 'Edición Central de Noticias' },
+        { start: '20:30', end: '22:30', title: 'Al Fondo Hay Sitio / Ficción Estelar' },
+        { start: '22:30', end: '24:00', title: 'La Noche es Nuestra / Análisis Político' }
+      ];
+    } else if (cat.includes('deporte') || name.includes('espn') || name.includes('liga') || name.includes('fox')) {
+      schedules = [
+        { start: '00:00', end: '06:00', title: 'Lo Mejor de la Jornada Deportiva' },
+        { start: '06:00', end: '10:00', title: 'SportsCenter Matutino (Noticias y Goles)' },
+        { start: '10:00', end: '13:00', title: 'Fútbol en Vivo / Debate en el Estudio' },
+        { start: '13:00', end: '16:00', title: 'Transmisión de Liga Internacional en Directo' },
+        { start: '16:00', end: '19:00', title: 'Fútbol en Vivo: Partido de la Fecha' },
+        { start: '19:00', end: '21:30', title: 'Post-Partido, Análisis y Estadísticas' },
+        { start: '21:30', end: '24:00', title: 'SportsCenter Noche / Equipo F' }
+      ];
+    } else if (cat.includes('infantil') || name.includes('disney') || name.includes('cartoon') || name.includes('nick')) {
+      schedules = [
+        { start: '00:00', end: '06:00', title: 'Maratón de Clásicos Animados' },
+        { start: '06:00', end: '09:00', title: 'Despierta con Dibujos Animados' },
+        { start: '09:00', end: '12:00', title: 'Series Animadas Infantiles y Aventuras' },
+        { start: '12:00', end: '15:00', title: 'Película Animada Familiar' },
+        { start: '15:00', end: '18:00', title: 'Nuevos Episodios: Bloque Divertido' },
+        { start: '18:00', end: '21:00', title: 'Cine Mágico Infantil' },
+        { start: '21:00', end: '24:00', title: 'Aventuras Nocturnas Animadas' }
+      ];
+    } else if (cat.includes('cine') || cat.includes('serie') || name.includes('hbo') || name.includes('tnt') || name.includes('warner') || name.includes('star')) {
+      schedules = [
+        { start: '00:00', end: '03:00', title: 'Cine de Medianoche: Suspenso y Acción' },
+        { start: '03:00', end: '06:00', title: 'Cine Clásico / Repetición Especial' },
+        { start: '06:00', end: '09:00', title: 'Comedia de la Mañana' },
+        { start: '09:00', end: '12:00', title: 'Maratón de Series Populares' },
+        { start: '12:00', end: '15:00', title: 'Cine Familiar de la Tarde' },
+        { start: '15:00', end: '18:00', title: 'Película Taquillera de Acción' },
+        { start: '18:00', end: '21:00', title: 'Estreno del Mes: Bloque Élite' },
+        { start: '21:00', end: '24:00', title: 'Cine Estelar: Gran Película de la Noche' }
+      ];
+    } else {
+      schedules = [
+        { start: '00:00', end: '06:00', title: 'Programación Especial de Madrugada' },
+        { start: '06:00', end: '12:00', title: 'Magazine Matinal en Vivo' },
+        { start: '12:00', end: '18:00', title: 'Tarde de Entretenimiento' },
+        { start: '18:00', end: '24:00', title: 'Horario Estelar: Emisión Principal' }
+      ];
+    }
+
+    const toMinutes = (timeStr) => {
+      const [h, m] = timeStr.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    let current = null;
+    let next = null;
+
+    for (let i = 0; i < schedules.length; i++) {
+      const s = schedules[i];
+      const startMin = toMinutes(s.start);
+      const endMin = toMinutes(s.end);
+      if (currentTotalMinutes >= startMin && currentTotalMinutes < endMin) {
+        current = s;
+        next = schedules[(i + 1) % schedules.length];
+        break;
+      }
+    }
+
+    if (!current) {
+      current = schedules[0];
+      next = schedules[1] || schedules[0];
+    }
+
+    const startMin = toMinutes(current.start);
+    const endMin = toMinutes(current.end);
+    const duration = endMin - startMin;
+    const elapsed = Math.max(0, currentTotalMinutes - startMin);
+    const progress = duration > 0 ? Math.min(1.0, elapsed / duration) : 0.5;
+
+    return {
+      currentProgram: current.title,
+      programTime: `${current.start} - ${current.end}`,
+      programProgress: Math.round(progress * 100) / 100,
+      nextProgram: next ? `${next.title} (${next.start})` : null
+    };
+  }
+
+  /**
+   * Obtiene la lista de canales activos para los clientes de la app
+   * Opcionalmente filtrados por categoría e integrados con EPG en vivo
+   */
+  getChannels(category = null, withEpg = true) {
     let list = this._channels.filter(c => c.isActive !== false);
     if (category && category !== 'Todos') {
       list = list.filter(c => c.category && c.category.toLowerCase() === category.toLowerCase());
     }
     // Ordenar por 'order' ascendente
-    return list.sort((a, b) => (a.order || 999) - (b.order || 999));
+    const sorted = list.sort((a, b) => (a.order || 999) - (b.order || 999));
+    if (!withEpg) return sorted;
+
+    return sorted.map(c => ({
+      ...c,
+      ...this.getChannelEpg(c)
+    }));
   }
 
   /**

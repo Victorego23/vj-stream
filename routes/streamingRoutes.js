@@ -574,6 +574,94 @@ const getChannelsHandler = (req, res) => {
 
 router.get('/channels', getChannelsHandler);
 router.get('/live-channels', getChannelsHandler);
+router.get('/channels/epg', (req, res) => {
+  try {
+    const { category } = req.query;
+    const channels = channelService.getChannels(category, true);
+    return res.json({
+      success: true,
+      app: 'TOM TV EPG',
+      total: channels.length,
+      channels
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * ====================================================================
+ * SINCRONIZACIÓN EN LA NUBE (CONTINUAR VIENDO Y FAVORITOS)
+ * ====================================================================
+ */
+
+/**
+ * @route   GET /api/streaming/user-data/sync
+ * @desc    Obtiene el historial de reproducción y favoritos sincronizados en la nube
+ * @query   code {string} - Código de cliente o identificador
+ */
+router.get('/user-data/sync', (req, res) => {
+  try {
+    const code = req.query.code || req.headers['x-client-code'];
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Código de cliente requerido' });
+    }
+    const data = accountService.getUserSyncData(code);
+    return res.json({
+      success: true,
+      app: 'TOM TV',
+      ...data
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/streaming/user-data/progress
+ * @desc    Guarda el progreso de reproducción de un elemento en la nube
+ * @body    code {string}
+ * @body    item {object}
+ */
+router.post('/user-data/progress', (req, res) => {
+  try {
+    const code = req.body.code || req.headers['x-client-code'];
+    const { item } = req.body;
+    if (!code || !item) {
+      return res.status(400).json({ success: false, error: 'Código de cliente e item son obligatorios' });
+    }
+    const history = accountService.savePlaybackProgress(code, item);
+    return res.json({
+      success: true,
+      history
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/streaming/user-data/favorite
+ * @desc    Agrega o quita un favorito en la nube
+ * @body    code {string}
+ * @body    item {object}
+ */
+router.post('/user-data/favorite', (req, res) => {
+  try {
+    const code = req.body.code || req.headers['x-client-code'];
+    const { item } = req.body;
+    if (!code || !item) {
+      return res.status(400).json({ success: false, error: 'Código de cliente e item son obligatorios' });
+    }
+    const favorites = accountService.toggleFavorite(code, item);
+    return res.json({
+      success: true,
+      favorites
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 /**
  * @route   GET /api/streaming/playlist.m3u
@@ -724,11 +812,14 @@ router.get('/version', (req, res) => {
     latestVersion,
     versionCode,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-10-04',
+    releaseDate: '2026-10-05',
     releaseNotes: [
-      '🎯 Protección Total de Enlaces: Nuevo filtro de integridad que garantiza que cada película o serie reproduzca exactamente el contenido solicitado, bloqueando cualquier transmisión ajena o mal etiquetada.',
-      '📺 Canales de Telenovelas 24/7 en TV en Vivo: Nuevos canales agregados (Telemundo Novelas - El Señor de los Cielos 24/7 y TNT Novelas HD) listos para ver en alta definición.',
-      '✨ Diálogo Informativo VIP: Si un título está en proceso de digitalización, ahora muestra un aviso claro con opción directa de ver en TV en vivo o disfrutar del tráiler oficial sin reproducirlo a ciegas.'
+      '📺 Guía Electrónica de Programación (EPG) en Vivo: Ahora los canales muestran qué programa se está emitiendo en directo, horarios y barra de progreso.',
+      '☁️ Sincronización en la Nube: Tu progreso de "Continuar Viendo" y "Mi Lista" se sincroniza automáticamente entre todas tus pantallas y dispositivos.',
+      '⏩ Sincronización y Retardo de Subtítulos: Nuevos controles en el reproductor (±0.5s) para calibrar subtítulos al instante desde el control remoto.',
+      '⚡ Optimización Extrema para Smart TV: Aceleración de memoria y carga fluida de portadas en TV Boxes de 1GB/2GB de RAM sin cierres inesperados.',
+      '🛡️ Redundancia Multi-Scraper: Enlaces siempre disponibles con respaldo automático ante caídas de proveedores.',
+      '🖼️ Banner Oficial 16:9 en Android TV: Integración perfecta y sin distorsión en la pantalla principal de Android TV y Google TV.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,

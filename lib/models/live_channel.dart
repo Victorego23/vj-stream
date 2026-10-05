@@ -8,6 +8,10 @@ class LiveChannel {
   final String quality;
   final bool isActive;
   final int order;
+  final String? currentProgram;
+  final String? programTime;
+  final double? programProgress;
+  final String? nextProgram;
 
   LiveChannel({
     required this.id,
@@ -19,6 +23,10 @@ class LiveChannel {
     this.quality = '1080p HD',
     this.isActive = true,
     this.order = 999,
+    this.currentProgram,
+    this.programTime,
+    this.programProgress,
+    this.nextProgram,
   }) : sources = (sources != null && sources.isNotEmpty)
             ? sources
             : (streamUrl.isNotEmpty ? [streamUrl] : []);
@@ -41,6 +49,11 @@ class LiveChannel {
 
     final effectiveStreamUrl = parsedSources.isNotEmpty ? parsedSources.first : rawStreamUrl;
 
+    double? parsedProgress;
+    if (json['programProgress'] != null) {
+      parsedProgress = (json['programProgress'] as num).toDouble();
+    }
+
     return LiveChannel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? 'Canal de TV',
@@ -51,6 +64,10 @@ class LiveChannel {
       quality: json['quality']?.toString() ?? '1080p HD',
       isActive: json['isActive'] != false,
       order: json['order'] is int ? json['order'] : 999,
+      currentProgram: json['currentProgram']?.toString(),
+      programTime: json['programTime']?.toString(),
+      programProgress: parsedProgress,
+      nextProgram: json['nextProgram']?.toString(),
     );
   }
 
@@ -65,6 +82,10 @@ class LiveChannel {
       'quality': quality,
       'isActive': isActive,
       'order': order,
+      'currentProgram': currentProgram,
+      'programTime': programTime,
+      'programProgress': programProgress,
+      'nextProgram': nextProgram,
     };
   }
 }

@@ -274,6 +274,8 @@ class HeroBanner extends StatelessWidget {
     return Image.network(
       backdropUrl,
       fit: BoxFit.cover,
+      cacheWidth: 1280,
+      filterQuality: FilterQuality.medium,
       errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF1B1B1B)),
     );
   }

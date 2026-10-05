@@ -461,6 +461,30 @@ class StreamResolverService {
         }
       }
 
+      if (streamMap.size === 0) {
+        // Redundancia Multi-Scraper de Respaldo: Si el proveedor principal falla o no tiene enlaces, consultar proveedores secundarios
+        const fallbackScraperEndpoints = [
+          `https://knightcrawler.elfhosted.com/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+          `https://mediafusion.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+          `https://comet.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`
+        ];
+
+        const fallbackResponses = await Promise.allSettled(
+          fallbackScraperEndpoints.map(u => axios.get(u, { timeout: 4500 }).catch(() => null))
+        );
+
+        for (const r of fallbackResponses) {
+          if (r.status === 'fulfilled' && Array.isArray(r.value?.data?.streams)) {
+            for (const s of r.value.data.streams) {
+              const key = s.url || s.behaviorHints?.filename || s.title;
+              if (key && !streamMap.has(key)) {
+                streamMap.set(key, s);
+              }
+            }
+          }
+        }
+      }
+
       if (streamMap.size === 0) return { latino: [], castellano: [], original: [] };
 
       const scored = Array.from(streamMap.values())
@@ -745,8 +769,16 @@ class StreamResolverService {
           ? `https://torrentio.strem.fun/stream/series/${imdbId}:${season}:${episode}.json`
           : `https://torrentio.strem.fun/stream/movie/${imdbId}.json`;
         const res = await axios.get(url, { timeout: 4500 }).catch(() => null);
-        if (res?.data?.streams) {
-          for (const st of res.data.streams) {
+        let streams = res?.data?.streams;
+        if (!Array.isArray(streams) || streams.length === 0) {
+          const backupUrl = mediaType === 'tv'
+            ? `https://knightcrawler.elfhosted.com/stream/series/${imdbId}:${season}:${episode}.json`
+            : `https://knightcrawler.elfhosted.com/stream/movie/${imdbId}.json`;
+          const backupRes = await axios.get(backupUrl, { timeout: 4000 }).catch(() => null);
+          streams = backupRes?.data?.streams;
+        }
+        if (Array.isArray(streams)) {
+          for (const st of streams) {
             if (st.infoHash) {
               const filename = st.behaviorHints?.filename || st.title?.split('\n')[0] || 'VJ-STREAM';
               if (!realDebridService.isCamOrLowQuality(filename)) {

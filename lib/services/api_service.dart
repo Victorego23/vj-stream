@@ -798,4 +798,67 @@ class ApiService {
     }
     return {'channels': <LiveChannel>[], 'categories': <String>[]};
   }
+
+  /// Obtiene los datos de sincronización del usuario (continuar viendo y favoritos) desde la nube
+  Future<Map<String, dynamic>?> fetchUserSyncData(String clientCode) async {
+    try {
+      final url = '$baseUrl/user-data/sync?code=${Uri.encodeComponent(clientCode)}';
+      final uri = Uri.parse(url);
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString(), extra: {'x-client-code': clientCode}))
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true) {
+          return data;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  /// Sincroniza el progreso de reproducción con la nube
+  Future<bool> syncPlaybackProgress(String clientCode, Map<String, dynamic> item) async {
+    try {
+      final url = '$baseUrl/user-data/progress';
+      final uri = Uri.parse(url);
+      final response = await http
+          .post(
+            uri,
+            headers: _getHeaders(uri.toString(), extra: {
+              'Content-Type': 'application/json',
+              'x-client-code': clientCode,
+            }),
+            body: json.encode({'code': clientCode, 'item': item}),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Sincroniza el agregado o retiro de un favorito con la nube
+  Future<bool> syncFavorite(String clientCode, Map<String, dynamic> item) async {
+    try {
+      final url = '$baseUrl/user-data/favorite';
+      final uri = Uri.parse(url);
+      final response = await http
+          .post(
+            uri,
+            headers: _getHeaders(uri.toString(), extra: {
+              'Content-Type': 'application/json',
+              'x-client-code': clientCode,
+            }),
+            body: json.encode({'code': clientCode, 'item': item}),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
 }

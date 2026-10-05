@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fondo 16:9 Negro OLED para Android TV -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#000000" />
+            <size android:width="320dp" android:height="180dp" />
+        </shape>
+    </item>
+
+    <!-- Borde sutil rojo carmesí característico de TOM TV -->
+    <item>
+        <shape android:shape="rectangle">
+            <stroke android:width="2dp" android:color="#E50914" />
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <!-- Ícono central de la aplicación centrado con proporción -->
+    <item
+        android:drawable="@mipmap/ic_launcher"
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp" />
+</layer-list>

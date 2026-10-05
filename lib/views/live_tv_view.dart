@@ -624,6 +624,35 @@ class _LiveTvViewState extends State<LiveTvView> {
                     ),
                   ],
                 ),
+                if (channel.currentProgram != null && channel.currentProgram!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.live_tv_rounded, color: Colors.amber, size: 14),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '🔴 En Vivo: ${channel.currentProgram!} ${channel.programTime != null ? "(${channel.programTime})" : ""}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (channel.programProgress != null) ...[
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: channel.programProgress,
+                        backgroundColor: Colors.white12,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
+                        minHeight: 3,
+                      ),
+                    ),
+                  ],
+                ],
               ],
             ),
           ),
@@ -1162,6 +1191,19 @@ class _LiveTvViewState extends State<LiveTvView> {
                 ),
               ],
             ),
+            if (channel.currentProgram != null && channel.currentProgram!.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(
+                '🔴 ${channel.currentProgram!}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Colors.amber,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ],
         ),
       ),

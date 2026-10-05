@@ -265,6 +265,18 @@ class _HomeViewState extends State<HomeView> {
           _favorites = favs;
         });
       }
+      // Sincronización transparente con la nube
+      PlaybackHistoryService.syncWithCloud().then((_) async {
+        if (!mounted) return;
+        final updatedH = await PlaybackHistoryService.getWatchHistory();
+        final updatedF = await PlaybackHistoryService.getFavorites();
+        if (mounted) {
+          setState(() {
+            _continueWatching = updatedH;
+            _favorites = updatedF;
+          });
+        }
+      });
     } catch (_) {}
   }
 

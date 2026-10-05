@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/media_item.dart';
+import 'api_service.dart';
+import 'auth_service.dart';
 
 /// Modelo de un elemento en reproducción guardado
 class WatchHistoryItem {
@@ -76,7 +78,7 @@ class WatchHistoryItem {
   );
 }
 
-/// Gestor de persistencia de "Continuar Viendo" y "Mi Lista" (Favoritos)
+/// Gestor de persistencia de "Continuar Viendo" y "Mi Lista" (Favoritos) con sincronización en la nube
 class PlaybackHistoryService {
   static const String _historyKey = 'vj_stream_watch_history';
   static const String _favoritesKey = 'vj_stream_favorites';
@@ -142,6 +144,28 @@ class PlaybackHistoryService {
       // Limitar a máximo 20 elementos recientes
       final trimmed = currentList.take(20).toList();
       await prefs.setString(_historyKey, json.encode(trimmed.map((e) => e.toJson()).toList()));
+
+      // Sincronizar en segundo plano con la nube
+      _syncProgressToCloud({
+        'id': id,
+        'title': title,
+        'posterUrl': posterUrl,
+        'backdropUrl': backdropUrl,
+        'mediaType': mediaType,
+        'positionSeconds': positionSeconds,
+        'durationSeconds': durationSeconds,
+        'season': season,
+        'episode': episode,
+      });
+    } catch (_) {}
+  }
+
+  static void _syncProgressToCloud(Map<String, dynamic> item) async {
+    try {
+      final code = await AuthService.getSavedClientCode();
+      if (code != null && code.isNotEmpty) {
+        ApiService().syncPlaybackProgress(code, item);
+      }
     } catch (_) {}
   }
 
@@ -208,9 +232,100 @@ class PlaybackHistoryService {
       }).toList());
 
       await prefs.setString(_favoritesKey, encoded);
+
+      // Sincronizar en segundo plano con la nube
+      _syncFavoriteToCloud(item);
+
       return !exists;
     } catch (_) {
       return false;
     }
+  }
+
+  static void _syncFavoriteToCloud(MediaItem item) async {
+    try {
+      final code = await AuthService.getSavedClientCode();
+      if (code != null && code.isNotEmpty) {
+        ApiService().syncFavorite(code, {
+          'id': item.id,
+          'title': item.title,
+          'posterUrl': item.posterMedium,
+          'backdropUrl': item.backdropLarge,
+          'mediaType': item.mediaType,
+        });
+      }
+    } catch (_) {}
+  }
+
+  /// Sincroniza y fusiona los datos locales con la nube
+  static Future<void> syncWithCloud() async {
+    try {
+      final code = await AuthService.getSavedClientCode();
+      if (code == null || code.isEmpty) return;
+      final cloudData = await ApiService().fetchUserSyncData(code);
+      if (cloudData == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+
+      // Sincronizar Historial
+      if (cloudData['history'] is List) {
+        final cloudHistory = (cloudData['history'] as List)
+            .map((e) => WatchHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+        final localHistory = await getWatchHistory();
+
+        final historyMap = <String, WatchHistoryItem>{};
+        for (final h in localHistory) {
+          historyMap[h.id.toString()] = h;
+        }
+        for (final h in cloudHistory) {
+          final existing = historyMap[h.id.toString()];
+          if (existing == null || h.lastWatched.isAfter(existing.lastWatched)) {
+            historyMap[h.id.toString()] = h;
+          }
+        }
+        final merged = historyMap.values.toList()
+          ..sort((a, b) => b.lastWatched.compareTo(a.lastWatched));
+        await prefs.setString(_historyKey, json.encode(merged.take(20).map((e) => e.toJson()).toList()));
+      }
+
+      // Sincronizar Favoritos
+      if (cloudData['favorites'] is List) {
+        final cloudFavorites = (cloudData['favorites'] as List)
+            .map((e) => MediaItem(
+                  id: e['id'],
+                  title: e['title'] ?? 'Sin título',
+                  mediaType: e['mediaType'] ?? 'movie',
+                  posterMedium: e['posterUrl'] ?? '',
+                  backdropLarge: e['backdropUrl'] ?? '',
+                ))
+            .toList();
+        final localFavorites = await getFavorites();
+        final favMap = <String, MediaItem>{};
+        for (final f in localFavorites) {
+          favMap[f.id.toString()] = f;
+        }
+        for (final f in cloudFavorites) {
+          if (!favMap.containsKey(f.id.toString())) {
+            favMap[f.id.toString()] = f;
+          }
+        }
+        final mergedFavs = favMap.values.toList();
+        await prefs.setString(_favoritesKey, json.encode(mergedFavs.map((i) => {
+          'id': i.id,
+          'title': i.title,
+          'originalTitle': i.originalTitle,
+          'synopsis': i.synopsis,
+          'releaseDate': i.releaseDate,
+          'rating': i.rating,
+          'voteCount': i.voteCount,
+          'mediaType': i.mediaType,
+          'posters': {'medium': i.posterMedium, 'original': i.posterOriginal, 'thumbnail': i.posterThumbnail},
+          'backdrops': {'large': i.backdropLarge, 'original': i.backdropOriginal, 'medium': i.backdropMedium},
+          'genres': i.genres,
+          'trailer': i.trailerUrl,
+        }).toList()));
+      }
+    } catch (_) {}
   }
 }
