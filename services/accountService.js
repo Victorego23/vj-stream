@@ -91,6 +91,12 @@ class AccountService {
           dbData.clients = Array.from(clientMap.values());
           dbData.revokedClients = Array.from(new Map([...dbData.revokedClients, ...backupData.revokedClients].map(r => [r.id, r])).values());
 
+          // Fusionar revendedores entre DB y Backup para que NUNCA se pierdan
+          const resellerMap = new Map();
+          (backupData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
+          (dbData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
+          dbData.resellers = Array.from(resellerMap.values());
+
           const json = JSON.stringify(dbData, null, 2);
           fs.writeFileSync(DB_FILE, json, 'utf8');
           fs.writeFileSync(BACKUP_FILE, json, 'utf8');
@@ -732,6 +738,7 @@ class AccountService {
         id: r.id,
         name: r.name,
         username: r.username,
+        password: r.password || '',
         whatsapp: r.whatsapp || '',
         credits: parseInt(r.credits, 10) || 0,
         status: r.status || 'active',
@@ -877,11 +884,15 @@ class AccountService {
   authenticateReseller(username, password) {
     if (!username || !password) throw new Error('Usuario y contraseña requeridos.');
     const db = this._readDb();
-    const cleanUser = username.trim().toLowerCase();
-    const cleanPass = password.trim();
+    const cleanUser = String(username).trim().toLowerCase();
+    const cleanPass = String(password).trim();
 
-    const reseller = (db.resellers || []).find(r => r.username.toLowerCase() === cleanUser);
-    if (!reseller || reseller.password !== cleanPass) {
+    // Buscar revendedor por username O por nombre (tolerancia total a mayúsculas y espacios)
+    const reseller = (db.resellers || []).find(r => 
+      (r.username || '').trim().toLowerCase() === cleanUser ||
+      (r.name || '').trim().toLowerCase() === cleanUser
+    );
+    if (!reseller || (reseller.password || '').trim() !== cleanPass) {
       throw new Error('Usuario o contraseña de revendedor incorrectos.');
     }
 

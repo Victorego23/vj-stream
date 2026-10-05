@@ -3,1157 +3,496 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOM TV - Tablero de Super Administrador</title>
+  <title>TOM TV - Panel de Administrador</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
       --primary: #E50914;
       --primary-dark: #B20710;
-      --primary-glow: rgba(229, 9, 20, 0.45);
+      --primary-glow: rgba(229, 9, 20, 0.4);
       --bg-dark: #07080B;
       --bg-surface: #0E1017;
-      --card-bg: #12141C;
-      --card-border: #1E222F;
-      --card-border-hover: rgba(229, 9, 20, 0.45);
+      --card-bg: #12141D;
+      --card-border: #1E2232;
       --text-main: #FFFFFF;
       --text-muted: #8E8E93;
       --text-subtle: #64748B;
       --success: #22C55E;
-      --success-glow: rgba(34, 197, 94, 0.3);
+      --success-glow: rgba(34, 197, 94, 0.25);
       --warning: #F59E0B;
-      --warning-glow: rgba(245, 158, 11, 0.3);
       --danger: #EF4444;
-      --accent: #38BDF8;
+      --accent: #06B6D4;
       --gold: #F59E0B;
-      --gold-glow: rgba(245, 158, 11, 0.35);
+      --radius: 14px;
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
     body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
 
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: #07080B; }
-    ::-webkit-scrollbar-thumb { background: #1E222F; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #333A4D; }
-
-    /* Login Screen */
+    /* Login View */
     #login-view {
       display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;
-      background: radial-gradient(circle at center, #270B0E 0%, #07080B 80%);
+      background: radial-gradient(circle at center, #1E0E12 0%, #07080B 80%);
     }
     .login-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 24px; padding: 44px 38px; width: 100%; max-width: 440px; text-align: center;
-      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.9), 0 0 35px var(--primary-glow);
-      position: relative; overflow: hidden;
+      border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px var(--primary-glow);
     }
-    .login-card::before {
-      content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, transparent, var(--primary), transparent);
-    }
-    .brand-badge {
+    .brand-logo {
       display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      padding: 6px 20px; border-radius: 12px; font-weight: 900; font-size: 22px; letter-spacing: 2px;
-      margin-bottom: 14px; box-shadow: 0 4px 18px var(--primary-glow); color: #fff;
+      padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 20px; letter-spacing: 2px;
+      margin-bottom: 12px; box-shadow: 0 4px 15px var(--primary-glow);
     }
-    .form-group { margin-bottom: 18px; text-align: left; }
-    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+
+    /* Form controls */
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
     .form-control {
-      width: 100%; background: #0A0C11; border: 1px solid var(--card-border); border-radius: 10px;
+      width: 100%; background: #08090D; border: 1px solid var(--card-border); border-radius: 10px;
       padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s;
     }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
-    select.form-control { cursor: pointer; }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+    .input-group { display: flex; gap: 8px; }
 
-    .input-group {
-      position: relative; display: flex; align-items: center;
-    }
-    .input-group input { padding-right: 42px; }
-    .input-toggle-btn {
-      position: absolute; right: 12px; background: none; border: none; color: var(--text-muted);
-      cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.2s;
-    }
-    .input-toggle-btn:hover { color: #fff; }
-
-    /* Quick Preset Button */
-    .quick-preset-badge {
-      display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent);
-      background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25);
-      padding: 4px 10px; border-radius: 8px; cursor: pointer; margin-top: 8px; font-weight: 600;
-      transition: all 0.2s;
-    }
-    .quick-preset-badge:hover { background: rgba(56, 189, 248, 0.2); }
-
-    /* Buttons */
+    /* Botones */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
       cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
     }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; }
-    .btn-primary:hover { opacity: 0.95; transform: translateY(-1px); box-shadow: 0 4px 14px var(--primary-glow); }
-    .btn-gold { background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 900; }
-    .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 4px 14px var(--gold-glow); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 4px 14px var(--primary-glow); }
+    .btn-secondary { background: #1A1D28; color: #E2E8F0; border: 1px solid var(--card-border); }
+    .btn-secondary:hover { background: #242938; }
     .btn-success { background: #15803D; color: #fff; }
     .btn-success:hover { background: #16A34A; }
+    .btn-gold { background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 900; }
     .btn-whatsapp { background: #128C7E; color: #fff; }
     .btn-whatsapp:hover { background: #25D366; }
-    .btn-warning { background: #B45309; color: #fff; }
-    .btn-warning:hover { background: #D97706; }
-    .btn-secondary { background: #1A1D27; color: #E2E8F0; border: 1px solid var(--card-border); }
-    .btn-secondary:hover { background: #262A38; color: #fff; }
     .btn-danger { background: #991B1B; color: #fff; }
     .btn-danger:hover { background: #DC2626; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+    .btn-icon { padding: 6px 10px; font-size: 14px; }
 
     /* Dashboard Layout */
     #dashboard-view { display: none; }
-    .navbar {
-      background: rgba(14, 16, 23, 0.94); backdrop-filter: blur(16px); border-bottom: 1px solid var(--card-border);
-      padding: 12px 28px; display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 100;
+    .header {
+      background: rgba(14, 16, 23, 0.95); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border); position: sticky; top: 0; z-index: 100;
+      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
     }
-    .nav-brand { display: flex; align-items: center; gap: 14px; }
-    .status-pill {
-      font-size: 11px; font-weight: 700; color: #22C55E; background: rgba(34, 197, 94, 0.12);
-      padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(34, 197, 94, 0.3); display: flex; align-items: center; gap: 6px;
-    }
-    .live-clock {
-      font-size: 12px; font-weight: 700; color: var(--text-muted); font-family: monospace;
-      background: #0A0C11; padding: 4px 10px; border-radius: 8px; border: 1px solid #1E222F;
-    }
-    .nav-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .container { max-width: 1360px; margin: 0 auto; padding: 24px 20px 60px; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-weight: 900; font-size: 18px; letter-spacing: 0.5px; }
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-    /* Tabs Bar */
+    /* Navigation Tabs */
     .tabs-bar {
-      display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--card-border); padding-bottom: 12px;
-      overflow-x: auto;
+      display: flex; gap: 8px; padding: 14px 24px; background: #0A0B10;
+      border-bottom: 1px solid var(--card-border); overflow-x: auto;
     }
-    .tab-btn {
-      background: transparent; color: var(--text-muted); border: 1px solid transparent;
-      padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer;
-      display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap;
+    .tab-pill {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
+      border-radius: 12px; font-weight: 700; font-size: 13px; color: var(--text-muted);
+      background: var(--card-bg); border: 1px solid var(--card-border); cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
     }
-    .tab-btn:hover { color: #fff; background: rgba(255,255,255,0.04); }
-    .tab-btn.active {
-      color: #fff; background: var(--card-bg); border-color: var(--card-border);
-      box-shadow: 0 4px 14px rgba(0,0,0,0.5);
+    .tab-pill:hover { color: #fff; background: #1A1D2A; }
+    .tab-pill.active {
+      color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow);
     }
-    .tab-btn.active span.tab-icon { transform: scale(1.15); }
+    .tab-badge {
+      background: rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 800;
+    }
 
-    /* Executive KPI Grid */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    /* Main Container */
+    .main-container { max-width: 1380px; margin: 0 auto; padding: 24px; }
+
+    /* Summary Stats Grid */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 24px;
+    }
     .stat-card {
-      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
-      padding: 18px; display: flex; flex-direction: column; gap: 6px; transition: all 0.2s; position: relative;
-      overflow: hidden;
-    }
-    .stat-card:hover { transform: translateY(-2px); border-color: var(--card-border-hover); }
-    .stat-card::after {
-      content: ""; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-      background: transparent; transition: background 0.3s;
-    }
-    .stat-card:hover::after { background: var(--primary); }
-    .stat-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 28px; font-weight: 900; color: #fff; }
-    .stat-sub { font-size: 11px; color: var(--text-subtle); margin-top: 2px; }
-
-    /* Filter Chips */
-    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
-    .chip {
-      background: #0E1017; border: 1px solid var(--card-border); color: var(--text-muted);
-      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-    }
-    .chip:hover { color: #fff; border-color: #444; }
-    .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-
-    /* Section Cards */
-    .section-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 18px; margin-bottom: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+      border-radius: var(--radius); padding: 20px; transition: all 0.2s;
     }
-    .section-header {
-      padding: 18px 24px; border-bottom: 1px solid var(--card-border);
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
-    }
-    .section-title { font-size: 17px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .stat-card:hover { border-color: rgba(255,255,255,0.15); }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 32px; font-weight: 900; margin: 6px 0 2px 0; color: #fff; }
+    .stat-sub { font-size: 12px; color: var(--text-subtle); }
 
-    .badge {
-      display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+    /* Controls Bar */
+    .controls-bar {
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      margin-bottom: 20px; flex-wrap: wrap;
     }
-    .badge-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid var(--warning); }
-    .badge-active { background: rgba(34, 197, 94, 0.15); color: var(--success); border: 1px solid var(--success); }
-    .badge-expired { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid var(--danger); }
-    .badge-suspended { background: rgba(142, 142, 147, 0.15); color: var(--text-muted); border: 1px solid var(--text-muted); }
-    .badge-category { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .search-box {
+      flex: 1; min-width: 240px; max-width: 440px; position: relative;
+    }
+    .search-input {
+      width: 100%; background: #0E1017; border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 12px 14px 12px 38px; color: #fff; font-size: 14px; outline: none;
+    }
+    .search-input:focus { border-color: var(--primary); }
+    .search-icon { position: absolute; left: 14px; top: 12px; color: var(--text-muted); font-size: 14px; }
+    .filter-pills { display: flex; gap: 6px; overflow-x: auto; }
+    .filter-btn {
+      padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
+      background: #141722; color: var(--text-muted); border: 1px solid var(--card-border);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-btn.active { background: #2A3044; color: #fff; border-color: rgba(255,255,255,0.3); }
 
-    /* Pending Grid */
-    .pending-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; padding: 20px; }
-    .pending-item {
-      background: #090B10; border: 1px solid var(--card-border); border-radius: 14px; padding: 18px;
-      display: flex; flex-direction: column; gap: 12px;
+    /* Tables & Cards */
+    .table-container {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); overflow: hidden;
     }
-    .code-display {
-      font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--primary);
-      background: #190B0C; padding: 10px; border-radius: 8px; text-align: center; border: 1px dashed var(--primary);
-      font-family: monospace;
-    }
-
-    /* Table */
-    .table-container { width: 100%; overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { padding: 14px 20px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; background: #0A0C11; border-bottom: 1px solid var(--card-border); font-weight: 700; letter-spacing: 0.5px; }
-    td { padding: 14px 20px; border-bottom: 1px solid #181A24; font-size: 13px; vertical-align: middle; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
-    .client-name { font-weight: 700; color: #fff; font-size: 14px; }
-    .client-user { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .actions-cell { display: flex; gap: 6px; flex-wrap: wrap; }
+    th {
+      background: #0B0D14; padding: 14px 18px; font-size: 12px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    td { padding: 14px 18px; font-size: 13px; border-bottom: 1px solid #161925; vertical-align: middle; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
-    /* TV Channels Grid */
-    .channels-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; padding: 20px;
+    /* Badges */
+    .badge {
+      display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800;
+      letter-spacing: 0.3px; text-transform: uppercase;
     }
-    .channel-card {
-      background: #0B0D13; border: 1px solid var(--card-border); border-radius: 14px;
-      padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: all 0.2s; position: relative;
-    }
-    .channel-card:hover { border-color: rgba(229,9,20,0.4); transform: translateY(-2px); }
-    .channel-card.inactive { opacity: 0.55; }
-    .channel-top { display: flex; align-items: center; gap: 14px; }
-    .channel-logo {
-      width: 56px; height: 56px; border-radius: 12px; background: #161822; display: flex; align-items: center;
-      justify-content: center; overflow: hidden; flex-shrink: 0; padding: 6px; border: 1px solid rgba(255,255,255,0.06);
-    }
-    .channel-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .channel-meta { flex: 1; min-width: 0; }
-    .channel-title { font-weight: 800; font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .channel-sub { display: flex; gap: 6px; align-items: center; margin-top: 4px; }
-    .channel-stream-url {
-      font-size: 11px; color: var(--text-muted); font-family: monospace; white-space: nowrap;
-      overflow: hidden; text-overflow: ellipsis; background: #07080B; padding: 6px 10px; border-radius: 6px; border: 1px solid #1C1E28;
-    }
-    .channel-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+    .badge-active { background: rgba(34, 197, 94, 0.15); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.3); }
+    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-expired { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-gold { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); }
 
-    /* Switch */
-    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .3s; border-radius: 24px; }
-    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-    input:checked + .slider { background-color: var(--success); }
-    input:checked + .slider:before { transform: translateX(20px); }
+    /* Code Pill */
+    .code-pill {
+      font-family: monospace; font-size: 14px; font-weight: 800; color: #22C55E;
+      background: #0A140E; border: 1px solid rgba(34, 197, 94, 0.3); padding: 4px 10px;
+      border-radius: 8px; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 6px;
+    }
 
-    /* Modals */
+    /* Reseller Cards Grid */
+    .resellers-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px;
+    }
+    .reseller-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: var(--radius); padding: 22px; position: relative;
+      display: flex; flex-direction: column; justify-content: space-between;
+      transition: all 0.2s;
+    }
+    .reseller-card:hover { border-color: rgba(245, 158, 11, 0.4); transform: translateY(-2px); }
+    .reseller-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+    .reseller-name { font-size: 18px; font-weight: 800; }
+    .reseller-user { font-size: 13px; color: var(--accent); font-family: monospace; margin-top: 2px; }
+    .reseller-cred-box {
+      background: #080A0E; border: 1px solid #1A1F2E; border-radius: 10px;
+      padding: 12px 14px; margin: 12px 0; font-size: 13px;
+    }
+    .reseller-cred-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .reseller-cred-row:last-child { margin-bottom: 0; }
+    .reseller-cred-label { color: var(--text-muted); }
+    .reseller-cred-val { font-weight: 700; color: #fff; font-family: monospace; }
+    .reseller-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+
+    /* Modales */
     .modal {
-      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); align-items: center; justify-content: center; z-index: 200; padding: 20px;
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
     }
     .modal-content {
       background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; width: 100%; max-width: 520px; padding: 28px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto;
+      border-radius: 20px; max-width: 520px; width: 100%; padding: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto;
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .close-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
-    .pulse { animation: pulse 2s infinite; }
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    .close-btn:hover { color: #fff; }
 
-    /* Toast Notification */
-    #toast-container {
-      position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;
-      pointer-events: none;
-    }
-    .toast {
-      pointer-events: auto; background: #12141C; border: 1px solid #1E222F; color: #fff;
-      padding: 12px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; display: flex;
-      align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    .toast-success { border-color: rgba(34, 197, 94, 0.5); }
-    .toast-error { border-color: rgba(239, 68, 68, 0.5); }
-    .toast-info { border-color: rgba(56, 189, 248, 0.5); }
-    @keyframes slideIn {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; background: #181B26; color: #fff;
+      padding: 14px 22px; border-radius: 12px; border: 1px solid var(--card-border);
+      font-size: 14px; font-weight: 700; z-index: 9999; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
 
-    /* ==========================================================================
-       ESTILOS PARA NUEVAS FUNCIONALIDADES (AVISOS, SESIONES, FINANZAS, MOBILE)
-       ========================================================================== */
-
-    /* TV Announcement Preview Screen */
-    .tv-mockup-frame {
-      background: #000;
-      border: 8px solid #1E222F;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.9), 0 0 30px rgba(229,9,20,0.2);
-      position: relative;
-      overflow: hidden;
-      min-height: 220px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-    .tv-stand-base {
-      width: 120px;
-      height: 10px;
-      background: #1E222F;
-      margin: 0 auto;
-      border-radius: 0 0 8px 8px;
-    }
-    .tv-announcement-banner {
-      background: linear-gradient(135deg, rgba(229,9,20,0.95), rgba(153,0,0,0.95));
-      border: 2px solid #fff;
-      border-radius: 14px;
-      padding: 18px 24px;
-      color: #fff;
-      box-shadow: 0 10px 30px rgba(229,9,20,0.5);
-      animation: pulseBanner 2.5s infinite;
-    }
-    .tv-announcement-banner.warning {
-      background: linear-gradient(135deg, rgba(245,158,11,0.95), rgba(180,83,9,0.95));
-      border-color: #FEF08A;
-      box-shadow: 0 10px 30px rgba(245,158,11,0.5);
-    }
-    .tv-announcement-banner.urgent {
-      background: linear-gradient(135deg, rgba(239,68,68,0.95), rgba(185,28,28,0.95));
-      border-color: #FECACA;
-      box-shadow: 0 10px 30px rgba(239,68,68,0.6);
-    }
-    @keyframes pulseBanner {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-
-    /* Charts Container */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-      margin-top: 20px;
-    }
-    .chart-box {
-      background: #090B10;
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 20px;
-      position: relative;
-    }
-    .chart-box h4 {
-      font-size: 14px;
-      font-weight: 800;
-      margin-bottom: 16px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* Sessions Live Pulse Badge */
-    .live-session-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 800;
-    }
-    .live-session-badge.online {
-      background: rgba(34,197,94,0.15);
-      color: var(--success);
-      border: 1px solid rgba(34,197,94,0.4);
-    }
-    .live-session-badge.offline {
-      background: rgba(142,142,147,0.12);
-      color: var(--text-muted);
-      border: 1px solid var(--card-border);
-    }
-
-    /* Mobile Bottom Navigation Bar */
-    .mobile-bottom-nav {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(10, 12, 17, 0.95);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid var(--card-border);
-      padding: 8px 10px;
-      z-index: 900;
-      justify-content: space-around;
-      align-items: center;
-    }
-    .mob-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      color: var(--text-muted);
-      font-size: 10px;
-      font-weight: 700;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 8px;
-      border-radius: 8px;
-      transition: all 0.2s;
-    }
-    .mob-nav-item.active {
-      color: #fff;
-      background: rgba(229, 9, 20, 0.2);
-    }
-    .mob-nav-item .icon {
-      font-size: 18px;
-    }
-
-    /* Floating Action Button (FAB) Mobile */
-    .fab-btn {
-      position: fixed;
-      bottom: 74px;
-      right: 18px;
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      color: #fff;
-      font-size: 22px;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 25px var(--primary-glow);
-      border: none;
-      cursor: pointer;
-      z-index: 850;
-      transition: transform 0.2s;
-    }
-    .fab-btn:active {
-      transform: scale(0.92);
-    }
-    .fab-menu {
-      position: fixed;
-      bottom: 136px;
-      right: 18px;
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 860;
-    }
-    .fab-menu.show {
-      display: flex;
-    }
-    .fab-item {
-      background: #141724;
-      border: 1px solid var(--card-border);
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 700;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.85);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.2s;
-    }
-    .fab-item:hover {
-      border-color: var(--primary);
-    }
-
-    /* Responsive Mobile UI Rules */
-    @media (max-width: 860px) {
-      body {
-        padding-bottom: 75px;
-      }
-      .mobile-bottom-nav {
-        display: flex;
-      }
-      .fab-btn {
-        display: flex;
-      }
-      .navbar {
-        padding: 12px 16px;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 10px;
-      }
-      .nav-brand {
-        justify-content: space-between;
-      }
-      .nav-actions {
-        overflow-x: auto;
-        white-space: nowrap;
-        padding-bottom: 4px;
-        scrollbar-width: none;
-      }
-      .tabs-bar {
-        overflow-x: auto;
-        white-space: nowrap;
-        flex-wrap: nowrap;
-        padding-bottom: 8px;
-        scrollbar-width: none;
-      }
-      .charts-grid {
-        grid-template-columns: 1fr;
-      }
-      .table-container table,
-      .table-container thead,
-      .table-container tbody,
-      .table-container th,
-      .table-container td,
-      .table-container tr {
-        display: block;
-      }
-      .table-container thead tr {
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-      }
-      .table-container tr {
-        border: 1px solid var(--card-border);
-        border-radius: 14px;
-        margin-bottom: 14px;
-        padding: 14px;
-        background: #0B0D14;
-      }
-      .table-container td {
-        border: none;
-        padding: 6px 0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 13px;
-      }
-      .table-container td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        color: var(--text-muted);
-        font-size: 11px;
-        text-transform: uppercase;
-        margin-right: 12px;
-      }
-      .table-container td.actions-cell {
-        justify-content: flex-end;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px solid #1A1D2B;
-      }
-      .table-container td.actions-cell::before {
-        display: none;
-      }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header { padding: 12px 16px; flex-direction: column; align-items: stretch; }
+      .header-actions { justify-content: space-between; }
+      .main-container { padding: 16px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .controls-bar { flex-direction: column; align-items: stretch; }
+      .search-box { max-width: 100%; }
+      .table-container { overflow-x: auto; }
+      th, td { padding: 10px 12px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- TOAST CONTAINER -->
-  <div id="toast-container"></div>
-
-  <!-- PANTALLA DE LOGIN (SUPER ADMIN) -->
+  <!-- PANTALLA DE ACCESO ADMINISTRADOR -->
   <div id="login-view">
     <div class="login-card">
-      <div class="brand-badge">TOM TV</div>
-      <h2 style="margin-bottom: 8px; font-weight: 900; font-size: 22px;">Tablero de Super Admin</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Centro de Control Maestro</p>
-
-      <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="brand-logo">TOM TV</div><br>
+      <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Panel Master</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Ingresa tu clave de administrador</p>
+      <form onsubmit="handleAdminLogin(event)">
         <div class="form-group">
-          <label>Contraseña Maestra:</label>
-          <div class="input-group">
-            <input type="password" id="admin-pass-input" class="form-control" placeholder="Ingresa contraseña (123456)" required autofocus>
-            <button type="button" class="input-toggle-btn" onclick="togglePassVisibility('admin-pass-input')">👁️</button>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-            <span class="quick-preset-badge" onclick="fillDefaultPass()">⚡ Usar clave: 123456</span>
-            <span style="font-size: 11px; color: var(--text-subtle);">Acceso exclusivo</span>
-          </div>
+          <input type="password" id="admin-pass-input" class="form-control" placeholder="Contraseña de administrador" required autofocus>
         </div>
-        <button type="submit" class="btn btn-primary" id="login-btn" style="width: 100%; padding: 13px; margin-top: 8px; font-size: 14px;">
-          Entrar al Panel Master
-        </button>
+        <button type="submit" class="btn btn-primary" id="btn-login-submit" style="width: 100%; padding: 12px;">Entrar al Panel</button>
       </form>
     </div>
   </div>
 
-  <!-- DASHBOARD PRINCIPAL -->
+  <!-- PANEL PRINCIPAL ADMINISTRADOR -->
   <div id="dashboard-view">
-    <!-- Navbar -->
-    <nav class="navbar">
-      <div class="nav-brand">
-        <div class="brand-badge" style="margin: 0; font-size: 14px; padding: 4px 12px;">TOM TV</div>
-        <div class="status-pill" id="nav-system-status"><span>●</span> Servidor Activo (v3.5.0)</div>
-        <div class="live-clock" id="live-clock">--:--:--</div>
+    <!-- Barra Superior -->
+    <header class="header">
+      <div class="header-left">
+        <div class="brand-logo" style="margin-bottom: 0;">TOM TV</div>
+        <div>
+          <div class="header-title">Panel de Control General</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Servidor Operativo & Sincronizado</div>
+        </div>
       </div>
-      <div class="nav-actions">
-        <button class="btn btn-whatsapp btn-sm" onclick="openWhatsAppTemplatesModal()" title="Abrir plantillas de WhatsApp para clientes">📲 Plantillas WhatsApp</button>
-        <a href="/mobile-preview" target="_blank" class="btn btn-secondary btn-sm" style="border-color: rgba(255,215,0,0.4); color: #FFD700;" title="Abrir simulador interactivo de celular en pestaña aparte">📱 Simulador Móvil</a>
-        <a href="/" target="_blank" class="btn btn-secondary btn-sm" title="Abrir la Web App oficial">🌐 Web App</a>
+      <div class="header-actions">
         <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">💼 Portal Resellers</a>
-        <a href="/apk" class="btn btn-primary btn-sm" title="Descargar APK oficial v3.5.0">📥 APK v3.5.0 (58 MB)</a>
-        <button class="btn btn-secondary btn-sm" onclick="downloadBackup()" title="Descargar copia de seguridad en JSON">💾 Backup</button>
-        <button class="btn btn-secondary btn-sm" onclick="openRestoreModal()" title="Restaurar desde JSON">📥 Restaurar</button>
-        <button class="btn btn-secondary btn-sm" onclick="fetchOverview()" title="Refrescar datos en vivo">🔄 Refrescar</button>
+        <a href="/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 Descargar APK</a>
+        <button class="btn btn-secondary btn-sm" onclick="fetchData()" title="Refrescar datos en vivo">🔄 Actualizar</button>
         <button class="btn btn-danger btn-sm" onclick="handleLogout()">Salir</button>
       </div>
+    </header>
+
+    <!-- Pestañas de Navegación Limpias y Separadas -->
+    <nav class="tabs-bar">
+      <button class="tab-pill active" onclick="switchTab('clients')" id="tab-btn-clients">
+        📱 Clientes & Activaciones <span class="tab-badge" id="badge-clients-count">0</span>
+      </button>
+      <button class="tab-pill" onclick="switchTab('resellers')" id="tab-btn-resellers">
+        💼 Revendedores (Distribuidores) <span class="tab-badge" id="badge-resellers-count">0</span>
+      </button>
+      <button class="tab-pill" onclick="switchTab('channels')" id="tab-btn-channels">
+        📡 Canales en Vivo <span class="tab-badge" id="badge-channels-count">0</span>
+      </button>
+      <button class="tab-pill" onclick="switchTab('settings')" id="tab-btn-settings">
+        ⚙️ Ajustes & Cobros (Plin / WhatsApp)
+      </button>
     </nav>
 
-    <div class="container">
-      <!-- Navegación por Pestañas -->
-      <div class="tabs-bar">
-        <button class="tab-btn active" id="tab-clients-btn" onclick="switchTab('clients')">
-          <span class="tab-icon">👥</span> Clientes
-        </button>
-        <button class="tab-btn" id="tab-sessions-btn" onclick="switchTab('sessions')">
-          <span class="tab-icon">📺</span> Pantallas en Vivo
-        </button>
-        <button class="tab-btn" id="tab-announcements-btn" onclick="switchTab('announcements')">
-          <span class="tab-icon">📢</span> Avisos a TVs
-        </button>
-        <button class="tab-btn" id="tab-finances-btn" onclick="switchTab('finances')">
-          <span class="tab-icon">💰</span> Finanzas & Métricas
-        </button>
-        <button class="tab-btn" id="tab-resellers-btn" onclick="switchTab('resellers')">
-          <span class="tab-icon">💼</span> Revendedores
-        </button>
-        <button class="tab-btn" id="tab-channels-btn" onclick="switchTab('channels')">
-          <span class="tab-icon">📡</span> Canales TV
-        </button>
-        <button class="tab-btn" id="tab-server-btn" onclick="switchTab('server')">
-          <span class="tab-icon">🖥️</span> Servidor & CDN
-        </button>
-        <button class="tab-btn" id="tab-settings-btn" onclick="switchTab('settings')">
-          <span class="tab-icon">⚙️</span> Ajustes & WhatsApp
-        </button>
-      </div>
+    <!-- Contenido Principal -->
+    <main class="main-container">
 
-      <!-- VISTA 1: CLIENTES Y PANTALLAS -->
-      <div id="view-clients">
-        <!-- Estadísticas KPI -->
-        <div class="stats-grid">
+      <!-- ============================================================== -->
+      <!-- SECCIÓN 1: CLIENTES & ACTIVACIONES -->
+      <!-- ============================================================== -->
+      <section id="section-clients">
+        <div class="stats-row">
           <div class="stat-card">
-            <span class="stat-title">Total Clientes</span>
-            <span class="stat-value" id="stat-total">0</span>
-            <span class="stat-sub">Registrados global</span>
+            <div class="stat-label">👥 Clientes Totales</div>
+            <div class="stat-value" id="stat-total-clients">0</div>
+            <div class="stat-sub">Registrados en el sistema</div>
           </div>
           <div class="stat-card">
-            <span class="stat-title">🟢 Activos</span>
-            <span class="stat-value" style="color: var(--success);" id="stat-active">0</span>
-            <span class="stat-sub">Con servicio vigente</span>
+            <div class="stat-label">🟢 Clientes Activos</div>
+            <div class="stat-value" style="color: var(--success);" id="stat-active-clients">0</div>
+            <div class="stat-sub">Suscripción vigente</div>
           </div>
           <div class="stat-card">
-            <span class="stat-title">🟡 Por Vencer</span>
-            <span class="stat-value" style="color: var(--warning);" id="stat-expiring">0</span>
-            <span class="stat-sub">En ≤ 3 días</span>
+            <div class="stat-label">🟡 Vencen en ≤ 3 Días</div>
+            <div class="stat-value" style="color: var(--warning);" id="stat-expiring-clients">0</div>
+            <div class="stat-sub">Cobro pendiente</div>
           </div>
           <div class="stat-card">
-            <span class="stat-title">🔴 Vencidos</span>
-            <span class="stat-value" style="color: var(--danger);" id="stat-expired">0</span>
-            <span class="stat-sub">Suscripción caducada</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">📺 TV Esperando</span>
-            <span class="stat-value" style="color: var(--primary);" id="stat-pending">0</span>
-            <span class="stat-sub">Por aprobar</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">💼 Revendedores</span>
-            <span class="stat-value" style="color: var(--accent);" id="stat-resellers">0</span>
-            <span class="stat-sub">Distribuidores</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">💎 Créditos Activos</span>
-            <span class="stat-value" style="color: var(--gold);" id="stat-credits">0</span>
-            <span class="stat-sub">En circulación</span>
+            <div class="stat-label">🔴 Vencidos / Inactivos</div>
+            <div class="stat-value" style="color: var(--danger);" id="stat-expired-clients">0</div>
+            <div class="stat-sub">Requieren renovación</div>
           </div>
         </div>
 
-        <!-- Pantallas Pendientes de Activación -->
-        <div class="section-card" id="pending-section" style="border-color: rgba(229,9,20,0.5); display: none;">
-          <div class="section-header" style="background: rgba(229,9,20,0.08);">
-            <div class="section-title">
-              <span class="pulse" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:var(--primary); margin-right:8px;"></span>
-              📺 Pantallas de TV / Dispositivos Esperando Activación
-            </div>
-            <span class="badge badge-pending" id="pending-badge">0 pendientes</span>
+        <div class="controls-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="client-search-input" class="search-input" placeholder="Buscar por código (TOM-XXXX), nombre o dispositivo..." oninput="filterClients()">
           </div>
-          <div class="pending-grid" id="pending-container"></div>
+          <div class="filter-pills">
+            <button class="filter-btn active" onclick="setClientFilter('all')" id="filter-btn-all">Todos</button>
+            <button class="filter-btn" onclick="setClientFilter('active')" id="filter-btn-active">Activos</button>
+            <button class="filter-btn" onclick="setClientFilter('expiring')" id="filter-btn-expiring">Por Vencer</button>
+            <button class="filter-btn" onclick="setClientFilter('expired')" id="filter-btn-expired">Vencidos</button>
+          </div>
+          <button class="btn btn-primary" onclick="openNewClientModal()">➕ Activar Nuevo Cliente</button>
         </div>
 
-        <!-- Lista de Clientes Registrados -->
-        <div class="section-card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">👥 Cartera Global de Clientes</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Clientes activos en el sistema (Ventas Directas + Revendedores)</p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <input type="text" id="search-input" class="form-control" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar cliente por nombre o código..." onkeyup="filterClients()">
-              <button class="btn btn-gold btn-sm" onclick="openQuickDemoModal()">⚡ Generar Demo (2 Horas)</button>
-              <button class="btn btn-primary btn-sm" onclick="openNewClientModal()">+ Nuevo Cliente Directo</button>
-            </div>
-          </div>
-
-          <!-- Filtros de Clientes -->
-          <div style="padding: 16px 20px 0;">
-            <div class="filter-chips">
-              <div class="chip active" onclick="setClientFilter('all', this)">Todos</div>
-              <div class="chip" onclick="setClientFilter('active', this)">🟢 Activos</div>
-              <div class="chip" onclick="setClientFilter('demos', this)">⚡ Demos (2h)</div>
-              <div class="chip" onclick="setClientFilter('expiring', this)">🟡 Por Vencer (≤3d)</div>
-              <div class="chip" onclick="setClientFilter('expired', this)">🔴 Vencidos</div>
-              <div class="chip" onclick="setClientFilter('suspended', this)">⏸️ Suspendidos</div>
-              <div class="chip" onclick="setClientFilter('direct', this)">🏷️ Ventas Directas</div>
-              <div class="chip" onclick="setClientFilter('resellers', this)">💼 De Revendedores</div>
-            </div>
-          </div>
-
-          <!-- Tabla de Clientes -->
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Código de Activación</th>
-                  <th>Estado</th>
-                  <th>Vence el</th>
-                  <th>Pantallas</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="clients-tbody">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando clientes...</td></tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Código TV</th>
+                <th>Cliente</th>
+                <th>Estado & Vencimiento</th>
+                <th>Dispositivos</th>
+                <th>Origen</th>
+                <th style="text-align: right;">Acciones Rápidas</th>
+              </tr>
+            </thead>
+            <tbody id="clients-table-body">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Cargando clientes...</td></tr>
+            </tbody>
+          </table>
         </div>
-      </div>
+      </section>
 
-      <!-- VISTA 2: REVENDEDORES & SISTEMA DE CRÉDITOS -->
-      <div id="view-resellers" style="display: none;">
-        <div class="section-card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">💼 Red de Distribuidores & Prepago de Créditos</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Crea cuentas de revendedores, recarga paquetes de créditos y supervisa sus ventas en tiempo real</p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">🌐 Ver Portal Reseller</a>
-              <button class="btn btn-primary btn-sm" onclick="openNewResellerModal()">+ Nuevo Revendedor</button>
-            </div>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Distribuidor</th>
-                  <th>Usuario</th>
-                  <th>WhatsApp</th>
-                  <th>Saldo Créditos</th>
-                  <th>Clientes Activos</th>
-                  <th>Estado</th>
-                  <th style="text-align: right;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="resellers-tbody">
-                <tr>
-                  <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando revendedores...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- VISTA 3: CANALES DE TV EN VIVO -->
-      <div id="view-channels" style="display: none;">
-        <div class="section-card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">📺 Canales de TV en Vivo Transmitiendo</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Transmisiones HLS (.m3u8) 100% auditadas y funcionales en TOM TV</p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-              <input type="text" id="channel-search-input" class="form-control" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar canal..." onkeyup="filterChannels()">
-              <button class="btn btn-primary btn-sm" onclick="openChannelModal()">+ Nuevo Canal</button>
-            </div>
-          </div>
-
-          <!-- Filtro de Categorías de Canales -->
-          <div style="padding: 16px 20px 0;">
-            <div class="filter-chips" id="channel-category-chips">
-              <div class="chip active" onclick="setChannelCategoryFilter('Todos', this)">🌟 Todos</div>
-              <div class="chip" onclick="setChannelCategoryFilter('peru', this)">🇵🇪 Perú TV</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Deportes', this)">⚽ Deportes & Fútbol</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Infantil', this)">👶 Niños & Dibujos</div>
-              <div class="chip" onclick="setChannelCategoryFilter('novelas', this)">🌹 Telenovelas</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Cine & Series', this)">🍿 Cine & Series</div>
-              <div class="chip" onclick="setChannelCategoryFilter('Internacional', this)">🌍 Internacional</div>
-            </div>
-          </div>
-
-          <div class="channels-grid" id="channels-container"></div>
-        </div>
-      </div>
-
-      <!-- VISTA: SERVIDOR, RENDIMIENTO & CDN EN VIVO -->
-      <div id="view-server" style="display: none;">
-        <div class="stats-grid">
+      <!-- ============================================================== -->
+      <!-- SECCIÓN 2: REVENDEDORES (DISTRIBUIDORES) -->
+      <!-- ============================================================== -->
+      <section id="section-resellers" style="display: none;">
+        <div class="stats-row">
           <div class="stat-card">
-            <span class="stat-title">Estado de Servidor</span>
-            <span class="stat-value" style="color: var(--success);" id="srv-status">ONLINE 🟢</span>
-            <span class="stat-sub" id="srv-platform">Render Cloud Platform</span>
+            <div class="stat-label">💼 Revendedores Activos</div>
+            <div class="stat-value" style="color: var(--accent);" id="stat-reseller-count">0</div>
+            <div class="stat-sub">Distribuidores oficiales</div>
           </div>
           <div class="stat-card">
-            <span class="stat-title">Tiempo Activo (Uptime)</span>
-            <span class="stat-value" style="color: #fff;" id="srv-uptime">Cargando...</span>
-            <span class="stat-sub">Servidor en ejecución</span>
+            <div class="stat-label">💰 Créditos en Circulación</div>
+            <div class="stat-value" style="color: var(--gold);" id="stat-reseller-credits">0</div>
+            <div class="stat-sub">Saldo disponible en la red</div>
           </div>
           <div class="stat-card">
-            <span class="stat-title">Consumo de Memoria</span>
-            <span class="stat-value" style="color: var(--accent);" id="srv-memory">-- MB</span>
-            <span class="stat-sub" id="srv-heap">Heap: -- MB</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">APK Oficial en Servidor</span>
-            <span class="stat-value" style="color: var(--primary);" id="srv-apk-ver">v3.5.0</span>
-            <span class="stat-sub" id="srv-apk-size">58.28 MB (200 OK)</span>
+            <div class="stat-label">📱 Clientes por Revendedores</div>
+            <div class="stat-value" id="stat-reseller-clients">0</div>
+            <div class="stat-sub">Ventas generadas</div>
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px;">
-          <!-- Card de Servicios y APIs -->
-          <div class="section-card">
-            <div class="section-header">
-              <div class="section-title">🔌 Motores de Streaming & Servicios Conectados</div>
-              <button class="btn btn-secondary btn-sm" onclick="fetchServerHealth()">🔄 Actualizar</button>
-            </div>
-            <div style="padding: 20px;">
-              <div style="display: flex; flex-direction: column; gap: 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
-                  <div>
-                    <div style="font-weight: 700; color: #fff;">Real-Debrid CDN Engine</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">Descompresión y aceleración 4K sin buffering</div>
-                  </div>
-                  <span class="badge badge-active" id="srv-rd-badge">🟢 Conectado</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
-                  <div>
-                    <div style="font-weight: 700; color: #fff;">The Movie Database (TMDB)</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">Metadatos, posters, sinopsis y audio en español</div>
-                  </div>
-                  <span class="badge badge-active" id="srv-tmdb-badge">🟢 Conectado</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
-                  <div>
-                    <div style="font-weight: 700; color: #fff;">Descarga Directa APK v3.5.0</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">tomtv.lat/apk (58 MB sin redirecciones)</div>
-                  </div>
-                  <span class="badge badge-active">⚡ Directo (HTTP 200)</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #0A0C12; border-radius: 10px; border: 1px solid var(--card-border);">
-                  <div>
-                    <div style="font-weight: 700; color: #fff;">Filtro Anti-Grabaciones de Cine (Anti-CAM)</div>
-                    <div style="font-size: 11px; color: var(--text-muted);">Garantiza solo versiones limpias 4K / 1080p</div>
-                  </div>
-                  <span class="badge badge-active">🛡️ Activado</span>
-                </div>
-              </div>
-            </div>
+        <div class="controls-bar">
+          <div>
+            <h3 style="font-size: 18px; font-weight: 800;">Tus Distribuidores Oficiales</h3>
+            <p style="font-size: 13px; color: var(--text-muted);">Gestiona sus credenciales, recárgales créditos y envíales su acceso listo por WhatsApp.</p>
           </div>
-
-          <!-- Card de Test de Latencia y Ping CDN -->
-          <div class="section-card">
-            <div class="section-header">
-              <div class="section-title">⚡ Diagnóstico & Latencia de Servidores</div>
-              <span class="badge badge-active" id="srv-ping-badge">Latencia: Medir</span>
-            </div>
-            <div style="padding: 20px;">
-              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-                Mide el tiempo de respuesta de los endpoints de la API central y la entrega de contenidos:
-              </p>
-              <div style="display: flex; flex-direction: column; gap: 10px;" id="server-ping-results">
-                <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #07080B; border-radius: 8px; border: 1px solid #1C1E2A;">
-                  <span>API Principal (/health)</span>
-                  <span id="ping-health" style="font-family: monospace; font-weight: 700; color: var(--success);">-- ms</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #07080B; border-radius: 8px; border: 1px solid #1C1E2A;">
-                  <span>Endpoint OTA (/api/streaming/version)</span>
-                  <span id="ping-version" style="font-family: monospace; font-weight: 700; color: var(--success);">-- ms</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; padding: 10px 14px; background: #07080B; border-radius: 8px; border: 1px solid #1C1E2A;">
-                  <span>Descarga Directa APK (/apk)</span>
-                  <span id="ping-apk" style="font-family: monospace; font-weight: 700; color: var(--success);">-- ms</span>
-                </div>
-              </div>
-              <button class="btn btn-primary" style="width: 100%; margin-top: 18px;" onclick="testCdnPings()">
-                🚀 Realizar Prueba de Latencia en Tiempo Real
-              </button>
-            </div>
-          </div>
+          <button class="btn btn-primary" onclick="openNewResellerModal()">➕ Nuevo Revendedor</button>
         </div>
-      </div>
 
-      <!-- VISTA 4: AJUSTES & WHATSAPP -->
-      <div id="view-settings" style="display: none;">
-        <div class="section-card" style="max-width: 680px; margin: 0 auto;">
-          <div class="section-header">
-            <div class="section-title">⚙️ Configuración del Negocio & Contacto</div>
+        <div class="resellers-grid" id="resellers-grid-container">
+          <!-- Renderizado dinámico de tarjetas -->
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- SECCIÓN 3: CANALES EN VIVO -->
+      <!-- ============================================================== -->
+      <section id="section-channels" style="display: none;">
+        <div class="controls-bar">
+          <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="channel-search-input" class="search-input" placeholder="Buscar canal por nombre o categoría..." oninput="filterChannels()">
           </div>
-          <div style="padding: 24px;">
-            <form id="settings-tab-form" onsubmit="submitSettings(event)">
+          <button class="btn btn-primary" onclick="openNewChannelModal()">➕ Agregar Canal</button>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Canal</th>
+                <th>Categoría</th>
+                <th>Estado</th>
+                <th>Enlace de Señal</th>
+                <th style="text-align: right;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="channels-table-body">
+              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Cargando canales...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- SECCIÓN 4: AJUSTES & COBROS -->
+      <!-- ============================================================== -->
+      <section id="section-settings" style="display: none;">
+        <div style="max-width: 680px; margin: 0 auto;">
+          <div class="stat-card" style="margin-bottom: 20px;">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Configuración de Cobros y Contacto</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Configura tu número de Plin oficial para recibir pagos y tu WhatsApp de atención.</p>
+
+            <form onsubmit="submitSettings(event)">
               <div class="form-group">
-                <label>Número de WhatsApp Oficial (Soporte, Consultas y Comprobantes):</label>
-                <input type="text" id="tab-whatsapp-number" class="form-control" placeholder="Ej: +51914598415">
-                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Tu WhatsApp de atención (+51 914 598 415).</small>
+                <label>Número Exclusivo de Pagos (Perú - Solo Plin):</label>
+                <input type="text" id="setting-plin" class="form-control" placeholder="Ej: 962622904" required>
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Este es el número oficial que se les mostrará a tus clientes para pagar por Plin.</small>
               </div>
 
               <div class="form-group">
-                <label>Número Exclusivo de Pagos Plin (Perú):</label>
-                <input type="text" id="tab-plin-number" class="form-control" placeholder="Ej: 962622904">
-                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Número oficial donde los clientes transferirán por Plin (962 622 904).</small>
+                <label>WhatsApp Oficial de Soporte y Comprobantes:</label>
+                <input type="text" id="setting-whatsapp" class="form-control" placeholder="Ej: +51914598415" required>
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">WhatsApp donde tus clientes te enviarán las capturas de pantalla de Plin.</small>
               </div>
 
               <div class="form-group">
-                <label>Plantilla de Recordatorio de Pago / Renovación:</label>
-                <textarea id="tab-whatsapp-msg" class="form-control" rows="3" placeholder="Hola {nombre}, te recordamos que tu suscripción TOM TV vence en {dias} días ({fecha}). Para renovar responde a este mensaje."></textarea>
-                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Variables disponibles: {nombre}, {dias}, {fecha}, {codigo}.</small>
+                <label>Plantilla de Recordatorio para Clientes:</label>
+                <textarea id="setting-template" class="form-control" rows="3" placeholder="Hola {nombre}, tu suscripción vence pronto. Para renovar por Plin transfiere al 962622904."></textarea>
               </div>
 
-              <div class="form-group" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--card-border);">
-                <label>Cambiar Contraseña de Administrador (Actual: 123456):</label>
-                <div class="input-group">
-                  <input type="password" id="tab-admin-pass" class="form-control" placeholder="Dejar en blanco para conservar la actual (123456)">
-                  <button type="button" class="input-toggle-btn" onclick="togglePassVisibility('tab-admin-pass')">👁️</button>
-                </div>
+              <div class="form-group" style="padding-top: 14px; border-top: 1px solid var(--card-border);">
+                <label>Cambiar Contraseña de Administrador (Dejar en blanco para no cambiar):</label>
+                <input type="password" id="setting-password" class="form-control" placeholder="••••••••">
               </div>
 
-              <button type="submit" class="btn btn-primary" style="margin-top: 10px;">💾 Guardar Ajustes</button>
+              <button type="submit" class="btn btn-primary" id="btn-save-settings" style="width: 100%; padding: 12px; margin-top: 10px;">💾 Guardar Ajustes</button>
             </form>
           </div>
-        </div>
-      </div>
 
-      <!-- VISTA: MONITOR DE PANTALLAS CONECTADAS & EXPULSIÓN REMOTA -->
-      <div id="view-sessions" style="display: none;">
-        <div class="stats-grid">
           <div class="stat-card">
-            <span class="stat-title">🟢 Pantallas en Vivo</span>
-            <span class="stat-value" style="color: var(--success);" id="stat-sessions-online">0</span>
-            <span class="stat-sub">Activas en los últimos 30 min</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">📺 Total Dispositivos</span>
-            <span class="stat-value" id="stat-sessions-total">0</span>
-            <span class="stat-sub">Smart TVs & Móviles vinculados</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">🛡️ Control de Pantallas</span>
-            <span class="stat-value" style="color: var(--accent);">Activo</span>
-            <span class="stat-sub">Expulsión remota instantánea</span>
-          </div>
-        </div>
-
-        <div class="section-card">
-          <div class="section-header">
-            <div>
-              <div class="section-title">📺 Monitor de Pantallas Conectadas en Tiempo Real</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Supervisa qué cliente está conectado y expulsa pantallas con 1 clic si comparten su cuenta</p>
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-              <button class="btn btn-secondary btn-sm" onclick="fetchSessions()">🔄 Actualizar Pantallas</button>
-            </div>
-          </div>
-
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Dispositivo / Smart TV</th>
-                  <th>Estado en Vivo</th>
-                  <th>Actividad</th>
-                  <th>Última Conexión</th>
-                  <th style="text-align: right;">Acciones</th>
-                </tr>
-              </thead>
-              <tbody id="sessions-tbody">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Cargando pantallas conectadas...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- VISTA: AVISOS Y NOTIFICACIONES A LAS PANTALLAS (SMART TV & MÓVIL) -->
-      <div id="view-announcements" style="display: none;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
-          <!-- Panel de Redacción de Aviso -->
-          <div class="section-card">
-            <div class="section-header">
-              <div class="section-title">📢 Transmitir Aviso a las Pantallas</div>
-            </div>
-            <div style="padding: 24px;">
-              <form id="announcement-form" onsubmit="submitAnnouncement(event)">
-                <div class="form-group">
-                  <label>Título del Aviso:</label>
-                  <input type="text" id="ann-title" class="form-control" placeholder="Ej: ⚽ ¡Transmisión en Vivo Hoy!" required oninput="updateTvMockup()">
-                </div>
-                <div class="form-group">
-                  <label>Mensaje para las Pantallas:</label>
-                  <textarea id="ann-message" class="form-control" rows="4" placeholder="Ej: A las 8:00 PM transmisión exclusiva del partido en Canal 4. ¡No te lo pierdas!" required oninput="updateTvMockup()"></textarea>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
-                  <div class="form-group">
-                    <label>Nivel de Importancia:</label>
-                    <select id="ann-type" class="form-control" onchange="updateTvMockup()">
-                      <option value="info">🔵 Informativo (Azul/Rojo)</option>
-                      <option value="warning">🟡 Alerta / Novedad (Dorado)</option>
-                      <option value="urgent">🔴 Urgente / Mantenimiento (Rojo Fuerte)</option>
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label>Duración del Aviso:</label>
-                    <select id="ann-hours" class="form-control">
-                      <option value="6">6 Horas</option>
-                      <option value="12">12 Horas</option>
-                      <option value="24" selected>24 Horas (1 Día)</option>
-                      <option value="48">48 Horas (2 Días)</option>
-                      <option value="168">7 Días</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style="display: flex; gap: 12px; margin-top: 16px;">
-                  <button type="submit" class="btn btn-primary" style="flex: 1;">📢 Transmitir a Todas las TVs</button>
-                  <button type="button" class="btn btn-secondary" onclick="disableAnnouncement()">🚫 Desactivar Aviso</button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <!-- Vista Previa de Cómo se Ve en el Televisor -->
-          <div class="section-card">
-            <div class="section-header">
-              <div class="section-title">📺 Vista Previa en Pantalla Smart TV</div>
-              <span id="ann-status-pill" class="badge badge-expired">Inactivo</span>
-            </div>
-            <div style="padding: 24px; text-align: center;">
-              <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Así verán este aviso tus clientes en la parte superior de su pantalla al abrir la app:</p>
-              
-              <div class="tv-mockup-frame">
-                <div style="position: absolute; top: 12px; left: 16px; font-size: 11px; color: rgba(255,255,255,0.4); font-weight: 800;">TOM TV • SMART TV</div>
-                <div id="mockup-banner" class="tv-announcement-banner">
-                  <div id="mockup-title" style="font-size: 16px; font-weight: 900; margin-bottom: 6px;">📢 ¡Transmisión en Vivo Hoy!</div>
-                  <div id="mockup-msg" style="font-size: 13px; opacity: 0.95; line-height: 1.4;">A las 8:00 PM transmisión exclusiva en el Canal 4. ¡Disfrútalo!</div>
-                </div>
-              </div>
-              <div class="tv-stand-base"></div>
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 6px;">Copia de Seguridad (Backup)</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Descarga o restaura tu base de datos de clientes y revendedores en un clic.</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <button class="btn btn-secondary btn-sm" onclick="downloadBackup()">📥 Descargar Backup JSON</button>
+              <button class="btn btn-secondary btn-sm" onclick="triggerRestore()">📤 Restaurar desde JSON</button>
+              <input type="file" id="file-restore-input" style="display: none;" accept=".json" onchange="handleFileRestore(event)">
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- VISTA: TABLERO FINANCIERO Y GANANCIAS -->
-      <div id="view-finances" style="display: none;">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <span class="stat-title">💰 Ingresos Proyectados / Mes</span>
-            <span class="stat-value" style="color: var(--success); font-size: 32px;" id="stat-finance-revenue">$0</span>
-            <span class="stat-sub">Cartera activa recurrente</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">👥 Clientes Pagos Activos</span>
-            <span class="stat-value" style="color: #fff;" id="stat-finance-active-clients">0</span>
-            <span class="stat-sub">Suscripciones vigentes</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">🚨 Vencen Hoy (Cobro Urgente)</span>
-            <span class="stat-value" style="color: var(--danger);" id="stat-finance-exp-today">0</span>
-            <span class="stat-sub">Para renovar de inmediato</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-title">🟡 Vencen en ≤ 3 Días</span>
-            <span class="stat-value" style="color: var(--warning);" id="stat-finance-exp-3d">0</span>
-            <span class="stat-sub">Oportunidades de cobro</span>
-          </div>
-        </div>
-
-        <!-- Gráficos de Inteligencia Financiera -->
-        <div class="charts-grid">
-          <div class="chart-box">
-            <h4>📊 Distribución de Clientes</h4>
-            <div style="height: 250px; position: relative;">
-              <canvas id="chart-client-dist"></canvas>
-            </div>
-          </div>
-          <div class="chart-box">
-            <h4>📅 Próximas Renovaciones (7 Días)</h4>
-            <div style="height: 250px; position: relative;">
-              <canvas id="chart-renewals"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Clientes con Renovación Inminente (Cobro Rápido por WhatsApp) -->
-        <div class="section-card" style="margin-top: 24px;">
-          <div class="section-header">
-            <div>
-              <div class="section-title">⚡ Clientes por Vencer (Enviar Cobro WhatsApp con 1 Clic)</div>
-              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Envía el recordatorio de pago directamente al WhatsApp del cliente con su código ya redactado</p>
-            </div>
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Código</th>
-                  <th>Vence</th>
-                  <th>Tiempo Restante</th>
-                  <th>Distribuidor</th>
-                  <th style="text-align: right;">Recordatorio WhatsApp</th>
-                </tr>
-              </thead>
-              <tbody id="finance-expiring-tbody">
-                <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay renovaciones urgentes por ahora.</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
+    </main>
   </div>
 
-  <!-- MODAL: ACTIVAR CÓDIGO PENDIENTE -->
-  <div class="modal" id="modal-activate">
+  <!-- ============================================================== -->
+  <!-- MODALES DE ACCIÓN -->
+  <!-- ============================================================== -->
+
+  <!-- MODAL: NUEVO CLIENTE -->
+  <div class="modal" id="modal-client">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">⚡ Activar Pantalla de Cliente</h3>
-        <button class="close-btn" onclick="closeModal('modal-activate')">&times;</button>
+        <h3 style="font-weight: 800;">➕ Activar Pantalla de Cliente</h3>
+        <button class="close-btn" onclick="closeModal('modal-client')">&times;</button>
       </div>
-      <form id="activate-form" onsubmit="submitActivation(event)">
-        <div class="form-group">
-          <label>Código de Pantalla TV:</label>
-          <input type="text" id="act-code" class="form-control" style="font-family: monospace; font-weight: 900; font-size: 18px; color: var(--primary);" readonly>
-        </div>
+      <form onsubmit="submitNewClient(event)">
         <div class="form-group">
           <label>Nombre del Cliente:</label>
-          <input type="text" id="act-name" class="form-control" placeholder="Ej: Roberto Salas" required autofocus>
+          <input type="text" id="new-client-name" class="form-control" placeholder="Ej: Carlos Mendoza" required>
         </div>
         <div class="form-group">
-          <label>Plan / Duración de la Membresía:</label>
-          <select id="act-plan" class="form-control">
-            <option value="2h">⚡ Demo Gratuito (2 Horas)</option>
+          <label>Código TV (Opcional, déjalo vacío para auto-generar):</label>
+          <input type="text" id="new-client-code" class="form-control" placeholder="Ej: TOM-5544">
+        </div>
+        <div class="form-group">
+          <label>Plan / Duración:</label>
+          <select id="new-client-plan" class="form-control">
             <option value="30" selected>1 Mes (30 días)</option>
             <option value="90">3 Meses (90 días)</option>
             <option value="180">6 Meses (180 días)</option>
@@ -1161,120 +500,48 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Pantallas Máximas Permitidas:</label>
-          <select id="act-devices" class="form-control">
+          <label>Dispositivos Permitidos:</label>
+          <select id="new-client-devices" class="form-control">
             <option value="1">1 Dispositivo</option>
             <option value="2">2 Dispositivos</option>
             <option value="3">3 Dispositivos</option>
             <option value="5">5 Dispositivos (Familiar)</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Aprobar y Activar Inmediatamente</button>
+        <button type="submit" class="btn btn-primary" id="btn-submit-client" style="width: 100%; padding: 12px; margin-top: 10px;">Activar Cliente</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: GENERAR DEMO RÁPIDO (2 HORAS) -->
-  <div class="modal" id="modal-quick-demo">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 style="font-weight: 800;">⚡ Generar Demo Rápido (2 Horas)</h3>
-        <button class="close-btn" onclick="closeModal('modal-quick-demo')">&times;</button>
-      </div>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-        Crea un código de prueba con vigencia exacta de 2 horas para enviar a tu cliente prospecto por WhatsApp.
-      </p>
-      <form id="quick-demo-form" onsubmit="submitQuickDemo(event)">
-        <div class="form-group">
-          <label>Nombre del Prospecto (Opcional):</label>
-          <input type="text" id="demo-client-name" class="form-control" placeholder="Ej: Prospecto WhatsApp / Juan">
-        </div>
-        <button type="submit" class="btn btn-gold" id="btn-create-demo-submit" style="width: 100%; padding: 12px; margin-top: 6px;">
-          ⚡ Generar Demo de 2 Horas
-        </button>
-      </form>
-
-      <!-- Resultado del demo generado -->
-      <div id="demo-result-box" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--card-border); text-align: center;">
-        <span style="font-size: 11px; color: var(--gold); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Demo Activo por 2 Horas:</span>
-        <div style="font-size: 32px; font-weight: 900; color: #fff; background: #07080B; border: 1px dashed var(--gold); padding: 12px; border-radius: 10px; margin: 10px 0; font-family: monospace;" id="demo-generated-code">VJ-0000</div>
-        <div style="display: flex; gap: 8px; flex-direction: column;">
-          <a id="demo-whatsapp-share-btn" href="#" target="_blank" class="btn btn-whatsapp" style="width: 100%; padding: 11px;">📲 Enviar Demo por WhatsApp</a>
-          <button class="btn btn-secondary" onclick="copyDemoLink()">🔗 Copiar Enlace Directo</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: NUEVO CLIENTE DIRECTO (SIN CÓDIGO PREVIO) -->
-  <div class="modal" id="modal-new-client-admin">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 style="font-weight: 800;">➕ Registrar Nuevo Cliente Directo</h3>
-        <button class="close-btn" onclick="closeModal('modal-new-client-admin')">&times;</button>
-      </div>
-      <form id="direct-client-form" onsubmit="submitDirectClient(event)">
-        <div class="form-group">
-          <label>Nombre Completo:</label>
-          <input type="text" id="dir-name" class="form-control" placeholder="Ej: Maria Fernández" required>
-        </div>
-        <div class="form-group">
-          <label>Plan / Tiempo:</label>
-          <select id="dir-plan" class="form-control">
-            <option value="2h">⚡ Demo Gratuito (2 Horas)</option>
-            <option value="30" selected>1 Mes (30 días)</option>
-            <option value="90">3 Meses (90 días)</option>
-            <option value="180">6 Meses (180 días)</option>
-            <option value="365">1 Año (365 días)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Pantallas Permitidas:</label>
-          <select id="dir-devices" class="form-control">
-            <option value="1">1 Pantalla</option>
-            <option value="2">2 Pantallas</option>
-            <option value="3">3 Pantallas</option>
-            <option value="5">5 Pantallas</option>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-primary" id="btn-save-dir-client" style="width: 100%; margin-top: 10px; padding: 12px;">
-          Crear Cliente y Generar Código
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: CREAR REVENDEDOR -->
+  <!-- MODAL: NUEVO REVENDEDOR -->
   <div class="modal" id="modal-reseller">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">💼 Registrar Nuevo Revendedor</h3>
+        <h3 style="font-weight: 800;">➕ Registrar Revendedor</h3>
         <button class="close-btn" onclick="closeModal('modal-reseller')">&times;</button>
       </div>
-      <form id="reseller-create-form" onsubmit="submitNewReseller(event)">
+      <form onsubmit="submitNewReseller(event)">
         <div class="form-group">
-          <label>Nombre Completo del Revendedor:</label>
-          <input type="text" id="res-name" class="form-control" placeholder="Ej: Carlos Mendoza (Distribuidor Norte)" required>
+          <label>Nombre Completo o Empresa:</label>
+          <input type="text" id="new-res-name" class="form-control" placeholder="Ej: Distribuidor Norte" required>
         </div>
         <div class="form-group">
-          <label>Nombre de Usuario (Para iniciar sesión en /reseller):</label>
-          <input type="text" id="res-username" class="form-control" placeholder="Ej: carlos_ventas" required>
+          <label>Nombre de Usuario (Para iniciar sesión):</label>
+          <input type="text" id="new-res-user" class="form-control" placeholder="Ej: distribuidor1" required>
         </div>
         <div class="form-group">
-          <label>Contraseña de Acceso:</label>
-          <input type="password" id="res-password" class="form-control" placeholder="Mínimo 4 caracteres" required>
+          <label>Contraseña:</label>
+          <input type="text" id="new-res-pass" class="form-control" placeholder="Ej: 123" required>
         </div>
         <div class="form-group">
-          <label>Teléfono de WhatsApp:</label>
-          <input type="text" id="res-whatsapp" class="form-control" placeholder="Ej: +51987654321">
+          <label>WhatsApp del Revendedor:</label>
+          <input type="text" id="new-res-wsp" class="form-control" placeholder="Ej: +51999999999">
         </div>
         <div class="form-group">
-          <label>Créditos Iniciales Asignados (1 Crédito = 1 Mes):</label>
-          <input type="number" id="res-credits" class="form-control" value="10" min="0" required>
+          <label>Créditos Iniciales Asignados:</label>
+          <input type="number" id="new-res-credits" class="form-control" value="20" min="0" required>
         </div>
-        <button type="submit" class="btn btn-primary" id="btn-save-reseller" style="width: 100%; margin-top: 10px; padding: 12px;">
-          Guardar Revendedor
-        </button>
+        <button type="submit" class="btn btn-primary" id="btn-submit-reseller" style="width: 100%; padding: 12px; margin-top: 10px;">Guardar Revendedor</button>
       </form>
     </div>
   </div>
@@ -1283,914 +550,418 @@
   <div class="modal" id="modal-recharge">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">💎 Recargar Créditos a Revendedor</h3>
+        <h3 style="font-weight: 800;">⚡ Recargar Créditos</h3>
         <button class="close-btn" onclick="closeModal('modal-recharge')">&times;</button>
       </div>
-      <form id="recharge-form" onsubmit="submitRecharge(event)">
-        <input type="hidden" id="recharge-reseller-id">
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 8px;">
-          Revendedor: <strong id="recharge-reseller-name" style="color: #fff;">-</strong>
-        </p>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-          Saldo actual: <strong id="recharge-current-credits" style="color: var(--gold);">0 créditos</strong>
-        </p>
-
-        <!-- Botones rápidos -->
-        <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(10)">+10 Créditos</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(25)">+25 Créditos</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(50)">+50 Créditos</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickRecharge(100)">+100 Créditos</button>
-        </div>
-
-        <div class="form-group">
-          <label>Cantidad de Créditos a Añadir:</label>
-          <input type="number" id="recharge-amount" class="form-control" value="25" min="1" required>
+      <form onsubmit="submitRecharge(event)">
+        <input type="hidden" id="recharge-res-id">
+        <div style="background: #090B10; border: 1px solid var(--card-border); padding: 14px; border-radius: 10px; margin-bottom: 16px;">
+          <div style="font-size: 12px; color: var(--text-muted);">Revendedor:</div>
+          <div style="font-size: 16px; font-weight: 800; color: #fff;" id="recharge-res-name">-</div>
+          <div style="font-size: 13px; color: var(--gold); margin-top: 4px;">Créditos actuales: <strong id="recharge-res-current">0</strong></div>
         </div>
         <div class="form-group">
-          <label>Nota / Referencia de Pago (Opcional):</label>
-          <input type="text" id="recharge-note" class="form-control" placeholder="Ej: Pago confirmado por Yape / Transferencia">
+          <label>Cantidad de Créditos a Añadir (o restar con signo negativo):</label>
+          <input type="number" id="recharge-amount" class="form-control" value="10" required>
         </div>
-        <button type="submit" class="btn btn-primary" id="btn-submit-recharge" style="width: 100%; margin-top: 10px; padding: 12px;">
-          Confirmar y Añadir Créditos
-        </button>
+        <div class="form-group">
+          <label>Nota / Motivo de la recarga:</label>
+          <input type="text" id="recharge-note" class="form-control" placeholder="Ej: Pago recibido vía Plin">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-recharge" style="width: 100%; padding: 12px;">Confirmar Recarga</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: GESTIONAR CANAL DE TV -->
-  <div class="modal" id="modal-channel">
+  <!-- MODAL: EDITAR REVENDEDOR -->
+  <div class="modal" id="modal-edit-reseller">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;" id="channel-modal-title">📺 Añadir Canal de TV en Vivo</h3>
-        <button class="close-btn" onclick="closeModal('modal-channel')">&times;</button>
+        <h3 style="font-weight: 800;">✏️ Editar Revendedor</h3>
+        <button class="close-btn" onclick="closeModal('modal-edit-reseller')">&times;</button>
       </div>
-      <form id="channel-form" onsubmit="submitChannel(event)">
-        <input type="hidden" id="ch-edit-id">
+      <form onsubmit="submitEditReseller(event)">
+        <input type="hidden" id="edit-res-id">
         <div class="form-group">
-          <label>Nombre del Canal:</label>
-          <input type="text" id="ch-name" class="form-control" placeholder="Ej: ESPN Deportes HD" required>
-        </div>
-        <div class="form-group">
-          <label>Categoría:</label>
-          <select id="ch-category" class="form-control">
-            <option value="Deportes">⚽ Deportes</option>
-            <option value="Cine & Series">🎬 Cine & Series</option>
-            <option value="Infantil">👶 Infantil</option>
-            <option value="Entretenimiento">🌍 Entretenimiento</option>
-            <option value="Nacionales">🌎 Nacionales</option>
-          </select>
+          <label>Nombre:</label>
+          <input type="text" id="edit-res-name" class="form-control" required>
         </div>
         <div class="form-group">
-          <label>URL del Logo (Icono PNG / SVG / JPG):</label>
-          <input type="url" id="ch-logo" class="form-control" placeholder="https://ejemplo.com/logo.png">
+          <label>Nueva Contraseña (Dejar en blanco para conservar la actual):</label>
+          <input type="text" id="edit-res-pass" class="form-control" placeholder="••••••••">
         </div>
         <div class="form-group">
-          <label>URL de Transmisión (.m3u8 HLS):</label>
-          <input type="url" id="ch-stream" class="form-control" placeholder="https://servidor.com/live/canal.m3u8" required>
+          <label>WhatsApp:</label>
+          <input type="text" id="edit-res-wsp" class="form-control">
         </div>
-        <div class="form-group">
-          <label>Calidad:</label>
-          <select id="ch-quality" class="form-control">
-            <option value="1080p HD">1080p HD</option>
-            <option value="720p HD">720p HD</option>
-            <option value="4K UHD">4K UHD</option>
-            <option value="SD">SD</option>
-          </select>
-        </div>
-        <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
-          <input type="checkbox" id="ch-active" checked style="width: 18px; height: 18px;">
-          <label for="ch-active" style="margin: 0; cursor: pointer;">Canal activo y visible en la App</label>
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top: 10px; width: 100%;">Guardar Canal</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Guardar Cambios</button>
       </form>
     </div>
   </div>
 
-  <!-- MODAL: REPRODUCTOR DE PRUEBA HLS -->
-  <div class="modal" id="modal-player">
-    <div class="modal-content" style="max-width: 640px; padding: 20px;">
-      <div class="modal-header">
-        <h3 style="font-weight: 800;" id="player-title">📺 Vista Previa de Canal</h3>
-        <button class="close-btn" onclick="closePlayerModal()">&times;</button>
-      </div>
-      <div style="position: relative; width: 100%; padding-top: 56.25%; background: #000; border-radius: 12px; overflow: hidden;">
-        <video id="preview-video" controls autoplay playsinline style="position: absolute; top:0; left:0; width:100%; height:100%;"></video>
-      </div>
-      <p id="player-status" style="font-size: 12px; color: var(--text-muted); margin-top: 10px; font-family: monospace;"></p>
-    </div>
-  </div>
+  <!-- Toast Notificaciones -->
+  <div id="toast"></div>
 
-  <!-- MODAL: RESTAURAR COPIA DE SEGURIDAD -->
-  <div class="modal" id="modal-restore">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3 style="font-weight: 800;">📥 Restaurar Copia de Seguridad</h3>
-        <button class="close-btn" onclick="closeModal('modal-restore')">&times;</button>
-      </div>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
-        Selecciona un archivo JSON previamente descargado para restaurar clientes, revendedores y configuraciones.
-      </p>
-      <div class="form-group">
-        <input type="file" id="restore-file-input" accept=".json" class="form-control" onchange="handleRestoreFile(event)">
-      </div>
-      <div class="form-group">
-        <label>O pega el contenido JSON directamente:</label>
-        <textarea id="restore-json-text" class="form-control" rows="5" placeholder="Pega aquí el JSON"></textarea>
-      </div>
-      <button type="button" class="btn btn-primary" style="width: 100%;" onclick="submitRestoreBackup()">Restaurar Datos Ahora</button>
-    </div>
-  </div>
-
-  <!-- MODAL: CENTRO DE PLANTILLAS DE WHATSAPP -->
-  <div class="modal" id="modal-whatsapp-templates">
-    <div class="modal-content" style="max-width: 600px;">
-      <div class="modal-header">
-        <h3 style="font-weight: 900; display: flex; align-items: center; gap: 8px;">
-          <span style="color: #25D366;">📲</span> Plantillas de WhatsApp Automatizadas
-        </h3>
-        <button class="close-btn" onclick="closeModal('modal-whatsapp-templates')">&times;</button>
-      </div>
-
-      <!-- Selector de Tipo de Mensaje -->
-      <div class="filter-chips" style="margin-bottom: 14px;">
-        <div class="chip active" onclick="switchWhatsAppTemplate('welcome', this)">🎉 Bienvenida TV</div>
-        <div class="chip" onclick="switchWhatsAppTemplate('expiring', this)">⏳ Por Vencer (Cobro)</div>
-        <div class="chip" onclick="switchWhatsAppTemplate('expired', this)">⚠️ Cuenta Vencida</div>
-        <div class="chip" onclick="switchWhatsAppTemplate('demo', this)">⚡ Demo 2 Horas</div>
-        <div class="chip" onclick="switchWhatsAppTemplate('downloader', this)">📺 Guía Downloader</div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
-        <div class="form-group" style="margin: 0;">
-          <label style="font-size: 11px;">Nombre del Cliente:</label>
-          <input type="text" id="tpl-client-name" class="form-control" placeholder="Ej: Juan Pérez" oninput="renderActiveWhatsAppTemplate()">
-        </div>
-        <div class="form-group" style="margin: 0;">
-          <label style="font-size: 11px;">Código TV (opcional):</label>
-          <input type="text" id="tpl-client-code" class="form-control" placeholder="Ej: VJ-3166" oninput="renderActiveWhatsAppTemplate()" style="text-transform: uppercase;">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label style="font-size: 11px;">Mensaje Listo para Enviar al Cliente:</label>
-        <textarea id="tpl-msg-preview" class="form-control" rows="8" style="font-family: monospace; font-size: 12px; line-height: 1.5;"></textarea>
-      </div>
-
-      <div style="display: flex; gap: 10px; margin-top: 14px;">
-        <button class="btn btn-whatsapp" style="flex: 1;" onclick="sendWhatsAppTemplateDirect()">
-          <span>📲</span> Abrir en WhatsApp Web / App
-        </button>
-        <button class="btn btn-secondary" onclick="copyWhatsAppTemplateText()">
-          <span>📋</span> Copiar al Portapapeles
-        </button>
-      </div>
-    </div>
-  </div>
-
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT DEL TABLERO -->
+  <!-- ============================================================== -->
   <script>
     let adminToken = localStorage.getItem('vj_admin_token') || '';
-    let allClients = [];
+    let clientsData = [];
+    let resellersData = [];
+    let channelsData = [];
     let currentClientFilter = 'all';
-    let allChannels = [];
-    let currentChannelCategory = 'Todos';
-    let allResellersList = [];
-    let appSettings = {};
-    let hlsInstance = null;
-    let refreshInterval = null;
 
-    // Inicialización
+    // Inicio
     window.addEventListener('DOMContentLoaded', () => {
-      startLiveClock();
       if (adminToken) {
-        testTokenAndLoad();
+        showDashboard();
       }
     });
 
-    // Reloj digital en vivo
-    function startLiveClock() {
-      const clockEl = document.getElementById('live-clock');
-      function update() {
-        const now = new Date();
-        clockEl.textContent = now.toLocaleTimeString('es-ES', { hour12: false });
-      }
-      update();
-      setInterval(update, 1000);
-    }
-
-    // Toggle de visibilidad de contraseñas
-    function togglePassVisibility(inputId) {
-      const el = document.getElementById(inputId);
-      if (!el) return;
-      el.type = el.type === 'password' ? 'text' : 'password';
-    }
-
-    // Rellenar contraseña por defecto (123456)
-    function fillDefaultPass() {
-      const input = document.getElementById('admin-pass-input');
-      if (input) {
-        input.value = '123456';
-        input.focus();
-        showToast('Clave 123456 asignada', 'info');
-      }
-    }
-
-    // Sistema de notificaciones Toast
-    function showToast(message, type = 'info') {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = `toast toast-${type}`;
-
-      let icon = 'ℹ️';
-      if (type === 'success') icon = '✅';
-      if (type === 'error') icon = '❌';
-
-      toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
-      container.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(10px)';
-        toast.style.transition = 'all 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-      }, 3500);
-    }
-
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      const activeBtn = document.getElementById(`tab-${tab}-btn`);
-      if (activeBtn) activeBtn.classList.add('active');
-
-      document.querySelectorAll('.mob-nav-item').forEach(b => b.classList.remove('active'));
-      const mobBtn = document.getElementById(`mob-nav-${tab}`);
-      if (mobBtn) mobBtn.classList.add('active');
-
-      document.getElementById('view-clients').style.display = tab === 'clients' ? 'block' : 'none';
-      document.getElementById('view-sessions').style.display = tab === 'sessions' ? 'block' : 'none';
-      document.getElementById('view-announcements').style.display = tab === 'announcements' ? 'block' : 'none';
-      document.getElementById('view-finances').style.display = tab === 'finances' ? 'block' : 'none';
-      document.getElementById('view-resellers').style.display = tab === 'resellers' ? 'block' : 'none';
-      document.getElementById('view-channels').style.display = tab === 'channels' ? 'block' : 'none';
-      document.getElementById('view-server').style.display = tab === 'server' ? 'block' : 'none';
-      document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
-
-      if (tab === 'sessions') {
-        fetchSessions();
-      } else if (tab === 'announcements') {
-        fetchAnnouncement();
-      } else if (tab === 'finances') {
-        fetchFinancialStats();
-      } else if (tab === 'channels') {
-        fetchChannels();
-      } else if (tab === 'resellers') {
-        fetchResellers();
-      } else if (tab === 'server') {
-        fetchServerHealth();
-      }
-    }
-
-    async function handleLogin(e) {
+    async function handleAdminLogin(e) {
       e.preventDefault();
       const pass = document.getElementById('admin-pass-input').value.trim();
-      const btn = document.getElementById('login-btn');
+      const btn = document.getElementById('btn-login-submit');
       btn.textContent = 'Verificando...';
       btn.disabled = true;
 
       try {
-        const res = await fetch('/api/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ password: pass })
+        const res = await fetch('/api/admin/overview', {
+          headers: { 'x-admin-password': pass }
         });
-        const data = await res.json();
-        if (data.success) {
-          adminToken = data.token || pass;
+        if (res.ok) {
+          adminToken = pass;
           localStorage.setItem('vj_admin_token', adminToken);
-          showToast('Bienvenido Super Administrador', 'success');
           showDashboard();
         } else {
-          showToast('Contraseña incorrecta. Recuerda que es: 123456', 'error');
-          btn.textContent = 'Entrar al Panel Master';
-          btn.disabled = false;
+          alert('Contraseña incorrecta. Por favor reintenta.');
         }
       } catch (err) {
-        showToast('Error de conexión con el servidor', 'error');
-        btn.textContent = 'Entrar al Panel Master';
+        alert('Error conectando con el servidor.');
+      } finally {
+        btn.textContent = 'Entrar al Panel';
         btn.disabled = false;
       }
     }
 
-    async function testTokenAndLoad() {
-      try {
-        const res = await fetch('/api/admin/overview', {
-          headers: { 'x-admin-password': adminToken }
-        });
-        if (res.status === 200) {
-          showDashboard();
-        } else {
-          handleLogout();
-        }
-      } catch (_) {
-        handleLogout();
-      }
+    function handleLogout() {
+      localStorage.removeItem('vj_admin_token');
+      adminToken = '';
+      document.getElementById('dashboard-view').style.display = 'none';
+      document.getElementById('login-view').style.display = 'flex';
     }
 
     function showDashboard() {
       document.getElementById('login-view').style.display = 'none';
       document.getElementById('dashboard-view').style.display = 'block';
-      fetchOverview();
-      fetchChannels();
-      fetchServerHealth();
-      if (!refreshInterval) {
-        refreshInterval = setInterval(() => {
-          fetchOverview();
-          fetchServerHealth();
-        }, 10000);
-      }
+      fetchData();
     }
 
-    function handleLogout() {
-      adminToken = '';
-      localStorage.removeItem('vj_admin_token');
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-      }
-      document.getElementById('login-view').style.display = 'flex';
-      document.getElementById('dashboard-view').style.display = 'none';
-      showToast('Sesión cerrada correctamente', 'info');
+    // Navegación entre pestañas
+    function switchTab(tab) {
+      const tabs = ['clients', 'resellers', 'channels', 'settings'];
+      tabs.forEach(t => {
+        const sec = document.getElementById(`section-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (sec) sec.style.display = (t === tab) ? 'block' : 'none';
+        if (btn) btn.classList.toggle('active', t === tab);
+      });
     }
 
-    async function fetchOverview() {
-      if (!adminToken) return;
+    // Cargar todos los datos
+    async function fetchData() {
       try {
         const res = await fetch('/api/admin/overview', {
           headers: { 'x-admin-password': adminToken }
         });
+        if (res.status === 401 || res.status === 403) {
+          handleLogout();
+          return;
+        }
         const data = await res.json();
         if (data.success) {
-          updateStats(data.stats);
-          renderPending(data.pending);
-          allClients = data.clients || [];
-          renderClients(filterClientsList());
+          clientsData = data.clients || [];
+          resellersData = data.resellers || [];
+          renderStats(data.stats);
+          renderClients();
+          renderResellers();
 
+          // Ajustes
           if (data.settings) {
-            appSettings = data.settings;
-            if (document.getElementById('tab-whatsapp-number')) {
-              document.getElementById('tab-whatsapp-number').value = data.settings.whatsappNumber || '';
-            }
-            if (document.getElementById('tab-plin-number')) {
-              document.getElementById('tab-plin-number').value = data.settings.plinNumber || '962622904';
-            }
-            if (document.getElementById('tab-whatsapp-msg')) {
-              document.getElementById('tab-whatsapp-msg').value = data.settings.whatsappMessage || '';
-            }
+            document.getElementById('setting-plin').value = data.settings.plinNumber || '962622904';
+            document.getElementById('setting-whatsapp').value = data.settings.whatsappNumber || '+51914598415';
+            document.getElementById('setting-template').value = data.settings.whatsappMessage || '';
           }
         }
+        fetchChannels();
       } catch (e) {
-        console.error('Error fetching overview:', e);
+        console.error('Error al cargar datos:', e);
       }
     }
 
-    function updateStats(stats) {
-      document.getElementById('stat-total').textContent = stats.totalClients || 0;
-      document.getElementById('stat-active').textContent = stats.activeClients || 0;
-      document.getElementById('stat-expiring').textContent = stats.expiringSoon || 0;
-      document.getElementById('stat-expired').textContent = stats.expiredClients || 0;
-      document.getElementById('stat-pending').textContent = stats.pendingCount || 0;
-      if (document.getElementById('stat-resellers')) {
-        document.getElementById('stat-resellers').textContent = stats.totalResellers || 0;
-      }
-      if (document.getElementById('stat-credits')) {
-        document.getElementById('stat-credits').textContent = stats.totalCredits || 0;
-      }
-      document.getElementById('pending-badge').textContent = `${stats.pendingCount || 0} pendientes`;
+    function renderStats(stats = {}) {
+      document.getElementById('stat-total-clients').textContent = stats.totalClients || clientsData.length;
+      document.getElementById('stat-active-clients').textContent = stats.activeClients || 0;
+      document.getElementById('stat-expiring-clients').textContent = stats.expiringSoon || 0;
+      document.getElementById('stat-expired-clients').textContent = stats.expiredClients || 0;
 
-      const pendingSection = document.getElementById('pending-section');
-      if (stats.pendingCount > 0) {
-        pendingSection.style.display = 'block';
-      } else {
-        pendingSection.style.display = 'none';
-      }
+      document.getElementById('badge-clients-count').textContent = clientsData.length;
+      document.getElementById('badge-resellers-count').textContent = resellersData.length;
+
+      document.getElementById('stat-reseller-count').textContent = resellersData.length;
+      const totalCredits = resellersData.reduce((acc, r) => acc + (parseInt(r.credits, 10) || 0), 0);
+      document.getElementById('stat-reseller-credits').textContent = totalCredits;
+      document.getElementById('stat-reseller-clients').textContent = clientsData.filter(c => c.resellerId).length;
     }
 
-    function renderPending(pendingList) {
-      const container = document.getElementById('pending-container');
-      if (!pendingList || pendingList.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px;">No hay pantallas esperando activación.</p>';
-        return;
-      }
-
-      container.innerHTML = pendingList.map(item => `
-        <div class="pending-item" style="border: 1px solid rgba(229,9,20,0.4); background: linear-gradient(135deg, #0E1018, #08090F); box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 12px; color: #fff; font-weight: 700;">📺 ${item.deviceModel || 'Smart TV'}</span>
-            <span style="font-size: 11px; color: var(--warning); background: rgba(245,158,11,0.15); padding: 2px 8px; border-radius: 999px;">${item.minutesAgo || 'Ahora'}</span>
-          </div>
-          <div class="code-display" style="font-size: 26px; box-shadow: 0 0 15px rgba(229,9,20,0.3); letter-spacing: 2px;">${item.code}</div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
-            <button class="btn btn-gold btn-sm" title="Aprobar Demo 2 Horas inmediato" onclick="quickActivate('${item.code}', '2h')">⚡ Demo 2h</button>
-            <button class="btn btn-primary btn-sm" title="Aprobar 1 Mes (30 días)" onclick="quickActivate('${item.code}', '30d')">📅 1 Mes (30d)</button>
-            <button class="btn btn-success btn-sm" title="Aprobar 3 Meses" onclick="quickActivate('${item.code}', '90d')">📅 3 Meses</button>
-            <button class="btn btn-secondary btn-sm" title="Personalizar nombre y pantallas" onclick="openActivateModal('${item.code}')">⚙️ Más</button>
-          </div>
-          <div style="display: flex; gap: 6px; margin-top: 4px;">
-            <button class="btn btn-whatsapp btn-sm" style="flex: 1;" title="Abrir plantillas de WhatsApp para esta TV" onclick="openWhatsAppTemplatesModal('Cliente ${item.code}', '${item.code}')">📲 WhatsApp</button>
-            <button class="btn btn-danger btn-sm" title="Descartar solicitud" onclick="rejectPending('${item.code}')">✕ Descartar</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function quickActivate(code, plan) {
-      try {
-        const res = await fetch('/api/admin/quick-activate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ code, plan })
-        });
-        const data = await res.json();
-        if (data.success) {
-          if (navigator.clipboard && data.whatsappMsg) {
-            try {
-              await navigator.clipboard.writeText(data.whatsappMsg);
-            } catch (_) {}
-          }
-          showToast(`¡Pantalla ${code} activada con éxito! Ficha de WhatsApp copiada 📋`, 'success');
-          fetchOverview();
-
-          setTimeout(() => {
-            if (confirm(`¿Deseas abrir WhatsApp para enviar la confirmación de activación al cliente ahora?`)) {
-              window.open(data.whatsappUrl, '_blank');
-            }
-          }, 350);
-        } else {
-          showToast(data.error || 'No se pudo activar la pantalla.', 'error');
-        }
-      } catch (err) {
-        showToast('Error de conexión al activar pantalla.', 'error');
-      }
-    }
-
-    async function rejectPending(code) {
-      if (!confirm(`¿Deseas descartar la solicitud de la pantalla ${code}?`)) return;
-      try {
-        const res = await fetch(`/api/admin/pending/${encodeURIComponent(code)}`, {
-          method: 'DELETE',
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Pantalla descartada', 'info');
-          fetchOverview();
-        }
-      } catch (_) {
-        showToast('Error al descartar.', 'error');
-      }
-    }
-
-    function setClientFilter(filter, el) {
+    // -------------------------------------------------------------
+    // GESTIÓN DE CLIENTES
+    // -------------------------------------------------------------
+    function setClientFilter(filter) {
       currentClientFilter = filter;
-      el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      renderClients(filterClientsList());
-    }
-
-    function filterClientsList() {
-      const q = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-      return allClients.filter(c => {
-        const matchesQuery = !q || c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q) || (c.resellerName && c.resellerName.toLowerCase().includes(q));
-        if (!matchesQuery) return false;
-
-        if (currentClientFilter === 'active') return c.status === 'active' && !c.isDemo;
-        if (currentClientFilter === 'demos') return c.isDemo;
-        if (currentClientFilter === 'expiring') return c.status === 'active' && c.daysRemaining <= 3 && !c.isDemo;
-        if (currentClientFilter === 'expired') return c.status === 'expired' || (c.isDemo && c.diffMinutes <= 0) || c.daysRemaining <= 0;
-        if (currentClientFilter === 'suspended') return c.status === 'suspended';
-        if (currentClientFilter === 'direct') return !c.resellerId;
-        if (currentClientFilter === 'resellers') return !!c.resellerId;
-        return true;
-      });
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = document.getElementById(`filter-btn-${filter}`);
+      if (activeBtn) activeBtn.classList.add('active');
+      renderClients();
     }
 
     function filterClients() {
-      renderClients(filterClientsList());
+      renderClients();
     }
 
-    function renderClients(clients) {
-      const tbody = document.getElementById('clients-tbody');
-      if (!clients || clients.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No se encontraron clientes en este filtro.</td></tr>';
+    function renderClients() {
+      const q = document.getElementById('client-search-input').value.trim().toLowerCase();
+      let list = clientsData.filter(c => {
+        if (!q) return true;
+        const code = (c.code || '').toLowerCase();
+        const name = (c.name || '').toLowerCase();
+        const user = (c.username || '').toLowerCase();
+        return code.includes(q) || name.includes(q) || user.includes(q);
+      });
+
+      if (currentClientFilter === 'active') {
+        list = list.filter(c => c.status === 'active' && (c.daysRemaining > 3 || c.daysRemaining === undefined));
+      } else if (currentClientFilter === 'expiring') {
+        list = list.filter(c => c.status === 'active' && c.daysRemaining <= 3);
+      } else if (currentClientFilter === 'expired') {
+        list = list.filter(c => c.status !== 'active' || c.daysRemaining <= 0);
+      }
+
+      const tbody = document.getElementById('clients-table-body');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No se encontraron clientes con este filtro.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = clients.map(c => {
-        let badgeClass = 'badge-active';
-        let statusText = `Activo (${c.daysRemaining}d)`;
-        if (c.status === 'suspended') {
-          badgeClass = 'badge-suspended';
-          statusText = 'Suspendido';
-        } else if (c.isDemo) {
-          if (c.status === 'expired' || (c.diffMinutes !== undefined && c.diffMinutes <= 0)) {
-            badgeClass = 'badge-expired';
-            statusText = '⚡ Demo Vencido';
-          } else {
-            badgeClass = 'badge-pending';
-            const mins = c.diffMinutes || 120;
-            statusText = mins > 60 ? `⚡ Demo (${(mins/60).toFixed(1)}h)` : `⚡ Demo (${mins}m)`;
-          }
-        } else if (c.status === 'expired' || c.daysRemaining <= 0) {
-          badgeClass = 'badge-expired';
-          statusText = 'Vencido';
-        } else if (c.daysRemaining <= 3) {
-          badgeClass = 'badge-pending';
-          statusText = `Vence en ${c.daysRemaining}d`;
+      tbody.innerHTML = list.map(c => {
+        const days = c.daysRemaining !== undefined ? c.daysRemaining : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+        let badgeHtml = '';
+        if (days <= 0) {
+          badgeHtml = '<span class="badge badge-expired">Vencido</span>';
+        } else if (days <= 3) {
+          badgeHtml = `<span class="badge badge-warning">Vence en ${days}d</span>`;
+        } else {
+          badgeHtml = `<span class="badge badge-active">${days} días</span>`;
         }
 
-        const expDate = c.isDemo 
-          ? new Date(c.expiresAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ' (Hoy)'
-          : new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        const expFormatted = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        const origin = c.resellerName ? `<span style="color: var(--accent); font-size: 11px;">💼 ${c.resellerName}</span>` : '<span style="color: var(--text-subtle); font-size: 11px;">Admin Directo</span>';
 
         return `
           <tr>
             <td>
-              <div class="client-name">${c.name}</div>
-              <div class="client-user">Usuario: ${c.username}</div>
-              <div style="font-size: 11px; color: ${c.resellerName ? '#38BDF8' : '#94A3B8'}; margin-top: 2px;">
-                ${c.resellerName ? '💼 Revendedor: ' + c.resellerName : '🏷️ Venta Directa (Admin)'}
-              </div>
+              <span class="code-pill">${c.code || 'SIN CÓDIGO'}</span>
             </td>
             <td>
-              <span style="font-family: monospace; font-weight: 700; color: #fff; background: #07080B; border: 1px solid #232532; padding: 4px 8px; border-radius: 6px;">${c.code}</span>
+              <div style="font-weight: 700; color: #fff;">${c.name}</div>
+              <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${c.username || ''}</div>
             </td>
-            <td><span class="badge ${badgeClass}">${statusText}</span></td>
-            <td>${expDate}</td>
-            <td>${c.deviceCount || 0} / ${c.maxDevices || 1}</td>
             <td>
-              <div class="actions-cell">
-                <button class="btn btn-whatsapp btn-sm" title="Enviar enlace de activación rápida por WhatsApp" onclick="sendWhatsAppQuickLink('${c.id}')">📲 WhatsApp</button>
-                <button class="btn btn-secondary btn-sm" title="Copiar ficha de bienvenida completa para compartir" onclick="copyFullClientCard('${c.id}')">📋 Ficha</button>
-                <button class="btn btn-secondary btn-sm" title="Copiar enlace directo de activación instantánea" onclick="copyClientActivationLink('${c.code}')">🔗 Link</button>
-                <button class="btn btn-secondary btn-sm" style="border-color: #38BDF8; color: #38BDF8;" title="Copiar URL M3U para Smart TV LG / IBO Player" onclick="copyLgPlaylistLink('${c.code}')">📺 Link LG</button>
-                <button class="btn btn-success btn-sm" title="${c.isDemo ? 'Convertir a Cliente Oficial (+30 días)' : 'Renovar +30 Días'}" onclick="renewClient('${c.id}', 30)">+30d</button>
-                <button class="btn btn-warning btn-sm" title="Suspender / Reactivar" onclick="toggleStatus('${c.id}')">${c.status === 'suspended' ? '▶️' : '⏸️'}</button>
-                <button class="btn btn-secondary btn-sm" title="Desvincular dispositivos para permitir registrar una nueva TV o móvil" onclick="resetDevices('${c.id}')">📺 Reset (${c.deviceCount || 0})</button>
-                <button class="btn btn-danger btn-sm" title="Eliminar cliente" onclick="deleteClient('${c.id}')">🗑️</button>
-              </div>
+              <div>${badgeHtml}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">${expFormatted}</div>
+            </td>
+            <td>
+              <span style="font-size: 12px; color: #fff;">${(c.devices || []).length} / ${c.maxDevices || 1}</span>
+            </td>
+            <td>${origin}</td>
+            <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm" onclick="renewClient('${c.id}', 30)" title="Renovar +30 días">🔄 +30d</button>
+              <button class="btn btn-whatsapp btn-sm" onclick="openClientWhatsApp('${c.name}', '${c.code}', '${days}')" title="Enviar WhatsApp">📲</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyText('${c.code}', '¡Código copiado!')" title="Copiar código">📋</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}', '${c.name}')" title="Eliminar">🗑️</button>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    // Modal de Demo Rápido de 2 Horas
-    let lastGeneratedDemoCode = '';
-    function openQuickDemoModal() {
-      document.getElementById('demo-client-name').value = '';
-      document.getElementById('demo-result-box').style.display = 'none';
-      openModal('modal-quick-demo');
-    }
-
-    async function submitQuickDemo(e) {
-      e.preventDefault();
-      const name = document.getElementById('demo-client-name').value.trim() || 'Cliente Demo';
-      const btn = document.getElementById('btn-create-demo-submit');
-      btn.textContent = 'Generando Demo...';
-      btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/admin/create-demo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ name })
-        });
-        const data = await res.json();
-        if (data.success && data.client) {
-          lastGeneratedDemoCode = data.client.code;
-          document.getElementById('demo-generated-code').textContent = data.client.code;
-          
-          const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(data.client.code)}`;
-          const apkLink = `${getBaseAppUrl()}/api/streaming/download-apk`;
-          let msg = `🎬 *¡DEMO GRATUITO DE 2 HORAS - TOM TV!*\n\n`;
-          msg += `🔑 Código de Activación: *${data.client.code}*\n`;
-          msg += `⏳ Vigencia: *2 Horas Completas*\n\n`;
-          msg += `📱 *Para ver ahora en iPhone, PC o navegador web:*\n${link}\n\n`;
-          msg += `📺 *Para Smart TV o Android TV (Descargar App):*\n${apkLink}\n\n`;
-          msg += `¡Que disfrutes de todo el catálogo en vivo sin límites!`;
-
-          document.getElementById('demo-whatsapp-share-btn').href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
-          document.getElementById('demo-result-box').style.display = 'block';
-
-          showToast('¡Demo de 2 Horas creado exitosamente!', 'success');
-          fetchOverview();
-        } else {
-          showToast('Error al crear demo.', 'error');
-        }
-      } catch (err) {
-        showToast('Error de conexión.', 'error');
-      } finally {
-        btn.textContent = '⚡ Generar Demo de 2 Horas';
-        btn.disabled = false;
-      }
-    }
-
-    function copyDemoLink() {
-      if (!lastGeneratedDemoCode) return;
-      copyClientActivationLink(lastGeneratedDemoCode);
-    }
-
     function openNewClientModal() {
-      document.getElementById('dir-name').value = '';
-      document.getElementById('dir-plan').value = '30';
-      document.getElementById('dir-devices').value = '1';
-      openModal('modal-new-client-admin');
+      document.getElementById('new-client-name').value = '';
+      document.getElementById('new-client-code').value = '';
+      document.getElementById('modal-client').style.display = 'flex';
     }
 
-    async function submitDirectClient(e) {
+    async function submitNewClient(e) {
       e.preventDefault();
-      const name = document.getElementById('dir-name').value.trim();
-      const rawPlan = document.getElementById('dir-plan').value;
-      const planDays = rawPlan === '2h' ? '2h' : parseInt(rawPlan, 10);
-      const maxDevices = parseInt(document.getElementById('dir-devices').value, 10);
-      const btn = document.getElementById('btn-save-dir-client');
+      const name = document.getElementById('new-client-name').value.trim();
+      const code = document.getElementById('new-client-code').value.trim();
+      const planDays = parseInt(document.getElementById('new-client-plan').value, 10);
+      const maxDevices = parseInt(document.getElementById('new-client-devices').value, 10);
 
-      btn.textContent = 'Creando Cliente...';
+      const btn = document.getElementById('btn-submit-client');
+      btn.textContent = 'Activando...';
       btn.disabled = true;
-
-      try {
-        const res = await fetch('/api/admin/clients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ name, planDays, maxDevices })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(`¡Cliente "${data.client.name}" creado con éxito! Código: ${data.client.code}`, 'success');
-          closeModal('modal-new-client-admin');
-          fetchOverview();
-        } else {
-          showToast('Error: ' + (data.error || 'No se pudo crear cliente'), 'error');
-        }
-      } catch (err) {
-        showToast('Error al conectar con el servidor.', 'error');
-      } finally {
-        btn.textContent = 'Crear Cliente y Generar Código';
-        btn.disabled = false;
-      }
-    }
-
-    function openActivateModal(code) {
-      document.getElementById('act-code').value = code;
-      document.getElementById('act-name').value = '';
-      document.getElementById('act-plan').value = '30';
-      document.getElementById('act-devices').value = '1';
-      openModal('modal-activate');
-    }
-
-    async function submitActivation(e) {
-      e.preventDefault();
-      const code = document.getElementById('act-code').value;
-      const name = document.getElementById('act-name').value.trim();
-      const planDays = document.getElementById('act-plan').value;
-      const maxDevices = document.getElementById('act-devices').value;
 
       try {
         const res = await fetch('/api/admin/activate-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ code, name, planDays, maxDevices })
+          body: JSON.stringify({ name, code: code || undefined, planDays, maxDevices })
         });
         const data = await res.json();
         if (data.success) {
-          showToast('¡Pantalla activada con éxito!', 'success');
-          closeModal('modal-activate');
-          fetchOverview();
+          closeModal('modal-client');
+          showToast(`¡Cliente "${name}" activado con éxito! Código: ${data.client?.code}`, 'success');
+          fetchData();
         } else {
-          showToast('Error al activar: ' + (data.error || 'Intente nuevamente'), 'error');
+          showToast('Error: ' + (data.error || 'No se pudo activar'), 'error');
         }
-      } catch (err) {
+      } catch (_) {
         showToast('Error de conexión.', 'error');
+      } finally {
+        btn.textContent = 'Activar Cliente';
+        btn.disabled = false;
       }
     }
 
-    function getBaseAppUrl() {
-      return window.location.origin;
-    }
-
-    function copyClientActivationLink(code) {
-      const link = `${getBaseAppUrl()}/?code=${encodeURIComponent(code)}`;
-      navigator.clipboard.writeText(link).then(() => {
-        showToast('¡Enlace de activación copiado al portapapeles!', 'success');
-      });
-    }
-
-    function copyLgPlaylistLink(code) {
-      const link = `${getBaseAppUrl()}/playlist.m3u?code=${encodeURIComponent(code)}`;
-      navigator.clipboard.writeText(link).then(() => {
-        showToast(`¡Enlace para LG (IBO Player) copiado!: ${link}`, 'success');
-      });
-    }
-
-    function copyFullClientCard(clientId) {
-      const client = allClients.find(c => c.id === clientId);
-      if (!client) return;
-
-      const link = `${getBaseAppUrl()}/play`;
-      const apkLink = `${getBaseAppUrl()}/apk`;
-      const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-
-      let card = `🎬 *¡FICHA OFICIAL DE CLIENTE - TOM TV!*\n\n`;
-      card += `👤 *Cliente:* ${client.name}\n`;
-      card += `🔑 *Código de Acceso:* *${client.code}*\n`;
-      card += `📅 *Vencimiento:* ${expDate} (${client.daysRemaining} días)\n`;
-      card += `📺 *Pantallas Permitidas:* ${client.maxDevices || 1}\n\n`;
-      card += `📲 *Ver en iPhone, iPad, Celular o PC:*\n${link}\n\n`;
-      card += `📺 *Instalar en Smart TV o Firestick (Downloader):*\nEscribe en Downloader: *tomtv.lat/apk*\n`;
-      card += `📥 *Descarga directa alternativa:* ${apkLink}\n\n`;
-      card += `¡Que disfrutes del mejor entretenimiento en 4K y TV en vivo sin cortes!`;
-
-      navigator.clipboard.writeText(card).then(() => {
-        showToast('¡Ficha de bienvenida copiada al portapapeles! 📋', 'success');
-      });
-    }
-
-    function sendWhatsAppQuickLink(clientId) {
-      const client = allClients.find(c => c.id === clientId);
-      if (!client) return;
-
-      const link = `${getBaseAppUrl()}/play`;
-      const apkLink = `${getBaseAppUrl()}/apk`;
-      const expDate = new Date(client.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-      
-      let msg = `🎬 *¡HOLA ${client.name}! TU ACCESO A TOM TV ESTÁ ACTIVO*\n\n`;
-      msg += `🔑 *Código de Activación:* *${client.code}*\n`;
-      msg += `📅 *Vencimiento:* ${expDate} (${client.daysRemaining} días restantes)\n\n`;
-      msg += `📲 *Para ver en iPhone o navegador web:*\n${link}\n\n`;
-      msg += `📺 *Para instalar en tu Smart TV o Firestick (con Downloader):*\nEscribe en la barra de Downloader: *tomtv.lat/apk*\n`;
-      msg += `📥 *Descarga directa:* ${apkLink}\n\n`;
-      msg += `¡Que disfrutes de tus películas, series y canales en vivo sin publicidad! ⭐`;
-
-      const encoded = encodeURIComponent(msg);
-      window.open(`https://wa.me/?text=${encoded}`, '_blank');
-    }
-
-    async function renewClient(clientId, days = 30) {
+    async function renewClient(id, days) {
+      if (!confirm(`¿Renovar esta suscripción por ${days} días adicionales?`)) return;
       try {
-        const res = await fetch(`/api/admin/clients/${clientId}/renew`, {
+        const res = await fetch(`/api/admin/client/${id}/renew`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
           body: JSON.stringify({ additionalDays: days })
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`Suscripción renovada +${days} días`, 'success');
-          fetchOverview();
+          showToast(`¡Suscripción renovada con éxito por ${days} días!`, 'success');
+          fetchData();
+        } else {
+          showToast('Error al renovar: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error al renovar suscripción.', 'error');
+      } catch (_) {
+        showToast('Error de conexión', 'error');
       }
     }
 
-    async function toggleStatus(clientId) {
+    async function deleteClient(id, name) {
+      if (!confirm(`¿Estás seguro de eliminar al cliente "${name}"? Perderá acceso de inmediato.`)) return;
       try {
-        const res = await fetch(`/api/admin/clients/${clientId}/toggle-status`, {
-          method: 'POST',
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Estado del cliente actualizado', 'info');
-          fetchOverview();
-        }
-      } catch (err) {
-        showToast('Error al cambiar estado.', 'error');
-      }
-    }
-
-    async function resetDevices(clientId) {
-      if (!confirm('¿Deseas desvincular todos los dispositivos de este cliente para que pueda registrar una nueva TV?')) return;
-      try {
-        const res = await fetch(`/api/admin/clients/${clientId}/reset-devices`, {
-          method: 'POST',
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Pantallas desvinculadas con éxito', 'success');
-          fetchOverview();
-        }
-      } catch (err) {
-        showToast('Error al desvincular.', 'error');
-      }
-    }
-
-    async function deleteClient(clientId) {
-      if (!confirm('¿Estás seguro de que deseas eliminar permanentemente a este cliente?\n\n⚠️ Sus pantallas y dispositivos quedarán revocados de inmediato y no podrán usar el servicio hasta que decidas aprobarlos otra vez.')) return;
-      try {
-        const res = await fetch(`/api/admin/clients/${clientId}`, {
+        const res = await fetch(`/api/admin/client/${id}`, {
           method: 'DELETE',
           headers: { 'x-admin-password': adminToken }
         });
         const data = await res.json();
         if (data.success) {
-          showToast(data.message || 'Cliente eliminado y dispositivos revocados.', 'info');
-          fetchOverview();
+          showToast(`Cliente "${name}" eliminado.`, 'success');
+          fetchData();
         } else {
-          showToast(data.error || 'Error al eliminar cliente.', 'error');
+          showToast('Error: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error al eliminar.', 'error');
+      } catch (_) {
+        showToast('Error de conexión', 'error');
       }
     }
 
-    // ==============================================================
-    // SECCIÓN REVENDEDORES
-    // ==============================================================
-
-    async function fetchResellers() {
-      if (!adminToken) return;
-      try {
-        const res = await fetch('/api/admin/resellers', {
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success) {
-          allResellersList = data.resellers || [];
-          renderResellers(allResellersList);
-        }
-      } catch (err) {
-        console.error('Error cargando revendedores:', err);
-      }
+    function openClientWhatsApp(name, code, days) {
+      const plin = document.getElementById('setting-plin').value || '962622904';
+      const msg = `¡Hola *${name}*! Tu acceso a TOM TV (Código: *${code}*) vence en ${days} días. Para renovar de inmediato por Plin, transfiere al *${plin}* y responde con tu comprobante.`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    function renderResellers(resellers) {
-      const tbody = document.getElementById('resellers-tbody');
-      if (!resellers || resellers.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 28px;">No hay revendedores registrados. Haz clic en "+ Nuevo Revendedor" para dar de alta a tu primer distribuidor.</td></tr>';
+    // -------------------------------------------------------------
+    // GESTIÓN DE REVENDEDORES
+    // -------------------------------------------------------------
+    function renderResellers() {
+      const container = document.getElementById('resellers-grid-container');
+      if (resellersData.length === 0) {
+        container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px; background: var(--card-bg); border-radius: 14px;">No tienes revendedores registrados aún. Haz clic en "➕ Nuevo Revendedor" para crear el primero.</div>';
         return;
       }
 
-      tbody.innerHTML = resellers.map(r => {
-        const isSuspended = r.status === 'suspended';
-        const waLink = r.whatsapp ? `https://wa.me/${r.whatsapp.replace(/[^0-9+]/g, '')}` : null;
-
+      container.innerHTML = resellersData.map(r => {
+        const originUrl = window.location.origin;
         return `
-          <tr>
-            <td>
-              <div style="font-weight: 700; color: #fff;">${r.name}</div>
-              <div style="font-size: 11px; color: var(--text-muted);">Registrado: ${new Date(r.createdAt).toLocaleDateString()}</div>
-            </td>
-            <td>
-              <span style="font-family: monospace; font-weight: 700; color: #38BDF8; background: #080A0F; padding: 4px 8px; border-radius: 6px; border: 1px solid #1E293B;">
-                ${r.username}
-              </span>
-            </td>
-            <td>
-              ${waLink ? `<a href="${waLink}" target="_blank" style="color: #25D366; text-decoration: none; font-weight: 600;">📲 ${r.whatsapp}</a>` : '<span style="color: var(--text-muted);">-</span>'}
-            </td>
-            <td>
-              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 900; color: #F59E0B; background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); padding: 4px 10px; border-radius: 8px;">
-                💎 ${r.credits || 0}
-              </span>
-            </td>
-            <td>
-              <strong style="color: #fff;">${r.activeClients || 0}</strong> <span style="color: var(--text-muted); font-size: 11px;">/ ${r.totalClients || 0} total</span>
-            </td>
-            <td>
-              <span class="badge ${isSuspended ? 'badge-expired' : 'badge-active'}">
-                ${isSuspended ? 'Suspendido' : 'Activo'}
-              </span>
-            </td>
-            <td style="text-align: right;">
-              <div style="display: flex; gap: 6px; justify-content: flex-end;">
-                <button class="btn btn-primary btn-sm" onclick="openRechargeModal('${r.id}', '${r.name}', ${r.credits || 0})" title="Añadir créditos al revendedor">💎 Recargar</button>
-                <button class="btn btn-warning btn-sm" onclick="toggleResellerStatus('${r.id}', '${r.status}')" title="Suspender o reactivar">${isSuspended ? '▶️ Activar' : '⏸️ Suspender'}</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteResellerAdmin('${r.id}', '${r.name}')" title="Eliminar revendedor">🗑️</button>
+          <div class="reseller-card">
+            <div>
+              <div class="reseller-header">
+                <div>
+                  <div class="reseller-name">${r.name}</div>
+                  <div class="reseller-user">@${r.username}</div>
+                </div>
+                <span class="badge ${r.status === 'active' ? 'badge-active' : 'badge-expired'}">${r.status === 'active' ? 'Activo' : 'Suspendido'}</span>
               </div>
-            </td>
-          </tr>
+
+              <div class="reseller-cred-box">
+                <div class="reseller-cred-row">
+                  <span class="reseller-cred-label">Saldo de Créditos:</span>
+                  <span style="color: var(--gold); font-size: 16px; font-weight: 900;">⚡ ${r.credits || 0} Créditos</span>
+                </div>
+                <div class="reseller-cred-row" style="margin-top: 8px;">
+                  <span class="reseller-cred-label">Usuario Sub-Panel:</span>
+                  <span class="reseller-cred-val">${r.username}</span>
+                </div>
+                <div class="reseller-cred-row">
+                  <span class="reseller-cred-label">Contraseña:</span>
+                  <span class="reseller-cred-val" id="pass-val-${r.id}">••••••••</span>
+                  <button type="button" class="btn btn-secondary btn-sm btn-icon" style="padding: 2px 6px; font-size: 11px;" onclick="togglePass('${r.id}', '${r.password || '123'}')">👁️</button>
+                </div>
+                <div class="reseller-cred-row">
+                  <span class="reseller-cred-label">Clientes Vendidos:</span>
+                  <span style="font-weight: 800; color: #fff;">${r.totalClients || 0}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="reseller-actions">
+              <button class="btn btn-primary btn-sm" onclick="openRechargeModal('${r.id}', '${r.name}', ${r.credits || 0})">⚡ Recargar</button>
+              <button class="btn btn-whatsapp btn-sm" onclick="sendResellerAccess('${r.name}', '${r.username}', '${r.password || '123'}', ${r.credits || 0})">📲 Enviar Acceso</button>
+              <button class="btn btn-secondary btn-sm" onclick="openEditResellerModal('${r.id}', '${r.name}', '${r.whatsapp || ''}')">✏️ Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteReseller('${r.id}', '${r.name}')">🗑️</button>
+            </div>
+          </div>
         `;
       }).join('');
     }
 
+    function togglePass(id, actualPass) {
+      const el = document.getElementById(`pass-val-${id}`);
+      if (el.textContent === '••••••••') {
+        el.textContent = actualPass;
+      } else {
+        el.textContent = '••••••••';
+      }
+    }
+
     function openNewResellerModal() {
-      document.getElementById('res-name').value = '';
-      document.getElementById('res-username').value = '';
-      document.getElementById('res-password').value = '';
-      document.getElementById('res-whatsapp').value = '';
-      document.getElementById('res-credits').value = '10';
-      openModal('modal-reseller');
+      document.getElementById('new-res-name').value = '';
+      document.getElementById('new-res-user').value = '';
+      document.getElementById('new-res-pass').value = '123';
+      document.getElementById('new-res-wsp').value = '';
+      document.getElementById('new-res-credits').value = '20';
+      document.getElementById('modal-reseller').style.display = 'flex';
     }
 
     async function submitNewReseller(e) {
       e.preventDefault();
-      const name = document.getElementById('res-name').value.trim();
-      const username = document.getElementById('res-username').value.trim();
-      const password = document.getElementById('res-password').value.trim();
-      const whatsapp = document.getElementById('res-whatsapp').value.trim();
-      const initialCredits = parseInt(document.getElementById('res-credits').value, 10);
-      const btn = document.getElementById('btn-save-reseller');
+      const name = document.getElementById('new-res-name').value.trim();
+      const username = document.getElementById('new-res-user').value.trim();
+      const password = document.getElementById('new-res-pass').value.trim();
+      const whatsapp = document.getElementById('new-res-wsp').value.trim();
+      const initialCredits = parseInt(document.getElementById('new-res-credits').value, 10);
 
+      const btn = document.getElementById('btn-submit-reseller');
       btn.textContent = 'Guardando...';
       btn.disabled = true;
 
@@ -2202,15 +973,14 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`¡Revendedor "${name}" creado exitosamente con ${initialCredits} créditos!`, 'success');
           closeModal('modal-reseller');
-          fetchResellers();
-          fetchOverview();
+          showToast(`¡Revendedor "${name}" registrado con ${initialCredits} créditos!`, 'success');
+          fetchData();
         } else {
-          showToast('Error: ' + (data.error || 'No se pudo crear revendedor'), 'error');
+          showToast('Error: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error de conexión.', 'error');
+      } catch (_) {
+        showToast('Error de conexión', 'error');
       } finally {
         btn.textContent = 'Guardar Revendedor';
         btn.disabled = false;
@@ -2218,27 +988,18 @@
     }
 
     function openRechargeModal(id, name, credits) {
-      document.getElementById('recharge-reseller-id').value = id;
-      document.getElementById('recharge-reseller-name').textContent = name;
-      document.getElementById('recharge-current-credits').textContent = `${credits} créditos`;
-      document.getElementById('recharge-amount').value = '25';
-      document.getElementById('recharge-note').value = '';
-      openModal('modal-recharge');
-    }
-
-    function setQuickRecharge(amount) {
-      document.getElementById('recharge-amount').value = amount;
+      document.getElementById('recharge-res-id').value = id;
+      document.getElementById('recharge-res-name').textContent = name;
+      document.getElementById('recharge-res-current').textContent = credits;
+      document.getElementById('recharge-amount').value = '10';
+      document.getElementById('modal-recharge').style.display = 'flex';
     }
 
     async function submitRecharge(e) {
       e.preventDefault();
-      const id = document.getElementById('recharge-reseller-id').value;
+      const id = document.getElementById('recharge-res-id').value;
       const credits = parseInt(document.getElementById('recharge-amount').value, 10);
       const note = document.getElementById('recharge-note').value.trim();
-      const btn = document.getElementById('btn-submit-recharge');
-
-      btn.textContent = 'Añadiendo Créditos...';
-      btn.disabled = true;
 
       try {
         const res = await fetch(`/api/admin/resellers/${id}/recharge`, {
@@ -2248,45 +1009,56 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`¡Se añadieron ${credits} créditos con éxito!`, 'success');
           closeModal('modal-recharge');
-          fetchResellers();
-          fetchOverview();
+          showToast(`¡Se han asignado ${credits} créditos con éxito!`, 'success');
+          fetchData();
         } else {
-          showToast('Error: ' + (data.error || 'No se pudo recargar'), 'error');
+          showToast('Error: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error al conectar.', 'error');
-      } finally {
-        btn.textContent = 'Confirmar y Añadir Créditos';
-        btn.disabled = false;
+      } catch (_) {
+        showToast('Error de conexión', 'error');
       }
     }
 
-    async function toggleResellerStatus(id, currentStatus) {
-      const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+    function openEditResellerModal(id, name, wsp) {
+      document.getElementById('edit-res-id').value = id;
+      document.getElementById('edit-res-name').value = name;
+      document.getElementById('edit-res-wsp').value = wsp;
+      document.getElementById('edit-res-pass').value = '';
+      document.getElementById('modal-edit-reseller').style.display = 'flex';
+    }
+
+    async function submitEditReseller(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-res-id').value;
+      const name = document.getElementById('edit-res-name').value.trim();
+      const whatsapp = document.getElementById('edit-res-wsp').value.trim();
+      const password = document.getElementById('edit-res-pass').value.trim();
+
+      const body = { name, whatsapp };
+      if (password) body.password = password;
+
       try {
         const res = await fetch(`/api/admin/resellers/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ status: newStatus })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Estado del revendedor actualizado', 'info');
-          fetchResellers();
+          closeModal('modal-edit-reseller');
+          showToast('Datos del revendedor actualizados.', 'success');
+          fetchData();
         } else {
-          showToast('Error al cambiar estado.', 'error');
+          showToast('Error: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error de conexión.', 'error');
+      } catch (_) {
+        showToast('Error de conexión', 'error');
       }
     }
 
-    async function deleteResellerAdmin(id, name) {
-      if (!confirm(`¿Estás seguro de que deseas eliminar al revendedor "${name}"? Sus clientes permanecerán en el sistema.`)) {
-        return;
-      }
+    async function deleteReseller(id, name) {
+      if (!confirm(`¿Eliminar al revendedor "${name}"? Perderá acceso a su sub-panel.`)) return;
       try {
         const res = await fetch(`/api/admin/resellers/${id}`, {
           method: 'DELETE',
@@ -2294,898 +1066,188 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast('Revendedor eliminado con éxito', 'info');
-          fetchResellers();
-          fetchOverview();
+          showToast(`Revendedor "${name}" eliminado.`, 'success');
+          fetchData();
         } else {
-          showToast('Error al eliminar revendedor.', 'error');
+          showToast('Error: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error de conexión.', 'error');
+      } catch (_) {
+        showToast('Error de conexión', 'error');
       }
     }
 
-    // ==============================================================
-    // SECCIÓN CANALES DE TV EN VIVO
-    // ==============================================================
+    function sendResellerAccess(name, username, password, credits) {
+      const origin = window.location.origin;
+      const msg = `¡Hola *${name}*! Aquí tienes tus credenciales para acceder a tu Sub-Panel de Distribuidor en TOM TV:\n\n🌐 *Portal:* ${origin}/reseller\n👤 *Usuario:* ${username}\n🔑 *Contraseña:* ${password}\n⚡ *Tus Créditos Disponibles:* ${credits}\n📥 *Descarga APK para tus clientes:* ${origin}/download-apk\n\nDesde allí puedes crear clientes en 1 clic y emitir pruebas gratuitas. ¡Éxitos con las ventas!`;
+      copyText(msg, '¡Mensaje copiado! Ahora pégalo en el chat de WhatsApp de tu revendedor.');
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    }
 
+    // -------------------------------------------------------------
+    // GESTIÓN DE CANALES
+    // -------------------------------------------------------------
     async function fetchChannels() {
-      if (!adminToken) return;
       try {
         const res = await fetch('/api/admin/channels', {
           headers: { 'x-admin-password': adminToken }
         });
         const data = await res.json();
         if (data.success) {
-          allChannels = data.channels || [];
-          renderChannels(filterChannelsList());
+          channelsData = data.channels || [];
+          document.getElementById('badge-channels-count').textContent = channelsData.length;
+          renderChannels();
         }
-      } catch (err) {
-        console.error('Error cargando canales:', err);
-      }
-    }
-
-    function setChannelCategoryFilter(category, el) {
-      currentChannelCategory = category;
-      document.querySelectorAll('#channel-category-chips .chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      renderChannels(filterChannelsList());
-    }
-
-    function filterChannelsList() {
-      const q = (document.getElementById('channel-search-input')?.value || '').toLowerCase().trim();
-      return allChannels.filter(c => {
-        const matchesQuery = !q || c.name.toLowerCase().includes(q) || (c.category && c.category.toLowerCase().includes(q));
-        if (!matchesQuery) return false;
-        if (currentChannelCategory === 'Todos') return true;
-        return c.category === currentChannelCategory;
-      });
+      } catch (_) {}
     }
 
     function filterChannels() {
-      renderChannels(filterChannelsList());
+      renderChannels();
     }
 
-    function renderChannels(channels) {
-      const container = document.getElementById('channels-container');
-      if (!channels || channels.length === 0) {
-        container.innerHTML = '<p style="color: var(--text-muted); font-size: 13px; grid-column: 1/-1; text-align: center; padding: 30px;">No se encontraron canales en esta categoría.</p>';
-        return;
-      }
-
-      container.innerHTML = channels.map(ch => `
-        <div class="channel-card ${ch.active === false ? 'inactive' : ''}">
-          <div class="channel-top">
-            <div class="channel-logo">
-              ${ch.logo ? `<img src="${ch.logo}" alt="${ch.name}" onerror="this.onerror=null; this.src='https://placehold.co/56x56/121318/ffffff?text=TV';">` : '📺'}
-            </div>
-            <div class="channel-meta">
-              <div class="channel-title" title="${ch.name}">${ch.name}</div>
-              <div class="channel-sub">
-                <span class="badge badge-category">${ch.category || 'General'}</span>
-                <span style="font-size: 11px; color: var(--text-muted);">${ch.quality || 'HD'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="channel-stream-url" title="${ch.streamUrl}">${ch.streamUrl}</div>
-
-          <div class="channel-footer">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <label class="switch">
-                <input type="checkbox" ${ch.active !== false ? 'checked' : ''} onchange="toggleChannelActive('${ch.id}', this.checked)">
-                <span class="slider"></span>
-              </label>
-              <span style="font-size: 11px; color: var(--text-muted);">${ch.active !== false ? 'Activo' : 'Pausado'}</span>
-            </div>
-            <div style="display: flex; gap: 6px;">
-              <button class="btn btn-secondary btn-sm" onclick="previewChannel('${ch.id}', '${ch.name.replace(/'/g, "\\'")}', '${ch.streamUrl}')" title="Probar reproducción">▶ Probar</button>
-              <button class="btn btn-secondary btn-sm" onclick="openChannelEdit('${ch.id}')" title="Editar canal">✏️</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteChannelAdmin('${ch.id}', '${ch.name.replace(/'/g, "\\'")}')" title="Eliminar canal">🗑️</button>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function openChannelModal() {
-      document.getElementById('channel-modal-title').textContent = '📺 Añadir Canal de TV en Vivo';
-      document.getElementById('ch-edit-id').value = '';
-      document.getElementById('ch-name').value = '';
-      document.getElementById('ch-category').value = 'Deportes';
-      document.getElementById('ch-logo').value = '';
-      document.getElementById('ch-stream').value = '';
-      document.getElementById('ch-quality').value = '1080p HD';
-      document.getElementById('ch-active').checked = true;
-      openModal('modal-channel');
-    }
-
-    function openChannelEdit(id) {
-      const ch = allChannels.find(c => c.id === id);
-      if (!ch) return;
-      document.getElementById('channel-modal-title').textContent = '✏️ Editar Canal de TV';
-      document.getElementById('ch-edit-id').value = ch.id;
-      document.getElementById('ch-name').value = ch.name;
-      document.getElementById('ch-category').value = ch.category || 'Deportes';
-      document.getElementById('ch-logo').value = ch.logo || '';
-      document.getElementById('ch-stream').value = ch.streamUrl;
-      document.getElementById('ch-quality').value = ch.quality || '1080p HD';
-      document.getElementById('ch-active').checked = ch.active !== false;
-      openModal('modal-channel');
-    }
-
-    async function submitChannel(e) {
-      e.preventDefault();
-      const editId = document.getElementById('ch-edit-id').value;
-      const body = {
-        name: document.getElementById('ch-name').value.trim(),
-        category: document.getElementById('ch-category').value,
-        logo: document.getElementById('ch-logo').value.trim(),
-        streamUrl: document.getElementById('ch-stream').value.trim(),
-        quality: document.getElementById('ch-quality').value,
-        active: document.getElementById('ch-active').checked
-      };
-
-      const url = editId ? `/api/admin/channels/${editId}` : '/api/admin/channels';
-      const method = editId ? 'PUT' : 'POST';
-
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Canal guardado correctamente', 'success');
-          closeModal('modal-channel');
-          fetchChannels();
-        } else {
-          showToast('Error al guardar canal.', 'error');
-        }
-      } catch (err) {
-        showToast('Error de conexión.', 'error');
-      }
-    }
-
-    async function toggleChannelActive(id, active) {
-      try {
-        await fetch(`/api/admin/channels/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ active })
-        });
-        const ch = allChannels.find(c => c.id === id);
-        if (ch) ch.active = active;
-        renderChannels(filterChannelsList());
-      } catch (_) {}
-    }
-
-    async function deleteChannelAdmin(id, name) {
-      if (!confirm(`¿Estás seguro de eliminar el canal "${name}"?`)) return;
-      try {
-        const res = await fetch(`/api/admin/channels/${id}`, {
-          method: 'DELETE',
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Canal eliminado', 'info');
-          fetchChannels();
-        }
-      } catch (_) {}
-    }
-
-    function previewChannel(id, name, streamUrl) {
-      document.getElementById('player-title').textContent = `📺 En Vivo: ${name}`;
-      const video = document.getElementById('preview-video');
-      const status = document.getElementById('player-status');
-      status.textContent = `Conectando con: ${streamUrl}`;
-
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-
-      openModal('modal-player');
-
-      if (Hls.isSupported()) {
-        hlsInstance = new Hls({ enableWorker: true });
-        hlsInstance.loadSource(streamUrl);
-        hlsInstance.attachMedia(video);
-        hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
-          status.textContent = 'Transmisión en vivo iniciada con éxito.';
-          video.play().catch(() => {});
-        });
-        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            status.textContent = `Aviso HLS: ${data.details}. Verificando origen...`;
-          }
-        });
-      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-        video.src = streamUrl;
-        video.play().catch(() => {});
-      }
-    }
-
-    function closePlayerModal() {
-      const video = document.getElementById('preview-video');
-      video.pause();
-      video.src = '';
-      if (hlsInstance) {
-        hlsInstance.destroy();
-        hlsInstance = null;
-      }
-      closeModal('modal-player');
-    }
-
-    // ==============================================================
-    // BACKUP & RESTAURACIÓN
-    // ==============================================================
-
-    function downloadBackup() {
-      if (!adminToken) return;
-      window.open(`/api/admin/backup?key=${encodeURIComponent(adminToken)}`, '_blank');
-      showToast('Descargando copia de seguridad JSON...', 'info');
-    }
-
-    function openRestoreModal() {
-      document.getElementById('restore-file-input').value = '';
-      document.getElementById('restore-json-text').value = '';
-      openModal('modal-restore');
-    }
-
-    function handleRestoreFile(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        document.getElementById('restore-json-text').value = event.target.result;
-      };
-      reader.readAsText(file);
-    }
-
-    async function submitRestoreBackup() {
-      const raw = document.getElementById('restore-json-text').value.trim();
-      if (!raw) {
-        showToast('Por favor carga un archivo o pega el contenido JSON.', 'error');
-        return;
-      }
-
-      let parsed;
-      try {
-        parsed = JSON.parse(raw);
-      } catch (e) {
-        showToast('El texto no es un formato JSON válido.', 'error');
-        return;
-      }
-
-      if (!confirm(`¿Confirmas restaurar la copia de seguridad? Se sincronizarán los clientes y configuraciones.`)) {
-        return;
-      }
-
-      try {
-        const res = await fetch('/api/admin/restore', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify(parsed)
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast(data.message || 'Copia de seguridad restaurada correctamente.', 'success');
-          closeModal('modal-restore');
-          fetchOverview();
-        } else {
-          showToast('Error: ' + (data.error || 'No se pudo restaurar la copia'), 'error');
-        }
-      } catch (err) {
-        showToast('Error al conectar con el servidor.', 'error');
-      }
-    }
-
-    // ==============================================================
-    // AJUSTES DEL SISTEMA
-    // ==============================================================
-
-    async function submitSettings(e) {
-      e.preventDefault();
-      const adminPassword = document.getElementById('tab-admin-pass').value.trim();
-      const whatsappNumber = document.getElementById('tab-whatsapp-number').value.trim();
-      const plinNumber = (document.getElementById('tab-plin-number') ? document.getElementById('tab-plin-number').value : '').trim();
-      const whatsappMessage = document.getElementById('tab-whatsapp-msg').value.trim();
-
-      const body = { whatsappNumber, plinNumber, whatsappMessage };
-      if (adminPassword) {
-        body.adminPassword = adminPassword;
-      }
-
-      const res = await fetch('/api/admin/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify(body)
+    function renderChannels() {
+      const q = document.getElementById('channel-search-input').value.trim().toLowerCase();
+      const list = channelsData.filter(c => {
+        if (!q) return true;
+        return (c.name || '').toLowerCase().includes(q) || (c.category || '').toLowerCase().includes(q);
       });
-      const data = await res.json();
-      if (data.success) {
-        if (adminPassword) {
-          adminToken = adminPassword;
-          localStorage.setItem('vj_admin_token', adminToken);
-        }
-        showToast('Ajustes guardados con éxito.', 'success');
-      }
-    }
 
-    // ==============================================================
-    // MONITOR DE PANTALLAS CONECTADAS & EXPULSIÓN REMOTA
-    // ==============================================================
-
-    async function fetchSessions() {
-      if (!adminToken) return;
-      const tbody = document.getElementById('sessions-tbody');
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Consultando pantallas en tiempo real...</td></tr>';
-
-      try {
-        const res = await fetch('/api/admin/sessions', {
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success) {
-          document.getElementById('stat-sessions-online').textContent = data.onlineCount || 0;
-          document.getElementById('stat-sessions-total').textContent = data.totalSessions || 0;
-          renderSessions(data.sessions || []);
-        }
-      } catch (err) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--danger); padding: 24px;">Error al cargar sesiones.</td></tr>';
-      }
-    }
-
-    function renderSessions(sessions) {
-      const tbody = document.getElementById('sessions-tbody');
-      if (!sessions || sessions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay pantallas ni dispositivos vinculados aún.</td></tr>';
+      const tbody = document.getElementById('channels-table-body');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No se encontraron canales.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = sessions.map(s => `
+      tbody.innerHTML = list.map(c => `
         <tr>
-          <td data-label="Cliente">
-            <div class="client-name">${s.clientName}</div>
-            <div class="client-user">Código: <span style="color:var(--primary); font-family:monospace; font-weight:800;">${s.clientCode}</span> • ${s.resellerName}</div>
+          <td>
+            <div style="font-weight: 700; color: #fff;">${c.name}</div>
           </td>
-          <td data-label="Dispositivo">
-            <div style="font-weight:700; color:#fff;">📺 ${s.deviceModel}</div>
-            <div style="font-size:11px; color:var(--text-muted); font-family:monospace;">ID: ${s.deviceId.slice(0, 16)}...</div>
-          </td>
-          <td data-label="Estado en Vivo">
-            ${s.isOnline
-              ? '<span class="live-session-badge online"><span style="width:8px; height:8px; border-radius:50%; background:var(--success); display:inline-block;" class="pulse"></span> EN LÍNEA</span>'
-              : '<span class="live-session-badge offline">⚪ Desconectado</span>'
-            }
-          </td>
-          <td data-label="Actividad">
-            <span style="font-size:12px; color:var(--text-main); font-weight:600;">${s.currentWatching}</span>
-          </td>
-          <td data-label="Última Conexión">
-            <span style="font-size:12px; color:var(--text-muted);">${s.diffMinutes <= 1 ? 'Hace un instante' : `Hace ${s.diffMinutes} min`}</span>
-          </td>
-          <td class="actions-cell" style="text-align: right;">
-            <button class="btn btn-danger btn-sm" onclick="disconnectDevice('${s.clientId}', '${s.deviceId}', '${s.clientName}')" title="Desconectar y expulsar esta TV">
-              🚫 Expulsar Pantalla
-            </button>
+          <td><span class="badge" style="background: rgba(255,255,255,0.1); color: #fff;">${c.category || 'General'}</span></td>
+          <td><span class="badge badge-active">Activo</span></td>
+          <td style="font-family: monospace; font-size: 11px; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.streamUrl || ''}</td>
+          <td style="text-align: right;">
+            <button class="btn btn-secondary btn-sm" onclick="copyText('${c.streamUrl}', 'Link copiado')">📋</button>
           </td>
         </tr>
       `).join('');
     }
 
-    async function disconnectDevice(clientId, deviceId, clientName) {
-      if (!confirm(`¿Estás seguro de expulsar y desconectar la pantalla del cliente "${clientName}"?\n\nLa TV se cerrará y se le pedirá código nuevamente.`)) {
-        return;
-      }
+    function openNewChannelModal() {
+      const name = prompt('Nombre del canal:');
+      if (!name) return;
+      const streamUrl = prompt('Enlace de transmisión (HLS / m3u8):');
+      if (!streamUrl) return;
+      const category = prompt('Categoría (ej: Perú, Deportes, Cine):') || 'General';
 
-      try {
-        const res = await fetch('/api/admin/sessions/disconnect', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ clientId, deviceId })
-        });
-        const data = await res.json();
+      fetch('/api/admin/channels', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+        body: JSON.stringify({ name, streamUrl, category })
+      }).then(r => r.json()).then(data => {
         if (data.success) {
-          showToast('Pantalla desconectada y expulsada exitosamente.', 'success');
-          fetchSessions();
-          fetchOverview();
-        } else {
-          showToast(data.error || 'No se pudo desconectar.', 'error');
+          showToast('Canal agregado con éxito.', 'success');
+          fetchChannels();
         }
-      } catch (err) {
-        showToast('Error al expulsar pantalla.', 'error');
-      }
+      });
     }
 
-    // ==============================================================
-    // AVISOS Y NOTIFICACIONES A LAS PANTALLAS (SMART TV & MÓVIL)
-    // ==============================================================
-
-    async function fetchAnnouncement() {
-      if (!adminToken) return;
-      try {
-        const res = await fetch('/api/admin/announcement', {
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success && data.announcement) {
-          const a = data.announcement;
-          document.getElementById('ann-title').value = a.title || '';
-          document.getElementById('ann-message').value = a.message || '';
-          document.getElementById('ann-type').value = a.type || 'info';
-
-          const pill = document.getElementById('ann-status-pill');
-          if (a.active) {
-            pill.className = 'badge badge-active';
-            pill.textContent = '🟢 Transmitiendo en Vivo';
-          } else {
-            pill.className = 'badge badge-expired';
-            pill.textContent = 'Inactivo';
-          }
-          updateTvMockup();
-        }
-      } catch (err) {
-        console.error('Error fetching announcement:', err);
-      }
-    }
-
-    function updateTvMockup() {
-      const title = document.getElementById('ann-title').value.trim() || 'Aviso de TOM TV';
-      const msg = document.getElementById('ann-message').value.trim() || 'Tu mensaje aparecerá aquí en las pantallas de tus usuarios.';
-      const type = document.getElementById('ann-type').value;
-
-      const titleEl = document.getElementById('mockup-title');
-      const msgEl = document.getElementById('mockup-msg');
-      const bannerEl = document.getElementById('mockup-banner');
-
-      titleEl.textContent = title;
-      msgEl.textContent = msg;
-
-      bannerEl.className = `tv-announcement-banner ${type}`;
-    }
-
-    async function submitAnnouncement(e) {
+    // -------------------------------------------------------------
+    // AJUSTES DEL SISTEMA
+    // -------------------------------------------------------------
+    async function submitSettings(e) {
       e.preventDefault();
-      const title = document.getElementById('ann-title').value.trim();
-      const message = document.getElementById('ann-message').value.trim();
-      const type = document.getElementById('ann-type').value;
-      const expiresHours = parseInt(document.getElementById('ann-hours').value, 10) || 24;
+      const plinNumber = document.getElementById('setting-plin').value.trim();
+      const whatsappNumber = document.getElementById('setting-whatsapp').value.trim();
+      const whatsappMessage = document.getElementById('setting-template').value.trim();
+      const adminPassword = document.getElementById('setting-password').value.trim();
+
+      const body = { plinNumber, whatsappNumber, whatsappMessage };
+      if (adminPassword) body.adminPassword = adminPassword;
+
+      const btn = document.getElementById('btn-save-settings');
+      btn.textContent = 'Guardando...';
+      btn.disabled = true;
 
       try {
-        const res = await fetch('/api/admin/announcement', {
+        const res = await fetch('/api/admin/settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ title, message, type, active: true, expiresHours })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
         if (data.success) {
-          showToast('¡Aviso transmitido con éxito a todas las pantallas!', 'success');
-          const pill = document.getElementById('ann-status-pill');
-          pill.className = 'badge badge-active';
-          pill.textContent = '🟢 Transmitiendo en Vivo';
+          if (adminPassword) {
+            adminToken = adminPassword;
+            localStorage.setItem('vj_admin_token', adminToken);
+          }
+          showToast('¡Ajustes guardados correctamente!', 'success');
         } else {
-          showToast(data.error || 'Error al transmitir aviso.', 'error');
+          showToast('Error: ' + data.error, 'error');
         }
-      } catch (err) {
-        showToast('Error de red al transmitir aviso.', 'error');
+      } catch (_) {
+        showToast('Error de conexión', 'error');
+      } finally {
+        btn.textContent = '💾 Guardar Ajustes';
+        btn.disabled = false;
       }
     }
 
-    async function disableAnnouncement() {
-      if (!confirm('¿Deseas retirar el aviso de todas las pantallas ahora?')) return;
-      try {
-        const res = await fetch('/api/admin/announcement', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-          body: JSON.stringify({ active: false, message: '' })
-        });
-        const data = await res.json();
-        if (data.success) {
-          showToast('Aviso retirado de las pantallas.', 'info');
-          const pill = document.getElementById('ann-status-pill');
-          pill.className = 'badge badge-expired';
-          pill.textContent = 'Inactivo';
-        }
-      } catch (err) {
-        showToast('Error al desactivar aviso.', 'error');
-      }
+    function downloadBackup() {
+      window.open('/api/admin/backup', '_blank');
     }
 
-    // ==============================================================
-    // TABLERO FINANCIERO Y GANANCIAS (CHART.JS & RENOVACIONES)
-    // ==============================================================
-
-    let chartDistInstance = null;
-    let chartRenewalsInstance = null;
-
-    async function fetchFinancialStats() {
-      if (!adminToken) return;
-      try {
-        const res = await fetch('/api/admin/financial-stats?price=10', {
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success && data.stats) {
-          const s = data.stats;
-          document.getElementById('stat-finance-revenue').textContent = `$${s.estimatedMonthlyRevenue.toLocaleString()}`;
-          document.getElementById('stat-finance-active-clients').textContent = s.activeClientsCount;
-          document.getElementById('stat-finance-exp-today').textContent = s.expiringTodayCount;
-          document.getElementById('stat-finance-exp-3d').textContent = s.expiringIn3DaysCount;
-
-          renderFinancialCharts(s);
-          renderExpiringClientsList(s.expiringClients || []);
-        }
-      } catch (err) {
-        console.error('Error fetching financial stats:', err);
-      }
+    function triggerRestore() {
+      document.getElementById('file-restore-input').click();
     }
 
-    function renderFinancialCharts(s) {
-      if (typeof Chart === 'undefined') return;
-
-      // 1. Gráfico de Distribución de Clientes (Doughnut)
-      const distCanvas = document.getElementById('chart-client-dist');
-      if (distCanvas) {
-        if (chartDistInstance) chartDistInstance.destroy();
-        chartDistInstance = new Chart(distCanvas, {
-          type: 'doughnut',
-          data: {
-            labels: ['🟢 Activos Pagos', '🟡 Por Vencer (≤3d)', '🔴 Vencidos', '⚡ Demos (2h)'],
-            datasets: [{
-              data: [
-                Math.max(0, s.activeClientsCount - s.expiringIn3DaysCount),
-                s.expiringIn3DaysCount,
-                s.expiredClientsCount,
-                s.demoClientsCount
-              ],
-              backgroundColor: ['#22C55E', '#F59E0B', '#EF4444', '#38BDF8'],
-              borderColor: '#090B10',
-              borderWidth: 3
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: { position: 'bottom', labels: { color: '#8E8E93', font: { family: 'Inter', size: 11 } } }
-            }
-          }
-        });
-      }
-
-      // 2. Gráfico de Renovaciones Próximas (Bar)
-      const renewCanvas = document.getElementById('chart-renewals');
-      if (renewCanvas) {
-        if (chartRenewalsInstance) chartRenewalsInstance.destroy();
-        chartRenewalsInstance = new Chart(renewCanvas, {
-          type: 'bar',
-          data: {
-            labels: ['Hoy', 'En 1-3 días', 'En 4-7 días'],
-            datasets: [{
-              label: 'Clientes a Renovar',
-              data: [s.expiringTodayCount, s.expiringIn3DaysCount, s.expiringIn7DaysCount],
-              backgroundColor: ['#EF4444', '#F59E0B', '#38BDF8'],
-              borderRadius: 8
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              x: { ticks: { color: '#8E8E93' }, grid: { display: false } },
-              y: { ticks: { color: '#8E8E93', precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }
-            },
-            plugins: {
-              legend: { display: false }
-            }
-          }
-        });
-      }
-    }
-
-    function renderExpiringClientsList(expiringList) {
-      const tbody = document.getElementById('finance-expiring-tbody');
-      if (!expiringList || expiringList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No hay clientes con vencimiento inminente. ¡Todo al día!</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = expiringList.map(c => {
-        const days = c.daysRemaining;
-        const urgencyColor = days === 0 ? 'var(--danger)' : 'var(--warning)';
-        const urgencyLabel = days === 0 ? '🚨 Vence Hoy' : `🟡 En ${days} día${days > 1 ? 's' : ''}`;
-        const dateStr = new Date(c.expiresAt).toLocaleDateString('es-ES');
-
-        return `
-          <tr>
-            <td data-label="Cliente">
-              <div class="client-name">${c.name}</div>
-            </td>
-            <td data-label="Código">
-              <span style="font-family:monospace; font-weight:800; color:var(--primary);">${c.code}</span>
-            </td>
-            <td data-label="Vence">${dateStr}</td>
-            <td data-label="Tiempo">
-              <span style="color:${urgencyColor}; font-weight:800;">${urgencyLabel}</span>
-            </td>
-            <td data-label="Distribuidor">${c.resellerName}</td>
-            <td class="actions-cell" style="text-align: right;">
-              <button class="btn btn-whatsapp btn-sm" onclick="sendRenewalWhatsApp('${c.name}', '${days}', '${dateStr}', '${c.code}')">
-                📲 Cobrar por WhatsApp
-              </button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    function sendRenewalWhatsApp(name, days, dateStr, code) {
-      let defaultMsg = `Hola ${name}, te recordamos que tu suscripción a TOM TV vence ${days === '0' ? 'hoy' : 'en ' + days + ' días'} (${dateStr}). Tu código de cuenta es ${code}. ¿Deseas renovar tu servicio ahora?`;
-      const url = `https://wa.me/?text=${encodeURIComponent(defaultMsg)}`;
-      window.open(url, '_blank');
-    }
-
-    // ==============================================================
-    // CONTROLES MÓVILES (FAB MENU)
-    // ==============================================================
-
-    function toggleFabMenu() {
-      const menu = document.getElementById('fab-menu');
-      if (menu) {
-        menu.classList.toggle('show');
-      }
-    }
-
-    // ==============================================================
-    // CENTRO DE PLANTILLAS INTELIGENTES DE WHATSAPP
-    // ==============================================================
-
-    let currentWhatsAppTemplateType = 'welcome';
-    const whatsappTemplateData = {
-      welcome: {
-        title: '🎉 Bienvenida & Activación Oficial',
-        render: (name, code) => {
-          const clientName = name || '[Nombre del Cliente]';
-          const clientCode = code || '[CÓDIGO TV]';
-          return `🎬 *¡BIENVENIDO A TOM TV OFICIAL!*\n\n` +
-            `¡Hola ${clientName}! Tu pantalla ha sido activada con éxito en nuestra plataforma.\n\n` +
-            `🔑 *Código de Activación:* *${clientCode}*\n` +
-            `📅 *Estado:* ACTIVO Y VIGENTE ⭐\n` +
-            `📺 *Calidad:* 4K Ultra HD & 60 FPS sin publicidad\n\n` +
-            `📲 *Para ver en Celular, iPhone o PC:*\nhttps://tomtv.lat/play\n\n` +
-            `📺 *Para Smart TV o Firestick (con Downloader):*\nEscribe en la barra: *tomtv.lat/apk*\n\n` +
-            `¡Que disfrutes del mejor cine, series y todo el fútbol en vivo!`;
-        }
-      },
-      expiring: {
-        title: '⏳ Recordatorio de Vencimiento (≤3 Días)',
-        render: (name, code) => {
-          const clientName = name || '[Nombre del Cliente]';
-          const clientCode = code || '[CÓDIGO TV]';
-          return `⏳ *RECORDATORIO DE RENOVACIÓN - TOM TV*\n\n` +
-            `¡Hola ${clientName}! Esperamos que estés disfrutando del mejor streaming en tu pantalla.\n\n` +
-            `Te recordamos que tu suscripción vence en los próximos días.\n` +
-            `🔑 *Tu Código:* *${clientCode}*\n\n` +
-            `💵 *Planes y Promociones:*\n` +
-            `• 1 Mes (1 Pantalla): S/. 10\n` +
-            `• Promo Dúo (2 Pantallas): S/. 18\n` +
-            `• Promo Familiar (3 Pantallas): S/. 25\n` +
-            `• Súper Promo 3 Meses: S/. 25 (S/. 8.30/mes)\n` +
-            `• Plan Anual VIP: S/. 90 (< S/. 7.50/mes)\n\n` +
-            `📲 *Medios de Pago:*\n` +
-            `Yape / Plin al: 914 598 415\n\n` +
-            `Envíanos tu captura de pago para renovar tu pantalla de inmediato sin cortes. ¡Muchas gracias!`;
-        }
-      },
-      expired: {
-        title: '⚠️ Aviso de Cuenta Vencida & Reactivación',
-        render: (name, code) => {
-          const clientName = name || '[Nombre del Cliente]';
-          const clientCode = code || '[CÓDIGO TV]';
-          return `⚠️ *TU SERVICIO DE TOM TV HA VENCIDO*\n\n` +
-            `¡Hola ${clientName}! Notamos que tu membresía de TOM TV ha caducado.\n` +
-            `🔑 *Código:* *${clientCode}*\n\n` +
-            `Para reactivar tu señal al instante y continuar viendo tus películas y partidos favoritos:\n\n` +
-            `📲 *Paga por Yape / Plin:* 914 598 415\n` +
-            `Envíanos tu comprobante por aquí y tu televisor se desbloqueará en 1 minuto. ¡Te esperamos!`;
-        }
-      },
-      demo: {
-        title: '⚡ Invitación a Demo Gratuito de 2 Horas',
-        render: (name, code) => {
-          const clientName = name || '[Amigo/a]';
-          const clientCode = code || '[CÓDIGO DEMO]';
-          return `🍿 *¡DEMO GRATUITO DE 2 HORAS EN TOM TV!*\n\n` +
-            `¡Hola ${clientName}! Te invitamos a probar gratis nuestro servicio de televisión y cine en 4K.\n\n` +
-            `🔑 *Código Demo:* *${clientCode}*\n` +
-            `⏳ *Duración:* 2 Horas de acceso libre ilimitado\n\n` +
-            `📲 *Ver ahora en iPhone, PC o Celular:*\nhttps://tomtv.lat/play\n\n` +
-            `📺 *Instalar en Smart TV o Firestick con Downloader:*\nEscribe en Downloader: *tomtv.lat/apk*\n\n` +
-            `¡Disfruta de más de 800 canales y 15,000 películas de estreno sin cortes!`;
-        }
-      },
-      downloader: {
-        title: '📺 Guía Paso a Paso para Smart TV (Downloader)',
-        render: (name, code) => {
-          const clientCode = code ? ` y tu código es: *${code}*` : '';
-          return `📺 *GUÍA DE INSTALACIÓN TOM TV EN SMART TV Y FIRESTICK*\n\n` +
-            `Sigue estos sencillos pasos para instalar la app en tu televisor${clientCode}:\n\n` +
-            `1️⃣ Abre la app *Downloader* en tu televisor (descárgala gratis en la tienda de apps de tu TV si no la tienes).\n` +
-            `2️⃣ En la barra de direcciones de Downloader escribe exactamente:\n*tomtv.lat/apk*\n\n` +
-            `3️⃣ Presiona *GO*. El archivo de 58 MB se descargará directamente en segundos.\n` +
-            `4️⃣ Haz clic en *Instalar* y luego abre TOM TV.\n` +
-            `5️⃣ Al abrir la app, te saldrá un código en pantalla. Envíanoslo por WhatsApp para activarte de inmediato.\n\n` +
-            `¡Cualquier consulta estamos a tu servicio por este WhatsApp! 💬`;
-        }
-      }
-    };
-
-    function openWhatsAppTemplatesModal(defaultName = '', defaultCode = '') {
-      if (defaultName && document.getElementById('tpl-client-name')) {
-        document.getElementById('tpl-client-name').value = defaultName;
-      }
-      if (defaultCode && document.getElementById('tpl-client-code')) {
-        document.getElementById('tpl-client-code').value = defaultCode;
-      }
-      renderActiveWhatsAppTemplate();
-      openModal('modal-whatsapp-templates');
-    }
-
-    function switchWhatsAppTemplate(type, el) {
-      currentWhatsAppTemplateType = type;
-      if (el) {
-        el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        el.classList.add('active');
-      }
-      renderActiveWhatsAppTemplate();
-    }
-
-    function renderActiveWhatsAppTemplate() {
-      const name = document.getElementById('tpl-client-name')?.value.trim() || '';
-      const code = document.getElementById('tpl-client-code')?.value.trim() || '';
-      const tpl = whatsappTemplateData[currentWhatsAppTemplateType];
-      if (!tpl) return;
-      const msg = tpl.render(name, code);
-      const textarea = document.getElementById('tpl-msg-preview');
-      if (textarea) textarea.value = msg;
-    }
-
-    function sendWhatsAppTemplateDirect() {
-      const msg = document.getElementById('tpl-msg-preview')?.value || '';
-      if (!msg) return;
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    function copyWhatsAppTemplateText() {
-      const msg = document.getElementById('tpl-msg-preview')?.value || '';
-      if (!msg) return;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(msg).then(() => {
-          showToast('¡Mensaje copiado al portapapeles! 📋', 'success');
-        });
-      }
-    }
-
-    // ==============================================================
-    // SECCIÓN SERVIDOR, DIAGNÓSTICO & CDN EN VIVO
-    // ==============================================================
-
-    async function fetchServerHealth() {
-      if (!adminToken) return;
-      try {
-        const res = await fetch('/api/admin/server-health', {
-          headers: { 'x-admin-password': adminToken }
-        });
-        const data = await res.json();
-        if (data.success && data.server) {
-          const s = data.server;
-          const statusEl = document.getElementById('srv-status');
-          if (statusEl) statusEl.textContent = `${s.status} 🟢`;
-          const uptimeEl = document.getElementById('srv-uptime');
-          if (uptimeEl) uptimeEl.textContent = s.uptimeFormatted;
-          const memEl = document.getElementById('srv-memory');
-          if (memEl) memEl.textContent = s.memory.rss;
-          const heapEl = document.getElementById('srv-heap');
-          if (heapEl) heapEl.textContent = `Heap: ${s.memory.heapUsed}`;
-          const apkVerEl = document.getElementById('srv-apk-ver');
-          if (apkVerEl) apkVerEl.textContent = `v${s.apk.version}`;
-          const apkSizeEl = document.getElementById('srv-apk-size');
-          if (apkSizeEl) apkSizeEl.textContent = `${s.apk.size} (200 OK)`;
-          const rdBadge = document.getElementById('srv-rd-badge');
-          if (rdBadge) rdBadge.textContent = s.services.realDebrid ? '🟢 Conectado' : '🔴 Desconectado';
-          const tmdbBadge = document.getElementById('srv-tmdb-badge');
-          if (tmdbBadge) tmdbBadge.textContent = s.services.tmdb ? '🟢 Conectado' : '🔴 Desconectado';
-
-          const statusPill = document.getElementById('nav-system-status');
-          if (statusPill) {
-            statusPill.innerHTML = `<span>●</span> Servidor Activo (v${s.apk.version}) • ${s.uptimeFormatted}`;
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching server health:', e);
-      }
-    }
-
-    async function testCdnPings() {
-      showToast('Midiendo latencia de servidores y CDN...', 'info');
-      const pingHealth = document.getElementById('ping-health');
-      const pingVersion = document.getElementById('ping-version');
-      const pingApk = document.getElementById('ping-apk');
-      const badge = document.getElementById('srv-ping-badge');
-
-      async function measure(url) {
-        const start = performance.now();
+    async function handleFileRestore(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
         try {
-          await fetch(url, { method: 'HEAD', cache: 'no-store' });
-          return Math.round(performance.now() - start);
+          const parsed = JSON.parse(evt.target.result);
+          const res = await fetch('/api/admin/restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+            body: JSON.stringify(parsed)
+          });
+          const data = await res.json();
+          if (data.success) {
+            showToast('Base de datos restaurada con éxito.', 'success');
+            fetchData();
+          } else {
+            showToast('Error al restaurar: ' + data.error, 'error');
+          }
         } catch (_) {
-          return null;
+          showToast('Archivo JSON inválido.', 'error');
         }
-      }
-
-      const t1 = await measure('/health');
-      if (pingHealth) pingHealth.textContent = t1 !== null ? `${t1} ms` : 'Error';
-
-      const t2 = await measure('/api/streaming/version');
-      if (pingVersion) pingVersion.textContent = t2 !== null ? `${t2} ms` : 'Error';
-
-      const t3 = await measure('/apk');
-      if (pingApk) pingApk.textContent = t3 !== null ? `${t3} ms` : 'Error';
-
-      const validPings = [t1, t2, t3].filter(p => p !== null);
-      const avg = validPings.length > 0 ? Math.round(validPings.reduce((a, b) => a + b, 0) / validPings.length) : 0;
-      if (badge) badge.textContent = `Latencia Promedio: ${avg} ms ⚡`;
-      showToast(`Prueba completada: Latencia promedio ${avg} ms`, 'success');
+      };
+      reader.readAsText(file);
     }
 
-    // Helpers de Modales
-    function openModal(id) {
-      document.getElementById(id).style.display = 'flex';
-    }
-
+    // Utilidades
     function closeModal(id) {
       document.getElementById(id).style.display = 'none';
     }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      if (type === 'success') toast.style.borderColor = 'var(--success)';
+      else if (type === 'error') toast.style.borderColor = 'var(--danger)';
+      else toast.style.borderColor = 'var(--card-border)';
+      setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
+
+    function copyText(text, successMsg = 'Copiado al portapapeles') {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg, 'success');
+      }).catch(() => {
+        prompt('Copia manualmente:', text);
+      });
+    }
   </script>
-
-  <!-- BARRA DE NAVEGACIÓN INFERIOR PARA CELULARES (MOBILE BOTTOM NAV) -->
-  <div class="mobile-bottom-nav">
-    <button class="mob-nav-item active" id="mob-nav-clients" onclick="switchTab('clients')">
-      <span class="icon">👥</span>
-      <span>Clientes</span>
-    </button>
-    <button class="mob-nav-item" id="mob-nav-sessions" onclick="switchTab('sessions')">
-      <span class="icon">📺</span>
-      <span>Pantallas</span>
-    </button>
-    <button class="mob-nav-item" id="mob-nav-announcements" onclick="switchTab('announcements')">
-      <span class="icon">📢</span>
-      <span>Avisos</span>
-    </button>
-    <button class="mob-nav-item" id="mob-nav-finances" onclick="switchTab('finances')">
-      <span class="icon">💰</span>
-      <span>Finanzas</span>
-    </button>
-    <button class="mob-nav-item" id="mob-nav-server" onclick="switchTab('server')">
-      <span class="icon">🖥️</span>
-      <span>Servidor</span>
-    </button>
-    <button class="mob-nav-item" id="mob-nav-settings" onclick="switchTab('settings')">
-      <span class="icon">⚙️</span>
-      <span>Ajustes</span>
-    </button>
-  </div>
-
-  <!-- BOTÓN FLOTANTE RÁPIDO PARA CELULARES (FAB) -->
-  <button class="fab-btn" onclick="toggleFabMenu()" title="Acciones Rápidas">⚡</button>
-  <div class="fab-menu" id="fab-menu">
-    <div class="fab-item" onclick="openQuickDemoModal(); toggleFabMenu();">⚡ Generar Demo (2h)</div>
-    <div class="fab-item" onclick="openNewClientModal(); toggleFabMenu();">+ Nuevo Cliente</div>
-    <div class="fab-item" onclick="switchTab('announcements'); toggleFabMenu();">📢 Transmitir Aviso TV</div>
-    <div class="fab-item" onclick="fetchOverview(); toggleFabMenu();">🔄 Refrescar Todo</div>
-  </div>
 </body>
 </html>

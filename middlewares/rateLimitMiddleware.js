@@ -60,8 +60,8 @@ function createRateLimiter(options = {}) {
 module.exports = {
   createRateLimiter,
   loginRateLimiter: createRateLimiter({
-    windowMs: 15 * 60 * 1000,
-    max: 6,
-    message: 'Has superado el límite de intentos de inicio de sesión. Bloqueado temporalmente por 15 minutos.'
+    windowMs: 5 * 60 * 1000,
+    max: 25,
+    message: 'Has superado el límite de intentos de inicio de sesión. Por favor espera 5 minutos.'
   })
 };
