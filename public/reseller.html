@@ -188,6 +188,13 @@
       font-size: 32px; font-weight: 900; letter-spacing: 3px; color: #22C55E; margin: 10px 0;
       font-family: monospace;
     }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; background: #181B26; color: #fff;
+      padding: 14px 22px; border-radius: 12px; border: 1px solid var(--card-border);
+      font-size: 14px; font-weight: 700; z-index: 9999; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
   </style>
 </head>
 <body>
@@ -735,11 +742,17 @@
           </tr>
         `;
       }).join('');
+    }
+
     function copyResellerLgLink(code) {
       const link = `${window.location.origin}/playlist.m3u?code=${encodeURIComponent(code)}`;
-      navigator.clipboard.writeText(link).then(() => {
-        showToast(`¡Enlace para LG (IBO Player) copiado!: ${link}`, 'success');
-      });
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => {
+          showToast(`¡Enlace para LG (IBO Player) copiado!: ${link}`, 'success');
+        });
+      } else {
+        alert(`¡Enlace para LG (IBO Player) copiado!: ${link}`);
+      }
     }
 
     function openRechargeWhatsApp() {
@@ -962,6 +975,21 @@
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
     }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      if (!toast) {
+        alert(msg);
+        return;
+      }
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      if (type === 'success') toast.style.borderColor = 'var(--success)';
+      else if (type === 'error') toast.style.borderColor = 'var(--danger)';
+      else toast.style.borderColor = 'var(--card-border)';
+      setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
   </script>
+  <div id="toast"></div>
 </body>
 </html>
