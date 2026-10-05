@@ -886,14 +886,31 @@ class AccountService {
     const db = this._readDb();
     const cleanUser = String(username).trim().toLowerCase();
     const cleanPass = String(password).trim();
+    const cleanUserDigits = cleanUser.replace(/\D/g, '');
 
-    // Buscar revendedor por username O por nombre (tolerancia total a mayúsculas y espacios)
-    const reseller = (db.resellers || []).find(r => 
-      (r.username || '').trim().toLowerCase() === cleanUser ||
-      (r.name || '').trim().toLowerCase() === cleanUser
-    );
+    // Buscar revendedor con máxima tolerancia: por username, nombre completo o teléfono WhatsApp
+    const reseller = (db.resellers || []).find(r => {
+      const rUser = (r.username || '').trim().toLowerCase();
+      const rName = (r.name || '').trim().toLowerCase();
+      const rPhoneDigits = (r.whatsapp || '').replace(/\D/g, '');
+
+      // 1. Coincidencia directa por username
+      if (rUser === cleanUser) return true;
+
+      // 2. Coincidencia por nombre completo o parcial
+      if (rName === cleanUser) return true;
+      if (cleanUser.length >= 3 && (rName.includes(cleanUser) || cleanUser.includes(rName))) return true;
+
+      // 3. Coincidencia por teléfono / WhatsApp (al menos 6 dígitos numéricos)
+      if (cleanUserDigits.length >= 6 && rPhoneDigits.length >= 6) {
+        if (rPhoneDigits.endsWith(cleanUserDigits) || cleanUserDigits.endsWith(rPhoneDigits)) return true;
+      }
+
+      return false;
+    });
+
     if (!reseller || (reseller.password || '').trim() !== cleanPass) {
-      throw new Error('Usuario o contraseña de revendedor incorrectos.');
+      throw new Error('Usuario o contraseña de revendedor incorrectos. Asegúrate de ingresar en el portal de revendedores.');
     }
 
     if (reseller.status === 'suspended') {

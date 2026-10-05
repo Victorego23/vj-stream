@@ -200,19 +200,32 @@
       <h2 style="margin-bottom: 6px; font-weight: 900; font-size: 22px;">Acceso de Distribuidor</h2>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Ingresa con tus credenciales asignadas</p>
 
+      <!-- Contenedor de error visible en pantalla -->
+      <div id="reseller-login-error" style="display:none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #FCA5A5; padding: 12px 14px; border-radius: 12px; font-size: 13px; margin-bottom: 18px; text-align: left; line-height: 1.4;"></div>
+
       <form id="reseller-login-form" onsubmit="handleResellerLogin(event)">
         <div class="form-group">
-          <label>Nombre de Usuario:</label>
-          <input type="text" id="reseller-user-input" class="form-control" placeholder="Ej: distribuidor_norte" required autofocus>
+          <label>Usuario o Teléfono WhatsApp:</label>
+          <input type="text" id="reseller-user-input" class="form-control" placeholder="Ej: usuario1 o 904416154" autocomplete="username" required autofocus>
         </div>
         <div class="form-group">
           <label>Contraseña:</label>
-          <input type="password" id="reseller-pass-input" class="form-control" placeholder="••••••••" required>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="password" id="reseller-pass-input" class="form-control" placeholder="••••••••" autocomplete="current-password" required style="padding-right: 44px;">
+            <button type="button" id="toggle-pass-btn" onclick="toggleResellerPasswordVisibility()" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center;" title="Mostrar u ocultar contraseña">
+              👁️
+            </button>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary" id="reseller-login-btn" style="width: 100%; padding: 12px; margin-top: 10px;">
+        <button type="submit" class="btn btn-primary" id="reseller-login-btn" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 14px;">
           Entrar a Mi Panel
         </button>
       </form>
+
+      <p style="margin-top: 20px; font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+        🔒 Acceso exclusivo para distribuidores oficiales de TOM TV.<br>
+        Si necesitas recargar créditos o restablecer tu acceso, contacta a la administración.
+      </p>
     </div>
   </div>
 
@@ -468,8 +481,27 @@
       }
     });
 
+    function toggleResellerPasswordVisibility() {
+      const passInput = document.getElementById('reseller-pass-input');
+      const passBtn = document.getElementById('toggle-pass-btn');
+      if (!passInput) return;
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        if (passBtn) passBtn.textContent = '🙈';
+      } else {
+        passInput.type = 'password';
+        if (passBtn) passBtn.textContent = '👁️';
+      }
+    }
+
     async function handleResellerLogin(e) {
       e.preventDefault();
+      const errBox = document.getElementById('reseller-login-error');
+      if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+      }
+
       const username = document.getElementById('reseller-user-input').value.trim();
       const password = document.getElementById('reseller-pass-input').value.trim();
       const btn = document.getElementById('reseller-login-btn');
@@ -492,12 +524,23 @@
           }
           showResellerDashboard();
         } else {
-          alert('Error: ' + (data.error || 'Credenciales incorrectas'));
+          const errMsg = data.error || 'Credenciales incorrectas. Verifica tu usuario y contraseña.';
+          if (errBox) {
+            errBox.innerHTML = `<strong>⚠️ Error de Acceso:</strong><br>${errMsg}`;
+            errBox.style.display = 'block';
+          } else {
+            alert('Error: ' + errMsg);
+          }
           btn.textContent = 'Entrar a Mi Panel';
           btn.disabled = false;
         }
       } catch (err) {
-        alert('Error al conectar con el servidor.');
+        if (errBox) {
+          errBox.innerHTML = '<strong>⚠️ Error de Conexión:</strong><br>No se pudo conectar con el servidor. Revisa tu internet e intenta nuevamente.';
+          errBox.style.display = 'block';
+        } else {
+          alert('Error al conectar con el servidor.');
+        }
         btn.textContent = 'Entrar a Mi Panel';
         btn.disabled = false;
       }
