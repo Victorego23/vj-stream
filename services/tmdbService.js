@@ -50,6 +50,10 @@ class TmdbService {
   constructor() {
     this.baseURL = 'https://api.themoviedb.org/3';
     this.imageBaseUrl = 'https://image.tmdb.org/t/p';
+    // Caché ultra-rápida en memoria para absorber miles de usuarios concurrentes sin saturar TMDB
+    this.cache = new Map();
+    this.CATALOG_TTL_MS = 25 * 60 * 1000; // 25 min para el catálogo principal consolidado
+    this.DETAILS_TTL_MS = 90 * 60 * 1000; // 1.5 horas para detalles de películas y series
   }
 
   /**
@@ -271,6 +275,12 @@ class TmdbService {
     try {
       if (!movieId) throw new Error('El parámetro "movieId" es obligatorio.');
 
+      const cacheKey = `movie_${movieId}`;
+      const cached = this.cache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp < this.DETAILS_TTL_MS)) {
+        return cached.data;
+      }
+
       const client = this.getAxiosClient();
       const lang = 'es-ES'; // Estrictamente español para VJ STREAM
 
@@ -289,7 +299,7 @@ class TmdbService {
 
       const forcedConf = this.getForcedTrailerConfig(data) || this.getForcedTrailerConfig(formatted) || this.getForcedTrailerConfig({ id: movieId });
 
-      return {
+      const result = {
         ...formatted,
         genres: data.genres || [],
         runtime: data.runtime || null, // en minutos
@@ -306,6 +316,9 @@ class TmdbService {
         hasSpanishAudio: forcedConf ? false : true,
         statusBadge: forcedConf ? forcedConf.statusBadge : null
       };
+
+      this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
+      return result;
     } catch (error) {
       this.handleError(`getMovieDetails (id: ${movieId})`, error);
     }
@@ -320,6 +333,12 @@ class TmdbService {
   async getTvShowDetails(tvId, language = 'es-ES') {
     try {
       if (!tvId) throw new Error('El parámetro "tvId" es obligatorio.');
+
+      const cacheKey = `tv_${tvId}`;
+      const cached = this.cache.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp < this.DETAILS_TTL_MS)) {
+        return cached.data;
+      }
 
       const client = this.getAxiosClient();
       const lang = 'es-ES'; // Estrictamente español para VJ STREAM
@@ -337,7 +356,7 @@ class TmdbService {
       const formatted = this.formatMediaItem({ ...data, media_type: 'tv' });
       const { trailer, trailerKey } = this._extractTrailer(data.videos);
 
-      return {
+      const result = {
         ...formatted,
         genres: data.genres || [],
         numberOfSeasons: data.number_of_seasons,
@@ -358,6 +377,9 @@ class TmdbService {
         trailer,
         trailerKey
       };
+
+      this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
+      return result;
     } catch (error) {
       this.handleError(`getTvShowDetails (id: ${tvId})`, error);
     }
@@ -924,6 +946,11 @@ class TmdbService {
    */
   async getFullCatalog() {
     try {
+      const cached = this.cache.get('full_catalog');
+      if (cached && (Date.now() - cached.timestamp < this.CATALOG_TTL_MS)) {
+        return cached.data;
+      }
+
       const [
         nowPlayingRaw,
         upcomingRaw,
@@ -974,7 +1001,7 @@ class TmdbService {
       const classics = dedupe(classicsRaw);
       const series = dedupe(seriesRaw);
 
-      return {
+      const catalogResult = {
         nowPlaying,
         upcoming,
         trending,
@@ -987,6 +1014,9 @@ class TmdbService {
         classics,
         series
       };
+
+      this.cache.set('full_catalog', { timestamp: Date.now(), data: catalogResult });
+      return catalogResult;
     } catch (error) {
       this.handleError('getFullCatalog', error);
     }

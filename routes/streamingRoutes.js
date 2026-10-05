@@ -778,5 +778,52 @@ router.get('/download-apk', (req, res) => {
   return res.redirect(githubReleaseUrl);
 });
 
+/**
+ * @route   GET /api/streaming/payment-info
+ * @desc    Obtiene la pasarela y métodos de pago oficiales con enlace directo al WhatsApp del dueño
+ */
+router.get('/payment-info', (req, res) => {
+  const settings = accountService.getSettings();
+  const whatsappNumber = settings.whatsappNumber || process.env.WHATSAPP_NUMBER || '+51914598415';
+  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
+
+  return res.json({
+    success: true,
+    whatsappNumber,
+    whatsappClean: cleanPhone,
+    ownerName: 'TOM TV Oficial',
+    methods: [
+      {
+        id: 'yape',
+        name: 'Yape (Perú)',
+        phone: '914 598 415',
+        currency: 'PEN',
+        badge: 'Inmediato'
+      },
+      {
+        id: 'plin',
+        name: 'Plin (Perú)',
+        phone: '914 598 415',
+        currency: 'PEN',
+        badge: 'Inmediato'
+      },
+      {
+        id: 'binance',
+        name: 'Binance Pay / USDT',
+        currency: 'USDT',
+        network: 'TRC20 / BEP20',
+        badge: 'Internacional'
+      }
+    ],
+    plans: [
+      { id: '1m', name: '1 Mes', days: 30, pricePen: '15 PEN', priceUsd: '4 USD', popular: false },
+      { id: '3m', name: '3 Meses', days: 90, pricePen: '40 PEN', priceUsd: '11 USD', popular: true },
+      { id: '6m', name: '6 Meses', days: 180, pricePen: '75 PEN', priceUsd: '20 USD', popular: false },
+      { id: '1y', name: '1 Año Completo VIP', days: 365, pricePen: '140 PEN', priceUsd: '38 USD', popular: false }
+    ],
+    whatsappLinkTemplate: `https://wa.me/${cleanPhone}?text=`
+  });
+});
+
 module.exports = router;
 
