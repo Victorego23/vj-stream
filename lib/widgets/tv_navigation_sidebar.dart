@@ -161,31 +161,31 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
         curve: Curves.easeOutCubic,
         width: _isExpanded ? 240.0 : 72.0,
         decoration: BoxDecoration(
-          color: const Color(0xFF0C0D13),
+          color: const Color(0xF808090E),
           border: const Border(
-            right: BorderSide(color: Color(0xFF1E202C), width: 1.2),
+            right: BorderSide(color: Color(0x26FFFFFF), width: 1.0),
           ),
           boxShadow: _isExpanded
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.8),
-                    blurRadius: 28,
-                    spreadRadius: 6,
+                    color: Colors.black.withValues(alpha: 0.9),
+                    blurRadius: 36,
+                    spreadRadius: 8,
                   ),
                 ]
               : null,
         ),
         child: Column(
           children: [
-            // Cabecera superior con logotipo de TOM TV
+            // Cabecera superior con logotipo de TOM TV Cinema
             _buildLogoHeader(),
 
-            const Divider(color: Color(0xFF1E202C), height: 1, thickness: 1),
+            const Divider(color: Color(0x1FFFFFFF), height: 1, thickness: 1),
 
             // Lista de elementos navegables
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                 children: [
                   for (final item in _items) _buildItemWidget(item),
                 ],
@@ -211,11 +211,11 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
               gradient: const LinearGradient(
                 colors: [Color(0xFFE50914), Color(0xFF990000)],
               ),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(8),
               boxShadow: const [
                 BoxShadow(
-                  color: Color(0x66E50914),
-                  blurRadius: 10,
+                  color: Color(0x80E50914),
+                  blurRadius: 14,
                   spreadRadius: 1,
                 ),
               ],
@@ -226,7 +226,7 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
                 color: Colors.white,
                 fontWeight: FontWeight.w900,
                 fontSize: 16,
-                letterSpacing: 0.8,
+                letterSpacing: 1.0,
               ),
             ),
           ),
@@ -238,21 +238,21 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'TV',
+                    'TV CINEMA',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 15,
+                      fontSize: 13,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2.5,
+                      letterSpacing: 2.0,
                     ),
                   ),
                   Text(
-                    '4K SMART TV',
+                    '4K ULTRA HD',
                     style: TextStyle(
                       color: Color(0xFFE50914),
                       fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ],
@@ -337,29 +337,46 @@ class _TvSidebarItemState extends State<_TvSidebarItem> {
 
   @override
   Widget build(BuildContext context) {
-    Color bgColor;
+    Color? bgColor;
+    LinearGradient? gradient;
     Color fgColor;
     Border? border;
     List<BoxShadow>? shadows;
 
     if (_isFocused) {
-      bgColor = const Color(0xFFE50914);
+      gradient = const LinearGradient(
+        colors: [Color(0xFFE50914), Color(0xFFB80610)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
       fgColor = Colors.white;
-      border = Border.all(color: Colors.white.withValues(alpha: 0.9), width: 1.5);
+      border = Border.all(color: Colors.white, width: 1.5);
       shadows = [
-        BoxShadow(
-          color: const Color(0xFFE50914).withValues(alpha: 0.7),
-          blurRadius: 14,
+        const BoxShadow(
+          color: Color(0x99E50914),
+          blurRadius: 18,
           spreadRadius: 2,
+        ),
+        const BoxShadow(
+          color: Color(0x33FFFFFF),
+          blurRadius: 6,
         ),
       ];
     } else if (widget.isSelected) {
-      bgColor = const Color(0x26E50914);
-      fgColor = const Color(0xFFE50914);
-      border = Border.all(color: const Color(0x4DE50914), width: 1);
+      gradient = const LinearGradient(
+        colors: [Color(0x33E50914), Color(0x18E50914)],
+      );
+      fgColor = Colors.white;
+      border = Border.all(color: const Color(0x66E50914), width: 1.2);
+      shadows = const [
+        BoxShadow(
+          color: Color(0x33E50914),
+          blurRadius: 8,
+        ),
+      ];
     } else {
       bgColor = Colors.transparent;
-      fgColor = Colors.white70;
+      fgColor = const Color(0xB3FFFFFF);
     }
 
     return Focus(
@@ -414,8 +431,9 @@ class _TvSidebarItemState extends State<_TvSidebarItem> {
             vertical: 9,
           ),
           decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(8),
+            color: gradient == null ? bgColor : null,
+            gradient: gradient,
+            borderRadius: BorderRadius.circular(12),
             border: border,
             boxShadow: shadows,
           ),
@@ -425,8 +443,10 @@ class _TvSidebarItemState extends State<_TvSidebarItem> {
             children: [
               Icon(
                 widget.item.icon,
-                color: fgColor,
-                size: 20,
+                color: _isFocused
+                    ? Colors.white
+                    : (widget.isSelected ? const Color(0xFFE50914) : const Color(0xB3FFFFFF)),
+                size: 21,
               ),
               if (widget.isExpanded) ...[
                 const SizedBox(width: 12),
@@ -437,20 +457,28 @@ class _TvSidebarItemState extends State<_TvSidebarItem> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       color: fgColor,
-                      fontSize: 13,
-                      fontWeight: _isFocused || widget.isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                      fontSize: 13.5,
+                      fontWeight: _isFocused
+                          ? FontWeight.w800
+                          : (widget.isSelected ? FontWeight.w700 : FontWeight.w500),
+                      letterSpacing: _isFocused ? 0.2 : 0.0,
                     ),
                   ),
                 ),
                 if (widget.isSelected && !_isFocused)
                   Container(
-                    width: 6,
-                    height: 6,
+                    width: 7,
+                    height: 7,
                     decoration: const BoxDecoration(
                       color: Color(0xFFE50914),
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFFE50914),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
                   ),
               ],

@@ -925,24 +925,34 @@ class _HomeViewState extends State<HomeView> {
     ];
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      height: 60,
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
+      height: 64,
       decoration: BoxDecoration(
-        color: const Color(0xE60E1017),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0x33FFFFFF), width: 1),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xF5141724), Color(0xF5080A12)],
+        ),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: const Color(0x3DFFFFFF), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.6),
+            color: Colors.black.withValues(alpha: 0.8),
+            blurRadius: 28,
+            offset: const Offset(0, 8),
+            spreadRadius: 2,
+          ),
+          BoxShadow(
+            color: const Color(0xFFE50914).withValues(alpha: 0.18),
             blurRadius: 20,
-            offset: const Offset(0, 6),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(32),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: navItems.map((item) {
@@ -969,27 +979,43 @@ class _HomeViewState extends State<HomeView> {
                   }
                 },
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  duration: const Duration(milliseconds: 220),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
-                    color: isSelected ? const Color(0x33E50914) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
+                    gradient: isSelected
+                        ? const LinearGradient(
+                            colors: [Color(0xFFE50914), Color(0xFFB80610)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFE50914).withValues(alpha: 0.65),
+                              blurRadius: 14,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         icon,
-                        color: isSelected ? const Color(0xFFE50914) : Colors.white60,
-                        size: 22,
+                        color: isSelected ? Colors.white : const Color(0x9EFFFFFF),
+                        size: 21,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         label,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white60,
-                          fontSize: 10,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? Colors.white : const Color(0x9EFFFFFF),
+                          fontSize: 10.5,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                          letterSpacing: isSelected ? 0.2 : 0.0,
                         ),
                       ),
                     ],
@@ -2537,25 +2563,44 @@ class _TvTabChipState extends State<_TvTabChip> {
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: widget.isSelected
-                  ? const Color(0xFFE50914)
-                  : (_isFocused ? const Color(0xFF2A2A2A) : const Color(0xFF141414)),
-              borderRadius: BorderRadius.circular(20),
+              gradient: widget.isSelected
+                  ? const LinearGradient(
+                      colors: [Color(0xFFE50914), Color(0xFFB80610)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : (_isFocused
+                      ? const LinearGradient(
+                          colors: [Color(0xFF2A2E3D), Color(0xFF1E212B)],
+                        )
+                      : null),
+              color: !widget.isSelected && !_isFocused ? const Color(0x1FFFFFFF) : null,
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
                 color: _isFocused
                     ? Colors.white
-                    : (widget.isSelected ? const Color(0xFFE50914) : const Color(0xFF262626)),
-                width: _isFocused ? 2 : 1.2,
+                    : (widget.isSelected ? const Color(0xFFFF4D4D) : const Color(0x26FFFFFF)),
+                width: _isFocused ? 2.0 : 1.1,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.6),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                      )
+                        color: widget.isSelected
+                            ? const Color(0xFFE50914).withValues(alpha: 0.8)
+                            : Colors.white.withValues(alpha: 0.4),
+                        blurRadius: 16,
+                        spreadRadius: 2,
+                      ),
                     ]
-                  : null,
+                  : (widget.isSelected
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFE50914).withValues(alpha: 0.45),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -2563,15 +2608,16 @@ class _TvTabChipState extends State<_TvTabChip> {
                 Icon(
                   widget.icon,
                   size: 16,
-                  color: widget.isSelected || _isFocused ? Colors.white : Colors.white60,
+                  color: widget.isSelected || _isFocused ? Colors.white : const Color(0xB3FFFFFF),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 7),
                 Text(
                   widget.label,
                   style: TextStyle(
-                    color: widget.isSelected || _isFocused ? Colors.white : Colors.white70,
-                    fontWeight: widget.isSelected || _isFocused ? FontWeight.bold : FontWeight.w500,
+                    color: widget.isSelected || _isFocused ? Colors.white : const Color(0xB3FFFFFF),
+                    fontWeight: widget.isSelected || _isFocused ? FontWeight.w800 : FontWeight.w500,
                     fontSize: 13,
+                    letterSpacing: widget.isSelected ? 0.2 : 0.0,
                   ),
                 ),
               ],

@@ -39,26 +39,27 @@ class HeroBanner extends StatelessWidget {
             ),
           ),
 
-          // Gradiente vertical oscuro para fundir con la lista de contenidos
+          // Gradiente vertical oscuro con fundido teatral profundo
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  stops: [0.0, 0.4, 0.75, 1.0],
+                  stops: [0.0, 0.35, 0.65, 0.90, 1.0],
                   colors: [
                     Colors.transparent,
-                    Color(0x66000000),
-                    Color(0xCC000000),
-                    Color(0xFF000000),
+                    Color(0x3307080B),
+                    Color(0x8807080B),
+                    Color(0xEE07080B),
+                    Color(0xFF07080B),
                   ],
                 ),
               ),
             ),
           ),
 
-          // Gradiente lateral izquierdo para asegurar legibilidad de texto en pantallas anchas
+          // Gradiente lateral izquierdo para asegurar legibilidad cinematográfica
           if (isTvOrDesktop)
             Positioned.fill(
               child: Container(
@@ -66,10 +67,10 @@ class HeroBanner extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.centerLeft,
                     end: Alignment.centerRight,
-                    stops: [0.0, 0.5, 1.0],
+                    stops: [0.0, 0.45, 0.85],
                     colors: [
-                      Color(0xF0000000),
-                      Color(0xAA000000),
+                      Color(0xFA07080B),
+                      Color(0xBB07080B),
                       Colors.transparent,
                     ],
                   ),
@@ -80,8 +81,8 @@ class HeroBanner extends StatelessWidget {
           // Contenido textual y botones de acción
           Positioned(
             left: isTvOrDesktop ? 48 : 20,
-            right: isTvOrDesktop ? size.width * 0.4 : 20,
-            bottom: 24,
+            right: isTvOrDesktop ? size.width * 0.38 : 20,
+            bottom: isTvOrDesktop ? 34 : 20,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
               child: KeyedSubtree(
@@ -90,177 +91,204 @@ class HeroBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                // Etiqueta destacada VJ STREAM
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFE50914), Color(0xFFB81D24)],
-                        ),
-                        borderRadius: BorderRadius.circular(4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFE50914).withValues(alpha: 0.5),
-                            blurRadius: 8,
-                            spreadRadius: 1,
+                    // Insignia Exclusiva TOM TV
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFE50914), Color(0xFF990000)],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFE50914).withValues(alpha: 0.6),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: const Text(
-                        'TOM TV',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.8,
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.local_fire_department_rounded, color: Colors.white, size: 13),
+                              SizedBox(width: 4),
+                              Text(
+                                'TOM TV EXCLUSIVO',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.6,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(3),
-                        border: Border.all(color: Colors.white24, width: 0.8),
-                      ),
-                      child: const Text(
-                        'CALIDAD COMERCIAL 4K',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          letterSpacing: 1.2,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Título de la película / serie
-                Text(
-                  item.title,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: isTvOrDesktop ? 38 : 26,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.5,
-                    shadows: const [
-                      Shadow(color: Colors.black, blurRadius: 12, offset: Offset(0, 2)),
-                    ],
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 10),
-
-                // Metadatos (Puntuación, Año, Calidad 4K, Audio Español)
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 6,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (item.rating > 0)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${item.formattedRating} / 10',
-                            style: const TextStyle(
-                              color: Colors.amber,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0x2238BDF8),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0x6638BDF8), width: 0.8),
+                          ),
+                          child: const Text(
+                            'ESTRENO',
+                            style: TextStyle(
+                              color: Color(0xFF38BDF8),
+                              fontSize: 10,
+                              letterSpacing: 1.2,
+                              fontWeight: FontWeight.w900,
                             ),
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Título de la película / serie con sombra cinematográfica
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isTvOrDesktop ? 40 : 28,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.6,
+                        height: 1.15,
+                        shadows: const [
+                          Shadow(color: Colors.black, blurRadius: 16, offset: Offset(0, 3)),
+                          Shadow(color: Color(0x66000000), blurRadius: 28, offset: Offset(0, 8)),
                         ],
                       ),
-                    if (item.releaseYear.isNotEmpty)
-                      Text(
-                        item.releaseYear,
-                        style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.2),
-                        border: Border.all(color: const Color(0xFFE50914), width: 0.8),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: const Text(
-                        '4K UHD HDR',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        border: Border.all(color: Colors.white38, width: 0.8),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: const Text(
-                        'AUDIO ESPAÑOL DUAL',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 12),
+
+                    // Metadatos (Puntuación dorada, Año, 4K UHD, Audio Latino)
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        if (item.rating > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0x33F59E0B),
+                              border: Border.all(color: const Color(0x80F59E0B), width: 0.8),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 14),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${item.formattedRating} / 10',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFBBF24),
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (item.releaseYear.isNotEmpty)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.08),
+                              border: Border.all(color: Colors.white24, width: 0.8),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              item.releaseYear,
+                              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0x26E50914),
+                            border: Border.all(color: const Color(0x80E50914), width: 0.8),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            '4K ULTRA HD',
+                            style: TextStyle(
+                              color: Color(0xFFFF5252),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
                         ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0x2210B981),
+                            border: Border.all(color: const Color(0x6610B981), width: 0.8),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'AUDIO LATINO 5.1',
+                            style: TextStyle(
+                              color: Color(0xFF34D399),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Sinopsis
+                    Text(
+                      item.synopsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: isTvOrDesktop ? 14 : 13,
+                        height: 1.45,
+                        shadows: const [
+                          Shadow(color: Colors.black, blurRadius: 6),
+                        ],
                       ),
+                      maxLines: isTvOrDesktop ? 3 : 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Botones interactivos modernos estilo cine
+                    Row(
+                      children: [
+                        _TvHeroButton(
+                          label: 'Reproducir',
+                          icon: Icons.play_arrow_rounded,
+                          isPrimary: true,
+                          onPressed: onPlay,
+                        ),
+                        const SizedBox(width: 14),
+                        _TvHeroButton(
+                          label: 'Más información',
+                          icon: Icons.info_outline_rounded,
+                          isPrimary: false,
+                          onPressed: onDetails,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // Sinopsis
-                Text(
-                  item.synopsis,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    height: 1.4,
-                    shadows: [
-                      Shadow(color: Colors.black, blurRadius: 4),
-                    ],
-                  ),
-                  maxLines: isTvOrDesktop ? 3 : 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 18),
-
-                // Botones interactivos enfocables para Smart TV / Móvil
-                Row(
-                  children: [
-                    _TvHeroButton(
-                      label: 'Reproducir',
-                      icon: Icons.play_arrow_rounded,
-                      isPrimary: true,
-                      onPressed: onPlay,
-                    ),
-                    const SizedBox(width: 14),
-                    _TvHeroButton(
-                      label: 'Más información',
-                      icon: Icons.info_outline_rounded,
-                      isPrimary: false,
-                      onPressed: onDetails,
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    ],
+        ],
       ),
     );
   }
@@ -281,7 +309,7 @@ class HeroBanner extends StatelessWidget {
   }
 }
 
-/// Botón con soporte de foco de control remoto y toque táctil para el Hero Banner
+/// Botón con soporte de foco de control remoto y toque táctil estilo cine moderno
 class _TvHeroButton extends StatefulWidget {
   final String label;
   final IconData icon;
@@ -320,8 +348,8 @@ class _TvHeroButtonState extends State<_TvHeroButton> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryBg = widget.isPrimary ? Colors.white : const Color(0x99565656);
-    final primaryTextColor = widget.isPrimary ? Colors.black : Colors.white;
+    // Colores según estado y tipo de botón (primario con gradiente carmesí o secundario de cristal)
+    final isPrimary = widget.isPrimary;
 
     return Focus(
       focusNode: _focusNode,
@@ -361,33 +389,52 @@ class _TvHeroButtonState extends State<_TvHeroButton> {
           widget.onPressed();
         },
         child: AnimatedScale(
-          scale: _isFocused ? 1.10 : 1.0,
+          scale: _isFocused ? 1.09 : 1.0,
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 13),
             decoration: BoxDecoration(
-              color: _isFocused ? const Color(0xFFE50914) : primaryBg,
-              borderRadius: BorderRadius.circular(8),
+              gradient: isPrimary
+                  ? (_isFocused
+                      ? const LinearGradient(colors: [Color(0xFFFF1E27), Color(0xFFE50914)])
+                      : const LinearGradient(colors: [Color(0xFFE50914), Color(0xFFB20710)]))
+                  : null,
+              color: isPrimary
+                  ? null
+                  : (_isFocused ? Colors.white : const Color(0x38FFFFFF)),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _isFocused ? Colors.white : Colors.transparent,
-                width: 2.5,
+                color: _isFocused
+                    ? Colors.white
+                    : (isPrimary ? Colors.transparent : const Color(0x40FFFFFF)),
+                width: _isFocused ? 2.2 : 1.0,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.85),
-                        blurRadius: 20,
-                        spreadRadius: 3,
+                        color: isPrimary
+                            ? const Color(0xFFE50914).withValues(alpha: 0.9)
+                            : Colors.white.withValues(alpha: 0.6),
+                        blurRadius: 24,
+                        spreadRadius: 2,
                       ),
                       BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        blurRadius: 8,
-                        spreadRadius: 1,
+                        color: Colors.black.withValues(alpha: 0.5),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
                     ]
-                  : null,
+                  : [
+                      BoxShadow(
+                        color: isPrimary
+                            ? const Color(0x55E50914)
+                            : Colors.black.withValues(alpha: 0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -395,15 +442,20 @@ class _TvHeroButtonState extends State<_TvHeroButton> {
                 Icon(
                   widget.icon,
                   size: 22,
-                  color: _isFocused ? Colors.white : primaryTextColor,
+                  color: isPrimary
+                      ? Colors.white
+                      : (_isFocused ? Colors.black : Colors.white),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   widget.label,
                   style: TextStyle(
-                    color: _isFocused ? Colors.white : primaryTextColor,
-                    fontWeight: FontWeight.bold,
+                    color: isPrimary
+                        ? Colors.white
+                        : (_isFocused ? Colors.black : Colors.white),
+                    fontWeight: FontWeight.w900,
                     fontSize: 14,
+                    letterSpacing: 0.4,
                   ),
                 ),
               ],

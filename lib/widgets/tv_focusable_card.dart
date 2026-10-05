@@ -122,7 +122,7 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
           widget.onTap();
         },
         child: AnimatedScale(
-          scale: _isFocused ? 1.10 : 1.0,
+          scale: _isFocused ? 1.09 : 1.0,
           duration: const Duration(milliseconds: 220),
           curve: Curves.easeOutCubic,
           child: AnimatedContainer(
@@ -131,18 +131,18 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
             height: widget.height,
             margin: const EdgeInsets.symmetric(horizontal: 7, vertical: 8),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFF1E1E1E),
-              // Borde brillante rojo estilo Netflix y halo de neón cuando está enfocado
+              borderRadius: BorderRadius.circular(14),
+              color: const Color(0xFF13151D),
+              // Borde brillante rojo estilo cine y halo de neón cuando está enfocado
               border: Border.all(
-                color: _isFocused ? const Color(0xFFE50914) : Colors.transparent,
-                width: _isFocused ? 3.5 : 0,
+                color: _isFocused ? const Color(0xFFE50914) : Colors.white.withValues(alpha: 0.08),
+                width: _isFocused ? 3.0 : 0.8,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.82),
-                        blurRadius: 22,
+                        color: const Color(0xFFE50914).withValues(alpha: 0.85),
+                        blurRadius: 28,
                         spreadRadius: 3,
                       ),
                       BoxShadow(
@@ -150,36 +150,43 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
                         blurRadius: 8,
                         spreadRadius: 1,
                       ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.6),
+                        blurRadius: 14,
+                        offset: const Offset(0, 8),
+                      ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.45),
-                        blurRadius: 6,
-                        offset: const Offset(0, 3),
+                        color: Colors.black.withValues(alpha: 0.55),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       )
                     ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(13),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   // Imagen del póster con fallback
                   _buildPosterImage(),
 
-                  // Degradado inferior para resaltar texto
+                  // Degradado inferior cinematográfico para resaltar texto
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: 70,
+                    height: 85,
                     child: Container(
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
+                          stops: [0.0, 0.45, 1.0],
                           colors: [
-                            Colors.black.withValues(alpha: 0.9),
+                            Color(0xF207080B),
+                            Color(0x8807080B),
                             Colors.transparent,
                           ],
                         ),
@@ -189,16 +196,16 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
 
                   // Badges de calidad y audio en español o modo Tráiler Oficial
                   Positioned(
-                    top: 6,
-                    left: 6,
+                    top: 8,
+                    left: 8,
                     child: widget.item.isTrailerOnly
                         ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
                                 colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
                               ),
-                              borderRadius: BorderRadius.circular(3),
+                              borderRadius: BorderRadius.circular(4),
                               boxShadow: [
                                 BoxShadow(
                                   color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
@@ -223,80 +230,96 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
                               ],
                             ),
                           )
-                        : Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                        : (widget.item.rating > 0
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE50914),
-                                  borderRadius: BorderRadius.circular(3),
+                                  color: const Color(0xE60A0C14),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0x66F59E0B), width: 0.8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.4),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
-                                child: const Text(
-                                  '4K',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 12),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      widget.item.formattedRating,
+                                      style: const TextStyle(
+                                        color: Color(0xFFFBBF24),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(width: 3),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF1E1E1E).withValues(alpha: 0.9),
-                                  borderRadius: BorderRadius.circular(3),
-                                  border: Border.all(color: Colors.white30, width: 0.5),
-                                ),
-                                child: const Text(
-                                  'ESP',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                              )
+                            : const SizedBox.shrink()),
+                  ),
+
+                  // Insignia superior derecha 4K / Audio Latino
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFE50914), Color(0xFF990000)],
+                            ),
+                            borderRadius: BorderRadius.circular(4),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0x66E50914),
+                                blurRadius: 4,
                               ),
                             ],
                           ),
+                          child: const Text(
+                            '4K',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xCC0E1017),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: const Color(0x6634D399), width: 0.6),
+                          ),
+                          child: const Text(
+                            'LAT',
+                            style: TextStyle(
+                              color: Color(0xFF34D399),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
 
-                  // Insignia de puntuación superior derecha
-                  if (widget.item.rating > 0)
-                    Positioned(
-                      top: 6,
-                      right: 6,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.amber.withValues(alpha: 0.8), width: 0.8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber, size: 10),
-                            const SizedBox(width: 2),
-                            Text(
-                              widget.item.formattedRating,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                  // Título inferior visible si está enfocado o no hay póster
+                  // Título inferior con tipografía estilizada
                   Positioned(
-                    bottom: 6,
-                    left: 6,
-                    right: 6,
+                    bottom: 8,
+                    left: 8,
+                    right: 8,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,16 +331,17 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: _isFocused ? 12.5 : 11.5,
-                            fontWeight: _isFocused ? FontWeight.w900 : FontWeight.w600,
+                            fontWeight: _isFocused ? FontWeight.w900 : FontWeight.w700,
+                            height: 1.2,
                             shadows: const [
-                              Shadow(color: Colors.black, blurRadius: 6, offset: Offset(0, 1)),
-                              Shadow(color: Colors.black, blurRadius: 12),
+                              Shadow(color: Colors.black, blurRadius: 8, offset: Offset(0, 1)),
+                              Shadow(color: Colors.black, blurRadius: 14),
                             ],
                           ),
                         ),
                         if (_isFocused && widget.item.releaseYear.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(top: 2),
+                            padding: const EdgeInsets.only(top: 3),
                             child: Row(
                               children: [
                                 Text(
