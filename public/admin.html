@@ -912,9 +912,15 @@
           <div style="padding: 24px;">
             <form id="settings-tab-form" onsubmit="submitSettings(event)">
               <div class="form-group">
-                <label>Número de WhatsApp para Recordatorios y Soporte:</label>
-                <input type="text" id="tab-whatsapp-number" class="form-control" placeholder="Ej: +51999999999">
-                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Incluye el código de país (ej: +51 para Perú, +52 para México, +57 para Colombia).</small>
+                <label>Número de WhatsApp Oficial (Soporte, Consultas y Comprobantes):</label>
+                <input type="text" id="tab-whatsapp-number" class="form-control" placeholder="Ej: +51914598415">
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Tu WhatsApp de atención (+51 914 598 415).</small>
+              </div>
+
+              <div class="form-group">
+                <label>Número Exclusivo de Pagos Plin (Perú):</label>
+                <input type="text" id="tab-plin-number" class="form-control" placeholder="Ej: 962622904">
+                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Número oficial donde los clientes transferirán por Plin (962 622 904).</small>
               </div>
 
               <div class="form-group">
@@ -1632,6 +1638,9 @@
             appSettings = data.settings;
             if (document.getElementById('tab-whatsapp-number')) {
               document.getElementById('tab-whatsapp-number').value = data.settings.whatsappNumber || '';
+            }
+            if (document.getElementById('tab-plin-number')) {
+              document.getElementById('tab-plin-number').value = data.settings.plinNumber || '962622904';
             }
             if (document.getElementById('tab-whatsapp-msg')) {
               document.getElementById('tab-whatsapp-msg').value = data.settings.whatsappMessage || '';
@@ -2582,9 +2591,10 @@
       e.preventDefault();
       const adminPassword = document.getElementById('tab-admin-pass').value.trim();
       const whatsappNumber = document.getElementById('tab-whatsapp-number').value.trim();
+      const plinNumber = (document.getElementById('tab-plin-number') ? document.getElementById('tab-plin-number').value : '').trim();
       const whatsappMessage = document.getElementById('tab-whatsapp-msg').value.trim();
 
-      const body = { whatsappNumber, whatsappMessage };
+      const body = { whatsappNumber, plinNumber, whatsappMessage };
       if (adminPassword) {
         body.adminPassword = adminPassword;
       }

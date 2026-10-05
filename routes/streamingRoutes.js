@@ -785,34 +785,32 @@ router.get('/download-apk', (req, res) => {
 router.get('/payment-info', (req, res) => {
   const settings = accountService.getSettings();
   const whatsappNumber = settings.whatsappNumber || process.env.WHATSAPP_NUMBER || '+51914598415';
-  const cleanPhone = whatsappNumber.replace(/[^0-9]/g, '');
+  const cleanWhatsapp = whatsappNumber.replace(/[^0-9]/g, '');
+  const plinNumber = settings.plinNumber || process.env.PLIN_NUMBER || '962622904';
+  const formattedPlin = '962 622 904';
 
   return res.json({
     success: true,
     whatsappNumber,
-    whatsappClean: cleanPhone,
+    whatsappClean: cleanWhatsapp,
     ownerName: 'TOM TV Oficial',
     methods: [
       {
-        id: 'yape',
-        name: 'Yape (Perú)',
-        phone: '914 598 415',
-        currency: 'PEN',
-        badge: 'Inmediato'
-      },
-      {
         id: 'plin',
         name: 'Plin (Perú)',
-        phone: '914 598 415',
+        phone: formattedPlin,
+        rawPhone: plinNumber,
         currency: 'PEN',
-        badge: 'Inmediato'
+        badge: 'Pago Oficial Perú (Plin)',
+        instruction: `Transfiere únicamente por Plin al número ${formattedPlin} y envía la captura a nuestro WhatsApp oficial ${whatsappNumber}.`
       },
       {
         id: 'binance',
         name: 'Binance Pay / USDT',
         currency: 'USDT',
         network: 'TRC20 / BEP20',
-        badge: 'Internacional'
+        badge: 'Internacional',
+        instruction: `Solicita los datos de Binance Pay por nuestro WhatsApp oficial ${whatsappNumber}.`
       }
     ],
     plans: [
@@ -821,7 +819,11 @@ router.get('/payment-info', (req, res) => {
       { id: '6m', name: '6 Meses', days: 180, pricePen: '75 PEN', priceUsd: '20 USD', popular: false },
       { id: '1y', name: '1 Año Completo VIP', days: 365, pricePen: '140 PEN', priceUsd: '38 USD', popular: false }
     ],
-    whatsappLinkTemplate: `https://wa.me/${cleanPhone}?text=`
+    notes: {
+      supportWhatsapp: whatsappNumber,
+      paymentPlin: formattedPlin
+    },
+    whatsappLinkTemplate: `https://wa.me/${cleanWhatsapp}?text=`
   });
 });
 

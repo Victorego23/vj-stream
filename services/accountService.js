@@ -28,6 +28,7 @@ class AccountService {
       settings: {
         whatsappNumber: process.env.WHATSAPP_NUMBER || '+51914598415',
         whatsappMessage: 'Hola, mi código de activación de TOM TV es {code}',
+        plinNumber: '962622904',
       },
       clients: [
         {
@@ -244,7 +245,7 @@ class AccountService {
     return this.verifyAdminPassword(str);
   }
 
-  updateSettings({ adminPassword, whatsappNumber, whatsappMessage }) {
+  updateSettings({ adminPassword, whatsappNumber, whatsappMessage, plinNumber }) {
     const db = this._readDb();
     if (adminPassword && adminPassword.trim().length >= 4) {
       db.admin.password = adminPassword.trim();
@@ -254,6 +255,9 @@ class AccountService {
     }
     if (whatsappMessage !== undefined) {
       db.settings.whatsappMessage = whatsappMessage.trim();
+    }
+    if (plinNumber !== undefined) {
+      db.settings.plinNumber = plinNumber.trim();
     }
     this._writeDb(db);
     return db.settings;

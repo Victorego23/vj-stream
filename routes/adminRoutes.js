@@ -253,12 +253,13 @@ router.post('/reject-pending', handleRejectPending);
  * @desc    Actualiza la contraseña del panel y el número de WhatsApp de contacto
  */
 router.post('/settings', (req, res) => {
-  const { adminPassword, whatsappNumber, whatsappMessage } = req.body;
+  const { adminPassword, whatsappNumber, whatsappMessage, plinNumber } = req.body;
 
   const updated = accountService.updateSettings({
     adminPassword,
     whatsappNumber,
-    whatsappMessage
+    whatsappMessage,
+    plinNumber
   });
 
   return res.json({ success: true, settings: updated, message: 'Ajustes guardados correctamente.' });
