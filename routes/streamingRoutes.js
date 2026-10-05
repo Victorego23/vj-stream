@@ -756,7 +756,7 @@ router.get('/download-apk', (req, res) => {
     return res.sendFile(fileToSend);
   }
 
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v3.5.5/TOM-TV-release.apk';
+  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/latest/download/TOM-TV-release.apk';
   return res.redirect(githubReleaseUrl);
 });
 

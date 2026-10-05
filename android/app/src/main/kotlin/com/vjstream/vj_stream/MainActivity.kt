@@ -57,6 +57,21 @@ class MainActivity : FlutterActivity() {
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, APK_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "getAppVersion" -> {
+                    try {
+                        val pInfo = packageManager.getPackageInfo(packageName, 0)
+                        val vCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                            pInfo.longVersionCode.toInt()
+                        } else {
+                            @Suppress("DEPRECATION")
+                            pInfo.versionCode
+                        }
+                        val vName = pInfo.versionName ?: "1.0.0"
+                        result.success(mapOf("versionCode" to vCode, "versionName" to vName))
+                    } catch (e: Exception) {
+                        result.error("VERSION_ERROR", e.message, null)
+                    }
+                }
                 "canRequestPackageInstalls" -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         result.success(packageManager.canRequestPackageInstalls())

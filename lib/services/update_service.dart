@@ -28,8 +28,8 @@ class AppUpdateInfo {
       notes = (json['releaseNotes'] as List).map((e) => e.toString()).toList();
     }
     return AppUpdateInfo(
-      latestVersion: json['latestVersion'] ?? '3.5.5',
-      versionCode: json['versionCode'] ?? 30,
+      latestVersion: json['latestVersion'] ?? '3.5.6',
+      versionCode: json['versionCode'] ?? 31,
       releaseNotes: notes,
       downloadUrl: json['downloadUrl'] ?? '/api/streaming/download-apk',
       forceUpdate: json['forceUpdate'] ?? false,
@@ -40,8 +40,10 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para TOM TV
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '3.5.5';
-  static const int currentVersionCode = 30;
+  static const String currentVersion = '3.5.6';
+  static const int currentVersionCode = 31;
+  static String currentInstalledVersionName = '3.5.6';
+  static int currentInstalledVersionCode = 31;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
@@ -63,6 +65,22 @@ class UpdateService {
     _hasCheckedThisSession = true;
 
     try {
+      // Obtener la versión REAL instalada directamente del sistema Android nativo
+      int installedVersionCode = currentVersionCode;
+      String installedVersionName = currentVersion;
+      if (Platform.isAndroid) {
+        try {
+          final verData = await const MethodChannel('com.vjstream.vj_stream/apk_installer')
+              .invokeMapMethod<String, dynamic>('getAppVersion');
+          if (verData != null && verData['versionCode'] is int) {
+            installedVersionCode = verData['versionCode'] as int;
+            installedVersionName = verData['versionName'] as String? ?? currentVersion;
+          }
+        } catch (_) {}
+      }
+      currentInstalledVersionCode = installedVersionCode;
+      currentInstalledVersionName = installedVersionName;
+
       final baseUrl = ApiService().baseUrl;
       final cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
       final uri = Uri.parse('$cleanBase/version');
@@ -74,12 +92,12 @@ class UpdateService {
           final updateInfo = AppUpdateInfo.fromJson(data);
 
           // Si la versión instalada ya es igual o superior a la remota, no hacer nada
-          if (updateInfo.versionCode <= currentVersionCode) {
+          if (updateInfo.versionCode <= installedVersionCode) {
             if (!silent && context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: Color(0xFF1E1E1E),
-                  content: Text('Ya tienes la versión más reciente de TOM TV (v$currentVersion).'),
+                SnackBar(
+                  backgroundColor: const Color(0xFF1E1E1E),
+                  content: Text('Ya tienes la versión más reciente de TOM TV (v$installedVersionName).'),
                 ),
               );
             }
@@ -87,7 +105,7 @@ class UpdateService {
           }
 
           // Si el código de versión remoto es estrictamente superior al actual
-          if (updateInfo.versionCode > currentVersionCode) {
+          if (updateInfo.versionCode > installedVersionCode) {
             // Prevención estricta de bucle: si ya se gestionó esta versión en las últimas 24 horas, no insistir en silencio
             if (silent) {
               try {
@@ -240,7 +258,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
 
       while (redirectCount < 10) {
         final request = http.Request('GET', currentUri);
-        request.headers['User-Agent'] = 'TOM-TV-App/3.5.5';
+        request.headers['User-Agent'] = 'TOM-TV-App/${UpdateService.currentInstalledVersionName}';
         final res = await client.send(request);
         if (res.statusCode == 301 ||
             res.statusCode == 302 ||
@@ -433,7 +451,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Versión ${widget.updateInfo.latestVersion} (Actual instalada: v${UpdateService.currentVersion})',
+                'Versión ${widget.updateInfo.latestVersion} (Actual instalada: v${UpdateService.currentInstalledVersionName})',
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
