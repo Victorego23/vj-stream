@@ -120,11 +120,13 @@ app.get(['/play', '/web', '/app'], (req, res) => {
 
 // Servir el Panel de Administrador Web
 app.get('/admin', (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // Servir el Sub-Panel para Revendedores Web
 app.get(['/reseller', '/revendedor', '/distribuidor', '/revendedores'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   res.sendFile(path.join(__dirname, 'public', 'reseller.html'));
 });
 

@@ -523,6 +523,8 @@
           if (data.adminContact?.whatsappNumber) {
             adminWhatsapp = data.adminContact.whatsappNumber;
           }
+          btn.textContent = 'Entrar a Mi Panel';
+          btn.disabled = false;
           showResellerDashboard();
         } else {
           const errMsg = data.error || 'Credenciales incorrectas. Verifica tu usuario y contraseña.';
@@ -536,6 +538,7 @@
           btn.disabled = false;
         }
       } catch (err) {
+        console.error('Error al iniciar sesión:', err);
         if (errBox) {
           errBox.innerHTML = '<strong>⚠️ Error de Conexión:</strong><br>No se pudo conectar con el servidor. Revisa tu internet e intenta nuevamente.';
           errBox.style.display = 'block';
@@ -568,9 +571,14 @@
     }
 
     function showResellerDashboard() {
-      document.getElementById('login-view').style.display = 'none';
-      document.getElementById('dashboard-view').style.display = 'block';
-      document.getElementById('reseller-name-display').textContent = currentReseller.name || currentReseller.username;
+      const loginView = document.getElementById('login-view');
+      const dashView = document.getElementById('dashboard-view');
+      if (loginView) loginView.style.display = 'none';
+      if (dashView) dashView.style.display = 'block';
+      const nameEl = document.getElementById('reseller-name-display');
+      if (nameEl) {
+        nameEl.textContent = (currentReseller && (currentReseller.name || currentReseller.username)) || 'Distribuidor';
+      }
       refreshResellerData();
     }
 
