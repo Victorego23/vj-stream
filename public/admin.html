@@ -245,14 +245,28 @@
   <div id="login-view">
     <div class="login-card">
       <div class="brand-logo">TOM TV</div><br>
-      <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Panel Master</h2>
-      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 24px;">Ingresa tu clave de administrador</p>
+      <div class="header-badge" style="margin-bottom: 12px; display: inline-block;">🛡️ Super-Admin Master</div>
+      <h2 style="font-size: 22px; font-weight: 900; margin-bottom: 6px;">Panel de Dueño</h2>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">Ingresa tu clave maestra general (por defecto: 123456)</p>
+
+      <!-- Alerta visual de error -->
+      <div id="admin-login-error" style="display:none; padding: 14px; border-radius: 12px; font-size: 13px; margin-bottom: 18px; text-align: left; line-height: 1.4;"></div>
+
       <form onsubmit="handleAdminLogin(event)">
         <div class="form-group">
-          <input type="password" id="admin-pass-input" class="form-control" placeholder="Contraseña de administrador" required autofocus>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="password" id="admin-pass-input" class="form-control" placeholder="Contraseña de administrador" required autofocus style="padding-right: 44px;">
+            <button type="button" onclick="toggleAdminPassVisibility()" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px;" title="Ver u ocultar contraseña">👁️</button>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary" id="btn-login-submit" style="width: 100%; padding: 12px;">Entrar al Panel</button>
+        <button type="submit" class="btn btn-primary" id="btn-login-submit" style="width: 100%; padding: 12px; font-size: 14px;">Entrar al Panel</button>
       </form>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--card-border);">
+        <a href="/reseller" style="color: var(--accent); font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+          💼 ¿Eres distribuidor / revendedor? Entra a tu Sub-Panel aquí →
+        </a>
+      </div>
     </div>
   </div>
 
@@ -619,26 +633,64 @@
       }
     });
 
+    function toggleAdminPassVisibility() {
+      const el = document.getElementById('admin-pass-input');
+      if (el) el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
     async function handleAdminLogin(e) {
       e.preventDefault();
+      const errBox = document.getElementById('admin-login-error');
+      if (errBox) { errBox.style.display = 'none'; errBox.innerHTML = ''; }
+
       const pass = document.getElementById('admin-pass-input').value.trim();
       const btn = document.getElementById('btn-login-submit');
       btn.textContent = 'Verificando...';
       btn.disabled = true;
 
       try {
-        const res = await fetch('/api/admin/overview', {
-          headers: { 'x-admin-password': pass }
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: pass })
         });
-        if (res.ok) {
-          adminToken = pass;
+        const data = await res.json();
+        if (data.success) {
+          adminToken = data.token || pass;
           localStorage.setItem('vj_admin_token', adminToken);
           showDashboard();
+        } else if (data.isReseller) {
+          if (errBox) {
+            errBox.style.background = 'rgba(245, 158, 11, 0.15)';
+            errBox.style.border = '1px solid #F59E0B';
+            errBox.style.color = '#FCD34D';
+            errBox.innerHTML = `⚠️ <strong>¡Esta contraseña es de un Revendedor!</strong><br>${data.error}<br><br><a href="/reseller" class="btn btn-gold btn-sm" style="display:inline-block; margin-top: 6px; text-decoration: none;">Ir al Sub-Panel de Revendedores</a>`;
+            errBox.style.display = 'block';
+          } else {
+            alert(data.error);
+          }
         } else {
-          alert('Contraseña incorrecta. Por favor reintenta.');
+          const errMsg = data.error || 'Contraseña de administrador incorrecta. Por favor reintenta.';
+          if (errBox) {
+            errBox.style.background = 'rgba(239, 68, 68, 0.15)';
+            errBox.style.border = '1px solid #EF4444';
+            errBox.style.color = '#FCA5A5';
+            errBox.innerHTML = `⚠️ <strong>Error:</strong> ${errMsg}`;
+            errBox.style.display = 'block';
+          } else {
+            alert(errMsg);
+          }
         }
       } catch (err) {
-        alert('Error conectando con el servidor.');
+        if (errBox) {
+          errBox.style.background = 'rgba(239, 68, 68, 0.15)';
+          errBox.style.border = '1px solid #EF4444';
+          errBox.style.color = '#FCA5A5';
+          errBox.innerHTML = '⚠️ Error conectando con el servidor.';
+          errBox.style.display = 'block';
+        } else {
+          alert('Error conectando con el servidor.');
+        }
       } finally {
         btn.textContent = 'Entrar al Panel';
         btn.disabled = false;

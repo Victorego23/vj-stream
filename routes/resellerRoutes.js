@@ -43,10 +43,10 @@ function resellerAuth(req, res, next) {
 router.post('/login', loginRateLimiter, (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
+    if (!password) {
       return res.status(400).json({
         success: false,
-        error: 'Usuario y contraseña requeridos.'
+        error: 'La contraseña es requerida.'
       });
     }
 

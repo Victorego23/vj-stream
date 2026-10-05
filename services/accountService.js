@@ -882,26 +882,26 @@ class AccountService {
   }
 
   authenticateReseller(username, password) {
-    if (!username || !password) throw new Error('Usuario y contraseña requeridos.');
+    if (!password) throw new Error('Contraseña de revendedor requerida.');
     const db = this._readDb();
-    const cleanUser = String(username).trim().toLowerCase();
+    const cleanUser = String(username || '').trim().toLowerCase();
     const cleanPass = String(password).trim();
     const cleanUserDigits = cleanUser.replace(/\D/g, '');
 
-    // Buscar revendedor con máxima tolerancia: por username, nombre completo o teléfono WhatsApp
-    const reseller = (db.resellers || []).find(r => {
+    // 1. Buscar revendedor con máxima tolerancia: por username, nombre completo o teléfono WhatsApp
+    let reseller = (db.resellers || []).find(r => {
       const rUser = (r.username || '').trim().toLowerCase();
       const rName = (r.name || '').trim().toLowerCase();
       const rPhoneDigits = (r.whatsapp || '').replace(/\D/g, '');
 
-      // 1. Coincidencia directa por username
-      if (rUser === cleanUser) return true;
+      // Coincidencia directa por username
+      if (cleanUser && rUser === cleanUser) return true;
 
-      // 2. Coincidencia por nombre completo o parcial
-      if (rName === cleanUser) return true;
-      if (cleanUser.length >= 3 && (rName.includes(cleanUser) || cleanUser.includes(rName))) return true;
+      // Coincidencia por nombre completo o parcial
+      if (cleanUser && rName === cleanUser) return true;
+      if (cleanUser && cleanUser.length >= 3 && (rName.includes(cleanUser) || cleanUser.includes(rName))) return true;
 
-      // 3. Coincidencia por teléfono / WhatsApp (al menos 6 dígitos numéricos)
+      // Coincidencia por teléfono / WhatsApp (al menos 6 dígitos numéricos)
       if (cleanUserDigits.length >= 6 && rPhoneDigits.length >= 6) {
         if (rPhoneDigits.endsWith(cleanUserDigits) || cleanUserDigits.endsWith(rPhoneDigits)) return true;
       }
@@ -909,8 +909,16 @@ class AccountService {
       return false;
     });
 
+    // 2. Si no se especificó usuario o no coincidió con el nombre/teléfono, buscar por contraseña única
+    if (!reseller) {
+      const matchingByPass = (db.resellers || []).filter(r => (r.password || '').trim() === cleanPass);
+      if (matchingByPass.length === 1) {
+        reseller = matchingByPass[0];
+      }
+    }
+
     if (!reseller || (reseller.password || '').trim() !== cleanPass) {
-      throw new Error('Usuario o contraseña de revendedor incorrectos. Asegúrate de ingresar en el portal de revendedores.');
+      throw new Error('Credenciales incorrectas. Verifica tu usuario o contraseña en tomtv.lat/reseller.');
     }
 
     if (reseller.status === 'suspended') {

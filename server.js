@@ -124,7 +124,7 @@ app.get('/admin', (req, res) => {
 });
 
 // Servir el Sub-Panel para Revendedores Web
-app.get('/reseller', (req, res) => {
+app.get(['/reseller', '/revendedor', '/distribuidor', '/revendedores'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'reseller.html'));
 });
 

@@ -26,6 +26,18 @@ function adminAuth(req, res, next) {
 router.post('/login', loginRateLimiter, (req, res) => {
   const { password } = req.body;
   if (!password || !accountService.verifyAdminPassword(password)) {
+    const clean = String(password || '').trim();
+    const db = accountService._readDb();
+    const matchingReseller = (db.resellers || []).find(r => (r.password || '').trim() === clean);
+    if (matchingReseller) {
+      return res.status(401).json({
+        success: false,
+        isReseller: true,
+        resellerUsername: matchingReseller.username,
+        resellerName: matchingReseller.name,
+        error: `Esta contraseña pertenece al revendedor "${matchingReseller.name}". Debes ingresar en el portal de revendedores: tomtv.lat/reseller`
+      });
+    }
     return res.status(401).json({ success: false, error: 'Contraseña de administrador incorrecta.' });
   }
 
