@@ -1144,7 +1144,7 @@
     async function renewClient(id, days) {
       if (!confirm(`¿Renovar esta suscripción por ${days} días adicionales?`)) return;
       try {
-        const res = await fetch(`/api/admin/client/${id}/renew`, {
+        const res = await fetch(`/api/admin/clients/${id}/renew`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
           body: JSON.stringify({ additionalDays: days })
@@ -1164,7 +1164,7 @@
     async function deleteClient(id, name) {
       if (!confirm(`¿Estás seguro de eliminar al cliente "${name}"? Perderá acceso de inmediato.`)) return;
       try {
-        const res = await fetch(`/api/admin/client/${id}`, {
+        const res = await fetch(`/api/admin/clients/${id}`, {
           method: 'DELETE',
           headers: { 'x-admin-password': adminToken }
         });

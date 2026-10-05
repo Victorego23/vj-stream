@@ -201,8 +201,7 @@ const handleRenew = (req, res) => {
   return res.json({ success: true, client, message: `Membresía renovada por ${days} días con éxito.` });
 };
 
-router.post('/clients/:id/renew', handleRenew);
-router.post('/renew', handleRenew);
+router.post(['/clients/:id/renew', '/client/:id/renew', '/renew'], handleRenew);
 
 /**
  * @route   POST /api/admin/clients/:id/toggle-status
@@ -220,8 +219,7 @@ const handleToggleStatus = (req, res) => {
   return res.json({ success: true, client });
 };
 
-router.post('/clients/:id/toggle-status', handleToggleStatus);
-router.post('/toggle-status', handleToggleStatus);
+router.post(['/clients/:id/toggle-status', '/client/:id/toggle-status', '/toggle-status'], handleToggleStatus);
 
 /**
  * @route   POST /api/admin/clients/:id/reset-devices
@@ -239,8 +237,7 @@ const handleResetDevices = (req, res) => {
   return res.json({ success: true, message: 'Dispositivos desvinculados correctamente.', client });
 };
 
-router.post('/clients/:id/reset-devices', handleResetDevices);
-router.post('/reset-devices', handleResetDevices);
+router.post(['/clients/:id/reset-devices', '/client/:id/reset-devices', '/reset-devices'], handleResetDevices);
 
 /**
  * @route   DELETE /api/admin/clients/:id
@@ -265,9 +262,8 @@ const handleDeleteClient = (req, res) => {
   });
 };
 
-router.delete('/clients/:id', handleDeleteClient);
-router.post('/clients/:id/delete', handleDeleteClient);
-router.post('/delete-client', handleDeleteClient);
+router.delete(['/clients/:id', '/client/:id'], handleDeleteClient);
+router.post(['/clients/:id/delete', '/client/:id/delete', '/delete-client'], handleDeleteClient);
 
 /**
  * @route   DELETE /api/admin/pending/:code
