@@ -131,8 +131,6 @@ class AccountService {
       return fallback;
     }
   }
-    }
-  }
 
   _writeDb(data) {
     try {
