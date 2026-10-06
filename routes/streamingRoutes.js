@@ -888,9 +888,9 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '3.8.0',
-  versionCode: 41,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v3.8.0/TOM-TV-release.apk',
+  latestVersion: '3.9.0',
+  versionCode: 42,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v3.9.0/TOM-TV-release.apk',
   releaseDate: '2026-10-06'
 };
 
@@ -942,11 +942,11 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '📺 Experiencia Smart TV 10-Foot: Interfaz cinematográfica estilo Apple TV / Netflix, reloj en vivo y halo neón rojo para control remoto.',
-      '🎮 Control Remoto D-Pad Completo: Salto de 10s con animación OSD, cambio rápido de canales con flechas Arriba/Abajo y previsualización dinámica en el Hero Banner.',
-      '❌ Acceso Limpio: Eliminados los 4 bloques gigantes de inicio para acceder de inmediato al catálogo destacado.',
-      '🔍 Búsqueda de Sagas y Relacionadas: Detección inteligente de franquicias, secuelas, precuelas y contenido del mismo universo.',
-      '⚡ Detección TV Mejorada: Activación automática de la guía de 3 columnas en TV Box, Firestick y Smart TVs.'
+      '📡 444 Canales de TV en Vivo 100% Operativos: Auditoría exhaustiva y eliminación permanente de señales caídas (Cero Bajas).',
+      '🛡️ Auto-Failover Inteligente 24/7: Conmutación automática a fuentes de respaldo si una señal primaria falla.',
+      '📺 Modo Smart TV Cinemático (10-Foot UI): Interfaz fluida estilo Apple TV/Netflix, halo neón de enfoque y reloj en vivo.',
+      '🎮 Control Remoto D-Pad Completo: Salto de 10s con animación OSD, cambio rápido de canales con flechas Arriba/Abajo.',
+      '⚡ Sincronización Total con Servidor TOM TV: Anuncios en pantalla en vivo y catálogo optimizado.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,
