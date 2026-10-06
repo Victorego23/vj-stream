@@ -950,12 +950,11 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '🚀 TOM TV v3.7.1: Nueva identidad visual con logotipo e ícono oficial en Rojo y Negro.',
-      '🎨 Sistema de Design Tokens renovado: Rojo Neón Carmesí (#E50914) y Negro Carbón (#0B0B0E).',
-      '✨ Interfaz pulida: Pestañas activas con efecto glow, botones principales de acción y reproductor integrados en carmesí.',
-      '🎬 Catálogo VOD móvil: Carrusel Panorámico Hero 16:9 con autodesplazamiento y dots, subcategorías superiores y posters 2:3 con badges.',
-      '📺 TV en Vivo móvil: Reproductor fijo superior 16:9 con overlays (FHD/HD, selector de audio/calidad), guía EPG rápida y navegación fluida.',
-      '🔒 Control Parental activo: Modal de bloqueo y protección para Zona 18+.'
+      '📺 Experiencia Smart TV 10-Foot: Interfaz cinematográfica estilo Apple TV / Netflix, reloj en vivo y halo neón rojo para control remoto.',
+      '🎮 Control Remoto D-Pad Completo: Salto de 10s con animación OSD, cambio rápido de canales con flechas Arriba/Abajo y previsualización dinámica en el Hero Banner.',
+      '❌ Acceso Limpio: Eliminados los 4 bloques gigantes de inicio para acceder de inmediato al catálogo destacado.',
+      '🔍 Búsqueda de Sagas y Relacionadas: Detección inteligente de franquicias, secuelas, precuelas y contenido del mismo universo.',
+      '⚡ Detección TV Mejorada: Activación automática de la guía de 3 columnas en TV Box, Firestick y Smart TVs.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,

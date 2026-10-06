@@ -73,10 +73,10 @@ jobs:
           body: |
             ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
-            - 🎬 **Player HUD Senior UI/UX**: Retroalimentación táctil y D-Pad lateral, barra de tiempo de 3 capas con cifras tabulares y menú cinemático sin solapamientos.
-            - ⚡ **Multi-Pool Real-Debrid**: Failover automático entre llaves API y verificación en vivo de reproducción.
-            - 🔄 **Sincronización Continua**: Actualización autónoma de catálogo cada 2 horas con los últimos estrenos.
-            - 📡 **Anti-Cache In-App OTA**: Descarga directa instantánea sin almacenamiento en caché obsoleto.
+            - 📺 **Modo Smart TV Cinemático (10-Foot UI)**: Interfaz ultra elegante estilo Apple TV/Netflix, halo neón de enfoque, reloj en vivo y detección en TV Box.
+            - 🎮 **Controles Remotos Completos**: OSD de salto temporal de 10s, cambio rápido de canales con flechas Arriba/Abajo y previsualización dinámica en el Hero Banner.
+            - ❌ **Acceso Limpio**: Eliminados los 4 bloques gigantes de inicio para entrar directo a la cartelera.
+            - 🔍 **Búsqueda Inteligente de Sagas**: Detección de franquicias, secuelas, precuelas y series relacionadas en TMDB.
           files: |
             TOM-TV-release.apk
         env:
