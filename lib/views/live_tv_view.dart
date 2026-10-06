@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 import '../models/live_channel.dart';
 import '../services/api_service.dart';
+import '../widgets/xuper_master_launcher.dart';
 import 'video_player_view.dart';
 
 class LiveTvView extends StatefulWidget {
@@ -29,17 +32,33 @@ class _LiveTvViewState extends State<LiveTvView> {
   bool _isLoading = true;
   String? _errorMessage;
 
+  // Mini-Reproductor en tiempo real para Smart TV (Columna 3 Xuper TV)
+  VideoPlayerController? _previewController;
+  Timer? _previewDebounceTimer;
+  bool _isPreviewLoading = false;
+  bool _isPreviewError = false;
+  bool _isMiniPlayerMuted = true;
+
   final ValueNotifier<LiveChannel?> _focusedChannelNotifier = ValueNotifier<LiveChannel?>(null);
   final FocusScopeNode _channelGridScopeNode = FocusScopeNode();
   final FocusScopeNode _sidebarScopeNode = FocusScopeNode();
-  final FocusNode _returnToMoviesFocusNode = FocusNode();
+  final FocusNode _returnToMoviesFocusNode = FocusNode(debugLabel: 'TvReturnToMovies');
+  final FocusNode _playButtonFocusNode = FocusNode(debugLabel: 'TvPlayButton');
+  final FocusNode _favButtonFocusNode = FocusNode(debugLabel: 'TvFavButton');
   final FocusNode _backToMoviesSidebarFocusNode = FocusNode(debugLabel: 'TvCat_BackToMovies');
   final Map<String, FocusNode> _categoryFocusNodes = {};
+  final Map<String, FocusNode> _channelFocusNodes = {};
   final ScrollController _scrollController = ScrollController();
+  final ScrollController _categoriesScrollController = ScrollController();
+  final ScrollController _channelListScrollController = ScrollController();
   bool _showBackToTop = false;
 
   FocusNode _getCategoryFocusNode(String cat) {
     return _categoryFocusNodes.putIfAbsent(cat, () => FocusNode(debugLabel: 'TvCat_$cat'));
+  }
+
+  FocusNode _getChannelFocusNode(String id) {
+    return _channelFocusNodes.putIfAbsent(id, () => FocusNode(debugLabel: 'TvChan_$id'));
   }
 
   static String getChannelCountry(LiveChannel channel) {
@@ -86,6 +105,7 @@ class _LiveTvViewState extends State<LiveTvView> {
     );
     if (_filteredChannels.isNotEmpty && mounted) {
       _focusedChannelNotifier.value = _filteredChannels.first;
+      _triggerPreviewUpdate(_filteredChannels.first);
     }
   }
 
@@ -95,14 +115,22 @@ class _LiveTvViewState extends State<LiveTvView> {
 
   @override
   void dispose() {
+    _disposePreviewPlayer();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _categoriesScrollController.dispose();
+    _channelListScrollController.dispose();
     _channelGridScopeNode.dispose();
     _sidebarScopeNode.dispose();
     _returnToMoviesFocusNode.dispose();
+    _playButtonFocusNode.dispose();
+    _favButtonFocusNode.dispose();
     _backToMoviesSidebarFocusNode.dispose();
     _focusedChannelNotifier.dispose();
     for (final node in _categoryFocusNodes.values) {
+      node.dispose();
+    }
+    for (final node in _channelFocusNodes.values) {
       node.dispose();
     }
     super.dispose();
@@ -202,6 +230,7 @@ class _LiveTvViewState extends State<LiveTvView> {
           _isLoading = false;
           if (_filteredChannels.isNotEmpty) {
             _focusedChannelNotifier.value = _filteredChannels.first;
+            _triggerPreviewUpdate(_filteredChannels.first);
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (mounted) {
                 _channelGridScopeNode.requestFocus();
@@ -218,6 +247,70 @@ class _LiveTvViewState extends State<LiveTvView> {
         });
       }
     }
+  }
+
+  void _triggerPreviewUpdate(LiveChannel? channel) {
+    _previewDebounceTimer?.cancel();
+    if (channel == null || channel.streamUrl.isEmpty) {
+      _disposePreviewPlayer();
+      return;
+    }
+
+    if (mounted) {
+      setState(() {
+        _isPreviewLoading = true;
+        _isPreviewError = false;
+      });
+    }
+
+    _previewDebounceTimer = Timer(const Duration(milliseconds: 400), () async {
+      if (!mounted) return;
+      if (_focusedChannelNotifier.value?.id != channel.id) return;
+
+      try {
+        final oldController = _previewController;
+        _previewController = null;
+        if (oldController != null) {
+          await oldController.dispose();
+        }
+
+        final controller = VideoPlayerController.networkUrl(
+          Uri.parse(channel.streamUrl),
+          videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+        );
+        _previewController = controller;
+        await controller.initialize();
+        if (mounted && _focusedChannelNotifier.value?.id == channel.id) {
+          await controller.setVolume(_isMiniPlayerMuted ? 0.0 : 0.8);
+          await controller.setLooping(true);
+          await controller.play();
+          setState(() {
+            _isPreviewLoading = false;
+            _isPreviewError = false;
+          });
+        }
+      } catch (e) {
+        if (mounted && _focusedChannelNotifier.value?.id == channel.id) {
+          setState(() {
+            _isPreviewLoading = false;
+            _isPreviewError = true;
+          });
+        }
+      }
+    });
+  }
+
+  void _disposePreviewPlayer() {
+    _previewDebounceTimer?.cancel();
+    _previewController?.dispose();
+    _previewController = null;
+  }
+
+  int _getCategoryCount(String cat) {
+    if (cat == 'Todos') return _allChannels.length;
+    if (cat == 'Favoritos') return _favoriteChannelIds.length;
+    if (cat == 'Recientes') return _recentChannelIds.length;
+    return _allChannels.where((c) => c.category.toLowerCase() == cat.toLowerCase()).length;
   }
 
   List<LiveChannel> get _filteredChannels {
@@ -259,6 +352,7 @@ class _LiveTvViewState extends State<LiveTvView> {
 
   void _playChannel(LiveChannel channel) {
     _recordRecentChannel(channel.id);
+    _previewController?.pause();
     final currentList = _filteredChannels;
     final initialIndex = currentList.indexWhere((c) => c.id == channel.id);
     Navigator.of(context).push(
@@ -275,7 +369,10 @@ class _LiveTvViewState extends State<LiveTvView> {
         ),
       ),
     ).then((_) {
-      _loadFavoritesAndRecents();
+      if (mounted) {
+        _loadFavoritesAndRecents();
+        _triggerPreviewUpdate(_focusedChannelNotifier.value ?? channel);
+      }
     });
   }
 
@@ -312,23 +409,18 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   // ===========================================================================
-  // LAYOUT PROFESIONAL SMART TV (SIDEBAR + BANNER + GRID CON ENFOQUE D-PAD)
+  // LAYOUT XUPER TV / MAGIS TV: GUÍA DE 3 COLUMNAS CON MINI-PLAYER EN TIEMPO REAL
+  // [ COLUMNA 1: CATEGORÍAS | COLUMNA 2: CANALES | COLUMNA 3: PREVIEW & EPG ]
   // ===========================================================================
   Widget _buildTvLayout() {
     final channels = _filteredChannels;
 
     return Column(
       children: [
-        // Panel Superior Dinámico del Canal Enfocado (TV Banner Preview)
-        ValueListenableBuilder<LiveChannel?>(
-          valueListenable: _focusedChannelNotifier,
-          builder: (context, currentFocused, _) {
-            final channelToShow = currentFocused ?? (channels.isNotEmpty ? channels.first : null);
-            return _buildFocusedChannelBanner(channelToShow);
-          },
-        ),
+        // 1. Barra Superior Xuper TV (Status, Categoría, Reloj Digital en Vivo y Volver)
+        _buildTvTopBar(),
 
-        // Cuadrícula de Canales a Pantalla Completa con Focus D-Pad
+        // 2. Guía Principal de 3 Columnas
         Expanded(
           child: _isLoading
               ? const Center(
@@ -336,511 +428,748 @@ class _LiveTvViewState extends State<LiveTvView> {
                 )
               : _errorMessage != null
                   ? _buildErrorView()
-                  : channels.isEmpty
-                      ? _buildEmptyView()
-                      : Stack(
-                          children: [
-                            FocusScope(
-                              node: _channelGridScopeNode,
-                              autofocus: true,
-                              child: GridView.builder(
-                                controller: _scrollController,
-                                cacheExtent: 1200,
-                                padding: const EdgeInsets.fromLTRB(28, 20, 28, 32),
-                                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                  maxCrossAxisExtent: 260,
-                                  mainAxisSpacing: 18,
-                                  crossAxisSpacing: 18,
-                                  childAspectRatio: 1.35,
-                                ),
-                                itemCount: channels.length,
-                                itemBuilder: (context, index) {
-                                  final channel = channels[index];
-                                  final channelNumber = index + 1;
-                                  final isFirstRow = index < 6;
-                                  return _TvFocusableChannelCard(
-                                    key: ValueKey(channel.id),
-                                    channel: channel,
-                                    channelNumber: channelNumber,
-                                    isFirstRow: isFirstRow,
-                                    autofocus: index == 0,
-                                    isFavorite: _favoriteChannelIds.contains(channel.id),
-                                    onFocusChange: (focused) {
-                                      if (focused) {
-                                        _focusedChannelNotifier.value = channel;
-                                      }
-                                    },
-                                    onTap: () => _playChannel(channel),
-                                    onLongPress: () => _toggleFavorite(channel),
-                                    onKeyLeft: (isFirstColumn) {
-                                      _jumpToSidebar();
-                                    },
-                                    onKeyUp: () {
-                                      _returnToMoviesFocusNode.requestFocus();
-                                      if (_scrollController.hasClients) {
-                                        _scrollController.animateTo(0, duration: const Duration(milliseconds: 150), curve: Curves.easeOut);
-                                      }
-                                    },
-                                    onFastScrollTop: _scrollToTop,
-                                    onBackToMovies: widget.onBackToMovies,
-                                  );
-                                },
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Columna 1: Panel de Categorías Verticales (~215px)
+                        Container(
+                          width: 215,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0C0D14),
+                            border: Border(
+                              right: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                width: 1.0,
                               ),
                             ),
-                                  if (_showBackToTop)
-                                    Positioned(
-                                      bottom: 24,
-                                      right: 24,
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: _scrollToTop,
-                                          borderRadius: BorderRadius.circular(30),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                                            decoration: BoxDecoration(
-                                              gradient: const LinearGradient(
-                                                colors: [Color(0xFFE50914), Color(0xFF990000)],
-                                              ),
-                                              borderRadius: BorderRadius.circular(30),
-                                              boxShadow: const [
-                                                BoxShadow(
-                                                  color: Color(0x88E50914),
-                                                  blurRadius: 14,
-                                                  spreadRadius: 2,
-                                                ),
-                                              ],
-                                            ),
-                                            child: const Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                Icon(Icons.keyboard_double_arrow_up_rounded, color: Colors.white, size: 22),
-                                                SizedBox(width: 8),
-                                                Text(
-                                                  'Subir Todo',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.w900,
-                                                    fontSize: 13,
-                                                    letterSpacing: 0.5,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
+                          ),
+                          child: _buildTvCategoriesColumn(),
+                        ),
+
+                        // Columna 2: Lista Vertical de Canales (~330px)
+                        Container(
+                          width: 330,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F1018),
+                            border: Border(
+                              right: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                width: 1.0,
                               ),
+                            ),
+                          ),
+                          child: _buildTvChannelsListColumn(channels),
+                        ),
+
+                        // Columna 3: Mini-Player en Vivo + Ficha Técnica EPG (Flex 1)
+                        Expanded(
+                          child: Container(
+                            color: const Color(0xFF08090F),
+                            child: _buildTvPreviewAndEpgColumn(channels),
+                          ),
+                        ),
+                      ],
+                    ),
         ),
       ],
     );
   }
 
-  // Banner superior con información del canal enfocado (Estilo Smart TV)
-  Widget _buildFocusedChannelBanner(LiveChannel? channel) {
-    if (channel == null) {
+  // ---------------------------------------------------------------------------
+  // CABECERA SUPERIOR XUPER TV
+  // ---------------------------------------------------------------------------
+  Widget _buildTvTopBar() {
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF090A10),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.08),
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Logo TOM TV + Badge GUÍA TV EN VIVO
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE50914), Color(0xFF990000)],
+              ),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: const Text(
+              'TOM TV',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFE50914).withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFFE50914), width: 0.8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.fiber_manual_record, color: Color(0xFFE50914), size: 8),
+                SizedBox(width: 5),
+                Text(
+                  'GUÍA TV EN VIVO',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Conteo de la categoría activa
+          Text(
+            '$_selectedCategory (${_filteredChannels.length} Canales)',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          // Reloj digital en vivo Xuper TV con segundero
+          const XuperLiveClock(),
+          const SizedBox(width: 16),
+          // Botón Regresar a Películas
+          if (widget.onBackToMovies != null)
+            _TvTopBarBackButton(onTap: widget.onBackToMovies!),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // COLUMNA 1: PANEL VERTICAL DE CATEGORÍAS
+  // ---------------------------------------------------------------------------
+  Widget _buildTvCategoriesColumn() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(
+            children: [
+              const Icon(Icons.tune_rounded, color: Color(0xFFE50914), size: 16),
+              const SizedBox(width: 8),
+              const Text(
+                'CATEGORÍAS',
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 11,
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_allChannels.length}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(color: Colors.white10, height: 1),
+        Expanded(
+          child: ListView.builder(
+            controller: _categoriesScrollController,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            itemCount: _categories.length,
+            itemBuilder: (context, index) {
+              final cat = _categories[index];
+              final isSelected = _selectedCategory.toLowerCase() == cat.toLowerCase();
+              final count = _getCategoryCount(cat);
+
+              return _TvCategoryItem(
+                key: ValueKey('TvCat_$cat'),
+                title: cat,
+                icon: _getCategoryIcon(cat),
+                isSelected: isSelected,
+                badgeCount: count,
+                focusNode: _getCategoryFocusNode(cat),
+                onSelect: () {
+                  setState(() {
+                    _selectedCategory = cat;
+                  });
+                  final channels = _filteredChannels;
+                  if (channels.isNotEmpty) {
+                    _focusedChannelNotifier.value = channels.first;
+                    _triggerPreviewUpdate(channels.first);
+                  }
+                },
+                onKeyRight: () {
+                  // Mover foco a la lista de canales (Columna 2)
+                  if (_filteredChannels.isNotEmpty) {
+                    final targetChan = _focusedChannelNotifier.value ?? _filteredChannels.first;
+                    _getChannelFocusNode(targetChan.id).requestFocus();
+                  }
+                },
+                onBackToMovies: widget.onBackToMovies,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // COLUMNA 2: LISTA VERTICAL DE CANALES
+  // ---------------------------------------------------------------------------
+  Widget _buildTvChannelsListColumn(List<LiveChannel> channels) {
+    if (channels.isEmpty) {
+      return _buildEmptyView();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+          child: Row(
+            children: [
+              const Icon(Icons.format_list_bulleted_rounded, color: Colors.white54, size: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'CANALES EN VIVO',
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+              Text(
+                '${channels.length}',
+                style: const TextStyle(
+                  color: Color(0xFFE50914),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Divider(color: Colors.white10, height: 1),
+        Expanded(
+          child: ListView.builder(
+            controller: _channelListScrollController,
+            cacheExtent: 1000,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            itemCount: channels.length,
+            itemBuilder: (context, index) {
+              final channel = channels[index];
+              final channelNumber = index + 1;
+              final isFav = _favoriteChannelIds.contains(channel.id);
+
+              return _TvChannelListRowItem(
+                key: ValueKey('tv_chan_${channel.id}'),
+                channel: channel,
+                channelNumber: channelNumber,
+                isFavorite: isFav,
+                focusNode: _getChannelFocusNode(channel.id),
+                onFocusChange: (focused) {
+                  if (focused) {
+                    _focusedChannelNotifier.value = channel;
+                    _triggerPreviewUpdate(channel);
+                  }
+                },
+                onTap: () => _playChannel(channel),
+                onLongPress: () => _toggleFavorite(channel),
+                onKeyLeft: () {
+                  // Mover foco a la categoría seleccionada en Columna 1
+                  _getCategoryFocusNode(_selectedCategory).requestFocus();
+                },
+                onKeyRight: () {
+                  // Mover foco al botón de Pantalla Completa en Columna 3
+                  _playButtonFocusNode.requestFocus();
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // COLUMNA 3: PREVIEW MINI-PLAYER EN TIEMPO REAL & FICHA TÉCNICA EPG
+  // ---------------------------------------------------------------------------
+  Widget _buildTvPreviewAndEpgColumn(List<LiveChannel> channels) {
+    return ValueListenableBuilder<LiveChannel?>(
+      valueListenable: _focusedChannelNotifier,
+      builder: (context, currentFocused, _) {
+        final channel = currentFocused ?? (channels.isNotEmpty ? channels.first : null);
+        if (channel == null) {
+          return const Center(
+            child: Text(
+              'Selecciona un canal para sintonizar',
+              style: TextStyle(color: Colors.white38, fontSize: 14),
+            ),
+          );
+        }
+
+        final isFav = _favoriteChannelIds.contains(channel.id);
+        final currentMinutes = DateTime.now().minute;
+        final progress = (currentMinutes / 60.0).clamp(0.1, 0.95);
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. MINI-PLAYER EN TIEMPO REAL (16:9)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF05060A),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      width: 1.2,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black87,
+                        blurRadius: 18,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Superficie de Video o Fallback de Sintonización
+                        if (_previewController != null &&
+                            _previewController!.value.isInitialized &&
+                            !_isPreviewLoading)
+                          VideoPlayer(_previewController!)
+                        else
+                          _buildMiniPlayerFallback(channel),
+
+                        // Overlay con click para Pantalla Completa
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _playChannel(channel),
+                            child: Container(),
+                          ),
+                        ),
+
+                        // Badge EN DIRECTO en la esquina superior izquierda
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE50914),
+                              borderRadius: BorderRadius.circular(5),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x88E50914),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.fiber_manual_record, color: Colors.white, size: 8),
+                                SizedBox(width: 4),
+                                Text(
+                                  'EN DIRECTO',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 0.6,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Botón de audio y badge de calidad en la esquina superior derecha
+                        Positioned(
+                          top: 12,
+                          right: 12,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _isMiniPlayerMuted = !_isMiniPlayerMuted);
+                                  _previewController?.setVolume(_isMiniPlayerMuted ? 0.0 : 0.8);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.6),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Colors.white12),
+                                  ),
+                                  child: Icon(
+                                    _isMiniPlayerMuted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                                    color: Colors.white70,
+                                    size: 15,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(color: Colors.white24, width: 0.8),
+                                ),
+                                child: Text(
+                                  channel.quality,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Icono central sutil para pantalla completa
+                        Center(
+                          child: IgnorePointer(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white30, width: 1.5),
+                              ),
+                              child: const Icon(
+                                Icons.fullscreen_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // 2. METADATOS DEL CANAL
+              Row(
+                children: [
+                  // Logo del canal grande
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F101A),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: channel.logoUrl.isNotEmpty
+                        ? Image.network(
+                            channel.logoUrl,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.tv_rounded, color: Colors.white38),
+                          )
+                        : const Icon(Icons.tv_rounded, color: Colors.white38),
+                  ),
+                  const SizedBox(width: 14),
+
+                  // Nombre e info del canal
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          channel.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                channel.category,
+                                style: const TextStyle(color: Colors.white70, fontSize: 10.5, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '⚡ ${channel.sources.length} ${channel.sources.length == 1 ? "fuente" : "fuentes"}',
+                              style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Botón rápido Favorito
+                  IconButton(
+                    icon: Icon(
+                      isFav ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: isFav ? Colors.amber : Colors.white38,
+                      size: 28,
+                    ),
+                    tooltip: isFav ? 'Quitar de Favoritos' : 'Añadir a Favoritos',
+                    onPressed: () => _toggleFavorite(channel),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // 3. GUÍA DE PROGRAMACIÓN ACTUAL (EPG SIMULADO)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10121D),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.schedule_rounded, color: Colors.amber, size: 15),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'PROGRAMA EN EMISIÓN',
+                          style: TextStyle(
+                            color: Colors.amber,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          '${DateTime.now().hour}:00 - ${(DateTime.now().hour + 1) % 24}:00',
+                          style: const TextStyle(color: Colors.white54, fontSize: 10.5),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      channel.currentProgram ?? 'Transmisión Oficial en Vivo',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        backgroundColor: Colors.white.withValues(alpha: 0.08),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
+                        minHeight: 4,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${(progress * 100).toInt()}% transcurrido',
+                          style: const TextStyle(color: Colors.white38, fontSize: 10),
+                        ),
+                        const Text(
+                          'A continuación: Programación Regular',
+                          style: TextStyle(color: Colors.white38, fontSize: 10),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 18),
+
+              // 4. BOTÓN GIGANTE ACCIÓN: VER EN PANTALLA COMPLETA
+              Focus(
+                focusNode: _playButtonFocusNode,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.select ||
+                        event.logicalKey == LogicalKeyboardKey.enter ||
+                        event.logicalKey == LogicalKeyboardKey.space) {
+                      _playChannel(channel);
+                      return KeyEventResult.handled;
+                    }
+                    if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                      _getChannelFocusNode(channel.id).requestFocus();
+                      return KeyEventResult.handled;
+                    }
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Builder(
+                  builder: (ctx) {
+                    final isFocused = Focus.of(ctx).hasFocus;
+                    return InkWell(
+                      onTap: () => _playChannel(channel),
+                      borderRadius: BorderRadius.circular(12),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: double.infinity,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE50914), Color(0xFF990000)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isFocused ? Colors.white : Colors.transparent,
+                            width: isFocused ? 2.5 : 0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFE50914).withValues(alpha: isFocused ? 0.8 : 0.4),
+                              blurRadius: isFocused ? 16 : 8,
+                              spreadRadius: isFocused ? 2 : 0,
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.fullscreen_rounded, color: Colors.white, size: 24),
+                            SizedBox(width: 10),
+                            Text(
+                              'VER EN PANTALLA COMPLETA (OK)',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMiniPlayerFallback(LiveChannel channel) {
+    if (_isPreviewLoading) {
       return Container(
-        height: 96,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        color: const Color(0xFF11121A),
-        child: const Row(
+        color: const Color(0xFF08090F),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.tv_rounded, color: Colors.white24, size: 40),
-            SizedBox(width: 16),
+            const SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(color: Color(0xFFE50914), strokeWidth: 3),
+            ),
+            const SizedBox(height: 12),
             Text(
-              'Selecciona un canal con el control remoto',
-              style: TextStyle(color: Colors.white54, fontSize: 15),
+              'Sintonizando ${channel.name}...',
+              style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ],
         ),
       );
     }
 
-    final isFav = _favoriteChannelIds.contains(channel.id);
-    final country = getChannelCountry(channel);
-
     return Container(
-      height: 104,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xF2141522), Color(0xEB0A0B12)],
-        ),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08), width: 1.0),
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black54,
-            blurRadius: 14,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
+      color: const Color(0xFF08090F),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Logo del canal grande
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              color: const Color(0xFF07080D),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x33E50914),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.all(8),
-            child: channel.logoUrl.isNotEmpty
-                ? Image.network(
-                    channel.logoUrl,
-                    fit: BoxFit.contain,
-                    cacheWidth: 200,
-                    cacheHeight: 200,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.tv_rounded, color: Colors.white38, size: 36),
-                  )
-                : const Icon(Icons.tv_rounded, color: Colors.white38, size: 36),
+          if (channel.logoUrl.isNotEmpty)
+            Image.network(
+              channel.logoUrl,
+              height: 48,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(Icons.tv_rounded, color: Colors.white38, size: 48),
+            )
+          else
+            const Icon(Icons.tv_rounded, color: Colors.white38, size: 48),
+          const SizedBox(height: 10),
+          Text(
+            channel.name,
+            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(width: 18),
-
-          // Metadatos del canal
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  children: [
-                    // Badge EN VIVO
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE50914),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.fiber_manual_record, color: Colors.white, size: 8),
-                          SizedBox(width: 4),
-                          Text(
-                            'EN VIVO',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Categoría
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        channel.category,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Calidad
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.4), width: 0.8),
-                      ),
-                      child: Text(
-                        channel.quality,
-                        style: const TextStyle(color: Colors.lightBlueAccent, fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-
-                    if (isFav) ...[
-                      const SizedBox(width: 8),
-                      const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 6),
-
-                // Nombre del canal
-                Text(
-                  channel.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 3),
-
-                // Categoría y Fuentes
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: const Color(0xFFE50914), width: 0.8),
-                      ),
-                      child: Text(
-                        channel.category.toUpperCase(),
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      '⚡ ${channel.sources.length} ${channel.sources.length == 1 ? "señal" : "señales"} disponible${channel.sources.length == 1 ? "" : "s"}',
-                      style: const TextStyle(color: Color(0xFF00E676), fontSize: 11, fontWeight: FontWeight.w700),
-                    ),
-                  ],
-                ),
-                if (channel.currentProgram != null && channel.currentProgram!.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.live_tv_rounded, color: Colors.amber, size: 14),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          '🔴 En Vivo: ${channel.currentProgram!} ${channel.programTime != null ? "(${channel.programTime})" : ""}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (channel.programProgress != null) ...[
-                    const SizedBox(height: 4),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(2),
-                      child: LinearProgressIndicator(
-                        value: channel.programProgress,
-                        backgroundColor: Colors.white12,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.amber),
-                        minHeight: 3,
-                      ),
-                    ),
-                  ],
-                ],
-              ],
-            ),
+          const SizedBox(height: 4),
+          const Text(
+            'Presiona OK para ver en pantalla completa',
+            style: TextStyle(color: Colors.white54, fontSize: 11),
           ),
-
-          // Leyenda de botones del control remoto
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF181A25),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF26293B)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE50914),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'OK',
-                        style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text('Pantalla Completa', style: TextStyle(color: Colors.white70, fontSize: 11)),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '★ OK Largo',
-                        style: TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.w900),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      isFav ? 'Quitar Favorito' : 'Guardar Favorito',
-                      style: const TextStyle(color: Colors.white70, fontSize: 11),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '⬅ / ATRÁS',
-                        style: TextStyle(color: Colors.white70, fontSize: 9.5, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Text('Menú Lateral', style: TextStyle(color: Colors.white54, fontSize: 11)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          // Botón directo a Películas con foco Smart TV
-          const SizedBox(width: 12),
-          Focus(
-            focusNode: _returnToMoviesFocusNode,
-            onKeyEvent: (node, event) {
-              if (event is KeyDownEvent) {
-                if (event.logicalKey == LogicalKeyboardKey.select ||
-                    event.logicalKey == LogicalKeyboardKey.enter ||
-                    event.logicalKey == LogicalKeyboardKey.space ||
-                    event.logicalKey == LogicalKeyboardKey.arrowUp ||
-                    event.logicalKey == LogicalKeyboardKey.escape ||
-                    event.logicalKey == LogicalKeyboardKey.goBack) {
-                  widget.onBackToMovies?.call();
-                  return KeyEventResult.handled;
-                }
-                if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-                  _channelGridScopeNode.requestFocus();
-                  return KeyEventResult.handled;
-                }
-                if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                  _jumpToSidebar();
-                  return KeyEventResult.handled;
-                }
-              }
-              return KeyEventResult.ignored;
-            },
-            child: Builder(
-              builder: (ctx) {
-                final isFocused = Focus.of(ctx).hasFocus;
-                return InkWell(
-                  onTap: widget.onBackToMovies,
-                  borderRadius: BorderRadius.circular(10),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      gradient: isFocused
-                          ? const LinearGradient(
-                              colors: [Color(0xFFE50914), Color(0xFF990000)],
-                            )
-                          : null,
-                      color: isFocused ? null : const Color(0xFF1E202C),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isFocused ? Colors.white : const Color(0xFF33374C),
-                        width: isFocused ? 2.0 : 1.0,
-                      ),
-                      boxShadow: isFocused
-                          ? const [
-                              BoxShadow(
-                                color: Color(0x99E50914),
-                                blurRadius: 14,
-                                spreadRadius: 2,
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.movie_rounded, color: Colors.white, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Ver Películas',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: isFocused ? FontWeight.w900 : FontWeight.bold,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // Botón rápido Subir Todo en la cabecera cuando el usuario ha bajado
-          if (_showBackToTop) ...[
-            const SizedBox(width: 14),
-            InkWell(
-              onTap: _scrollToTop,
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFE50914), Color(0xFF990000)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x66E50914),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.keyboard_double_arrow_up_rounded, color: Colors.white, size: 22),
-                    SizedBox(height: 3),
-                    Text(
-                      'Subir Todo',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -1469,70 +1798,54 @@ class _TvCategoryItemState extends State<_TvCategoryItem> {
 }
 
 // =============================================================================
-// TARJETA DE CANAL FOCUSABLE CON ZOOM, GLOW Y MANEJO D-PAD PARA SMART TV
+// WIDGET ITEM CANAL VERTICAL FOCUSABLE PARA SMART TV (COLUMNA 2 XUPER TV)
 // =============================================================================
-class _TvFocusableChannelCard extends StatefulWidget {
+class _TvChannelListRowItem extends StatefulWidget {
   final LiveChannel channel;
   final int channelNumber;
   final bool isFavorite;
+  final FocusNode focusNode;
   final ValueChanged<bool> onFocusChange;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
-  final ValueChanged<bool> onKeyLeft;
-  final bool isFirstRow;
-  final bool autofocus;
-  final VoidCallback? onKeyUp;
-  final VoidCallback? onFastScrollTop;
-  final VoidCallback? onBackToMovies;
+  final VoidCallback onKeyLeft;
+  final VoidCallback onKeyRight;
 
-  const _TvFocusableChannelCard({
+  const _TvChannelListRowItem({
     super.key,
     required this.channel,
     required this.channelNumber,
     required this.isFavorite,
+    required this.focusNode,
     required this.onFocusChange,
     required this.onTap,
     required this.onLongPress,
     required this.onKeyLeft,
-    this.isFirstRow = false,
-    this.autofocus = false,
-    this.onKeyUp,
-    this.onFastScrollTop,
-    this.onBackToMovies,
+    required this.onKeyRight,
   });
 
   @override
-  State<_TvFocusableChannelCard> createState() => _TvFocusableChannelCardState();
+  State<_TvChannelListRowItem> createState() => _TvChannelListRowItemState();
 }
 
-class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
-  final FocusNode _focusNode = FocusNode();
+class _TvChannelListRowItemState extends State<_TvChannelListRowItem> {
   bool _isFocused = false;
-  DateTime? _keyDownTime;
 
   @override
   void initState() {
     super.initState();
-    _focusNode.addListener(_handleFocus);
-    if (widget.autofocus) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _focusNode.requestFocus();
-        }
-      });
-    }
+    widget.focusNode.addListener(_handleFocus);
   }
 
   void _handleFocus() {
     if (mounted) {
-      final focused = _focusNode.hasFocus;
-      setState(() => _isFocused = focused);
-      widget.onFocusChange(focused);
-
-      if (focused) {
+      final f = widget.focusNode.hasFocus;
+      setState(() => _isFocused = f);
+      widget.onFocusChange(f);
+      if (f) {
         Scrollable.ensureVisible(
           context,
-          alignment: 0.2,
+          alignment: 0.35,
           duration: const Duration(milliseconds: 60),
           curve: Curves.easeOut,
         );
@@ -1542,263 +1855,216 @@ class _TvFocusableChannelCardState extends State<_TvFocusableChannelCard> {
 
   @override
   void dispose() {
-    _focusNode.removeListener(_handleFocus);
-    _focusNode.dispose();
+    widget.focusNode.removeListener(_handleFocus);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: _focusNode,
-      autofocus: widget.autofocus,
+      focusNode: widget.focusNode,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent) {
           if (event.logicalKey == LogicalKeyboardKey.select ||
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space) {
-            _keyDownTime = DateTime.now();
-            return KeyEventResult.handled;
-          }
-          if (event.logicalKey == LogicalKeyboardKey.escape ||
-              event.logicalKey == LogicalKeyboardKey.goBack) {
-            // Presionar Atrás/Retroceso en la cuadrícula regresa al menú lateral de categorías
-            widget.onKeyLeft(true);
+            widget.onTap();
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-            final moved = node.focusInDirection(TraversalDirection.left);
-            if (moved) {
-              return KeyEventResult.handled;
-            }
-            // Si no se puede mover a la izquierda dentro de la cuadrícula, estamos en la primera columna: regresar al sidebar
-            widget.onKeyLeft(true);
+            widget.onKeyLeft();
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-            final moved = node.focusInDirection(TraversalDirection.right);
-            if (moved) {
-              return KeyEventResult.handled;
-            }
-          }
-          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-            if (widget.isFirstRow) {
-              widget.onKeyUp?.call();
-              return KeyEventResult.handled;
-            }
-            final moved = node.focusInDirection(TraversalDirection.up);
-            if (moved) {
-              return KeyEventResult.handled;
-            }
-          }
-          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-            final moved = node.focusInDirection(TraversalDirection.down);
-            if (moved) {
-              return KeyEventResult.handled;
-            }
-          }
-          if (event.logicalKey == LogicalKeyboardKey.pageUp ||
-              event.logicalKey == LogicalKeyboardKey.channelUp) {
-            widget.onFastScrollTop?.call();
+            widget.onKeyRight();
             return KeyEventResult.handled;
-          }
-        } else if (event is KeyUpEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.select ||
-              event.logicalKey == LogicalKeyboardKey.enter ||
-              event.logicalKey == LogicalKeyboardKey.space) {
-            if (_keyDownTime != null) {
-              final elapsed = DateTime.now().difference(_keyDownTime!).inMilliseconds;
-              _keyDownTime = null;
-              if (elapsed >= 600) {
-                // Pulsación larga: Favorito
-                widget.onLongPress();
-              } else {
-                // Pulsación corta: Reproducir
-                widget.onTap();
-              }
-              return KeyEventResult.handled;
-            }
           }
         }
         return KeyEventResult.ignored;
       },
       child: GestureDetector(
         onTap: () {
-          _focusNode.requestFocus();
+          widget.focusNode.requestFocus();
           widget.onTap();
         },
-        onLongPress: () {
-          _focusNode.requestFocus();
-          widget.onLongPress();
-        },
-        child: AnimatedScale(
-          scale: _isFocused ? 1.06 : 1.0,
+        onLongPress: widget.onLongPress,
+        child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOutCubic,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            decoration: BoxDecoration(
-              color: _isFocused ? const Color(0xFF1F2232) : const Color(0xFF14151E),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _isFocused
-                    ? const Color(0xFFE50914)
-                    : widget.isFavorite
-                        ? Colors.amber.withValues(alpha: 0.4)
-                        : const Color(0xFF222432),
-                width: _isFocused ? 3.0 : 1.0,
-              ),
-              boxShadow: [
-                if (_isFocused)
-                  BoxShadow(
-                    color: const Color(0xFFE50914).withValues(alpha: 0.8),
-                    blurRadius: 14,
-                    spreadRadius: 2,
+          margin: const EdgeInsets.symmetric(vertical: 2.5),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: _isFocused
+                ? const LinearGradient(
+                    colors: [Color(0xFFE50914), Color(0xFF990000)],
                   )
-                else
-                  const BoxShadow(
-                    color: Colors.black45,
-                    blurRadius: 6,
-                    offset: Offset(0, 2),
-                  ),
-              ],
+                : null,
+            color: _isFocused ? null : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: _isFocused ? Colors.white : Colors.transparent,
+              width: _isFocused ? 2 : 1,
             ),
-            padding: const EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Cabecera de la tarjeta: Número de canal + Bandera + Indicador de Favorito
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: _isFocused
-                            ? const Color(0xFFE50914)
-                            : Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '#${widget.channelNumber.toString().padLeft(2, "0")}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+            boxShadow: _isFocused
+                ? const [
+                    BoxShadow(
+                      color: Color(0x66E50914),
+                      blurRadius: 10,
+                      spreadRadius: 1,
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE50914).withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0xFFE50914), width: 0.6),
-                          ),
-                          child: const Text(
-                            'EN VIVO',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 7.5,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        if (widget.isFavorite) ...[
-                          const SizedBox(width: 4),
-                          const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
-                        ],
-                      ],
-                    ),
-                  ],
+                  ]
+                : null,
+          ),
+          child: Row(
+            children: [
+              // Número de canal
+              Container(
+                width: 34,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _isFocused ? Colors.black38 : Colors.white.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(5),
                 ),
-
-                const SizedBox(height: 6),
-
-                // Logo central del canal
-                Expanded(
-                  child: Center(
-                    child: Container(
-                      width: double.infinity,
-                      height: double.infinity,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0A0B10),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.all(6),
-                      child: widget.channel.logoUrl.isNotEmpty
-                          ? Image.network(
-                              widget.channel.logoUrl,
-                              fit: BoxFit.contain,
-                              cacheWidth: 160,
-                              cacheHeight: 160,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.tv_rounded,
-                                color: Colors.white30,
-                                size: 34,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.tv_rounded,
-                              color: Colors.white30,
-                              size: 34,
-                            ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Nombre del canal
-                Text(
-                  widget.channel.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Text(
+                  '#${widget.channelNumber.toString().padLeft(2, '0')}',
                   style: TextStyle(
-                    color: _isFocused ? Colors.white : Colors.white.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 12.5,
+                    color: _isFocused ? Colors.white : Colors.white70,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
 
-                const SizedBox(height: 2),
+              // Logo miniatura
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF07080C),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: widget.channel.logoUrl.isNotEmpty
+                    ? Image.network(
+                        widget.channel.logoUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.tv_rounded, color: Colors.white38, size: 16),
+                      )
+                    : const Icon(Icons.tv_rounded, color: Colors.white38, size: 16),
+              ),
+              const SizedBox(width: 10),
 
-                // Categoría y Calidad
-                Row(
+              // Nombre y programa/categoría
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        widget.channel.category,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: _isFocused ? Colors.white70 : Colors.white38,
-                          fontSize: 10.5,
-                        ),
+                    Text(
+                      widget.channel.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: _isFocused ? FontWeight.w900 : FontWeight.w700,
+                        fontSize: 13,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: Text(
-                        widget.channel.quality,
-                        style: const TextStyle(
-                          color: Colors.white60,
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.channel.currentProgram ?? widget.channel.category,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _isFocused ? Colors.white70 : Colors.white38,
+                        fontSize: 10.5,
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+
+              // Calidad y Favorito
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                    decoration: BoxDecoration(
+                      color: _isFocused ? Colors.black26 : Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      widget.channel.quality,
+                      style: TextStyle(
+                        color: _isFocused ? Colors.white : Colors.white60,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (widget.isFavorite) ...[
+                    const SizedBox(width: 5),
+                    const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// BOTÓN DE VOLVER FOCUSABLE PARA CABECERA TV
+// =============================================================================
+class _TvTopBarBackButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _TvTopBarBackButton({required this.onTap});
+
+  @override
+  State<_TvTopBarBackButton> createState() => _TvTopBarBackButtonState();
+}
+
+class _TvTopBarBackButtonState extends State<_TvTopBarBackButton> {
+  bool _isFocused = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      onFocusChange: (f) => setState(() => _isFocused = f),
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter)) {
+          widget.onTap();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _isFocused ? const Color(0xFFE50914) : Colors.white.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: _isFocused ? Colors.white : Colors.white12),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.arrow_back_rounded, color: Colors.white, size: 16),
+              SizedBox(width: 6),
+              Text(
+                'Volver',
+                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
         ),
       ),

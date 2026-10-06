@@ -83,11 +83,6 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
           icon: Icons.live_tv_rounded,
         ),
         TvSidebarItemData(
-          id: 'Canales Perú',
-          label: 'Canales Perú',
-          icon: Icons.tv_rounded,
-        ),
-        TvSidebarItemData(
           id: 'Películas',
           label: 'Películas',
           icon: Icons.movie_rounded,

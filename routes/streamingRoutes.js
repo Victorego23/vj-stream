@@ -888,8 +888,8 @@ router.get('/version', (req, res) => {
   const path = require('path');
   const fs = require('fs');
 
-  let latestVersion = '3.5.6';
-  let versionCode = 31;
+  let latestVersion = '3.6.0';
+  let versionCode = 35;
 
   try {
     const pubspecPath = path.resolve(__dirname, '..', 'pubspec.yaml');
@@ -911,12 +911,11 @@ router.get('/version', (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-05',
     releaseNotes: [
-      '🎬 Reproductor HUD Rediseñado: Micro-feedback lateral (+10s/-10s) sin interferir con Play/Pausa y barra de tiempo ergonómica de 3 capas con búfer dinámico.',
-      '✨ Nueva Interfaz Senior UI/UX: Estilo cinematográfico Apple TV / Netflix con cinta de metadatos unificada (4K UHD, HDR, 5.1) y menú sin bordes semáforo.',
-      '⚡ Motor Real-Debrid Multi-Pool: Soporte de múltiples llaves API con failover automático y verificación en tiempo real de reproducción.',
-      '🔄 Sincronización Continua de Catálogo: Worker autónomo cada 2 horas con los últimos estrenos de cine y series actualizados.',
-      '🚀 Streaming Proxy RFC 7233: Salto instantáneo en línea de tiempo y protección de direcciones IP.',
-      '📺 Optimización Total para Android TV y Móvil: Máxima fluidez y compatibilidad con control remoto D-Pad.'
+      '🔥 Nuevo Diseño Maestro Xuper TV / Magis TV: Launcher principal con reloj digital en vivo, fecha en tiempo real y Bloques Gigantes neón (TV En Vivo, Películas, Series, Deportes).',
+      '📺 Guía de TV en Vivo Profesional en 3 Columnas: Panel de Categorías verticales, Lista de Canales con numeración (#01, #02...) y Mini-Reproductor HLS en tiempo real con ficha EPG completa.',
+      '⚡ Zapping Lateral OSD con Control Remoto: Abre el menú de canales deslizando a la izquierda o con flechas sin cortar la reproducción, navega con Arriba/Abajo y sintoniza con Enter/OK.',
+      '✨ Integración Total de Canales Peruanos: Todos los canales nacionales integrados ordenadamente en la parrilla unificada de TV.',
+      '🚀 Rendimiento Ultrarrápido: Debounce inteligente de 400ms para hardware de Smart TV, decodificación optimizada y compatibilidad 100% táctil y control remoto.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,

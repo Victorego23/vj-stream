@@ -143,8 +143,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   bool _showZappingOsd = false;
   Timer? _zappingOsdTimer;
 
-  // Guía Rápida Lateral (Quick Channel Drawer)
+  // Guía Rápida Lateral (Quick Channel Drawer estilo Xuper TV)
   bool _showChannelDrawer = false;
+  int _drawerFocusedIndex = 0;
+  final ScrollController _drawerScrollController = ScrollController();
   final TextEditingController _drawerSearchController = TextEditingController();
   String _drawerSearchQuery = '';
 
@@ -586,6 +588,26 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     });
 
     await _initializePlayer();
+  }
+
+  void _openChannelDrawer() {
+    setState(() {
+      _showChannelDrawer = true;
+      _drawerFocusedIndex = _currentChannelIndex;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToDrawerIndex(_drawerFocusedIndex);
+    });
+  }
+
+  void _scrollToDrawerIndex(int index) {
+    if (!_drawerScrollController.hasClients) return;
+    final targetOffset = (index * 48.0) - 100.0;
+    _drawerScrollController.animateTo(
+      targetOffset.clamp(0.0, _drawerScrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 140),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _initPipSupport() async {
@@ -1825,6 +1847,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     _zappingOsdTimer?.cancel();
     _numericInputTimer?.cancel();
     _drawerSearchController.dispose();
+    _drawerScrollController.dispose();
     _seekDebounceTimer?.cancel();
     _bufferingWatchdogTimer?.cancel();
     _hideControlsTimer?.cancel();
@@ -1857,10 +1880,30 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
             return KeyEventResult.ignored;
           }
 
-          // Si la Guía Lateral de Canales está abierta
+          // Si la Guía Lateral de Canales (Xuper TV Lateral Drawer) está abierta
           if (_showChannelDrawer) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              final newIdx = (_drawerFocusedIndex - 1 + _liveChannelsList.length) % _liveChannelsList.length;
+              setState(() => _drawerFocusedIndex = newIdx);
+              _scrollToDrawerIndex(newIdx);
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              final newIdx = (_drawerFocusedIndex + 1) % _liveChannelsList.length;
+              setState(() => _drawerFocusedIndex = newIdx);
+              _scrollToDrawerIndex(newIdx);
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter) {
+              _switchChannel(_drawerFocusedIndex);
+              setState(() => _showChannelDrawer = false);
+              return KeyEventResult.handled;
+            }
             if (event.logicalKey == LogicalKeyboardKey.escape ||
-                event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                event.logicalKey == LogicalKeyboardKey.goBack ||
+                event.logicalKey == LogicalKeyboardKey.arrowRight ||
+                event.logicalKey == LogicalKeyboardKey.arrowLeft) {
               setState(() => _showChannelDrawer = false);
               return KeyEventResult.handled;
             }
@@ -1898,7 +1941,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               return KeyEventResult.handled;
             }
             if (event.logicalKey == LogicalKeyboardKey.arrowLeft && !_showChannelDrawer) {
-              setState(() => _showChannelDrawer = true);
+              _openChannelDrawer();
               return KeyEventResult.handled;
             }
           }
@@ -1966,7 +2009,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               final velocity = details.primaryVelocity ?? 0;
               if (velocity > 250 && !_showChannelDrawer) {
                 // Deslizar hacia la derecha: Abrir Guía de Canales
-                setState(() => _showChannelDrawer = true);
+                _openChannelDrawer();
               } else if (velocity < -250 && _showChannelDrawer) {
                 // Deslizar hacia la izquierda: Cerrar Guía
                 setState(() => _showChannelDrawer = false);
@@ -2557,33 +2600,46 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     // Lista de canales
                     Expanded(
                       child: ListView.builder(
+                        controller: _drawerScrollController,
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         itemCount: displayedChannels.length,
                         itemBuilder: (ctx, idx) {
                           final ch = displayedChannels[idx];
                           final realIndex = _liveChannelsList.indexOf(ch);
                           final isCurrent = realIndex == _currentChannelIndex;
+                          final isFocused = realIndex == _drawerFocusedIndex;
+                          final isHighlighted = isCurrent || isFocused;
 
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 4),
                             child: InkWell(
                               onTap: () {
                                 _switchChannel(realIndex);
+                                setState(() => _showChannelDrawer = false);
                               },
                               borderRadius: BorderRadius.circular(8),
-                              child: Container(
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: isCurrent
-                                      ? const Color(0xFFE50914).withValues(alpha: 0.22)
+                                  color: isHighlighted
+                                      ? const Color(0xFFE50914).withValues(alpha: isFocused ? 0.35 : 0.22)
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: isCurrent
+                                    color: isHighlighted
                                         ? const Color(0xFFE50914)
                                         : Colors.transparent,
-                                    width: 1,
+                                    width: isFocused ? 1.8 : 1.0,
                                   ),
+                                  boxShadow: isFocused
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0xFFE50914).withValues(alpha: 0.45),
+                                            blurRadius: 8,
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                                 child: Row(
                                   children: [
@@ -2942,7 +2998,11 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                         icon: const Icon(Icons.format_list_bulleted_rounded, color: Colors.white70, size: 22),
                         tooltip: 'Guía de Canales (◀)',
                         onPressed: () {
-                          setState(() => _showChannelDrawer = !_showChannelDrawer);
+                          if (_showChannelDrawer) {
+                            setState(() => _showChannelDrawer = false);
+                          } else {
+                            _openChannelDrawer();
+                          }
                         },
                       ),
                     IconButton(
