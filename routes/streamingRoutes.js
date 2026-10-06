@@ -881,44 +881,81 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
 });
 
 /**
- * @route   GET /api/streaming/version
- * @desc    Devuelve los metadatos de la última versión y notas de la versión para OTA
+ * Caché del último release publicado en GitHub (el que tiene el APK ya compilado).
+ * Se anuncia ESTA versión a las apps, no la de pubspec.yaml: pubspec cambia en cuanto
+ * se hace push, pero el APK tarda ~5 min en compilarse. Anunciar pubspec provocaba
+ * que la app pidiera actualizar a una versión cuyo archivo aún no existía.
  */
-router.get('/version', (req, res) => {
-  const path = require('path');
-  const fs = require('fs');
+let _publishedReleaseCache = { fetchedAt: 0, data: null };
+const RELEASE_CACHE_MS = 3 * 60 * 1000;
 
-  let latestVersion = '3.6.2';
-  let versionCode = 37;
-
+async function getPublishedRelease() {
+  const now = Date.now();
+  if (_publishedReleaseCache.data && now - _publishedReleaseCache.fetchedAt < RELEASE_CACHE_MS) {
+    return _publishedReleaseCache.data;
+  }
   try {
-    const pubspecPath = path.resolve(__dirname, '..', 'pubspec.yaml');
-    if (fs.existsSync(pubspecPath)) {
-      const content = fs.readFileSync(pubspecPath, 'utf8');
-      const match = content.match(/version:\s*([0-9.]+)\+(\d+)/);
-      if (match) {
-        latestVersion = match[1];
-        versionCode = parseInt(match[2], 10);
-      }
+    const res = await axios.get('https://api.github.com/repos/Victorego23/vj-stream/releases/latest', {
+      timeout: 5000,
+      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'tomtv-backend' }
+    });
+    const rel = res.data || {};
+    const asset = (rel.assets || []).find(a => a.name === 'TOM-TV-release.apk' && a.state === 'uploaded');
+    const tagMatch = String(rel.tag_name || '').match(/^v?([0-9.]+)$/);
+    const buildMatch = String(rel.name || '').match(/Build\s+(\d+)/i);
+    if (asset && tagMatch && buildMatch) {
+      const data = {
+        latestVersion: tagMatch[1],
+        versionCode: parseInt(buildMatch[1], 10),
+        downloadUrl: asset.browser_download_url,
+        releaseDate: (rel.published_at || '').slice(0, 10)
+      };
+      _publishedReleaseCache = { fetchedAt: now, data };
+      return data;
     }
-  } catch (_) {}
+  } catch (err) {
+    console.warn('[OTA] No se pudo consultar el último release de GitHub:', err.message);
+  }
+  // Si GitHub falla, conservar el último dato bueno conocido (aunque esté vencido)
+  return _publishedReleaseCache.data;
+}
+
+/**
+ * @route   GET /api/streaming/version
+ * @desc    Devuelve los metadatos de la última versión DESCARGABLE y notas de la versión para OTA
+ */
+router.get('/version', async (req, res) => {
+  const published = await getPublishedRelease();
+
+  if (!published) {
+    // Sin información confiable de un APK publicado: no anunciar ninguna actualización.
+    return res.json({
+      success: true,
+      app: 'TOM TV',
+      latestVersion: '0.0.0',
+      versionCode: 0,
+      minSupportedVersion: '1.0.0',
+      releaseNotes: [],
+      downloadUrl: '/api/streaming/download-apk',
+      forceUpdate: false,
+      announcement: accountService.getAnnouncement()
+    });
+  }
 
   return res.json({
     success: true,
     app: 'TOM TV',
-    latestVersion,
-    versionCode,
+    latestVersion: published.latestVersion,
+    versionCode: published.versionCode,
     minSupportedVersion: '1.0.0',
-    releaseDate: '2026-10-05',
+    releaseDate: published.releaseDate,
     releaseNotes: [
-      '🛡️ Catálogo 100% Reproducible y Verificado: Eliminadas todas las películas y series no estrenadas, trailers y títulos sin fuentes para garantizar reproducción inmediata.',
-      '💎 Nuevo Logotipo Oficial 3D Xuper TV: Emblema biselado OLED con Play de cristal facetado y acento neón rubí/titanio metálico.',
-      '🔥 Diseño Maestro Xuper TV / Magis TV: Launcher principal con reloj digital en vivo, fecha en tiempo real y Bloques Gigantes neón.',
-      '📺 Guía de TV en Vivo en 3 Columnas: Categorías, diales numerados y mini-reproductor HLS en tiempo real con ficha EPG.',
-      '⚡ Zapping Lateral OSD sin Interrupciones: Cambia de canal con D-Pad Arriba/Abajo y Enter sin pausar el video.'
+      '🖼️ Nuevo ícono de la app en el menú de tu TV y celular.',
+      '🛡️ Catálogo depurado: se retiraron estrenos aún no disponibles, títulos de solo tráiler y títulos sin votos.',
+      '🔄 Actualizaciones más confiables: solo se ofrece una versión cuando su instalador ya está publicado.',
+      '📺 Diseño estilo Xuper TV con guía de canales en 3 columnas y zapping lateral.'
     ],
-    downloadUrl: `https://github.com/Victorego23/vj-stream/releases/download/v${latestVersion}/TOM-TV-release.apk`,
-    fallbackDownloadUrl: '/api/streaming/download-apk',
+    downloadUrl: published.downloadUrl,
     forceUpdate: false,
     announcement: accountService.getAnnouncement()
   });

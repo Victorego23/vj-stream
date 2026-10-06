@@ -40,10 +40,10 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para TOM TV
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '3.6.2';
-  static const int currentVersionCode = 37;
-  static String currentInstalledVersionName = '3.6.2';
-  static int currentInstalledVersionCode = 37;
+  static const String currentVersion = '3.6.3';
+  static const int currentVersionCode = 38;
+  static String currentInstalledVersionName = '3.6.3';
+  static int currentInstalledVersionCode = 38;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
