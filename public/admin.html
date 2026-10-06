@@ -965,12 +965,12 @@
 
         <div class="stats-row" style="margin-bottom: 24px;">
           <div class="stat-card">
-            <div class="stat-value" id="debrid-premium-days" style="color: var(--gold);">--</div>
-            <div class="stat-label">Días Premium Real-Debrid</div>
+            <div class="stat-value" id="torbox-status-badge" style="color: #38bdf8;">--</div>
+            <div class="stat-label">Base 1: TorBox (Multi-IP)</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value" id="debrid-keys-pool">1 Clave</div>
-            <div class="stat-label">Pool de Claves API</div>
+            <div class="stat-value" id="debrid-premium-days" style="color: var(--gold);">--</div>
+            <div class="stat-label">Base 2: Real-Debrid Caché</div>
           </div>
           <div class="stat-card">
             <div class="stat-value" id="catalog-total-movies" style="color: var(--accent);">--</div>
@@ -984,12 +984,22 @@
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
           <div class="card" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px;">
-            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; color: var(--gold);">🛡️ Cuenta Real-Debrid</h3>
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; color: #38bdf8;">⚡ Base 1: TorBox (Multi-IP Prioritario)</h3>
+            <div style="font-size: 13px; line-height: 2; color: #ccc;" id="torbox-account-details">
+              Cargando información de TorBox...
+            </div>
+            <div style="margin-top: 15px;">
+              <button class="btn btn-secondary btn-sm" onclick="fetchDebridStatus()">🔄 Comprobar Conexión</button>
+            </div>
+          </div>
+
+          <div class="card" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; color: var(--gold);">🛡️ Base 2: Real-Debrid (Respaldo Caché)</h3>
             <div style="font-size: 13px; line-height: 2; color: #ccc;" id="debrid-account-details">
               Cargando información de cuenta...
             </div>
             <div style="margin-top: 15px;">
-              <button class="btn btn-secondary btn-sm" onclick="fetchDebridStatus()">🔄 Comprobar Conexión RD</button>
+              <button class="btn btn-secondary btn-sm" onclick="fetchDebridStatus()">🔄 Comprobar Conexión</button>
             </div>
           </div>
 
@@ -1400,29 +1410,57 @@
     }
 
     async function fetchDebridStatus() {
-      const container = document.getElementById('debrid-account-details');
-      if (!container) return;
+      const rdContainer = document.getElementById('debrid-account-details');
+      const tbContainer = document.getElementById('torbox-account-details');
+      const tbBadge = document.getElementById('torbox-status-badge');
+      const rdBadge = document.getElementById('debrid-premium-days');
+
       try {
         const res = await fetch('/api/admin/debrid-status', {
           headers: { 'x-admin-password': adminToken }
         });
         const data = await res.json();
-        if (data.success && data.isPremium) {
-          document.getElementById('debrid-premium-days').textContent = data.daysLeft + 'd';
-          document.getElementById('debrid-keys-pool').textContent = (data.poolSize || 1) + ' Clave(s)';
-          container.innerHTML = `
-            <div>Usuario: <strong>${data.username}</strong></div>
-            <div>Tipo: <span style="background: rgba(34, 197, 94, 0.2); color: #22C55E; font-weight: 700; padding: 2px 8px; border-radius: 6px;">Premium Activo</span></div>
-            <div>Días restantes: <strong>${data.daysLeft} días</strong> (Vence: ${new Date(data.expiration).toLocaleDateString()})</div>
-            <div>Puntos Fidelidad: <strong>${data.points} pts</strong></div>
-            <div>Claves configuradas: <strong>${data.poolSize || 1}</strong></div>
-          `;
-        } else {
-          document.getElementById('debrid-premium-days').textContent = 'Inactivo';
-          container.innerHTML = `<div style="color: var(--danger);">⚠️ Cuenta de Real-Debrid no activa o sin suscripción premium. ${data.error || ''}</div>`;
+
+        // 1. Renderizar TorBox (Base 1)
+        if (tbContainer) {
+          const tb = data.torbox || {};
+          if (tb.active) {
+            if (tbBadge) tbBadge.textContent = tb.plan || 'Activo';
+            const expText = tb.expiresAt ? new Date(tb.expiresAt).toLocaleDateString() : 'Activo (Suscripción)';
+            tbContainer.innerHTML = `
+              <div>Estado: <span style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 700; padding: 2px 8px; border-radius: 6px;">${tb.plan || 'Pro'} Activo</span></div>
+              <div>Email: <strong>${tb.email || 'Conectado'}</strong></div>
+              <div>Vigencia: <strong>${expText}</strong></div>
+              <div style="color: #38bdf8; font-size: 11px; margin-top: 4px;">⚡ Soporta reproducción simultánea Multi-IP sin riesgo de baneo.</div>
+            `;
+          } else {
+            if (tbBadge) tbBadge.textContent = 'Sin clave';
+            tbContainer.innerHTML = `
+              <div style="color: var(--text-muted);">ℹ️ TorBox no está activado aún.</div>
+              <div style="font-size: 11px; color: #888; margin-top: 4px;">Agrega <code>TORBOX_API_KEY</code> en tu <code>.env</code> para activar la Base 1 Multi-IP. Mientras tanto, Real-Debrid actuará como base principal.</div>
+            `;
+          }
+        }
+
+        // 2. Renderizar Real-Debrid (Base 2)
+        if (rdContainer) {
+          const rd = data.realDebrid || data;
+          if (data.success && rd.isPremium) {
+            if (rdBadge) rdBadge.textContent = (rd.daysLeft || 0) + 'd';
+            rdContainer.innerHTML = `
+              <div>Usuario: <strong>${rd.username}</strong></div>
+              <div>Tipo: <span style="background: rgba(34, 197, 94, 0.2); color: #22C55E; font-weight: 700; padding: 2px 8px; border-radius: 6px;">Premium Activo</span></div>
+              <div>Días restantes: <strong>${rd.daysLeft} días</strong> (Vence: ${new Date(rd.expiration).toLocaleDateString()})</div>
+              <div>Puntos Fidelidad: <strong>${rd.points} pts</strong></div>
+              <div>Claves configuradas: <strong>${data.poolSize || 1}</strong></div>
+            `;
+          } else {
+            if (rdBadge) rdBadge.textContent = 'Inactivo';
+            rdContainer.innerHTML = `<div style="color: var(--danger);">⚠️ Cuenta de Real-Debrid no activa o sin suscripción premium. ${rd.error || ''}</div>`;
+          }
         }
       } catch (err) {
-        container.innerHTML = `<div style="color: var(--danger);">Error conectando con Real-Debrid: ${err.message}</div>`;
+        if (rdContainer) rdContainer.innerHTML = `<div style="color: var(--danger);">Error conectando con servicios: ${err.message}</div>`;
       }
     }
 

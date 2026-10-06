@@ -12,6 +12,8 @@ services:
         value: es-ES
       - key: TMDB_API_KEY
         sync: false
+      - key: TORBOX_API_KEY
+        sync: false
       - key: REALDEBRID_API_KEY
         sync: false
       - key: ADMIN_PASSWORD

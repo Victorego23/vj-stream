@@ -3,6 +3,7 @@ const router = express.Router();
 const accountService = require('../services/accountService');
 const channelService = require('../services/channelService');
 const realDebridService = require('../services/realDebridService');
+const torboxService = require('../services/torboxService');
 const catalogSyncService = require('../services/catalogSyncService');
 const { adminLoginLimiter, createRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
@@ -845,9 +846,12 @@ router.get('/debrid-status', async (req, res) => {
   try {
     const status = await realDebridService.checkAccountStatus();
     const allKeys = realDebridService.getAllApiKeys();
+    const torboxStatus = await torboxService.checkAccountStatus();
     return res.json({
       success: true,
       poolSize: allKeys.length,
+      realDebrid: status,
+      torbox: torboxStatus,
       ...status
     });
   } catch (err) {

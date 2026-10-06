@@ -1,5 +1,6 @@
 const axios = require('axios');
 const realDebridService = require('./realDebridService');
+const torboxService = require('./torboxService');
 const tmdbService = require('./tmdbService');
 
 /**
@@ -551,11 +552,28 @@ class StreamResolverService {
   }
 
   /**
-   * Búsqueda instantánea en catálogo con Real-Debrid conectado (devuelve torrents ya cacheados [RD+]).
+   * Búsqueda instantánea en catálogo con proveedores Debrid conectados.
+   * Soporta Base 1 (TorBox) y Base 2 (Real-Debrid).
+   * @param {string} imdbId
+   * @param {string} mediaType
+   * @param {number} season
+   * @param {number} episode
+   * @param {Object} mediaInfo
+   * @param {string} provider - 'torbox' o 'realdebrid'
    * @private
    */
-  async _searchInstantCachedStreams(imdbId, mediaType = 'movie', season = 1, episode = 1, mediaInfo = null) {
-    const apiKey = realDebridService.getApiKey() || process.env.REALDEBRID_API_KEY;
+  async _searchInstantCachedStreams(imdbId, mediaType = 'movie', season = 1, episode = 1, mediaInfo = null, provider = 'realdebrid') {
+    let apiKey = null;
+    let providerParam = 'realdebrid';
+
+    if (provider === 'torbox') {
+      apiKey = torboxService.getApiKey();
+      providerParam = 'torbox';
+    } else {
+      apiKey = realDebridService.getApiKey() || process.env.REALDEBRID_API_KEY;
+      providerParam = 'realdebrid';
+    }
+
     if (!apiKey || !imdbId) return { latino: [], castellano: [], original: [] };
 
     try {
@@ -566,11 +584,11 @@ class StreamResolverService {
       // Consulta en paralelo Torrentio + Knightcrawler + Comet + MediaFusion
       // Eliminando caídas individuales y acelerando el tiempo de respuesta a < 2 segundos
       const scraperEndpoints = [
-        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://torrentio.strem.fun/providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,commandotorrent|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://knightcrawler.elfhosted.com/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://comet.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://mediafusion.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`
+        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://torrentio.strem.fun/providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,commandotorrent|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://knightcrawler.elfhosted.com/sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://comet.elfhosted.com/${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://mediafusion.elfhosted.com/${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`
       ];
 
       const responses = await Promise.allSettled(
@@ -607,12 +625,125 @@ class StreamResolverService {
         .filter(x => !x.isSpanishAudio)
         .sort((a, b) => b.score - a.score);
 
-      console.log(`[VJ STREAM Multi-Scraper Turbo] 🎯 Fuentes válidas para ${mediaInfo?.title || imdbId} (${imdbId}): ${latino.length} Latino, ${castellano.length} Castellano, ${original.length} Original (${streamMap.size} totales evaluadas)`);
+      console.log(`[TOM TV Multi-Scraper] 🎯 [${provider.toUpperCase()}] Fuentes válidas para ${mediaInfo?.title || imdbId} (${imdbId}): ${latino.length} Latino, ${castellano.length} Castellano, ${original.length} Original`);
       return { latino, castellano, original };
     } catch (err) {
-      console.warn('[VJ STREAM Multi-Scraper] Error en búsqueda combinada:', err.message);
+      console.warn(`[TOM TV Multi-Scraper] Error en búsqueda combinada (${provider}):`, err.message);
       return { latino: [], castellano: [], original: [] };
     }
+  }
+
+  /**
+   * Evalúa y verifica la reproducibilidad de candidatos cacheados para un proveedor.
+   * @private
+   */
+  async _evaluateCandidateStreams(instant, excludeUrls, providerName = 'Real-Debrid') {
+    const verifyCandidate = async (candidate) => {
+      if (!candidate || !candidate.stream || !candidate.stream.url) return null;
+      if (excludeUrls.includes(candidate.stream.url)) return null;
+
+      const directCdnUrl = await this._resolveDirectCdnUrl(candidate.stream.url);
+      if (!directCdnUrl || excludeUrls.includes(directCdnUrl)) return null;
+
+      const playable = await this.isStreamPlayable(directCdnUrl);
+      if (!playable) return null;
+
+      return {
+        streamUrl: directCdnUrl,
+        qualityLabel: candidate.qualityLabel,
+        audioLanguage: candidate.audioLanguage,
+        isSpanishAudio: candidate.isSpanishAudio,
+        audioChannels: candidate.audioChannels || 'Estéreo 2.0',
+        filename: candidate.filename,
+        provider: providerName
+      };
+    };
+
+    const availableStreams = [];
+    let primaryStream = null;
+
+    // 1. Probar y resolver el mejor Latino (y un servidor de respaldo)
+    for (const cand of (instant.latino || []).slice(0, 10)) {
+      const verified = await verifyCandidate(cand);
+      if (verified) {
+        if (!primaryStream) {
+          primaryStream = verified;
+          availableStreams.push({
+            id: 'latino',
+            label: `Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
+            language: 'Español Latino Estéreo',
+            audioChannels: verified.audioChannels || 'Estéreo 2.0',
+            streamUrl: verified.streamUrl,
+            qualityLabel: verified.qualityLabel,
+            filename: verified.filename,
+            provider: providerName,
+            isBackup: false
+          });
+        } else if (availableStreams.filter(s => s.id.startsWith('latino')).length < 2) {
+          availableStreams.push({
+            id: 'latino_backup',
+            label: `Español Latino - Servidor 2 (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
+            language: 'Español Latino (Servidor 2)',
+            audioChannels: verified.audioChannels || 'Estéreo 2.0',
+            streamUrl: verified.streamUrl,
+            qualityLabel: verified.qualityLabel,
+            filename: verified.filename,
+            provider: providerName,
+            isBackup: true
+          });
+          break;
+        }
+      }
+    }
+
+    // 2. Probar y resolver el mejor Castellano
+    for (const cand of (instant.castellano || []).slice(0, 10)) {
+      const verified = await verifyCandidate(cand);
+      if (verified) {
+        if (!primaryStream) primaryStream = verified;
+        availableStreams.push({
+          id: 'castellano',
+          label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
+          language: 'Castellano Estéreo',
+          audioChannels: verified.audioChannels || 'Estéreo 2.0',
+          streamUrl: verified.streamUrl,
+          qualityLabel: verified.qualityLabel,
+          filename: verified.filename,
+          provider: providerName,
+          isBackup: false
+        });
+        break;
+      }
+    }
+
+    // 3. Probar y resolver versión en Audio Original con Subtítulos en Español si no hay doblaje
+    if (!primaryStream && (instant.original || []).length > 0) {
+      for (const cand of instant.original.slice(0, 8)) {
+        const verified = await verifyCandidate(cand);
+        if (verified) {
+          primaryStream = {
+            ...verified,
+            audioLanguage: 'Original (Subtitulado al Español)',
+            isSpanishAudio: false,
+            isSubtitled: true
+          };
+          availableStreams.push({
+            id: 'original_sub',
+            label: `Audio Original (${verified.qualityLabel || 'HD'} Subtítulos 🇲🇽)`,
+            language: 'Original Subtitulado',
+            audioChannels: verified.audioChannels || 'Estéreo 2.0',
+            streamUrl: verified.streamUrl,
+            qualityLabel: verified.qualityLabel,
+            filename: verified.filename,
+            provider: providerName,
+            isBackup: false
+          });
+          break;
+        }
+      }
+    }
+
+    return { primaryStream, availableStreams };
   }
 
   /**
@@ -772,137 +903,49 @@ class StreamResolverService {
       } catch (_) {}
     }
 
-    // 2. PASO 1: BÚSQUEDA INSTANTÁNEA EN CACHÉ DE REAL-DEBRID (TORRENTIO RD)
-    // Clasifica fuentes en Latino, Castellano, Original y prepara opciones para el selector
+    // 2. PASO 1: RESOLUCIÓN MULTI-BASE:
+    // BASE 1: TorBox (Prioritaria por permitir multi-IP y cero baneos)
+    // BASE 2: Real-Debrid (Respaldo inmediato por su inmensa caché latina)
     if (imdbId) {
-      const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo);
-      const totalCandidates = instant.latino.length + instant.castellano.length + instant.original.length;
+      const debridProviders = [];
+      if (torboxService.isAvailable()) {
+        debridProviders.push({ id: 'torbox', name: 'TorBox (Base 1 - Multi-IP)' });
+      }
+      debridProviders.push({ id: 'realdebrid', name: 'Real-Debrid (Base 2 - Respaldo Caché)' });
 
-      if (totalCandidates > 0) {
-        console.log(`[VJ STREAM Auto-Resolver] 📋 Evaluando fuentes instantáneas: ${instant.latino.length} Latino, ${instant.castellano.length} Castellano, ${instant.original.length} Original para "${title}"...`);
+      for (const prov of debridProviders) {
+        console.log(`[TOM TV Auto-Resolver] 🔍 [${prov.name}] Evaluando fuentes para "${title}"...`);
+        const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo, prov.id);
+        const totalCandidates = (instant.latino?.length || 0) + (instant.castellano?.length || 0) + (instant.original?.length || 0);
 
-        const verifyCandidate = async (candidate) => {
-          if (!candidate || !candidate.stream || !candidate.stream.url) return null;
-          if (excludeUrls.includes(candidate.stream.url)) return null;
+        if (totalCandidates > 0) {
+          console.log(`[TOM TV Auto-Resolver] 📋 Evaluando fuentes [${prov.name}]: ${instant.latino.length} Latino, ${instant.castellano.length} Castellano, ${instant.original.length} Original...`);
+          const { primaryStream, availableStreams } = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name);
 
-          const directCdnUrl = await this._resolveDirectCdnUrl(candidate.stream.url);
-          if (!directCdnUrl || excludeUrls.includes(directCdnUrl)) return null;
+          if (primaryStream) {
+            console.log(`[TOM TV Auto-Resolver] ✅ Transmisión seleccionada vía [${prov.name}]: [${primaryStream.audioLanguage}] "${primaryStream.filename}"`);
+            const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
+            const result = {
+              success: true,
+              streamUrl: primaryStream.streamUrl,
+              qualityLabel: primaryStream.qualityLabel,
+              audioLanguage: primaryStream.audioLanguage,
+              isSpanishAudio: primaryStream.isSpanishAudio,
+              filename: primaryStream.filename,
+              title: title,
+              provider: prov.name,
+              availableStreams: availableStreams,
+              subtitles: subtitles
+            };
 
-          const playable = await this.isStreamPlayable(directCdnUrl);
-          if (!playable) return null;
-
-          return {
-            streamUrl: directCdnUrl,
-            qualityLabel: candidate.qualityLabel,
-            audioLanguage: candidate.audioLanguage,
-            isSpanishAudio: candidate.isSpanishAudio,
-            audioChannels: candidate.audioChannels || 'Estéreo 2.0',
-            filename: candidate.filename
-          };
-        };
-
-        const availableStreams = [];
-        let primaryStream = null;
-
-        // 1. Probar y resolver el mejor Latino (y un servidor de respaldo)
-        for (const cand of instant.latino.slice(0, 10)) {
-          const verified = await verifyCandidate(cand);
-          if (verified) {
-            if (!primaryStream) {
-              primaryStream = verified;
-              availableStreams.push({
-                id: 'latino',
-                label: `Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
-                language: 'Español Latino Estéreo',
-                audioChannels: verified.audioChannels || 'Estéreo 2.0',
-                streamUrl: verified.streamUrl,
-                qualityLabel: verified.qualityLabel,
-                filename: verified.filename,
-                isBackup: false
-              });
-            } else if (availableStreams.filter(s => s.id.startsWith('latino')).length < 2) {
-              availableStreams.push({
-                id: 'latino_backup',
-                label: `Español Latino - Servidor 2 (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
-                language: 'Español Latino (Servidor 2)',
-                audioChannels: verified.audioChannels || 'Estéreo 2.0',
-                streamUrl: verified.streamUrl,
-                qualityLabel: verified.qualityLabel,
-                filename: verified.filename,
-                isBackup: true
-              });
-              break;
-            }
+            this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
+            return result;
           }
-        }
-
-        // 2. Probar y resolver el mejor Castellano
-        for (const cand of instant.castellano.slice(0, 10)) {
-          const verified = await verifyCandidate(cand);
-          if (verified) {
-            if (!primaryStream) primaryStream = verified;
-            availableStreams.push({
-              id: 'castellano',
-              label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
-              language: 'Castellano Estéreo',
-              audioChannels: verified.audioChannels || 'Estéreo 2.0',
-              streamUrl: verified.streamUrl,
-              qualityLabel: verified.qualityLabel,
-              filename: verified.filename,
-              isBackup: false
-            });
-            break;
-          }
-        }
-
-        // 3. Probar y resolver versión en Audio Original con Subtítulos en Español si no hay doblaje
-        if (!primaryStream && instant.original.length > 0) {
-          for (const cand of instant.original.slice(0, 8)) {
-            const verified = await verifyCandidate(cand);
-            if (verified) {
-              primaryStream = {
-                ...verified,
-                audioLanguage: 'Original (Subtitulado al Español)',
-                isSpanishAudio: false,
-                isSubtitled: true
-              };
-              availableStreams.push({
-                id: 'original_sub',
-                label: `Audio Original (${verified.qualityLabel || 'HD'} Subtítulos 🇲🇽)`,
-                language: 'Original Subtitulado',
-                audioChannels: verified.audioChannels || 'Estéreo 2.0',
-                streamUrl: verified.streamUrl,
-                qualityLabel: verified.qualityLabel,
-                filename: verified.filename,
-                isBackup: false
-              });
-              break;
-            }
-          }
-        }
-
-        if (primaryStream) {
-          console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión seleccionada: [${primaryStream.audioLanguage}] "${primaryStream.filename}" con ${availableStreams.length} opciones en engranaje`);
-          const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
-          const result = {
-            success: true,
-            streamUrl: primaryStream.streamUrl,
-            qualityLabel: primaryStream.qualityLabel,
-            audioLanguage: primaryStream.audioLanguage,
-            isSpanishAudio: primaryStream.isSpanishAudio,
-            filename: primaryStream.filename,
-            title: title,
-            availableStreams: availableStreams,
-            subtitles: subtitles
-          };
-
-          this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
-          return result;
         }
       }
     }
 
-    // 3. PASO 2: RESPALDO CON REAL-DEBRID RESOLVER NATIVO (Por si no estaba en la caché directa)
+    // 3. PASO 2: RESPALDO CON MAGNETS Y SCRAPERS NATIVOS (Por si no estaba en la caché directa)
     console.log(`[VJ STREAM Auto-Resolver] 🔄 Consultando respaldo nativo Real-Debrid para "${title}"...`);
     let fallbackMagnets = [];
 
@@ -987,10 +1030,20 @@ class StreamResolverService {
 
     for (const candidate of fallbackMagnets.slice(0, 5)) {
       try {
-        const result = await realDebridService.resolveMagnetToStream(candidate.magnet, {
-          files: 'all',
-          unrestrictAll: true
-        });
+        let result = null;
+        if (torboxService.isAvailable()) {
+          try {
+            result = await torboxService.resolveMagnetToStream(candidate.magnet);
+          } catch (_) {
+            result = null;
+          }
+        }
+        if (!result || !result.streamUrl) {
+          result = await realDebridService.resolveMagnetToStream(candidate.magnet, {
+            files: 'all',
+            unrestrictAll: true
+          });
+        }
 
         if (result && result.streams && result.streams.length > 0) {
           for (const streamOption of result.streams) {
@@ -1133,8 +1186,14 @@ class StreamResolverService {
       };
     }
 
-    // 3. Consulta rápida en Torrentio / Real-Debrid
-    const instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo);
+    // 3. Consulta rápida en proveedores (TorBox Base 1, luego Real-Debrid Base 2)
+    let instant = { latino: [], castellano: [] };
+    if (torboxService.isAvailable()) {
+      instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo, 'torbox');
+    }
+    if ((!instant.latino || instant.latino.length === 0) && (!instant.castellano || instant.castellano.length === 0)) {
+      instant = await this._searchInstantCachedStreams(imdbId, mediaType, season, episode, mediaInfo, 'realdebrid');
+    }
     const hasLatino = instant.latino && instant.latino.length > 0;
     const hasCastellano = instant.castellano && instant.castellano.length > 0;
 
