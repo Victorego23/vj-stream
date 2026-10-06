@@ -1157,7 +1157,7 @@ class _HomeViewState extends State<HomeView> {
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? const LinearGradient(
-                            colors: [Color(0xFF2962FF), Color(0xFF1540BD)],
+                            colors: [TomTokens.primaryAccentGlow, TomTokens.primaryAccent],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           )

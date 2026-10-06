@@ -950,11 +950,12 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '🚀 Gran actualización TOM TV v3.7.0: Rediseño visual prémium con sistema de tokens Dark Mode (#101018).',
-      '🎬 Catálogo VOD móvil: Carrusel Panorámico Hero 16:9 con autodesplazamiento y dots, subcategorías superiores con indicador azul, y posters 2:3 con badges.',
-      '📺 TV en Vivo móvil: Reproductor fijo superior 16:9 con overlays (calidad FHD/HD, silencio, pantalla completa), selector de datos móviles y guía EPG con badge de número.',
-      '🔒 Control Parental activo: Modal de bloqueo y protección para Zona 18+.',
-      '👤 Pantalla de Perfil ("Mi Cuenta"): Gestión de credenciales, centro de canje, acciones rápidas y prueba VIP gratuita.'
+      '🚀 TOM TV v3.7.1: Nueva identidad visual con logotipo e ícono oficial en Rojo y Negro.',
+      '🎨 Sistema de Design Tokens renovado: Rojo Neón Carmesí (#E50914) y Negro Carbón (#0B0B0E).',
+      '✨ Interfaz pulida: Pestañas activas con efecto glow, botones principales de acción y reproductor integrados en carmesí.',
+      '🎬 Catálogo VOD móvil: Carrusel Panorámico Hero 16:9 con autodesplazamiento y dots, subcategorías superiores y posters 2:3 con badges.',
+      '📺 TV en Vivo móvil: Reproductor fijo superior 16:9 con overlays (FHD/HD, selector de audio/calidad), guía EPG rápida y navegación fluida.',
+      '🔒 Control Parental activo: Modal de bloqueo y protección para Zona 18+.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,

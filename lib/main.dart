@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'services/auth_service.dart';
+import 'theme/tom_tokens.dart';
 import 'views/activation_view.dart';
 import 'views/home_view.dart';
 
@@ -43,15 +44,15 @@ class VjStreamApp extends StatelessWidget {
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF101018), // Dark Mode puro TOM TV
-        primaryColor: const Color(0xFF2962FF),             // Azul eléctrico primario
+        scaffoldBackgroundColor: TomTokens.backgroundMain, // Negro Carbón (#0B0B0E)
+        primaryColor: TomTokens.primaryAccent,             // Rojo Neón Carmesí (#E50914)
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF2962FF),
-          secondary: Color(0xFF2962FF),
-          surface: Color(0xFF1C1C28),
+          primary: TomTokens.primaryAccent,
+          secondary: TomTokens.primaryAccentGlow,
+          surface: TomTokens.surfaceCard,
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF101018),
+          backgroundColor: TomTokens.backgroundMain,
           elevation: 0,
         ),
         textTheme: const TextTheme(

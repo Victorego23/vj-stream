@@ -621,7 +621,7 @@ class _ProfileViewState extends State<ProfileView> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF2962FF), Color(0xFF40A9FF)],
+                                  colors: [TomTokens.primaryAccent, TomTokens.primaryAccentGlow],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),

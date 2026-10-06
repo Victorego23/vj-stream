@@ -5,19 +5,20 @@ class TomTokens {
   TomTokens._();
 
   // ==========================================
-  // PALETA DE COLORES
+  // PALETA DE COLORES (ROJO CARMESÍ & NEGRO CARBÓN)
   // ==========================================
-  static const Color backgroundMain = Color(0xFF101018); // Fondo de pantalla principal
-  static const Color surfaceCard = Color(0xFF1C1C28);    // Tarjetas de contenido, banners y modales
-  static const Color primaryAccent = Color(0xFF2962FF);  // Azul eléctrico para tabs activas, botones y switches
+  static const Color backgroundMain = Color(0xFF0B0B0E); // Negro Carbón
+  static const Color surfaceCard = Color(0xFF161720);    // Tarjetas de contenido, banners y modales
+  static const Color primaryAccent = Color(0xFFE50914);  // Rojo Neón Carmesí para tabs activas, botones y reproductor
+  static const Color primaryAccentGlow = Color(0xFFFF2A4D); // Resplandor Rojo Neón
   static const Color textPrimary = Color(0xFFFFFFFF);    // Títulos y nombres de canales
   static const Color textSecondary = Color(0xFF8F92A1);  // Subtítulos EPG, etiquetas e IDs
   static const Color overlayScrim = Color(0xA6000000);   // rgba(0, 0, 0, 0.65) Oscurecimiento de modales
   
-  static const Color accentRed = Color(0xFFFF4D4F);      // Icono Favoritos en perfil
+  static const Color accentRed = Color(0xFFFF2A4D);      // Icono Favoritos en perfil
   static const Color accentBlue = Color(0xFF40A9FF);     // Icono Historial en perfil
   static const Color accentGreen = Color(0xFF52C41A);    // Icono Compartir en perfil
-  static const Color surfaceCardLight = Color(0xFF262638);
+  static const Color surfaceCardLight = Color(0xFF222330);
   static const Color dividerColor = Color(0x1FFFFFFF);
 
   // ==========================================
