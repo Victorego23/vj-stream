@@ -64,12 +64,16 @@ class TorBoxService {
       const client = this._getAxiosClient();
       const res = await client.get('/user/me');
       const data = res.data?.data || res.data;
+      const planLabel = data.plan === 3 ? 'Pro' : data.plan === 2 ? 'Estándar' : data.plan === 1 ? 'Essential' : (data.is_subscribed ? 'Premium' : 'Free');
+      const expiresAt = data.premium_expires_at || data.customer?.expires_at || null;
+      const daysLeft = expiresAt ? Math.max(0, Math.ceil((new Date(expiresAt) - new Date()) / (1000 * 60 * 60 * 24))) : null;
       return {
-        active: true,
+        active: Boolean(data.is_subscribed || (daysLeft && daysLeft > 0)),
         provider: 'TorBox',
-        plan: data.plan === 2 ? 'Pro' : data.plan === 1 ? 'Essential' : 'Free',
+        plan: planLabel,
         email: data.email,
-        expiresAt: data.customer?.expires_at || null
+        expiresAt: expiresAt,
+        daysLeft: daysLeft
       };
     } catch (err) {
       return {
