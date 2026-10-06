@@ -69,7 +69,7 @@ class _SportsViewState extends State<SportsView> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _pulseController = AnimationController(
-      vs.sync: this,
+      vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
