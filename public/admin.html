@@ -11,120 +11,190 @@
     :root {
       --primary: #E50914;
       --primary-dark: #B20710;
-      --primary-glow: rgba(229, 9, 20, 0.4);
+      --primary-light: #FF2E3B;
+      --primary-glow: rgba(229, 9, 20, 0.45);
       --bg-dark: #07080B;
-      --bg-surface: #0E1017;
-      --card-bg: #12141D;
-      --card-border: #1E2232;
+      --bg-surface: #0E1018;
+      --card-bg: rgba(15, 18, 28, 0.82);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-hover-border: rgba(229, 9, 20, 0.45);
       --text-main: #FFFFFF;
-      --text-muted: #8E8E93;
+      --text-muted: #94A3B8;
       --text-subtle: #64748B;
       --success: #22C55E;
-      --success-glow: rgba(34, 197, 94, 0.25);
+      --success-glow: rgba(34, 197, 94, 0.3);
       --warning: #F59E0B;
+      --warning-glow: rgba(245, 158, 11, 0.3);
       --danger: #EF4444;
       --accent: #06B6D4;
       --gold: #F59E0B;
-      --radius: 14px;
+      --radius: 16px;
       --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); }
-    body { background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; overflow-x: hidden; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-family); -webkit-tap-highlight-color: transparent; }
+    
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(ellipse at 50% -10%, rgba(229, 9, 20, 0.22) 0%, transparent 60%),
+        radial-gradient(circle at 100% 100%, rgba(6, 182, 212, 0.04) 0%, transparent 40%);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      letter-spacing: -0.01em;
+    }
 
     /* Login View */
     #login-view {
       display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;
-      background: radial-gradient(circle at center, #1E0E12 0%, #07080B 80%);
+      background: radial-gradient(circle at center, #1C0A0E 0%, #07080B 80%);
     }
     .login-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; padding: 40px; width: 100%; max-width: 420px; text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.8), 0 0 30px var(--primary-glow);
+      background: rgba(18, 21, 32, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px; padding: 44px 36px; width: 100%; max-width: 420px; text-align: center;
+      box-shadow: 0 30px 60px -15px rgba(0,0,0,0.9), 0 0 35px var(--primary-glow);
     }
     .brand-logo {
-      display: inline-block; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      padding: 6px 16px; border-radius: 10px; font-weight: 900; font-size: 20px; letter-spacing: 2px;
-      margin-bottom: 12px; box-shadow: 0 4px 15px var(--primary-glow);
+      display: inline-block;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+      padding: 7px 18px; border-radius: 12px; font-weight: 900; font-size: 20px; letter-spacing: 2.5px;
+      margin-bottom: 12px; box-shadow: 0 6px 20px var(--primary-glow);
+      text-transform: uppercase;
+    }
+    .header-badge {
+      display: inline-block; background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1); padding: 4px 12px;
+      border-radius: 20px; font-size: 11px; font-weight: 700; color: var(--text-muted);
     }
 
     /* Form controls */
     .form-group { margin-bottom: 16px; text-align: left; }
     .form-group label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
     .form-control {
-      width: 100%; background: #08090D; border: 1px solid var(--card-border); border-radius: 10px;
+      width: 100%; background: #0A0C12; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px;
       padding: 12px 14px; color: #fff; font-size: 14px; outline: none; transition: all 0.2s;
     }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 14px var(--primary-glow);
+      background: #0D0F18;
+    }
     .input-group { display: flex; gap: 8px; }
 
-    /* Botones */
+    /* Botones Modernos */
     .btn {
       display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 13px;
+      padding: 11px 20px; border-radius: 12px; font-weight: 700; font-size: 13px;
       cursor: pointer; border: none; transition: all 0.2s; text-decoration: none;
+      user-select: none;
     }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: #fff; box-shadow: 0 4px 14px var(--primary-glow); }
-    .btn-secondary { background: #1A1D28; color: #E2E8F0; border: 1px solid var(--card-border); }
-    .btn-secondary:hover { background: #242938; }
-    .btn-success { background: #15803D; color: #fff; }
-    .btn-success:hover { background: #16A34A; }
-    .btn-gold { background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 900; }
-    .btn-whatsapp { background: #128C7E; color: #fff; }
-    .btn-whatsapp:hover { background: #25D366; }
-    .btn-danger { background: #991B1B; color: #fff; }
-    .btn-danger:hover { background: #DC2626; }
-    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
-    .btn-icon { padding: 6px 10px; font-size: 14px; }
+    .btn:hover { transform: translateY(-1.5px); }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff; box-shadow: 0 6px 18px var(--primary-glow);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 8px 24px rgba(229, 9, 20, 0.6);
+      filter: brightness(1.1);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.06); color: #E2E8F0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+    .btn-success {
+      background: linear-gradient(135deg, #16A34A, #15803D); color: #fff;
+      box-shadow: 0 4px 14px var(--success-glow);
+    }
+    .btn-success:hover { filter: brightness(1.1); }
+    .btn-gold {
+      background: linear-gradient(135deg, #F59E0B, #D97706); color: #000; font-weight: 900;
+    }
+    .btn-whatsapp {
+      background: linear-gradient(135deg, #25D366, #128C7E); color: #fff;
+      box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3);
+    }
+    .btn-whatsapp:hover { filter: brightness(1.1); }
+    .btn-danger {
+      background: linear-gradient(135deg, #DC2626, #991B1B); color: #fff;
+    }
+    .btn-danger:hover { background: #EF4444; }
+    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 9px; }
+    .btn-icon { padding: 8px 12px; font-size: 14px; }
 
     /* Dashboard Layout */
     #dashboard-view { display: none; }
     .header {
-      background: rgba(14, 16, 23, 0.95); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--card-border); position: sticky; top: 0; z-index: 100;
-      padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: rgba(10, 12, 19, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: sticky; top: 0; z-index: 100;
+      padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
     }
     .header-left { display: flex; align-items: center; gap: 16px; }
-    .header-title { font-weight: 900; font-size: 18px; letter-spacing: 0.5px; }
+    .header-title { font-weight: 900; font-size: 18px; letter-spacing: -0.02em; }
     .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
     /* Navigation Tabs */
     .tabs-bar {
-      display: flex; gap: 8px; padding: 14px 24px; background: #0A0B10;
-      border-bottom: 1px solid var(--card-border); overflow-x: auto;
+      display: flex; gap: 8px; padding: 14px 28px; background: rgba(7, 8, 12, 0.75);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06); overflow-x: auto;
+      scrollbar-width: none;
     }
+    .tabs-bar::-webkit-scrollbar { display: none; }
     .tab-pill {
-      display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;
-      border-radius: 12px; font-weight: 700; font-size: 13px; color: var(--text-muted);
-      background: var(--card-bg); border: 1px solid var(--card-border); cursor: pointer;
-      transition: all 0.2s; white-space: nowrap;
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+      border-radius: 14px; font-weight: 700; font-size: 13px; color: var(--text-muted);
+      background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.06);
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
-    .tab-pill:hover { color: #fff; background: #1A1D2A; }
+    .tab-pill:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
     .tab-pill.active {
       color: #fff; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-      border-color: var(--primary); box-shadow: 0 4px 15px var(--primary-glow);
+      border-color: var(--primary); box-shadow: 0 4px 18px var(--primary-glow);
     }
     .tab-badge {
-      background: rgba(255,255,255,0.18); padding: 2px 8px; border-radius: 10px;
+      background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;
       font-size: 11px; font-weight: 800;
     }
 
     /* Main Container */
-    .main-container { max-width: 1380px; margin: 0 auto; padding: 24px; }
+    .main-container { max-width: 1400px; margin: 0 auto; padding: 26px 28px; }
 
     /* Summary Stats Grid */
     .stats-row {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px; margin-bottom: 24px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px; margin-bottom: 26px;
     }
     .stat-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: var(--radius); padding: 20px; transition: all 0.2s;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius); padding: 22px; transition: all 0.25s;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      position: relative; overflow: hidden;
     }
-    .stat-card:hover { border-color: rgba(255,255,255,0.15); }
-    .stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-value { font-size: 32px; font-weight: 900; margin: 6px 0 2px 0; color: #fff; }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    }
+    .stat-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+    .stat-card-gold { border-color: rgba(245, 158, 11, 0.3); }
+    .stat-card-gold:hover { border-color: rgba(245, 158, 11, 0.6); }
+    .stat-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-value { font-size: 32px; font-weight: 900; margin: 6px 0 2px 0; color: #fff; letter-spacing: -0.02em; }
     .stat-sub { font-size: 12px; color: var(--text-subtle); }
 
     /* Controls Bar */
@@ -136,54 +206,83 @@
       flex: 1; min-width: 240px; max-width: 440px; position: relative;
     }
     .search-input {
-      width: 100%; background: #0E1017; border: 1px solid var(--card-border);
-      border-radius: 12px; padding: 12px 14px 12px 38px; color: #fff; font-size: 14px; outline: none;
+      width: 100%; background: #0A0C13; border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px; padding: 12px 14px 12px 40px; color: #fff; font-size: 14px; outline: none;
+      transition: all 0.2s;
     }
-    .search-input:focus { border-color: var(--primary); }
-    .search-icon { position: absolute; left: 14px; top: 12px; color: var(--text-muted); font-size: 14px; }
-    .filter-pills { display: flex; gap: 6px; overflow-x: auto; }
+    .search-input:focus { border-color: var(--primary); box-shadow: 0 0 12px var(--primary-glow); }
+    .search-icon { position: absolute; left: 14px; top: 13px; color: var(--text-muted); font-size: 14px; }
+    .filter-pills { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+    .filter-pills::-webkit-scrollbar { display: none; }
     .filter-btn {
-      padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
-      background: #141722; color: var(--text-muted); border: 1px solid var(--card-border);
-      cursor: pointer; transition: all 0.2s;
+      padding: 9px 16px; border-radius: 10px; font-size: 12px; font-weight: 700;
+      background: rgba(255, 255, 255, 0.04); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.07);
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
     }
-    .filter-btn.active { background: #2A3044; color: #fff; border-color: rgba(255,255,255,0.3); }
+    .filter-btn.active {
+      background: rgba(255, 255, 255, 0.14); color: #fff;
+      border-color: rgba(255, 255, 255, 0.35); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
 
     /* Tables & Cards */
     .table-container {
-      background: var(--card-bg); border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
       border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
     }
     table { width: 100%; border-collapse: collapse; text-align: left; }
     th {
-      background: #0B0D14; padding: 14px 18px; font-size: 12px; font-weight: 700;
-      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--card-border);
+      background: #090B12; padding: 15px 20px; font-size: 12px; font-weight: 800;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
     }
-    td { padding: 14px 18px; font-size: 13px; border-bottom: 1px solid #161925; vertical-align: middle; }
+    td { padding: 15px 20px; font-size: 13px; border-bottom: 1px solid rgba(255, 255, 255, 0.04); vertical-align: middle; }
     tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
     /* Badges */
     .badge {
-      display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800;
       letter-spacing: 0.3px; text-transform: uppercase;
     }
-    .badge-active { background: rgba(34, 197, 94, 0.15); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.3); }
-    .badge-warning { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.3); }
-    .badge-expired { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-gold { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-active {
+      background: rgba(34, 197, 94, 0.16); color: #4ADE80;
+      border: 1px solid rgba(34, 197, 94, 0.35); box-shadow: 0 0 10px rgba(34, 197, 94, 0.15);
+    }
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.16); color: #FBBF24;
+      border: 1px solid rgba(245, 158, 11, 0.35); box-shadow: 0 0 10px rgba(245, 158, 11, 0.15);
+    }
+    .badge-expired {
+      background: rgba(239, 68, 68, 0.16); color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.35); box-shadow: 0 0 10px rgba(239, 68, 68, 0.15);
+    }
+    .badge-gold {
+      background: rgba(245, 158, 11, 0.18); color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+    }
 
     /* Code Pill */
     .code-pill {
-      font-family: monospace; font-size: 14px; font-weight: 800; color: #22C55E;
-      background: #0A140E; border: 1px solid rgba(34, 197, 94, 0.3); padding: 4px 10px;
-      border-radius: 8px; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 6px;
+      font-family: monospace; font-size: 14px; font-weight: 800; color: #4ADE80;
+      background: rgba(6, 26, 14, 0.9); border: 1px solid rgba(34, 197, 94, 0.4); padding: 5px 12px;
+      border-radius: 10px; letter-spacing: 1.2px; display: inline-flex; align-items: center; gap: 8px;
+      cursor: pointer; transition: all 0.2s; user-select: all;
+    }
+    .code-pill:hover {
+      background: rgba(14, 46, 24, 0.95);
+      border-color: #4ADE80;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.3);
+      transform: scale(1.02);
     }
 
     /* Live Pending Activations */
     @keyframes pulse-glow {
-      0% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7); }
-      70% { box-shadow: 0 0 0 9px rgba(229, 9, 20, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.8); }
+      70% { box-shadow: 0 0 0 10px rgba(229, 9, 20, 0); }
       100% { box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); }
     }
     .pulse-dot {
@@ -191,24 +290,24 @@
       background: #E50914; animation: pulse-glow 1.5s infinite;
     }
     .pending-banner {
-      background: linear-gradient(135deg, rgba(229, 9, 20, 0.12), rgba(15, 17, 26, 0.98));
-      border: 1.5px solid rgba(229, 9, 20, 0.6);
-      border-radius: var(--radius); padding: 20px;
-      box-shadow: 0 0 30px rgba(229, 9, 20, 0.22);
-      margin-bottom: 24px;
+      background: linear-gradient(135deg, rgba(229, 9, 20, 0.16), rgba(18, 20, 30, 0.96));
+      border: 1.5px solid rgba(229, 9, 20, 0.7);
+      border-radius: var(--radius); padding: 22px;
+      box-shadow: 0 0 35px rgba(229, 9, 20, 0.25);
+      margin-bottom: 26px;
     }
     .pending-grid {
       display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 14px; margin-top: 14px;
     }
     .pending-card {
-      background: #090B12; border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 12px; padding: 16px; display: flex; flex-direction: column;
+      background: #080A12; border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px; padding: 18px; display: flex; flex-direction: column;
       gap: 12px; transition: all 0.2s;
     }
     .pending-card:hover {
-      border-color: rgba(229, 9, 20, 0.8);
-      box-shadow: 0 0 15px rgba(229, 9, 20, 0.25);
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(229, 9, 20, 0.3);
     }
 
     /* Reseller Cards Grid */
@@ -217,18 +316,25 @@
       gap: 18px;
     }
     .reseller-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: var(--radius); padding: 22px; position: relative;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius); padding: 24px; position: relative;
       display: flex; flex-direction: column; justify-content: space-between;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
-    .reseller-card:hover { border-color: rgba(245, 158, 11, 0.4); transform: translateY(-2px); }
+    .reseller-card:hover {
+      border-color: rgba(245, 158, 11, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
     .reseller-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
     .reseller-name { font-size: 18px; font-weight: 800; }
     .reseller-user { font-size: 13px; color: var(--accent); font-family: monospace; margin-top: 2px; }
     .reseller-cred-box {
-      background: #080A0E; border: 1px solid #1A1F2E; border-radius: 10px;
-      padding: 12px 14px; margin: 12px 0; font-size: 13px;
+      background: #080A12; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px;
+      padding: 14px 16px; margin: 12px 0; font-size: 13px;
     }
     .reseller-cred-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
     .reseller-cred-row:last-child { margin-bottom: 0; }
@@ -238,35 +344,246 @@
 
     /* Modales */
     .modal {
-      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; padding: 20px;
+      display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      z-index: 1000; align-items: center; justify-content: center; padding: 20px;
     }
     .modal-content {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 20px; max-width: 520px; width: 100%; padding: 28px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.9); max-height: 90vh; overflow-y: auto;
+      background: #0E111B; border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px; max-width: 520px; width: 100%; padding: 32px;
+      box-shadow: 0 30px 60px -12px rgba(0,0,0,0.95); max-height: 90vh; overflow-y: auto;
     }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
     .close-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
     .close-btn:hover { color: #fff; }
 
     /* Toast */
     #toast {
-      position: fixed; bottom: 24px; right: 24px; background: #181B26; color: #fff;
-      padding: 14px 22px; border-radius: 12px; border: 1px solid var(--card-border);
-      font-size: 14px; font-weight: 700; z-index: 9999; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: fixed; bottom: 24px; right: 24px;
+      background: rgba(18, 22, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      color: #fff;
+      padding: 14px 24px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 14px; font-weight: 700; z-index: 9999; display: none;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.6);
     }
 
-    /* Responsive */
+    /* Mobile Cards View (Oculto en desktop, activo en móvil) */
+    .mobile-only-cards {
+      display: none;
+    }
+    .client-mobile-card {
+      background: rgba(15, 18, 28, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: all 0.2s;
+    }
+    .client-mobile-card:active {
+      transform: scale(0.99);
+    }
+    .client-mob-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .client-mob-name {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1.25;
+    }
+    .client-mob-user {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-top: 3px;
+    }
+    .client-mob-code-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #080910;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 10px 14px;
+    }
+    .client-mob-devices {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+    .client-mob-meta-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 11px;
+    }
+    .client-mob-chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 5px 10px;
+      border-radius: 8px;
+      color: var(--text-muted);
+    }
+    .client-mob-chip strong {
+      color: #fff;
+    }
+    .client-mob-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 2px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .btn-mob-action {
+      width: 100%;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: 10px;
+    }
+
+    /* Mobile Bottom Navigation Dock */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(8, 10, 16, 0.94);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)) 10px;
+      z-index: 999;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
+    }
+    .mobile-nav-item {
+      background: none;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      flex: 1;
+    }
+    .mobile-nav-item.active {
+      color: #fff;
+    }
+    .mobile-nav-item.active .mob-nav-icon {
+      transform: scale(1.18);
+      filter: drop-shadow(0 0 10px rgba(229, 9, 20, 0.8));
+    }
+    .mobile-nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0px;
+      width: 20px;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 2px;
+      box-shadow: 0 0 10px var(--primary);
+    }
+    .mob-nav-icon {
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+
+    /* ============================================================== */
+    /* RESPONSIVE DESIGN INTELIGENTE (CELULARES & TABLETS)           */
+    /* ============================================================== */
     @media (max-width: 768px) {
-      .header { padding: 12px 16px; flex-direction: column; align-items: stretch; }
-      .header-actions { justify-content: space-between; }
-      .main-container { padding: 16px; }
-      .stats-row { grid-template-columns: 1fr 1fr; }
-      .controls-bar { flex-direction: column; align-items: stretch; }
-      .search-box { max-width: 100%; }
-      .table-container { overflow-x: auto; }
-      th, td { padding: 10px 12px; font-size: 12px; }
+      body {
+        padding-bottom: 76px; /* Espacio para el Dock inferior */
+      }
+      .header {
+        padding: 10px 16px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .header-title-sub { display: none; }
+      .header-title { font-size: 15px; }
+      .header-actions { gap: 6px; }
+      .header-actions .btn-desktop-only { display: none; }
+      
+      /* Ocultar barra superior en móvil, el Dock inferior toma el control */
+      .tabs-bar { display: none; }
+      .mobile-bottom-nav { display: flex; }
+
+      .main-container { padding: 14px 14px; }
+      .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .stat-card {
+        padding: 16px 14px;
+        border-radius: 14px;
+      }
+      .stat-value { font-size: 24px; margin: 4px 0 2px 0; }
+      .stat-label { font-size: 11px; }
+      .stat-sub { font-size: 11px; }
+
+      .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .search-box { max-width: 100%; min-width: 100%; }
+      .search-input { padding: 12px 14px 12px 38px; font-size: 14px; }
+      .filter-pills {
+        width: 100%;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .controls-bar .btn-primary {
+        width: 100%;
+        padding: 13px;
+        font-size: 14px;
+      }
+
+      /* Reemplazar tabla por tarjetas móviles */
+      .table-container { display: none !important; }
+      .mobile-only-cards { display: flex; flex-direction: column; gap: 12px; }
+
+      /* Modales optimizados para móvil */
+      .modal {
+        padding: 10px;
+        align-items: flex-end;
+      }
+      .modal-content {
+        padding: 22px 18px;
+        border-radius: 22px 22px 14px 14px;
+        max-width: 100%;
+        width: 100%;
+        max-height: 88vh;
+      }
+      .form-control {
+        padding: 13px 14px;
+        font-size: 15px; /* Evita auto-zoom en iPhone */
+      }
     }
   </style>
 </head>
@@ -313,8 +630,8 @@
         </div>
       </div>
       <div class="header-actions">
-        <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm" title="Abrir portal de revendedores">💼 Portal Resellers</a>
-        <a href="/download-apk" class="btn btn-secondary btn-sm" title="Descargar APK oficial">📥 Descargar APK</a>
+        <a href="/reseller" target="_blank" class="btn btn-secondary btn-sm btn-desktop-only" title="Abrir portal de revendedores">💼 Portal Resellers</a>
+        <a href="/download-apk" class="btn btn-secondary btn-sm btn-desktop-only" title="Descargar APK oficial">📥 Descargar APK</a>
         <button class="btn btn-secondary btn-sm" onclick="fetchData()" title="Refrescar datos en vivo">🔄 Actualizar</button>
         <button class="btn btn-danger btn-sm" onclick="handleLogout()">Salir</button>
       </div>
@@ -360,6 +677,11 @@
             <div class="stat-value" style="color: var(--success);" id="stat-active-clients">0</div>
             <div class="stat-sub">Suscripción vigente</div>
           </div>
+          <div class="stat-card stat-card-gold">
+            <div class="stat-label">💰 Ingresos Est. / Mes</div>
+            <div class="stat-value" style="color: var(--gold);" id="stat-estimated-income">S/ 0</div>
+            <div class="stat-sub">Basado en clientes activos</div>
+          </div>
           <div class="stat-card">
             <div class="stat-label">🟡 Vencen en ≤ 3 Días</div>
             <div class="stat-value" style="color: var(--warning);" id="stat-expiring-clients">0</div>
@@ -386,6 +708,7 @@
           <button class="btn btn-primary" onclick="openNewClientModal()">➕ Activar Nuevo Cliente</button>
         </div>
 
+        <!-- Tabla Completa para Computadoras y Tablets -->
         <div class="table-container">
           <table>
             <thead>
@@ -403,6 +726,9 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Tarjetas Interactivas Táctiles para Celulares (Zero scroll horizontal) -->
+        <div id="clients-mobile-cards" class="mobile-only-cards"></div>
       </section>
 
       <!-- ============================================================== -->
@@ -468,14 +794,57 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Tarjetas de canales para móvil -->
+        <div id="channels-mobile-cards" class="mobile-only-cards"></div>
       </section>
 
       <!-- ============================================================== -->
       <!-- SECCIÓN 4: AJUSTES & COBROS -->
       <!-- ============================================================== -->
       <section id="section-settings" style="display: none;">
-        <div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+        <div style="max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
           
+          <!-- ANUNCIO GLOBAL EN PANTALLA A LA APP EN VIVO -->
+          <div class="stat-card" style="border: 1px solid rgba(229, 9, 20, 0.45); background: linear-gradient(135deg, rgba(229, 9, 20, 0.08), rgba(15, 18, 28, 0.95));">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <div>
+                <h3 style="font-size: 17px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                  📢 Anuncio en Pantalla a la App (En Vivo)
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
+                  Transmite un aviso emergente en tiempo real en la parte superior de las TVs y celulares de tus clientes.
+                </p>
+              </div>
+              <span class="badge" id="announcement-status-badge" style="background: rgba(255,255,255,0.08); color: var(--text-muted);">Consultando estado...</span>
+            </div>
+
+            <form onsubmit="handleSaveAnnouncement(event)" style="display: flex; flex-direction: column; gap: 14px;">
+              <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Título del Aviso:</label>
+                  <input type="text" id="ann-title" class="form-control" placeholder="Ej: ⚽ ¡HOY CLÁSICO EN VIVO! Canales 5 y 10">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Tipo de Banner:</label>
+                  <select id="ann-type" class="form-control">
+                    <option value="info">🔵 Informativo</option>
+                    <option value="promo">🔴 Alerta / Destacado</option>
+                    <option value="warning">🟡 Mantenimiento / Aviso</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label>Mensaje para las pantallas:</label>
+                <textarea id="ann-message" class="form-control" rows="2" placeholder="Ej: Disfruta del partido en vivo en 4K/FHD. Recuerda no compartir tu cuenta para evitar cortes."></textarea>
+              </div>
+              <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="handleDeactivateAnnouncement()">❌ Quitar de Pantallas</button>
+                <button type="submit" class="btn btn-primary btn-sm" id="btn-save-announcement">🚀 Transmitir en Vivo a la App</button>
+              </div>
+            </form>
+          </div>
+
           <!-- CONTROL DE IDENTIDAD & ACCESO MASTER -->
           <div class="stat-card">
             <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px; color: #fff;">👑 Control de Marca & Acceso Master</h3>
@@ -617,6 +986,30 @@
       </section>
 
     </main>
+
+    <!-- Mobile Bottom Navigation Dock (Barra Táctil Inferior para Celulares) -->
+    <nav class="mobile-bottom-nav">
+      <button class="mobile-nav-item active" onclick="switchTab('clients')" id="mob-nav-clients">
+        <span class="mob-nav-icon">📱</span>
+        <span class="mob-nav-label">Clientes</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchTab('resellers')" id="mob-nav-resellers">
+        <span class="mob-nav-icon">💼</span>
+        <span class="mob-nav-label">Resellers</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchTab('channels')" id="mob-nav-channels">
+        <span class="mob-nav-icon">📡</span>
+        <span class="mob-nav-label">Canales</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchTab('settings')" id="mob-nav-settings">
+        <span class="mob-nav-icon">⚙️</span>
+        <span class="mob-nav-label">Ajustes</span>
+      </button>
+      <button class="mobile-nav-item" onclick="switchTab('debrid')" id="mob-nav-debrid">
+        <span class="mob-nav-icon">🎬</span>
+        <span class="mob-nav-label">Debrid</span>
+      </button>
+    </nav>
   </div>
 
   <!-- ============================================================== -->
@@ -928,12 +1321,20 @@
       tabs.forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
+        const mobBtn = document.getElementById(`mob-nav-${t}`);
         if (sec) sec.style.display = (t === tab) ? 'block' : 'none';
         if (btn) btn.classList.toggle('active', t === tab);
+        if (mobBtn) mobBtn.classList.toggle('active', t === tab);
       });
+      if (window.innerWidth <= 768) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       if (tab === 'debrid') {
         fetchDebridStatus();
         fetchCatalogStatus();
+      }
+      if (tab === 'settings') {
+        fetchAnnouncementStatus();
       }
     }
 
@@ -1063,8 +1464,92 @@
           }
         }
         fetchChannels();
+        fetchAnnouncementStatus();
       } catch (e) {
         console.error('Error al cargar datos:', e);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // GESTIÓN DE ANUNCIOS EN VIVO A PANTALLAS (TVS Y MÓVILES)
+    // -------------------------------------------------------------
+    async function fetchAnnouncementStatus() {
+      try {
+        const res = await fetch('/api/admin/announcement', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.announcement) {
+          const ann = data.announcement;
+          const badge = document.getElementById('announcement-status-badge');
+          if (badge) {
+            if (ann.active) {
+              badge.textContent = '🟢 En Vivo en Pantallas';
+              badge.style.background = 'rgba(34, 197, 94, 0.2)';
+              badge.style.color = '#4ADE80';
+              badge.style.border = '1px solid rgba(34, 197, 94, 0.4)';
+            } else {
+              badge.textContent = '⚪ Inactivo';
+              badge.style.background = 'rgba(255, 255, 255, 0.08)';
+              badge.style.color = 'var(--text-muted)';
+              badge.style.border = 'none';
+            }
+          }
+          if (document.getElementById('ann-title')) document.getElementById('ann-title').value = ann.title || '';
+          if (document.getElementById('ann-message')) document.getElementById('ann-message').value = ann.message || '';
+          if (document.getElementById('ann-type')) document.getElementById('ann-type').value = ann.type || 'info';
+        }
+      } catch (_) {}
+    }
+
+    async function handleSaveAnnouncement(e) {
+      e.preventDefault();
+      const title = document.getElementById('ann-title').value.trim();
+      const message = document.getElementById('ann-message').value.trim();
+      const type = document.getElementById('ann-type').value;
+
+      if (!title && !message) {
+        showToast('Ingresa un título o mensaje para el aviso.', 'warning');
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-announcement');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/announcement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ title, message, type, active: true })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('🚀 ¡Aviso transmitido con éxito a todas las pantallas!', 'success');
+          fetchAnnouncementStatus();
+        } else {
+          showToast('Error: ' + (data.error || 'No se pudo guardar'), 'error');
+        }
+      } catch (_) {
+        showToast('Error de red al guardar aviso.', 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function handleDeactivateAnnouncement() {
+      try {
+        const res = await fetch('/api/admin/announcement', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ active: false })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Aviso retirado de las pantallas.', 'info');
+          fetchAnnouncementStatus();
+        }
+      } catch (_) {
+        showToast('Error al desactivar aviso.', 'error');
       }
     }
 
@@ -1273,9 +1758,14 @@
 
     function renderStats(stats = {}) {
       document.getElementById('stat-total-clients').textContent = stats.totalClients || clientsData.length;
-      document.getElementById('stat-active-clients').textContent = stats.activeClients || 0;
+      const active = stats.activeClients || 0;
+      document.getElementById('stat-active-clients').textContent = active;
       document.getElementById('stat-expiring-clients').textContent = stats.expiringSoon || 0;
       document.getElementById('stat-expired-clients').textContent = stats.expiredClients || 0;
+
+      const estimatedIncome = active * 15;
+      const incomeEl = document.getElementById('stat-estimated-income');
+      if (incomeEl) incomeEl.textContent = `S/ ${estimatedIncome.toLocaleString('es-PE')}`;
 
       document.getElementById('badge-clients-count').textContent = clientsData.length;
       document.getElementById('badge-resellers-count').textContent = resellersData.length;
@@ -1320,11 +1810,17 @@
       }
 
       const tbody = document.getElementById('clients-table-body');
+      const mobCards = document.getElementById('clients-mobile-cards');
+
       if (list.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No se encontraron clientes con este filtro.</td></tr>';
+        if (mobCards) {
+          mobCards.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 35px 20px; background: rgba(15, 18, 28, 0.7); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">No se encontraron clientes con este filtro.</div>';
+        }
         return;
       }
 
+      // Renderizado en Tabla (Desktop)
       tbody.innerHTML = list.map(c => {
         const days = c.daysRemaining !== undefined ? c.daysRemaining : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
         let badgeHtml = '';
@@ -1337,16 +1833,16 @@
         }
 
         const expFormatted = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-        const origin = c.resellerName ? `<span style="color: var(--accent); font-size: 11px;">💼 ${c.resellerName}</span>` : '<span style="color: var(--text-subtle); font-size: 11px;">Admin Directo</span>';
+        const origin = c.resellerName ? `<span style="color: var(--accent); font-size: 11px;">💼 ${escapeHtml(c.resellerName)}</span>` : '<span style="color: var(--text-subtle); font-size: 11px;">Admin Directo</span>';
 
         return `
           <tr>
             <td>
-              <span class="code-pill">${c.code || 'SIN CÓDIGO'}</span>
+              <span class="code-pill" onclick="copyToClipboard('${escapeJs(c.code)}')" title="Copiar código">${escapeHtml(c.code || 'SIN CÓDIGO')}</span>
             </td>
             <td>
-              <div style="font-weight: 700; color: #fff;">${c.name}</div>
-              <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${c.username || ''}</div>
+              <div style="font-weight: 700; color: #fff;">${escapeHtml(c.name)}</div>
+              <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${escapeHtml(c.username || '')}</div>
             </td>
             <td>
               <div>${badgeHtml}</div>
@@ -1358,7 +1854,7 @@
             <td>${origin}</td>
             <td style="text-align: right;">
               <button class="btn btn-secondary btn-sm" onclick="openEditClientModal('${c.id}')" title="Modificar cliente">✏️ Editar</button>
-              <button class="btn btn-secondary btn-sm" onclick="renewClient('${c.id}', 30)" title="Renovar +30 días">🔄 +30d</button>
+              <button class="btn btn-success btn-sm" onclick="renewClient('${c.id}', 30)" title="Renovar +30 días">⚡ +30d</button>
               <button class="btn btn-whatsapp btn-sm" onclick="openClientWhatsApp('${escapeJs(c.name)}', '${escapeJs(c.code)}', '${days}')" title="Enviar WhatsApp">📲</button>
               <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.code)}', '¡Código copiado!')" title="Copiar código">📋</button>
               <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}', '${escapeJs(c.name)}')" title="Eliminar definitivamente">🗑️</button>
@@ -1366,6 +1862,66 @@
           </tr>
         `;
       }).join('');
+
+      // Renderizado en Tarjetas Táctiles (Móviles)
+      if (mobCards) {
+        mobCards.innerHTML = list.map(c => {
+          const days = c.daysRemaining !== undefined ? c.daysRemaining : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+          let badgeHtml = '';
+          if (days <= 0) {
+            badgeHtml = '<span class="badge badge-expired">🔴 Vencido</span>';
+          } else if (days <= 3) {
+            badgeHtml = `<span class="badge badge-warning">🟡 Vence en ${days}d</span>`;
+          } else {
+            badgeHtml = `<span class="badge badge-active">🟢 ${days} días</span>`;
+          }
+
+          const expFormatted = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+          const origin = c.resellerName ? `💼 ${escapeHtml(c.resellerName)}` : '🛡️ Directo';
+
+          return `
+            <div class="client-mobile-card">
+              <div class="client-mob-header">
+                <div>
+                  <div class="client-mob-name">${escapeHtml(c.name)}</div>
+                  ${c.username ? `<div class="client-mob-user">@${escapeHtml(c.username)}</div>` : ''}
+                </div>
+                <div>${badgeHtml}</div>
+              </div>
+
+              <div class="client-mob-code-row">
+                <div class="code-pill" onclick="copyToClipboard('${escapeJs(c.code)}')" title="Toca para copiar código">
+                  <span>${escapeHtml(c.code || 'SIN CÓDIGO')}</span>
+                  <span style="font-size: 13px; opacity: 0.8;">📋</span>
+                </div>
+                <div class="client-mob-devices">
+                  📱 ${(c.devices || []).length}/${c.maxDevices || 1} disp.
+                </div>
+              </div>
+
+              <div class="client-mob-meta-row">
+                <span class="client-mob-chip">📅 Vence: <strong>${expFormatted}</strong></span>
+                <span class="client-mob-chip">${origin}</span>
+              </div>
+
+              <div class="client-mob-actions">
+                <button class="btn btn-whatsapp btn-mob-action" onclick="openClientWhatsApp('${escapeJs(c.name)}', '${escapeJs(c.code)}', '${days}')">
+                  📲 WhatsApp
+                </button>
+                <button class="btn btn-success btn-mob-action" onclick="renewClient('${c.id}', 30)">
+                  ⚡ +30 Días
+                </button>
+                <button class="btn btn-secondary btn-mob-action" onclick="openEditClientModal('${c.id}')">
+                  ✏️ Editar
+                </button>
+                <button class="btn btn-danger btn-mob-action" onclick="deleteClient('${c.id}', '${escapeJs(c.name)}')">
+                  🗑️ Borrar
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
     function openNewClientModal() {
@@ -1779,24 +2335,49 @@
       });
 
       const tbody = document.getElementById('channels-table-body');
+      const mobCards = document.getElementById('channels-mobile-cards');
+
       if (list.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No se encontraron canales.</td></tr>';
+        if (mobCards) {
+          mobCards.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 35px 20px; background: rgba(15, 18, 28, 0.7); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">No se encontraron canales.</div>';
+        }
         return;
       }
 
       tbody.innerHTML = list.map(c => `
         <tr>
           <td>
-            <div style="font-weight: 700; color: #fff;">${c.name}</div>
+            <div style="font-weight: 700; color: #fff;">${escapeHtml(c.name)}</div>
           </td>
-          <td><span class="badge" style="background: rgba(255,255,255,0.1); color: #fff;">${c.category || 'General'}</span></td>
+          <td><span class="badge" style="background: rgba(255,255,255,0.08); color: #fff;">${escapeHtml(c.category || 'General')}</span></td>
           <td><span class="badge badge-active">Activo</span></td>
-          <td style="font-family: monospace; font-size: 11px; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.streamUrl || ''}</td>
+          <td style="font-family: monospace; font-size: 11px; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(c.streamUrl || '')}</td>
           <td style="text-align: right;">
-            <button class="btn btn-secondary btn-sm" onclick="copyText('${c.streamUrl}', 'Link copiado')">📋</button>
+            <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')">📋</button>
           </td>
         </tr>
       `).join('');
+
+      if (mobCards) {
+        mobCards.innerHTML = list.map(c => `
+          <div class="client-mobile-card">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-size: 16px; font-weight: 800; color: #fff;">${escapeHtml(c.name)}</div>
+              <span class="badge badge-active">Activo</span>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--text-muted);">
+              <span class="client-mob-chip">🏷️ ${escapeHtml(c.category || 'General')}</span>
+            </div>
+            <div style="font-family: monospace; font-size: 11px; color: var(--text-muted); background: #080910; padding: 8px 10px; border-radius: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+              ${escapeHtml(c.streamUrl || '')}
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary btn-mob-action" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')">📋 Copiar Señal</button>
+            </div>
+          </div>
+        `).join('');
+      }
     }
 
     function openNewChannelModal() {
