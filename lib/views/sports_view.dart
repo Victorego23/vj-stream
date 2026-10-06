@@ -1417,7 +1417,7 @@ class _SportsViewState extends State<SportsView> with SingleTickerProviderStateM
           _previewController?.pause();
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => DetailView(mediaItem: item),
+              builder: (_) => DetailView(item: item),
             ),
           );
         },
