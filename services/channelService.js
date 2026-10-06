@@ -80,18 +80,6 @@ class ChannelService {
         { start: '18:00', end: '21:00', title: 'Tierra Amarga (Telenovela Estelar)' },
         { start: '21:00', end: '24:00', title: 'El Señor de los Cielos - Emisión Central' }
       ];
-    } else if (cat.includes('peru') || name.includes('america') || name.includes('atv') || name.includes('latina') || name.includes('panamericana')) {
-      schedules = [
-        { start: '00:00', end: '05:30', title: 'Programación de Madrugada / Lo Mejor del Día' },
-        { start: '05:30', end: '09:30', title: 'Edición Matinal en Vivo (Noticias del Perú)' },
-        { start: '09:30', end: '12:30', title: 'Magacín Matutino en Directo' },
-        { start: '12:30', end: '14:30', title: 'El Noticiero del Mediodía en Vivo' },
-        { start: '14:30', end: '17:00', title: 'Telenovela de la Tarde' },
-        { start: '17:00', end: '19:00', title: 'Programa de Entretenimiento y Concursos' },
-        { start: '19:00', end: '20:30', title: 'Edición Central de Noticias' },
-        { start: '20:30', end: '22:30', title: 'Al Fondo Hay Sitio / Ficción Estelar' },
-        { start: '22:30', end: '24:00', title: 'La Noche es Nuestra / Análisis Político' }
-      ];
     } else if (cat.includes('deporte') || name.includes('espn') || name.includes('liga') || name.includes('fox')) {
       schedules = [
         { start: '00:00', end: '06:00', title: 'Lo Mejor de la Jornada Deportiva' },
@@ -206,15 +194,14 @@ class ChannelService {
     });
     const cats = Array.from(set);
     const orderPriority = {
-      '🇵🇪 Canales Peruanos': 1,
-      'Deportes': 2,
+      'Deportes': 1,
+      'Cine & Series': 2,
       'Infantil': 3,
       'Telenovelas': 4,
-      'Cine & Series': 5,
-      'Entretenimiento': 6,
-      'Noticias': 7,
-      'Música': 8,
-      'Cultura': 9
+      'Entretenimiento': 5,
+      'Noticias': 6,
+      'Música': 7,
+      'Cultura': 8
     };
     cats.sort((a, b) => {
       const pA = orderPriority[a] || 99;

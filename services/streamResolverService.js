@@ -85,11 +85,124 @@ class StreamResolverService {
    * @param {Object} mediaInfo - { title, originalTitle, year, mediaType, season, episode }
    * @returns {{ isMatch: boolean, matchCount: number, ratio: number, matchedKeywords: string[] }}
    */
+  /**
+   * Extrae el número de secuela o parte de un título (ej: "2", "3", "II", "Parte 2").
+   * @param {string} text
+   * @returns {string|null}
+   */
+  extractSequelNumber(text) {
+    if (!text) return null;
+    const norm = this.normalizeText(text);
+    const roman = { i: '1', ii: '2', iii: '3', iv: '4', v: '5', vi: '6', vii: '7', viii: '8', ix: '9', x: '10' };
+    
+    // Partes o volúmenes explícitos: "part 2", "parte 3", "vol 1"
+    const partMatch = norm.match(/\b(?:part|parte|vol|volumen|capitulo)\s*([0-9ivx]+)\b/i);
+    if (partMatch) {
+      const val = partMatch[1].toLowerCase();
+      return roman[val] || val;
+    }
+    // Números arábigos o romanos aislados: 2 al 10 o ii al x
+    const numMatch = norm.match(/\b([2-9]|10|ii|iii|iv|v|vi|vii|viii|ix|x)\b/i);
+    if (numMatch) {
+      const val = numMatch[1].toLowerCase();
+      return roman[val] || val;
+    }
+    return null;
+  }
+
+  /**
+   * Extrae años de 4 dígitos relevantes de un texto (1930 a 2030, excluyendo 1080p).
+   * @param {string} text
+   * @returns {number[]}
+   */
+  extractYears(text) {
+    if (!text) return [];
+    const norm = this.normalizeText(text);
+    const matches = norm.match(/\b(19[3-9]\d|20[0-3]\d)\b/g);
+    if (!matches) return [];
+    return matches.map(Number).filter(y => y !== 1080);
+  }
+
+  /**
+   * Extrae temporada y episodio de un texto para series de televisión.
+   * @param {string} text
+   * @returns {{ season: number|null, episode: number|null }}
+   */
+  extractTvSeasonEpisode(text) {
+    if (!text) return { season: null, episode: null };
+    const lower = text.toLowerCase();
+    const m1 = lower.match(/\bs(\d{1,2})[.\s_-]*e(\d{1,3})\b/);
+    if (m1) return { season: parseInt(m1[1], 10), episode: parseInt(m1[2], 10) };
+    const m2 = lower.match(/\b(\d{1,2})x(\d{1,3})\b/);
+    if (m2) return { season: parseInt(m2[1], 10), episode: parseInt(m2[2], 10) };
+    const m3 = lower.match(/\b(?:ep|episodio|cap|capitulo)[.\s_-]*(\d{1,3})\b/);
+    if (m3) return { season: null, episode: parseInt(m3[1], 10) };
+    return { season: null, episode: null };
+  }
+
+  /**
+   * Valida si un stream o archivo coincide con el título solicitado.
+   * Aplica 4 barreras estrictas:
+   * 1. Barrera de Secuela: Terrifier 3 jamás acepta Terrifier 1 o 2.
+   * 2. Barrera de Año: Road House (2024) jamás acepta Road House (1989).
+   * 3. Barrera de Episodio: Capítulo 4 jamás acepta Capítulo 1.
+   * 4. Barrera de Palabras Clave: Requiere coincidencia de términos distintivos.
+   * @param {string} candidateText - Nombre de archivo o título del torrent
+   * @param {Object} mediaInfo - { title, originalTitle, year, mediaType, season, episode }
+   * @returns {{ isMatch: boolean, matchCount: number, ratio: number, matchedKeywords: string[], reason?: string }}
+   */
   validateTitleMatch(candidateText, mediaInfo) {
     if (!candidateText || !mediaInfo) return { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
     const { title, originalTitle } = mediaInfo;
     if (!title && !originalTitle) return { isMatch: true, matchCount: 0, ratio: 1, matchedKeywords: [] };
 
+    // --- BARRERA 1: CONTROL ESTRICTO DE SECUELA Y NÚMERO DE FRANQUICIA ---
+    const reqSequel = this.extractSequelNumber(title) || this.extractSequelNumber(originalTitle);
+    const candSequel = this.extractSequelNumber(candidateText);
+    if (reqSequel && candSequel && reqSequel !== candSequel) {
+      // Ejemplo: Pidió Terrifier 3 y el archivo es Terrifier 2 -> RECHAZAR
+      return { isMatch: false, reason: 'sequel_mismatch', matchCount: 0, ratio: 0, matchedKeywords: [] };
+    }
+    if (reqSequel && !candSequel) {
+      // Ejemplo: Pidió Terrifier 3 y el archivo es Terrifier 1 (sin número) -> RECHAZAR
+      return { isMatch: false, reason: 'missing_sequel_number', matchCount: 0, ratio: 0, matchedKeywords: [] };
+    }
+    if (!reqSequel && candSequel) {
+      // Ejemplo: Pidió Gladiator (2000) y el archivo es Gladiator II -> RECHAZAR
+      return { isMatch: false, reason: 'unwanted_sequel', matchCount: 0, ratio: 0, matchedKeywords: [] };
+    }
+
+    // --- BARRERA 2: CONTROL ESTRICTO DE AÑO (Evita remakes o películas homónimas) ---
+    if (mediaInfo.year) {
+      const targetYear = parseInt(mediaInfo.year, 10);
+      if (!isNaN(targetYear) && targetYear > 1940) {
+        const candYears = this.extractYears(candidateText);
+        if (candYears.length > 0) {
+          const hasCloseYear = candYears.some(y => Math.abs(y - targetYear) <= 1);
+          if (!hasCloseYear) {
+            // Ejemplo: Pidió Road House (2024) y el archivo tiene 1989 -> RECHAZAR
+            return { isMatch: false, reason: 'year_mismatch', matchCount: 0, ratio: 0, matchedKeywords: [] };
+          }
+        }
+      }
+    }
+
+    // --- BARRERA 3: CONTROL ESTRICTO DE EPISODIO Y TEMPORADA PARA SERIES ---
+    if (mediaInfo.mediaType === 'tv' && mediaInfo.episode) {
+      const targetEp = parseInt(mediaInfo.episode, 10);
+      const targetSeason = parseInt(mediaInfo.season, 10) || 1;
+      const { season: candSeason, episode: candEp } = this.extractTvSeasonEpisode(candidateText);
+      if (candEp !== null && candEp !== targetEp) {
+        // Archivo indica un capítulo diferente -> RECHAZAR
+        return { isMatch: false, reason: 'tv_episode_mismatch', matchCount: 0, ratio: 0, matchedKeywords: [] };
+      }
+      if (candSeason !== null && candSeason !== targetSeason) {
+        // Archivo indica otra temporada -> RECHAZAR
+        return { isMatch: false, reason: 'tv_season_mismatch', matchCount: 0, ratio: 0, matchedKeywords: [] };
+      }
+    }
+
+    // --- BARRERA 4: COINCIDENCIA SEMÁNTICA DE PALABRAS CLAVE DISTINTIVAS ---
     const GENERIC_TITLE_WORDS = new Set([
       'senor', 'senora', 'don', 'dona', 'doctor', 'dra', 'casa', 'vida', 'mundo',
       'hombre', 'mujer', 'historia', 'tierra', 'amor', 'nuevo', 'nueva', 'gran', 'grande',
@@ -132,9 +245,6 @@ class StreamResolverService {
 
     let isMatch = false;
     if (distinctiveTitleKw.length > 0 || distinctiveOrigKw.length > 0) {
-      // Si el título contiene palabras distintivas (ej: "cielos" en "El Señor de los Cielos", "papel" en "La Casa de Papel"),
-      // AL MENOS UNA palabra distintiva DEBE coincidir obligatoriamente.
-      // Coincidir únicamente con una palabra genérica ("señor", "casa") se rechaza como falso positivo.
       const hasDistinctiveMatch = matchedDistinctive.length > 0;
       if (hasDistinctiveMatch) {
         if (totalKw >= 2 && maxMatches < 2 && (distinctiveTitleKw.length >= 2 || distinctiveOrigKw.length >= 2)) {
@@ -560,6 +670,10 @@ class StreamResolverService {
 
       for (const m of movies) {
         if (year && m.year && Math.abs(m.year - parseInt(year, 10)) > 1) continue;
+        const candidateText = `${m.title} ${m.year || ''}`;
+        const matchCheck = this.validateTitleMatch(candidateText, { title: query, originalTitle: query, year });
+        if (!matchCheck.isMatch) continue;
+
         const torrents = m.torrents || [];
         for (const t of torrents) {
           if (t.hash) {
