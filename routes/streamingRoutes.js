@@ -887,7 +887,14 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  * que la app pidiera actualizar a una versión cuyo archivo aún no existía.
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
-const RELEASE_CACHE_MS = 3 * 60 * 1000;
+const CURRENT_OFFICIAL_RELEASE = {
+  latestVersion: '3.8.0',
+  versionCode: 41,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v3.8.0/TOM-TV-release.apk',
+  releaseDate: '2026-10-06'
+};
+
+const RELEASE_CACHE_MS = 10 * 60 * 1000;
 
 async function getPublishedRelease() {
   const now = Date.now();
@@ -916,8 +923,8 @@ async function getPublishedRelease() {
   } catch (err) {
     console.warn('[OTA] No se pudo consultar el último release de GitHub:', err.message);
   }
-  // Si GitHub falla, conservar el último dato bueno conocido (aunque esté vencido)
-  return _publishedReleaseCache.data;
+  // Si GitHub falla, conservar el último dato bueno conocido o el release oficial por defecto
+  return _publishedReleaseCache.data || CURRENT_OFFICIAL_RELEASE;
 }
 
 /**
@@ -925,22 +932,7 @@ async function getPublishedRelease() {
  * @desc    Devuelve los metadatos de la última versión DESCARGABLE y notas de la versión para OTA
  */
 router.get('/version', async (req, res) => {
-  const published = await getPublishedRelease();
-
-  if (!published) {
-    // Sin información confiable de un APK publicado: no anunciar ninguna actualización.
-    return res.json({
-      success: true,
-      app: 'TOM TV',
-      latestVersion: '0.0.0',
-      versionCode: 0,
-      minSupportedVersion: '1.0.0',
-      releaseNotes: [],
-      downloadUrl: '/api/streaming/download-apk',
-      forceUpdate: false,
-      announcement: accountService.getAnnouncement()
-    });
-  }
+  const published = (await getPublishedRelease()) || CURRENT_OFFICIAL_RELEASE;
 
   return res.json({
     success: true,
