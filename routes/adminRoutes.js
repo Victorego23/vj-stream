@@ -4,16 +4,24 @@ const accountService = require('../services/accountService');
 const channelService = require('../services/channelService');
 const realDebridService = require('../services/realDebridService');
 const catalogSyncService = require('../services/catalogSyncService');
-const { loginRateLimiter } = require('../middlewares/rateLimitMiddleware');
+const { adminLoginLimiter, createRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
-// Middleware para verificar token o contraseña del Administrador
+// Rate limiter general para operaciones administrativas (120 req/min)
+const adminGeneralLimiter = createRateLimiter({
+  windowMs: 1 * 60 * 1000,
+  max: 120,
+  countAll: true,
+  message: 'Límite de peticiones administrativas alcanzado.'
+});
+
+// Middleware blindado para verificar token o contraseña del Administrador exclusivamente por Headers
 function adminAuth(req, res, next) {
-  const token = req.headers['x-admin-password'] || req.headers['authorization'] || req.query.key;
+  const token = req.headers['x-admin-password'] || req.headers['authorization'];
   if (!token) {
-    return res.status(401).json({ success: false, error: 'Se requiere token o credenciales de administrador.' });
+    return res.status(401).json({ success: false, error: 'Se requiere token o credenciales de administrador en cabeceras seguras.' });
   }
 
-  const cleanPass = token.startsWith('Bearer ') ? token.slice(7) : token;
+  const cleanPass = token.startsWith('Bearer ') ? token.slice(7).trim() : String(token).trim();
   if (!accountService.verifyAdminToken(cleanPass)) {
     return res.status(403).json({ success: false, error: 'Sesión o credenciales de administrador inválidas.' });
   }
@@ -23,9 +31,9 @@ function adminAuth(req, res, next) {
 
 /**
  * @route   POST /api/admin/login
- * @desc    Valida credenciales de acceso al Panel Web y emite token firmado de sesión
+ * @desc    Valida credenciales de acceso al Panel Web (Blindado con máx 6 intentos cada 15 min)
  */
-router.post('/login', loginRateLimiter, (req, res) => {
+router.post('/login', adminLoginLimiter, (req, res) => {
   const { password, username } = req.body;
   if (!password || !accountService.verifyAdminPassword(password)) {
     const cleanPass = String(password || '').trim();

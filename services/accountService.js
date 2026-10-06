@@ -378,6 +378,17 @@ class AccountService {
   // AUTENTICACIÓN Y CONFIGURACIÓN DEL ADMINISTRADOR
   // -------------------------------------------------------------
 
+  _safeCompare(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') return false;
+    const bufA = Buffer.from(a, 'utf8');
+    const bufB = Buffer.from(b, 'utf8');
+    if (bufA.length !== bufB.length) {
+      crypto.timingSafeEqual(bufA, bufA);
+      return false;
+    }
+    return crypto.timingSafeEqual(bufA, bufB);
+  }
+
   verifyAdminPassword(password) {
     if (!password) return false;
     const clean = String(password).trim();
@@ -386,12 +397,12 @@ class AccountService {
     const dbPass = db.admin?.password && String(db.admin.password).trim();
 
     if (dbPass) {
-      return clean === dbPass;
+      return this._safeCompare(clean, dbPass);
     }
     if (envPass) {
-      return clean === envPass;
+      return this._safeCompare(clean, envPass);
     }
-    return clean === DEFAULT_ADMIN_PASSWORD;
+    return this._safeCompare(clean, DEFAULT_ADMIN_PASSWORD);
   }
 
   verifyAdminCredentials(username, password) {
@@ -424,7 +435,7 @@ class AccountService {
       if (parts.length === 3) {
         const [, b64, sig] = parts;
         const expectedSig = crypto.createHmac('sha256', SIGNING_SECRET).update(`adm.${b64}`).digest('base64url');
-        if (expectedSig === sig) {
+        if (this._safeCompare(expectedSig, sig)) {
           try {
             const payload = JSON.parse(Buffer.from(b64, 'base64url').toString('utf8'));
             if (payload && payload.role === 'admin' && payload.exp > Date.now()) {
@@ -971,7 +982,7 @@ class AccountService {
     if (parts.length !== 3) return null;
     const [_, b64, sig] = parts;
     const expectedSig = crypto.createHmac('sha256', SIGNING_SECRET).update(b64).digest('base64url');
-    if (sig !== expectedSig) return null;
+    if (!this._safeCompare(sig, expectedSig)) return null;
     try {
       const jsonStr = Buffer.from(b64, 'base64url').toString('utf8');
       const decoded = JSON.parse(jsonStr);

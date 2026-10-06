@@ -7,15 +7,15 @@ const { loginRateLimiter } = require('../middlewares/rateLimitMiddleware');
  * Middleware para autenticar las peticiones de revendedores
  */
 function resellerAuth(req, res, next) {
-  const authHeader = req.headers['authorization'] || req.headers['x-reseller-token'] || req.query.token;
+  const authHeader = req.headers['authorization'] || req.headers['x-reseller-token'];
   if (!authHeader) {
     return res.status(401).json({
       success: false,
-      error: 'Se requiere inicio de sesión de revendedor.'
+      error: 'Se requiere inicio de sesión de revendedor en cabeceras seguras.'
     });
   }
 
-  const cleanToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+  const cleanToken = String(authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader).trim();
   const reseller = accountService.verifyResellerAuth(cleanToken);
 
   if (!reseller) {
