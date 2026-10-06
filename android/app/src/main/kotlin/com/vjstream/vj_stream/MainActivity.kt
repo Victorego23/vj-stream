@@ -157,17 +157,33 @@ class MainActivity : FlutterActivity() {
                                     setDataAndType(uri, "application/vnd.android.package-archive")
                                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    clipData = android.content.ClipData.newRawUri("", uri)
                                 }
 
-                                // Otorgar permisos de lectura explícitos a todos los gestores de instalación de paquetes
-                                val resInfoList = packageManager.queryIntentActivities(intent, 0)
-                                for (resolveInfo in resInfoList) {
-                                    grantUriPermission(
-                                        resolveInfo.activityInfo.packageName,
-                                        uri,
-                                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                    )
+                                // Otorgar permisos de lectura explícitos a todos los gestores de instalación de paquetes conocidos
+                                val knownInstallers = listOf(
+                                    "com.google.android.packageinstaller",
+                                    "com.android.packageinstaller",
+                                    "com.amazon.venezia",
+                                    "com.miui.packageinstaller",
+                                    "com.samsung.android.packageinstaller"
+                                )
+                                for (pkg in knownInstallers) {
+                                    try {
+                                        grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    } catch (_: Exception) {}
                                 }
+
+                                try {
+                                    val resInfoList = packageManager.queryIntentActivities(intent, 0)
+                                    for (resolveInfo in resInfoList) {
+                                        grantUriPermission(
+                                            resolveInfo.activityInfo.packageName,
+                                            uri,
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                        )
+                                    }
+                                } catch (_: Exception) {}
 
                                 startActivity(intent)
                                 result.success(true)

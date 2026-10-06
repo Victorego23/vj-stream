@@ -47,24 +47,36 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk TOM-TV-release.apk
           ls -lh TOM-TV-release.apk
 
+      - name: Extraer Versión de pubspec.yaml
+        id: get_version
+        run: |
+          RAW_VERSION=$(grep '^version:' pubspec.yaml | head -n 1 | awk '{print $2}')
+          VER_NAME=$(echo "$RAW_VERSION" | cut -d'+' -f1)
+          VER_CODE=$(echo "$RAW_VERSION" | cut -d'+' -f2)
+          echo "version_name=$VER_NAME" >> $GITHUB_OUTPUT
+          echo "version_code=$VER_CODE" >> $GITHUB_OUTPUT
+          echo "full_version=$RAW_VERSION" >> $GITHUB_OUTPUT
+          echo "Compilando versión: $VER_NAME (Build $VER_CODE)"
+
       - name: Subir Artifact de GitHub Actions
         uses: actions/upload-artifact@v4
         with:
-          name: TOM-TV-v3.5.6-release
+          name: TOM-TV-v${{ steps.get_version.outputs.version_name }}-release
           path: TOM-TV-release.apk
 
       - name: Publicar Release Oficial en GitHub
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v3.5.6
-          name: TOM TV v3.5.6 Oficial
+          tag_name: v${{ steps.get_version.outputs.version_name }}
+          name: TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
           make_latest: true
           body: |
-            ## 🚀 TOM TV v3.5.6 Oficial (Build 31)
+            ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
-            - 🎯 **Protección Total de Enlaces**: Filtro inteligente de integridad que garantiza la coincidencia exacta de títulos y bloquea falsos positivos.
-            - 📺 **Canales de Telenovelas 24/7**: Canales en vivo de Telemundo Novelas (El Señor de los Cielos 24/7) y TNT Novelas HD agregados a TV en Vivo.
-            - ✨ **Diálogo Informativo VIP**: Si un capítulo aún no está digitalizado, informa con opciones claras de ver en TV en vivo o tráiler oficial sin reproducirlo a ciegas.
+            - 🎬 **Player HUD Senior UI/UX**: Retroalimentación táctil y D-Pad lateral, barra de tiempo de 3 capas con cifras tabulares y menú cinemático sin solapamientos.
+            - ⚡ **Multi-Pool Real-Debrid**: Failover automático entre llaves API y verificación en vivo de reproducción.
+            - 🔄 **Sincronización Continua**: Actualización autónoma de catálogo cada 2 horas con los últimos estrenos.
+            - 📡 **Anti-Cache In-App OTA**: Descarga directa instantánea sin almacenamiento en caché obsoleto.
           files: |
             TOM-TV-release.apk
         env:
@@ -75,5 +87,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add TOM-TV-release.apk
-          git commit -m "build: auto-compile official TOM-TV-release.apk v3.5.6 (Build 31) [skip ci]" || echo "Sin cambios detectados"
+          git commit -m "build: auto-compile official TOM-TV-release.apk v${{ steps.get_version.outputs.version_name }} (Build ${{ steps.get_version.outputs.version_code }}) [skip ci]" || echo "Sin cambios detectados"
           git push origin main || echo "Push omitido"

@@ -203,8 +203,6 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
         {'filePath': filePath},
       );
       if (success == true) {
-        // Solo marcamos como gestionado cuando la instalación fue lanzada con éxito
-        await UpdateService.markDismissed(widget.updateInfo.versionCode);
         if (mounted) {
           setState(() {
             _downloadMessage = 'Abriendo instalador del sistema Android... Por favor confirma en pantalla.';
@@ -247,9 +245,11 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
     try {
       final origin = ApiService().serverOrigin;
       final downloadPath = widget.updateInfo.downloadUrl;
-      final fullUrl = downloadPath.startsWith('http')
+      final rawUrl = downloadPath.startsWith('http')
           ? downloadPath
           : (downloadPath.startsWith('/') ? '$origin$downloadPath' : '$origin/$downloadPath');
+      final sep = rawUrl.contains('?') ? '&' : '?';
+      final fullUrl = '$rawUrl${sep}_t=${DateTime.now().millisecondsSinceEpoch}';
 
       final client = http.Client();
       var currentUri = Uri.parse(fullUrl);
@@ -259,6 +259,9 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
       while (redirectCount < 10) {
         final request = http.Request('GET', currentUri);
         request.headers['User-Agent'] = 'TOM-TV-App/${UpdateService.currentInstalledVersionName}';
+        request.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+        request.headers['Pragma'] = 'no-cache';
+        request.headers['Expires'] = '0';
         final res = await client.send(request);
         if (res.statusCode == 301 ||
             res.statusCode == 302 ||

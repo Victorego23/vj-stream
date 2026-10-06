@@ -958,7 +958,9 @@ router.get('/download-apk', (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.android.package-archive');
     res.setHeader('Content-Length', stat.size);
     res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
-    res.setHeader('Cache-Control', 'public, max-age=300');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     return res.sendFile(fileToSend);
   }
 
