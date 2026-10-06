@@ -950,10 +950,11 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '🖼️ Nuevo ícono de la app en el menú de tu TV y celular.',
-      '🛡️ Catálogo depurado: se retiraron estrenos aún no disponibles, títulos de solo tráiler y títulos sin votos.',
-      '🔄 Actualizaciones más confiables: solo se ofrece una versión cuando su instalador ya está publicado.',
-      '📺 Diseño estilo Xuper TV con guía de canales en 3 columnas y zapping lateral.'
+      '🚀 Gran actualización TOM TV v3.7.0: Rediseño visual prémium con sistema de tokens Dark Mode (#101018).',
+      '🎬 Catálogo VOD móvil: Carrusel Panorámico Hero 16:9 con autodesplazamiento y dots, subcategorías superiores con indicador azul, y posters 2:3 con badges.',
+      '📺 TV en Vivo móvil: Reproductor fijo superior 16:9 con overlays (calidad FHD/HD, silencio, pantalla completa), selector de datos móviles y guía EPG con badge de número.',
+      '🔒 Control Parental activo: Modal de bloqueo y protección para Zona 18+.',
+      '👤 Pantalla de Perfil ("Mi Cuenta"): Gestión de credenciales, centro de canje, acciones rápidas y prueba VIP gratuita.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,

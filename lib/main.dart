@@ -43,20 +43,20 @@ class VjStreamApp extends StatelessWidget {
       scrollBehavior: AppScrollBehavior(),
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF000000), // Negro absoluto OLED
-        primaryColor: const Color(0xFFE50914),
+        scaffoldBackgroundColor: const Color(0xFF101018), // Dark Mode puro TOM TV
+        primaryColor: const Color(0xFF2962FF),             // Azul eléctrico primario
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFE50914),
-          secondary: Color(0xFFE50914),
-          surface: Color(0xFF0D0D0D),
+          primary: Color(0xFF2962FF),
+          secondary: Color(0xFF2962FF),
+          surface: Color(0xFF1C1C28),
         ),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF000000),
+          backgroundColor: Color(0xFF101018),
           elevation: 0,
         ),
         textTheme: const TextTheme(
           bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
+          bodyMedium: TextStyle(color: Color(0xFF8F92A1)),
         ),
       ),
       home: const AuthGate(),

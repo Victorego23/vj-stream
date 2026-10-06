@@ -18,7 +18,11 @@ import 'detail_view.dart';
 import 'search_view.dart';
 import 'video_player_view.dart';
 import 'live_tv_view.dart';
+import 'profile_view.dart';
 import '../widgets/xuper_master_launcher.dart';
+import '../widgets/tom_hero_carousel.dart';
+import '../widgets/tom_vod_components.dart';
+import '../theme/tom_tokens.dart';
 
 /// Pantalla Principal (HomeView) estilo Netflix para VJ STREAM.
 /// Soporta Smart TV (Android TV D-Pad) y dispositivos móviles.
@@ -59,6 +63,10 @@ class _HomeViewState extends State<HomeView> {
   List<MediaItem> _turkishNovelas = [];
   List<MediaItem> _kdramas = [];
   bool _isLoadingTelenovelas = false;
+
+  // Catálogo especializado de Anime
+  List<MediaItem> _animeItems = [];
+  bool _isLoadingAnime = false;
 
   // Cartelera Infinita dinámica sin fin
   final List<Map<String, dynamic>> _extraCategories = [];
@@ -315,6 +323,29 @@ class _HomeViewState extends State<HomeView> {
       }
     } catch (_) {
       if (mounted) setState(() => _isLoadingTelenovelas = false);
+    }
+  }
+
+  Future<void> _loadAnimeCatalog() async {
+    if (_animeItems.isNotEmpty) return;
+    setState(() => _isLoadingAnime = true);
+    try {
+      if (_kidsAnime.isNotEmpty) {
+        setState(() {
+          _animeItems = List.from(_kidsAnime);
+          _isLoadingAnime = false;
+        });
+        return;
+      }
+      final res = await _apiService.fetchKidsCatalog();
+      if (mounted) {
+        setState(() {
+          _animeItems = res['anime'] ?? [];
+          _isLoadingAnime = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingAnime = false);
     }
   }
 
@@ -867,6 +898,143 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  void _showCastDialog() {
+    showDialog(
+      context: context,
+      builder: (dlgContext) => AlertDialog(
+        backgroundColor: TomTokens.surfaceCard,
+        shape: RoundedRectangleBorder(borderRadius: TomTokens.borderLg),
+        title: const Row(
+          children: [
+            Icon(Icons.cast_rounded, color: TomTokens.primaryAccent),
+            SizedBox(width: 10),
+            Text('Dispositivos de Transmisión', style: TextStyle(color: Colors.white, fontSize: 18)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Buscando pantallas en la red Wi-Fi (Chromecast / Google TV / DLNA):',
+              style: TextStyle(color: TomTokens.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: TomTokens.backgroundMain,
+                borderRadius: TomTokens.borderMd,
+                border: Border.all(color: Colors.white12),
+              ),
+              child: const Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: TomTokens.primaryAccent),
+                  ),
+                  SizedBox(width: 12),
+                  Text('Escaneando pantallas cercanas...', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Asegúrate de que tu Smart TV o receptor de streaming esté encendido y conectado a la misma red Wi-Fi.',
+              style: TextStyle(color: Colors.white38, fontSize: 11),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgContext),
+            child: const Text('Cerrar', style: TextStyle(color: Colors.white54)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openHistoryDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.7,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: const BoxDecoration(
+            color: TomTokens.surfaceCard,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Historial de Reproducción',
+                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  if (_continueWatching.isNotEmpty)
+                    TextButton(
+                      onPressed: () async {
+                        await PlaybackHistoryService.clearHistory();
+                        setState(() => _continueWatching.clear());
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Borrar Todo', style: TextStyle(color: TomTokens.accentRed, fontSize: 12)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: _continueWatching.isEmpty
+                    ? const Center(
+                        child: Text('No hay historial de reproducción reciente.', style: TextStyle(color: TomTokens.textSecondary)),
+                      )
+                    : ListView.separated(
+                        itemCount: _continueWatching.length,
+                        separatorBuilder: (_, __) => const Divider(color: Colors.white10),
+                        itemBuilder: (c, idx) {
+                          final item = _continueWatching[idx];
+                          return ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: ClipRRect(
+                              borderRadius: TomTokens.borderSm,
+                              child: item.posterUrl != null && item.posterUrl!.isNotEmpty
+                                  ? Image.network(item.posterUrl!, width: 44, height: 60, fit: BoxFit.cover)
+                                  : Container(width: 44, height: 60, color: Colors.white12, child: const Icon(Icons.movie, color: Colors.white30)),
+                            ),
+                            title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                            subtitle: Text('Progreso: ${(item.progressPercentage * 100).toInt()}% visto', style: const TextStyle(color: TomTokens.textSecondary, fontSize: 12)),
+                            trailing: const Icon(Icons.play_circle_fill_rounded, color: TomTokens.primaryAccent, size: 30),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _openDetail(MediaItem(id: item.id, title: item.title, posterMedium: item.posterUrl, mediaType: item.mediaType));
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isTv = MediaQuery.of(context).size.width > 700;
@@ -914,28 +1082,25 @@ class _HomeViewState extends State<HomeView> {
   }
 
   // ===========================================================================
-  // BARRA DE NAVEGACIÓN INFERIOR FLOTANTE DE CRISTAL (MÓVIL / TABLET)
+  // BARRA DE NAVEGACIÓN INFERIOR (5 PESTAÑAS FIJAS CON DESIGN TOKENS)
+  // [1. Películas | 2. TV en Vivo | 3. Deportes | 4. 18+ | 5. Perfil]
   // ===========================================================================
   Widget _buildMobileBottomBar() {
     final navItems = [
-      {'id': 'Todos', 'label': 'Inicio', 'icon': Icons.home_rounded},
-      {'id': 'TV en Vivo', 'label': 'TV & Deportes', 'icon': Icons.live_tv_rounded},
-      {'id': 'Niños', 'label': 'Niños', 'icon': Icons.child_care_rounded},
-      {'id': 'Telenovelas', 'label': 'Novelas', 'icon': Icons.favorite_rounded},
-      {'id': 'Mi Lista', 'label': 'Mi Lista', 'icon': Icons.star_rounded},
+      {'id': 'Todos', 'label': 'Películas', 'icon': Icons.movie_outlined},
+      {'id': 'TV en Vivo', 'label': 'TV en Vivo', 'icon': Icons.tv_rounded},
+      {'id': 'Fútbol & Deportes', 'label': 'Deportes', 'icon': Icons.sports_soccer_rounded},
+      {'id': 'Zona 18+', 'label': '18+', 'icon': Icons.eighteen_mp_rounded},
+      {'id': 'Perfil', 'label': 'Perfil', 'icon': Icons.person_outline_rounded},
     ];
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 18),
       height: 64,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xF5141724), Color(0xF5080A12)],
-        ),
+        color: TomTokens.surfaceCard.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: const Color(0x3DFFFFFF), width: 1.2),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.2),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.8),
@@ -944,7 +1109,7 @@ class _HomeViewState extends State<HomeView> {
             spreadRadius: 2,
           ),
           BoxShadow(
-            color: const Color(0xFFE50914).withValues(alpha: 0.18),
+            color: TomTokens.primaryAccent.withValues(alpha: 0.22),
             blurRadius: 20,
             offset: const Offset(0, 2),
           ),
@@ -960,17 +1125,24 @@ class _HomeViewState extends State<HomeView> {
               final id = item['id'] as String;
               final label = item['label'] as String;
               final icon = item['icon'] as IconData;
-              final isSelected = _activeTab == id;
+              final isSelected = _activeTab == id || (_activeTab == 'Películas' && id == 'Todos');
 
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
+                  if (id == 'Zona 18+') {
+                    showParentalWarningDialog(
+                      context,
+                      onGoToLink: () => setState(() => _activeTab = 'Perfil'),
+                    );
+                    return;
+                  }
+
                   setState(() {
                     _activeTab = id;
                     _hoveredItem = null;
                   });
-                  if (id == 'Niños') _loadKidsCatalog();
-                  if (id == 'Telenovelas') _loadTelenovelasCatalog();
+
                   if (_scrollController.hasClients) {
                     _scrollController.animateTo(
                       0,
@@ -985,7 +1157,7 @@ class _HomeViewState extends State<HomeView> {
                   decoration: BoxDecoration(
                     gradient: isSelected
                         ? const LinearGradient(
-                            colors: [Color(0xFFE50914), Color(0xFFB80610)],
+                            colors: [Color(0xFF2962FF), Color(0xFF1540BD)],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           )
@@ -994,7 +1166,7 @@ class _HomeViewState extends State<HomeView> {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: const Color(0xFFE50914).withValues(alpha: 0.65),
+                              color: TomTokens.primaryAccent.withValues(alpha: 0.65),
                               blurRadius: 14,
                               spreadRadius: 1,
                             ),
@@ -1006,14 +1178,14 @@ class _HomeViewState extends State<HomeView> {
                     children: [
                       Icon(
                         icon,
-                        color: isSelected ? Colors.white : const Color(0x9EFFFFFF),
+                        color: isSelected ? Colors.white : TomTokens.textSecondary,
                         size: 21,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         label,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0x9EFFFFFF),
+                          color: isSelected ? Colors.white : TomTokens.textSecondary,
                           fontSize: 10.5,
                           fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
                           letterSpacing: isSelected ? 0.2 : 0.0,
@@ -1332,26 +1504,22 @@ class _HomeViewState extends State<HomeView> {
               ],
             ),
             actions: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 14),
-                child: XuperLiveClock(compact: true),
+              IconButton(
+                tooltip: 'Transmitir / Cast',
+                icon: const Icon(Icons.cast_rounded, color: Colors.white, size: 22),
+                onPressed: _showCastDialog,
+              ),
+              IconButton(
+                tooltip: 'Historial',
+                icon: const Icon(Icons.history_rounded, color: Colors.white, size: 23),
+                onPressed: _openHistoryDialog,
               ),
               IconButton(
                 tooltip: 'Buscar en TOM TV',
-                icon: const Icon(Icons.search, color: Colors.white, size: 24),
+                icon: const Icon(Icons.search_rounded, color: Colors.white, size: 24),
                 onPressed: _openSearch,
               ),
-              IconButton(
-                tooltip: 'Recargar catálogo',
-                icon: const Icon(Icons.refresh, color: Colors.white70),
-                onPressed: _loadCatalog,
-              ),
-              IconButton(
-                tooltip: 'Configurar servidor',
-                icon: const Icon(Icons.settings, color: Colors.white70),
-                onPressed: _showConfigDialog,
-              ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
             ],
           ),
 
@@ -1458,21 +1626,46 @@ class _HomeViewState extends State<HomeView> {
             SliverToBoxAdapter(
               child: _buildComingSoonTab(false),
             )
+          // Vista cuando la pestaña activa es "Perfil" (Sección 6)
+          else if (_activeTab == 'Perfil')
+            SliverFillRemaining(
+              hasScrollBody: true,
+              child: ProfileView(
+                onOpenFavorites: () => setState(() => _activeTab = 'Mi Lista'),
+                onOpenHistory: _openHistoryDialog,
+                onOpenSearch: _openSearch,
+              ),
+            )
+          // Vista cuando la pestaña activa es "Anime" (Sección 3.5 con Skeleton)
+          else if (_activeTab == 'Anime')
+            SliverToBoxAdapter(
+              child: _buildAnimeTab(),
+            )
           // Vista cuando seleccionó un año específico en Películas
           else if (_activeTab == 'Películas' && _selectedMovieYear != null)
             SliverToBoxAdapter(
               child: _buildYearMoviesGrid(false),
             )
           else ...[
-            // Hero Banner destacado superior
-            if (_getHeroItemForTab() != null)
+            // 3.2 Hero Carousel Panorámico (16:9 con autodesplazamiento 3s, gestos swipe y dots)
+            if (_trendingItems.isNotEmpty || _getHeroItemForTab() != null)
               SliverToBoxAdapter(
-                child: HeroBanner(
-                  item: _getHeroItemForTab()!,
-                  onPlay: () => _playMedia(_getHeroItemForTab()!),
-                  onDetails: () => _openDetail(_getHeroItemForTab()!),
+                child: TomHeroCarousel(
+                  items: _trendingItems.isNotEmpty ? _trendingItems : [_getHeroItemForTab()!],
+                  onPlay: _playMedia,
+                  onDetails: _openDetail,
                 ),
               ),
+
+            // 3.4 Banner Publicitario Nativo intercalado
+            SliverToBoxAdapter(
+              child: TomNativeAdBanner(
+                title: 'TOM TV VIP Ilimitado',
+                subtitle: 'Acceso total a más de 10,000 películas y series en 4K UHD sin interrupciones.',
+                ctaText: 'ENTRAR AHORA',
+                onTap: () => setState(() => _activeTab = 'Perfil'),
+              ),
+            ),
 
             // Fila: Continuar Viendo
             SliverToBoxAdapter(
@@ -1482,20 +1675,18 @@ class _HomeViewState extends State<HomeView> {
             // Fila: Mi Lista (solo en tab Todos si hay favoritos)
             if (_activeTab == 'Todos' && _favorites.isNotEmpty)
               SliverToBoxAdapter(
-                child: MediaRow(
-                  title: 'Mi Lista',
+                child: TomContentRow(
+                  title: 'Mi Lista Favorita',
                   items: _favorites,
                   onItemTap: _openDetail,
                 ),
               ),
 
-
-
-            // Filas según la pestaña activa
+            // 3.3 Filas Horizontales de Contenido (Content Carousels con badges y '...')
             if (_activeTab == 'Todos' || _activeTab == 'Películas') ...[
               if (_nowPlayingItems.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: MediaRow(
+                  child: TomContentRow(
                     title: 'Estrenos en Cartelera',
                     items: _nowPlayingItems,
                     onItemTap: _openDetail,
@@ -1503,7 +1694,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
               if (_trendingItems.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: MediaRow(
+                  child: TomContentRow(
                     title: _activeTab == 'Películas'
                         ? 'Películas en Tendencia'
                         : 'Tendencias de la Semana',
@@ -1515,16 +1706,16 @@ class _HomeViewState extends State<HomeView> {
                 ),
               if (_actionItems.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: MediaRow(
-                    title: 'Acción y Aventura',
+                  child: TomContentRow(
+                    title: 'Ecos del campo de batalla (Acción)',
                     items: _actionItems,
                     onItemTap: _openDetail,
                   ),
                 ),
               if (_scifiItems.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: MediaRow(
-                    title: 'Ciencia Ficción y Fantasía',
+                  child: TomContentRow(
+                    title: 'Mundo de la Ciencia Ficción',
                     items: _scifiItems,
                     onItemTap: _openDetail,
                   ),
@@ -1534,15 +1725,15 @@ class _HomeViewState extends State<HomeView> {
             if (_activeTab == 'Todos' || _activeTab == 'Series') ...[
               if (_seriesItems.isNotEmpty)
                 SliverToBoxAdapter(
-                  child: MediaRow(
-                    title: 'Series Populares',
+                  child: TomContentRow(
+                    title: 'Series de TV Exclusivas',
                     items: _seriesItems,
                     onItemTap: _openDetail,
                   ),
                 ),
               if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
                 SliverToBoxAdapter(
-                  child: MediaRow(
+                  child: TomContentRow(
                     title: 'Series en Tendencia',
                     items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
                     onItemTap: _openDetail,
@@ -1550,11 +1741,11 @@ class _HomeViewState extends State<HomeView> {
                 ),
             ],
 
-            // Filas dinámicas infinitas de Cartelera sin fin
+            // Filas dinámicas infinitas con TomContentRow
             if (_activeTab == 'Todos' || (_activeTab == 'Películas' && _selectedMovieYear == null))
               for (final cat in _extraCategories)
                 SliverToBoxAdapter(
-                  child: MediaRow(
+                  child: TomContentRow(
                     title: cat['title'] as String,
                     items: (cat['items'] as List<MediaItem>),
                     onItemTap: _openDetail,
@@ -1572,7 +1763,7 @@ class _HomeViewState extends State<HomeView> {
                       height: 32,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE50914)),
+                        valueColor: AlwaysStoppedAnimation<Color>(TomTokens.primaryAccent),
                       ),
                     ),
                   ),
@@ -1586,6 +1777,69 @@ class _HomeViewState extends State<HomeView> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Pestaña 3.5: Anime con Skeleton Loading animado
+  Widget _buildAnimeTab() {
+    if (_isLoadingAnime) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Anime y Animación Japonesa',
+              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: 4,
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                itemBuilder: (_, __) => const TomSkeletonCard(),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_animeItems.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.movie_filter_rounded, color: TomTokens.primaryAccent, size: 48),
+              const SizedBox(height: 12),
+              const Text('Cargando catálogo de anime...', style: TextStyle(color: TomTokens.textSecondary)),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TomTokens.primaryAccent,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _loadAnimeCatalog,
+                child: const Text('Reintentar'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        TomContentRow(
+          title: 'Anime y Animación Popular',
+          items: _animeItems,
+          onItemTap: _openDetail,
+        ),
+      ],
     );
   }
 
@@ -1738,6 +1992,74 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _buildTabBar(bool isTv) {
+    if (!isTv) {
+      final mobileSubTabs = [
+        {'id': 'Todos', 'label': 'Recomendado'},
+        {'id': 'Películas', 'label': 'Filmes'},
+        {'id': 'Series', 'label': 'Serie de TV'},
+        {'id': 'Niños', 'label': 'Infantil'},
+        {'id': 'Anime', 'label': 'Anime'},
+        {'id': 'Adulto Zonas', 'label': 'Adulto Zonas'},
+      ];
+
+      return Container(
+        height: 42,
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: mobileSubTabs.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemBuilder: (context, index) {
+            final tab = mobileSubTabs[index];
+            final id = tab['id']!;
+            final label = tab['label']!;
+            final isSelected = (_activeTab == id) || (_activeTab == 'Todos' && id == 'Todos');
+
+            return GestureDetector(
+              onTap: () {
+                if (id == 'Adulto Zonas') {
+                  showParentalWarningDialog(
+                    context,
+                    onGoToLink: () => setState(() => _activeTab = 'Perfil'),
+                  );
+                  return;
+                }
+                setState(() => _activeTab = id);
+                if (id == 'Niños') _loadKidsCatalog();
+                if (id == 'Anime') _loadAnimeCatalog();
+                if (_scrollController.hasClients && _scrollController.offset > 0) {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isSelected ? TomTokens.primaryAccent : Colors.transparent,
+                      width: 2.5,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? TomTokens.primaryAccent : TomTokens.textSecondary,
+                    fontSize: 14.5,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     final tabs = [
       {'id': 'Todos', 'label': 'Todos', 'icon': Icons.grid_view_rounded},
       {'id': 'Fútbol & Deportes', 'label': '⚽ Fútbol & Deportes', 'icon': Icons.sports_soccer_rounded},

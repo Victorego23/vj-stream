@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 import '../models/live_channel.dart';
 import '../services/api_service.dart';
 import '../widgets/xuper_master_launcher.dart';
+import '../widgets/tom_live_tv_mobile.dart';
 import 'video_player_view.dart';
 
 class LiveTvView extends StatefulWidget {
@@ -1162,6 +1163,19 @@ class _LiveTvViewState extends State<LiveTvView> {
   // LAYOUT MÓVIL / PANTALLA ESTRECHA (LIMPIO, SIN BARRA DE BÚSQUEDA)
   // ===========================================================================
   Widget _buildMobileLayout() {
+    return TomLiveTvMobile(
+      channels: _allChannels,
+      favoriteIds: _favoriteChannelIds,
+      initialCategory: widget.initialCategory ?? _selectedCategory,
+      onToggleFavorite: _toggleFavorite,
+      onChannelSelected: (channel) {
+        _recordRecentChannel(channel.id);
+      },
+      onBackToMovies: widget.onBackToMovies,
+    );
+  }
+
+  Widget _buildLegacyMobileLayout() {
     final channels = _filteredChannels;
 
     return Scaffold(
