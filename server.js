@@ -66,28 +66,22 @@ app.get('/api/version', (req, res) => {
 
 // Controlador unificado para servir el APK directamente sin redirecciones intermedias
 const serveApkDirect = (req, res) => {
-  const fs = require('fs');
-  const tomReleasePath = path.resolve(__dirname, 'TOM-TV-release.apk');
-  const releasePath = path.resolve(__dirname, 'VJ-STREAM-release.apk');
-  const apkPath = path.resolve(__dirname, 'VJ-STREAM-debug.apk');
-  const fallbackPath = path.resolve(__dirname, 'build', 'app', 'outputs', 'flutter-apk', 'app-release.apk');
-
-  const fileToSend = fs.existsSync(tomReleasePath)
-    ? tomReleasePath
-    : (fs.existsSync(releasePath) ? releasePath : (fs.existsSync(apkPath) ? apkPath : fallbackPath));
-
-  if (fs.existsSync(fileToSend)) {
-    const stat = fs.statSync(fileToSend);
-    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-    res.setHeader('Content-Length', stat.size);
-    res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    return res.sendFile(fileToSend);
+  if (req.query.source === 'local') {
+    const fs = require('fs');
+    const tomReleasePath = path.resolve(__dirname, 'TOM-TV-release.apk');
+    if (fs.existsSync(tomReleasePath)) {
+      const stat = fs.statSync(tomReleasePath);
+      res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+      res.setHeader('Content-Length', stat.size);
+      res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      return res.sendFile(tomReleasePath);
+    }
   }
 
+  // Redirigir siempre al APK del release oficial más reciente en GitHub CDN
   const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/latest/download/TOM-TV-release.apk';
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   return res.redirect(githubReleaseUrl);
 };
 
