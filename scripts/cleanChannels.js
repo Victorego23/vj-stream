@@ -4,8 +4,8 @@ const path = require('path');
 const CHANNELS_FILE = path.join(__dirname, '..', 'data', 'channels.json');
 const BACKUP_FILE = path.join(__dirname, '..', 'data', 'channels.backup.json');
 
-const CONCURRENCY = 40; // 40 verificaciones concurrentes
-const TIMEOUT_MS = 2200; // 2.2 segundos máximo por canal
+const CONCURRENCY = 30; // 30 verificaciones concurrentes
+const TIMEOUT_MS = 4000; // 4.0 segundos para dar margen a CDNs internacionales
 
 /**
  * Prueba con alta velocidad si una URL de streaming M3U8 responde con señal activa de video.
@@ -13,7 +13,7 @@ const TIMEOUT_MS = 2200; // 2.2 segundos máximo por canal
 async function testStream(url) {
   if (!url || typeof url !== 'string' || !url.startsWith('http')) return false;
 
-  // Descartar dominios conocidos que están permanentemente caídos
+  // Descartar dominios conocidos que están permanentemente caídos o muertos
   if (url.includes('tvpass.org') || url.includes('rtvelivestream.akamaized.net')) {
     return false;
   }
@@ -22,21 +22,26 @@ async function testStream(url) {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(TIMEOUT_MS),
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Accept': '*/*'
       }
     });
 
     if (res.status >= 200 && res.status < 400) {
       const ct = (res.headers.get('content-type') || '').toLowerCase();
-      // Si responde con HTML en vez de stream, es una página de error o bloqueo
-      if (ct.includes('text/html')) return false;
+      // Si responde con HTML o JSON de error, no es un stream válido
+      if (ct.includes('text/html') || ct.includes('application/json')) return false;
 
       const txt = await res.text().catch(() => '');
-      if (txt.includes('#EXTM3U') || txt.includes('#EXTINF') || ct.includes('mpegurl') || ct.includes('video') || ct.includes('application/vnd.apple.mpegurl')) {
-        return true;
-      }
-      if (res.status === 200 && txt.length > 50) {
+      if (
+        txt.includes('#EXTM3U') || 
+        txt.includes('#EXTINF') || 
+        ct.includes('mpegurl') || 
+        ct.includes('video') || 
+        ct.includes('application/vnd.apple.mpegurl') ||
+        ct.includes('application/x-mpegurl') ||
+        (res.status === 200 && txt.length > 20 && !txt.toLowerCase().includes('error') && !txt.toLowerCase().includes('forbidden'))
+      ) {
         return true;
       }
     }
@@ -92,9 +97,14 @@ async function cleanChannels() {
     for (const r of results) {
       processed++;
       if (r.workingUrl) {
+        const reorderedSources = [
+          r.workingUrl,
+          ...(Array.isArray(r.channel.sources) ? r.channel.sources.filter(s => s !== r.workingUrl) : [])
+        ];
         activeChannels.push({
           ...r.channel,
           streamUrl: r.workingUrl,
+          sources: reorderedSources,
           isActive: true,
           order: activeChannels.length + 1
         });

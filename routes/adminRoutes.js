@@ -494,6 +494,39 @@ router.post('/channels/sync-iptv', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/admin/channels/health
+ * @desc    Obtiene el estado de salud en tiempo real de todos los canales en vivo
+ */
+router.get('/channels/health', (req, res) => {
+  try {
+    const health = channelService.getHealthStatus();
+    return res.json({
+      success: true,
+      health
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/channels/audit
+ * @desc    Ejecuta auditoría en vivo y reparación/failover de señales de TV de inmediato
+ */
+router.post('/channels/audit', async (req, res) => {
+  try {
+    const result = await channelService.auditAndAutoHealChannels();
+    return res.json({
+      success: true,
+      message: 'Auditoría y auto-reparación de canales en vivo completada.',
+      result
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * ====================================================================
  * GESTIÓN DE REVENDEDORES Y CRÉDITOS (MASTER ADMIN)
  * ====================================================================

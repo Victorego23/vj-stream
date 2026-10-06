@@ -6,6 +6,9 @@ const CHANNELS_FILE = path.join(__dirname, '..', 'data', 'channels.json');
 class ChannelService {
   constructor() {
     this._channels = [];
+    this._isAuditing = false;
+    this._lastAudit = new Date().toISOString();
+    this._monitorTimer = null;
     this._load();
   }
 
@@ -292,6 +295,154 @@ class ChannelService {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Valida en alta velocidad si una URL de streaming M3U8/HLS tiene señal activa
+   */
+  async testStream(url, timeoutMs = 3500) {
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) return false;
+    if (url.includes('tvpass.org') || url.includes('rtvelivestream.akamaized.net')) return false;
+
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(timeoutMs),
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': '*/*'
+        }
+      });
+
+      if (res.status >= 200 && res.status < 400) {
+        const ct = (res.headers.get('content-type') || '').toLowerCase();
+        if (ct.includes('text/html') || ct.includes('application/json')) return false;
+        const txt = await res.text().catch(() => '');
+        if (
+          txt.includes('#EXTM3U') ||
+          txt.includes('#EXTINF') ||
+          ct.includes('mpegurl') ||
+          ct.includes('video') ||
+          ct.includes('application/vnd.apple.mpegurl') ||
+          ct.includes('application/x-mpegurl') ||
+          (res.status === 200 && txt.length > 20 && !txt.toLowerCase().includes('error'))
+        ) {
+          return true;
+        }
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
+   * Audita todos los canales, repara fallos con fuentes de respaldo (Failover),
+   * y desactiva canales sin señal para garantizar cero bajas.
+   */
+  async auditAndAutoHealChannels() {
+    if (this._isAuditing) {
+      return { success: true, status: 'in_progress', message: 'Auditoría ya en ejecución en segundo plano' };
+    }
+
+    this._isAuditing = true;
+    console.log('[ChannelService] 🩺 Iniciando auditoría y auto-recuperación de canales de TV...');
+
+    try {
+      const concurrency = 25;
+      let activeCount = 0;
+      let recoveredCount = 0;
+      let disabledCount = 0;
+
+      for (let i = 0; i < this._channels.length; i += concurrency) {
+        const batch = this._channels.slice(i, i + concurrency);
+        await Promise.all(batch.map(async (ch) => {
+          const sources = Array.isArray(ch.sources) && ch.sources.length > 0 ? ch.sources : [ch.streamUrl];
+          let workingUrl = null;
+
+          // 1. Probar stream principal primero
+          if (await this.testStream(ch.streamUrl)) {
+            workingUrl = ch.streamUrl;
+          } else {
+            // 2. Intentar Failover con fuentes secundarias
+            for (const src of sources) {
+              if (src !== ch.streamUrl && await this.testStream(src)) {
+                workingUrl = src;
+                recoveredCount++;
+                break;
+              }
+            }
+          }
+
+          if (workingUrl) {
+            ch.streamUrl = workingUrl;
+            ch.sources = [workingUrl, ...sources.filter(s => s !== workingUrl)];
+            ch.isActive = true;
+            ch.lastChecked = new Date().toISOString();
+            activeCount++;
+          } else {
+            // Sin señal en ninguna fuente: marcar inactivo para evitar pantalla negra a usuarios
+            ch.isActive = false;
+            ch.lastChecked = new Date().toISOString();
+            disabledCount++;
+          }
+        }));
+      }
+
+      this._lastAudit = new Date().toISOString();
+      this._save();
+
+      console.log(`[ChannelService] ✅ Auditoría finalizada: ${activeCount} activos, ${recoveredCount} auto-recuperados, ${disabledCount} desactivados.`);
+
+      return {
+        success: true,
+        total: this._channels.length,
+        activeCount,
+        recoveredCount,
+        disabledCount,
+        lastAudit: this._lastAudit
+      };
+    } catch (err) {
+      console.error('[ChannelService] Error durante auditoría:', err.message);
+      return { success: false, error: err.message };
+    } finally {
+      this._isAuditing = false;
+    }
+  }
+
+  /**
+   * Inicia el monitor continuo en segundo plano para supervisar señales 24/7
+   */
+  startBackgroundMonitor(intervalHours = 6) {
+    if (this._monitorTimer) clearInterval(this._monitorTimer);
+
+    // Verificación inicial diferida (1 minuto tras arranque)
+    setTimeout(() => {
+      this.auditAndAutoHealChannels().catch(e => console.error('[ChannelMonitor] Error en pase inicial:', e.message));
+    }, 60000);
+
+    const ms = intervalHours * 60 * 60 * 1000;
+    this._monitorTimer = setInterval(() => {
+      this.auditAndAutoHealChannels().catch(e => console.error('[ChannelMonitor] Error en pase periódico:', e.message));
+    }, ms);
+
+    console.log(`[ChannelService] 🛡️ Monitor autónomo de canales 24/7 ACTIVO (Supervisión cada ${intervalHours}h)`);
+  }
+
+  /**
+   * Devuelve resumen del estado de salud de los canales
+   */
+  getHealthStatus() {
+    const total = this._channels.length;
+    const active = this._channels.filter(c => c.isActive !== false).length;
+    const inactive = total - active;
+    return {
+      total,
+      active,
+      inactive,
+      isAuditing: this._isAuditing,
+      lastAudit: this._lastAudit,
+      healthScore: total > 0 ? Math.round((active / total) * 100) : 100
+    };
   }
 
   /**

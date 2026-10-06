@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const resellerRoutes = require('./routes/resellerRoutes');
 const catalogSyncService = require('./services/catalogSyncService');
+const channelService = require('./services/channelService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -187,6 +188,9 @@ const server = app.listen(PORT, () => {
 
   // Iniciar motor autónomo de actualización continua del catálogo
   catalogSyncService.startBackgroundWorker();
+
+  // Iniciar monitor autónomo de canales de TV en vivo 24/7 (Auditoría continua cada 6h)
+  channelService.startBackgroundMonitor(6);
 });
 
 // ====================================================================

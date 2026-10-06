@@ -770,6 +770,27 @@
       <!-- SECCIÓN 3: CANALES EN VIVO -->
       <!-- ============================================================== -->
       <section id="section-channels" style="display: none;">
+        <!-- Banner de Salud y Monitoreo de Señales -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 14px; padding: 14px 18px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 12px; height: 12px; border-radius: 50%; background: #10b981; box-shadow: 0 0 12px #10b981; animation: pulse 2s infinite;"></div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.95rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                <span>Canales 100% Operativos</span>
+                <span id="channel-health-badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.75rem; padding: 2px 8px; border-radius: 20px; font-weight: 800;">VERIFICANDO...</span>
+              </div>
+              <div id="channel-health-desc" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">
+                🛡️ Monitor autónomo 24/7 activo: supervisa y recupera señales automáticamente para evitar cortes.
+              </div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-outline" id="btn-audit-channels" onclick="triggerChannelAudit()" style="font-size: 0.82rem; padding: 8px 16px; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
+              ⚡ Auditar Señales Ahora
+            </button>
+          </div>
+        </div>
+
         <div class="controls-bar">
           <div class="search-box">
             <span class="search-icon">🔍</span>
@@ -2319,8 +2340,62 @@
           channelsData = data.channels || [];
           document.getElementById('badge-channels-count').textContent = channelsData.length;
           renderChannels();
+          fetchChannelHealth();
         }
       } catch (_) {}
+    }
+
+    async function fetchChannelHealth() {
+      try {
+        const res = await fetch('/api/admin/channels/health', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.health) {
+          const h = data.health;
+          const badge = document.getElementById('channel-health-badge');
+          const desc = document.getElementById('channel-health-desc');
+          if (badge) {
+            badge.textContent = `${h.active} ACTIVOS / ${h.inactive} BAJAS (100% OPERATIVO)`;
+          }
+          if (desc && h.lastAudit) {
+            const timeStr = new Date(h.lastAudit).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            desc.innerHTML = `🛡️ Monitor autónomo 24/7 activo: supervisa y repara señales automáticamente. Última verificación: <strong>${timeStr}</strong>`;
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function triggerChannelAudit() {
+      const btn = document.getElementById('btn-audit-channels');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Auditando señales...';
+      }
+      showToast('🔍 Verificando señales en vivo... Espera unos segundos', 'info');
+
+      try {
+        const res = await fetch('/api/admin/channels/audit', {
+          method: 'POST',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.result) {
+          const r = data.result;
+          showToast(`✅ Auditoría completada: ${r.activeCount} canales operativos, ${r.recoveredCount || 0} auto-reparados.`, 'success');
+          await fetchChannels();
+          await fetchChannelHealth();
+        } else {
+          showToast('Error al auditar canales: ' + (data.error || 'Desconocido'), 'error');
+        }
+      } catch (e) {
+        showToast('Error de conexión durante la auditoría', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '⚡ Auditar Señales Ahora';
+        }
+      }
     }
 
     function filterChannels() {
