@@ -26,7 +26,7 @@ class MediaRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
 
-    final isTv = MediaQuery.of(context).size.width > 700;
+    final isTv = MediaQuery.of(context).size.width > 680 || (MediaQuery.of(context).orientation == Orientation.landscape && MediaQuery.of(context).size.width > 520);
     final rowCardWidth = isTv ? 160.0 : cardWidth;
     final rowCardHeight = isTv ? 240.0 : cardHeight;
 

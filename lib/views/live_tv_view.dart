@@ -379,7 +379,7 @@ class _LiveTvViewState extends State<LiveTvView> {
 
   @override
   Widget build(BuildContext context) {
-    final isTv = MediaQuery.of(context).size.width > 700;
+    final isTv = MediaQuery.of(context).size.width > 680 || (MediaQuery.of(context).orientation == Orientation.landscape && MediaQuery.of(context).size.width > 520);
 
     return PopScope(
       canPop: false,

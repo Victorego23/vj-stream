@@ -90,6 +90,7 @@ router.get('/overview', (req, res) => {
   const clients = accountService.getClients();
   const pending = accountService.getPendingActivations();
   const settings = accountService.getSettings();
+  const db = accountService._readDb();
 
   const totalClients = clients.length;
   const activeClients = clients.filter(c => c.status === 'active').length;
@@ -116,7 +117,12 @@ router.get('/overview', (req, res) => {
     clients,
     pending,
     resellers,
-    settings
+    settings: {
+      ...settings,
+      appName: settings.appName || 'TOM TV',
+      adminUsername: db.admin?.username || 'admin',
+      hasAdminPassword: Boolean(db.admin?.password)
+    }
   });
 });
 
@@ -268,6 +274,28 @@ router.delete(['/clients/:id', '/client/:id'], handleDeleteClient);
 router.post(['/clients/:id/delete', '/client/:id/delete', '/delete-client'], handleDeleteClient);
 
 /**
+ * @route   PUT /api/admin/clients/:id
+ * @route   POST /api/admin/clients/:id/edit
+ * @desc    Actualiza todos los datos del cliente (nombre, código TV, dispositivos, días, estado)
+ */
+const handleUpdateClient = (req, res) => {
+  try {
+    const clientId = req.params.id || req.body.id;
+    const updated = accountService.updateClient(clientId, req.body);
+    return res.json({
+      success: true,
+      client: updated,
+      message: 'Datos del cliente actualizados exitosamente.'
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+};
+
+router.put(['/clients/:id', '/client/:id'], handleUpdateClient);
+router.post(['/clients/:id/edit', '/client/:id/edit', '/update-client'], handleUpdateClient);
+
+/**
  * @route   DELETE /api/admin/pending/:code
  * @route   POST /api/admin/reject-pending
  * @desc    Descarta / rechaza una pantalla pendiente de activación
@@ -287,19 +315,45 @@ router.post('/reject-pending', handleRejectPending);
 
 /**
  * @route   POST /api/admin/settings
- * @desc    Actualiza la contraseña del panel y el número de WhatsApp de contacto
+ * @desc    Actualiza la configuración general del sistema, panel, marca y accesos
  */
 router.post('/settings', (req, res) => {
-  const { adminPassword, whatsappNumber, whatsappMessage, plinNumber } = req.body;
+  const { 
+    adminUsername, 
+    adminPassword, 
+    appName, 
+    whatsappNumber, 
+    whatsappMessage, 
+    plinNumber,
+    realDebridKey,
+    tmdbKey 
+  } = req.body;
 
   const updated = accountService.updateSettings({
+    adminUsername,
     adminPassword,
+    appName,
     whatsappNumber,
     whatsappMessage,
-    plinNumber
+    plinNumber,
+    realDebridKey,
+    tmdbKey
   });
 
   return res.json({ success: true, settings: updated, message: 'Ajustes guardados correctamente.' });
+});
+
+/**
+ * @route   POST /api/admin/reset-clean
+ * @desc    Limpia la base de datos dejando clientes y revendedores en 0 de manera segura
+ */
+router.post('/reset-clean', (req, res) => {
+  try {
+    const result = accountService.resetToCleanState();
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 /**

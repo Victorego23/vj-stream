@@ -1037,7 +1037,7 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final isTv = MediaQuery.of(context).size.width > 700;
+    final isTv = MediaQuery.of(context).size.width > 680 || (MediaQuery.of(context).orientation == Orientation.landscape && MediaQuery.of(context).size.width > 520);
 
     return PopScope(
       canPop: false,
@@ -1316,36 +1316,6 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ),
 
-            // Bloques Maestros Gigantes estilo Xuper TV Launcher (TV En Vivo, Películas, Series, Deportes)
-            if (_activeTab == 'Todos')
-              SliverToBoxAdapter(
-                child: XuperMasterCardsRow(
-                  onOpenLiveTv: () {
-                    setState(() {
-                      _activeTab = 'TV en Vivo';
-                      _hoveredItem = null;
-                    });
-                  },
-                  onOpenMovies: () {
-                    setState(() {
-                      _activeTab = 'Películas';
-                      _hoveredItem = null;
-                    });
-                  },
-                  onOpenSeries: () {
-                    setState(() {
-                      _activeTab = 'Series';
-                      _hoveredItem = null;
-                    });
-                  },
-                  onOpenSports: () {
-                    setState(() {
-                      _activeTab = 'Fútbol & Deportes';
-                      _hoveredItem = null;
-                    });
-                  },
-                ),
-              ),
 
             // Hero Banner destacado superior dinámico
             if (_getHeroItemForTab() != null)
@@ -1534,16 +1504,6 @@ class _HomeViewState extends State<HomeView> {
             child: _buildTabBar(false),
           ),
 
-          // Bloques Maestros Gigantes estilo Xuper TV en Móvil (solo en pestaña Todos)
-          if (_activeTab == 'Todos')
-            SliverToBoxAdapter(
-              child: XuperMasterCardsRow(
-                onOpenLiveTv: () => setState(() => _activeTab = 'TV en Vivo'),
-                onOpenMovies: () => setState(() => _activeTab = 'Películas'),
-                onOpenSeries: () => setState(() => _activeTab = 'Series'),
-                onOpenSports: () => setState(() => _activeTab = 'Fútbol & Deportes'),
-              ),
-            ),
 
           // Selector horizontal de Años 2000 - 2026 cuando está en la pestaña "Películas"
           if (_activeTab == 'Películas')

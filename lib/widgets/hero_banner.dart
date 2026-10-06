@@ -19,7 +19,7 @@ class HeroBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isTvOrDesktop = size.width > 700;
+    final isTvOrDesktop = size.width > 680 || (MediaQuery.of(context).orientation == Orientation.landscape && size.width > 520);
     final bannerHeight = isTvOrDesktop ? size.height * 0.65 : size.height * 0.55;
 
     return SizedBox(

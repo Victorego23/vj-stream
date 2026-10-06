@@ -90,7 +90,7 @@ class _SearchViewState extends State<SearchView> {
 
   @override
   Widget build(BuildContext context) {
-    final isTv = MediaQuery.of(context).size.width > 700;
+    final isTv = MediaQuery.of(context).size.width > 680 || (MediaQuery.of(context).orientation == Orientation.landscape && MediaQuery.of(context).size.width > 520);
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Calcular columnas para cuadrícula de pósters

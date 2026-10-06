@@ -949,8 +949,8 @@
     .focusable.tv-focused {
       outline: none !important;
       transform: scale(1.08) translateY(-4px) !important;
-      border: 3.5px solid #FFD700 !important;
-      box-shadow: 0 0 26px rgba(255, 215, 0, 0.9), 0 12px 32px rgba(0, 0, 0, 0.95) !important;
+      border: 3.5px solid #E50914 !important;
+      box-shadow: 0 0 28px rgba(229, 9, 20, 0.85), 0 14px 32px rgba(0, 0, 0, 0.95) !important;
       z-index: 120 !important;
       position: relative;
     }
@@ -1187,6 +1187,134 @@
       letter-spacing: 6px !important;
     }
 
+    /* ========================================================
+       MODO SMART TV CINEMATOGRÁFICO Y PANTALLAS GRANDES (10-FOOT UI)
+       ======================================================== */
+    .brand-sub-badge {
+      font-size: 10px;
+      font-weight: 900;
+      color: #FFD700;
+      background: rgba(255, 215, 0, 0.15);
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      padding: 2px 7px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+      margin-left: 6px;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .tv-clock-badge {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+    .tv-live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22C55E;
+      box-shadow: 0 0 8px #22C55E;
+      display: inline-block;
+      animation: pulseDot 2s infinite ease-in-out;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    @media (min-width: 900px) {
+      .tv-clock-badge {
+        display: inline-flex;
+      }
+      .hero-banner {
+        height: 520px;
+        padding: 48px 40px;
+      }
+      .hero-title {
+        font-size: 44px;
+        line-height: 1.1;
+      }
+      .media-card {
+        flex: 0 0 175px;
+      }
+      .media-poster {
+        height: 260px;
+      }
+      .grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+        gap: 20px;
+      }
+    }
+
+    body.tv-mode {
+      background: #060709;
+    }
+    body.tv-mode .tv-clock-badge {
+      display: inline-flex !important;
+    }
+    body.tv-mode #iosHelpBtn,
+    body.tv-mode a[href="/mobile-preview"] {
+      display: none !important;
+    }
+    body.tv-mode .hero-banner {
+      height: 530px;
+    }
+    body.tv-mode .media-card {
+      flex: 0 0 180px;
+    }
+    body.tv-mode .media-poster {
+      height: 270px;
+    }
+    body.tv-mode .grid-container {
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    /* RETROALIMENTACIÓN DE SEEK / OSD EN REPRODUCTOR */
+    .player-seek-pill {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.85);
+      background: rgba(10, 11, 16, 0.92);
+      border: 1.5px solid rgba(229, 9, 20, 0.8);
+      color: #fff;
+      padding: 16px 32px;
+      border-radius: 40px;
+      font-size: 24px;
+      font-weight: 900;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.9), 0 0 25px rgba(229, 9, 20, 0.6);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .player-seek-pill.show {
+      display: inline-flex;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .player-modal.player-idle .player-header {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    .player-header {
+      transition: opacity 0.3s ease;
+    }
+
     /* BARRA DE NAVEGACIÓN INFERIOR PARA MÓVILES (NETFLIX STYLE) */
     .mobile-bottom-nav {
       display: none;
@@ -1266,9 +1394,14 @@
 
   <!-- HEADER -->
   <header>
-    <div class="brand" onclick="switchTab('Todos')">
+    <div class="brand" onclick="switchTab('Todos')" style="cursor: pointer;">
       <div class="brand-logo">TOM</div>
       <div class="brand-name">TV</div>
+      <span class="brand-sub-badge">4K ULTRA HD</span>
+    </div>
+    <div class="tv-clock-badge" id="tvClockBadge">
+      <span class="tv-live-dot"></span>
+      <span id="tvClockTime">--:--</span>
     </div>
     <div class="header-actions">
       <button class="senior-toggle-btn focusable" id="seniorToggleBtn" onclick="toggleSeniorMode()" title="Modo TV Fácil para Adultos Mayores con control remoto">
@@ -1388,14 +1521,20 @@
 
   <!-- MODAL REPRODUCTOR DE VIDEO HTML5 / HLS CON AUDIO ESTÉREO -->
   <div class="player-modal" id="playerModal">
-    <div class="player-header">
+    <div class="player-header" id="playerHeader">
       <div class="player-title" id="playerTitle">Reproduciendo...</div>
       <div style="display: flex; gap: 10px; align-items: center;">
-        <button class="audio-selector-btn" onclick="toggleAudioDropdown()">
+        <button class="audio-selector-btn focusable" onclick="toggleAudioDropdown()">
           🎧 Audio: <span id="currentAudioLabel">Español Estéreo</span> ▼
         </button>
-        <button class="btn-close-player" onclick="closePlayer()">✕</button>
+        <button class="btn-close-player focusable" onclick="closePlayer()">✕</button>
       </div>
+    </div>
+
+    <!-- FEEDBACK OSD EN REPRODUCTOR (SEEK +/-10S) -->
+    <div class="player-seek-pill" id="playerSeekPill">
+      <span id="playerSeekIcon">⏩</span>
+      <span id="playerSeekText">+10s</span>
     </div>
 
     <!-- MENÚ DE OPCIONES DE AUDIO -->
@@ -2189,7 +2328,7 @@
       const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || '');
       const safeItem = encodeURIComponent(JSON.stringify(item));
       return `
-        <div class="media-card focusable" tabindex="0" onclick="openMediaDetail('${safeItem}')">
+        <div class="media-card focusable" tabindex="0" data-media="${safeItem}" onmouseenter="previewCardOnHover('${safeItem}')" onclick="openMediaDetail('${safeItem}')">
           <div class="media-lang-badge">ESP</div>
           <img class="media-poster" src="${poster}" alt="${item.title}" loading="lazy">
           <div class="media-rating">★ ${rating}</div>
@@ -2199,6 +2338,27 @@
           </div>
         </div>
       `;
+    }
+
+    function previewCardOnHover(safeItem) {
+      try {
+        const item = JSON.parse(decodeURIComponent(safeItem));
+        updateHeroPreview(item);
+      } catch (_) {}
+    }
+
+    function updateHeroPreview(item) {
+      if (!item || currentTab === 'TV en Vivo') return;
+      const heroBanner = document.getElementById('heroBanner');
+      const heroTitle = document.getElementById('heroTitle');
+      const heroSynopsis = document.getElementById('heroSynopsis');
+      if (heroTitle && item.title) heroTitle.textContent = item.title;
+      if (heroSynopsis) heroSynopsis.textContent = item.synopsis || (item.overview || 'Disponible en calidad 4K Ultra HD en TOM TV.');
+      const backdrop = item.backdrops?.original || item.backdrops?.large || item.posters?.original || item.posters?.medium;
+      if (heroBanner && backdrop) {
+        heroBanner.style.backgroundImage = `url('${backdrop}')`;
+      }
+      heroItem = item;
     }
 
     // REPRODUCCIÓN AUTOMÁTICA CON RESOLVER Y AUDIO ESTÉREO
@@ -2234,6 +2394,8 @@
       titleEl.textContent = `Buscando enlace en Español Estéreo para: ${item.title}...`;
       modal.style.display = 'flex';
       video.pause();
+      currentPlayingLiveChannel = null;
+      resetPlayerIdleTimer();
 
       const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || null);
 
@@ -2280,10 +2442,12 @@
         return;
       }
 
+      currentPlayingLiveChannel = ch;
       const modal = document.getElementById('playerModal');
       const titleEl = document.getElementById('playerTitle');
       titleEl.textContent = `EN VIVO: ${ch.name}`;
       modal.style.display = 'flex';
+      resetPlayerIdleTimer();
 
       const sources = ch.sources || [ch.url];
       currentStreams = sources.map((url, i) => ({
@@ -2373,6 +2537,9 @@
         hlsInstance.destroy();
         hlsInstance = null;
       }
+      currentPlayingLiveChannel = null;
+      if (playerIdleTimer) clearTimeout(playerIdleTimer);
+      modal.classList.remove('player-idle');
       modal.style.display = 'none';
       document.getElementById('audioDropdown').style.display = 'none';
     }
@@ -2513,25 +2680,104 @@
       if (currentTab === 'TV en Vivo') renderCurrentTab();
     }
 
+    let currentPlayingLiveChannel = null;
+    let playerIdleTimer = null;
+    let seekPillTimer = null;
+
+    function resetPlayerIdleTimer() {
+      const modal = document.getElementById('playerModal');
+      const header = document.getElementById('playerHeader');
+      if (!modal || modal.style.display !== 'flex') return;
+
+      modal.classList.remove('player-idle');
+      if (header) header.style.opacity = '1';
+
+      if (playerIdleTimer) clearTimeout(playerIdleTimer);
+      playerIdleTimer = setTimeout(() => {
+        if (modal.style.display === 'flex') {
+          modal.classList.add('player-idle');
+          if (header) header.style.opacity = '0';
+        }
+      }, 3500);
+    }
+
+    function showPlayerSeekFeedback(icon, text) {
+      const pill = document.getElementById('playerSeekPill');
+      const iconEl = document.getElementById('playerSeekIcon');
+      const textEl = document.getElementById('playerSeekText');
+      if (!pill) return;
+      if (iconEl) iconEl.textContent = icon;
+      if (textEl) textEl.textContent = text;
+      pill.classList.add('show');
+      if (seekPillTimer) clearTimeout(seekPillTimer);
+      seekPillTimer = setTimeout(() => {
+        pill.classList.remove('show');
+      }, 900);
+    }
+
+    function switchLiveChannelRelative(delta) {
+      if (!liveChannels || liveChannels.length === 0) return;
+      let idx = -1;
+      if (currentPlayingLiveChannel) {
+        idx = liveChannels.findIndex(c => c.id === currentPlayingLiveChannel.id);
+      }
+      if (idx === -1) idx = 0;
+      let nextIdx = (idx + delta + liveChannels.length) % liveChannels.length;
+      const nextCh = liveChannels[nextIdx];
+      if (nextCh) {
+        const info = PERU_CHANNELS_MAP[nextCh.id];
+        const chNum = info ? info.num : (nextCh.number || nextIdx + 1);
+        showTvOsd(chNum, nextCh.name, 'Cambiando canal...');
+        playLiveChannel(nextCh);
+      }
+    }
+
+    function updateTvClock() {
+      const clockEl = document.getElementById('tvClockTime');
+      if (!clockEl) return;
+      const now = new Date();
+      clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
     // MOTOR DE NAVEGACIÓN POR CONTROL REMOTO (D-PAD SPATIAL NAVIGATION)
     function initTvRemoteNavigation() {
       const savedPref = localStorage.getItem('tom_tv_senior_mode');
-      const isTv = /SmartTV|Tizen|Web0S|NetCast|HbbTV|BRAVIA|Viera|Android TV|GoogleTV|AppleTV|BOX/i.test(navigator.userAgent);
-      if (savedPref === 'true' || (savedPref === null && (isTv || window.innerWidth >= 1200))) {
+      const isTv = /SmartTV|Tizen|Web0S|NetCast|HbbTV|BRAVIA|Viera|Android TV|GoogleTV|AppleTV|BOX|CrKey|Roku/i.test(navigator.userAgent);
+      
+      // En televisores Smart TV o pantallas grandes activamos el elegante modo TV cinematográfico
+      if (isTv || window.innerWidth >= 900) {
+        document.body.classList.add('tv-mode');
+      }
+
+      // Solo si el usuario guardó explícitamente el Modo Adulto Mayor lo activamos
+      if (savedPref === 'true') {
         toggleSeniorMode(true);
       }
+
+      // Iniciar reloj digital en cabecera
+      updateTvClock();
+      setInterval(updateTvClock, 10000);
+
+      // Movimiento de mouse en reproductor despierta los controles
+      window.addEventListener('mousemove', () => {
+        const modal = document.getElementById('playerModal');
+        if (modal && modal.style.display === 'flex') {
+          resetPlayerIdleTimer();
+        }
+      });
 
       window.addEventListener('keydown', (e) => {
         const key = e.key;
         const code = e.keyCode;
+        const playerModal = document.getElementById('playerModal');
+        const isPlayerOpen = playerModal && playerModal.style.display === 'flex';
 
         // TECLAS DE SALIR / ATRÁS (Escape, Back en Samsung 10009, Back en LG 461, Backspace)
         if (key === 'Escape' || code === 27 || code === 10009 || code === 461 || (key === 'Backspace' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName))) {
-          const playerModal = document.getElementById('playerModal');
           const searchModal = document.getElementById('searchModal');
           const activationModal = document.getElementById('activationModal');
 
-          if (playerModal && playerModal.style.display === 'flex') {
+          if (isPlayerOpen) {
             closePlayer();
             e.preventDefault();
             return;
@@ -2548,6 +2794,53 @@
           }
         }
 
+        // CONTROLES DE REPRODUCTOR CUANDO ESTÁ REPRODUCIENDO EN SMART TV
+        if (isPlayerOpen) {
+          resetPlayerIdleTimer();
+          const video = document.getElementById('videoPlayer');
+
+          // Pausar / Reanudar con Space o Tecla Play/Pause
+          if (key === ' ' || code === 32 || code === 179) {
+            e.preventDefault();
+            if (video) {
+              if (video.paused) video.play().catch(() => {}); else video.pause();
+            }
+            return;
+          }
+
+          // Adelantar / Retroceder (+/- 10s) con Flechas Izquierda / Derecha
+          if (key === 'ArrowLeft' || code === 37 || code === 21) {
+            e.preventDefault();
+            if (video && video.duration) {
+              video.currentTime = Math.max(0, video.currentTime - 10);
+              showPlayerSeekFeedback('⏪', '-10s');
+            }
+            return;
+          }
+          if (key === 'ArrowRight' || code === 39 || code === 22) {
+            e.preventDefault();
+            if (video && video.duration) {
+              video.currentTime = Math.min(video.duration, video.currentTime + 10);
+              showPlayerSeekFeedback('⏩', '+10s');
+            }
+            return;
+          }
+
+          // Cambiar de canal con Flechas Arriba / Abajo si es transmisión de TV en Vivo
+          if (currentPlayingLiveChannel) {
+            if (key === 'ArrowUp' || code === 38 || code === 19) {
+              e.preventDefault();
+              switchLiveChannelRelative(-1);
+              return;
+            }
+            if (key === 'ArrowDown' || code === 40 || code === 20) {
+              e.preventDefault();
+              switchLiveChannelRelative(1);
+              return;
+            }
+          }
+        }
+
         // TECLAS NUMÉRICAS (0 AL 9): ZAP DIRECTO DE CANAL
         if (!['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
           let numPressed = null;
@@ -2561,16 +2854,16 @@
           }
         }
 
-        // FLECHAS DE NAVEGACIÓN D-PAD
+        // FLECHAS DE NAVEGACIÓN D-PAD EN CATÁLOGO
         const isArrow = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key) || [19, 20, 21, 22, 37, 38, 39, 40].includes(code);
-        if (isArrow) {
+        if (isArrow && !isPlayerOpen) {
           handleSpatialDpad(e);
           return;
         }
 
         // BOTÓN ENTER / OK
         if ((key === 'Enter' || code === 13 || code === 66 || code === 23) && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-          if (currentFocusedElement) {
+          if (!isPlayerOpen && currentFocusedElement) {
             e.preventDefault();
             currentFocusedElement.click();
           }
@@ -2643,14 +2936,12 @@
         e.preventDefault();
         setFocusToElement(bestTarget);
       } else if (isLeft) {
-        // Si no encontró por geometría espacial 2D, retroceder al elemento previo enfocable
         const idx = focusables.indexOf(currentFocusedElement);
         if (idx > 0) {
           e.preventDefault();
           setFocusToElement(focusables[idx - 1]);
         }
       } else if (isRight) {
-        // Si no encontró por geometría espacial 2D, avanzar al siguiente elemento enfocable
         const idx = focusables.indexOf(currentFocusedElement);
         if (idx >= 0 && idx < focusables.length - 1) {
           e.preventDefault();
@@ -2667,6 +2958,17 @@
       currentFocusedElement.classList.add('tv-focused');
       currentFocusedElement.focus({ preventScroll: true });
       currentFocusedElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+      // Si se enfoca una película o serie con el control remoto, previsualizar en el Hero Banner
+      if (el.classList.contains('media-card')) {
+        const rawMedia = el.getAttribute('data-media');
+        if (rawMedia) {
+          try {
+            const item = JSON.parse(decodeURIComponent(rawMedia));
+            updateHeroPreview(item);
+          } catch (_) {}
+        }
+      }
     }
 
     // INICIALIZACIÓN

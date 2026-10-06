@@ -514,7 +514,7 @@ class _DetailViewState extends State<DetailView> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isTv = size.width > 700;
+    final isTv = size.width > 680 || (MediaQuery.of(context).orientation == Orientation.landscape && size.width > 520);
 
     return Scaffold(
       backgroundColor: const Color(0xFF000000), // Negro absoluto OLED

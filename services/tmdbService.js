@@ -158,12 +158,80 @@ class TmdbService {
       });
 
       const { data } = response;
+      let rawResults = (data.results || []).filter(item => item.media_type !== 'person');
+      const seenIds = new Set(rawResults.map(r => `${r.media_type || (r.title ? 'movie' : 'tv')}_${r.id}`));
+
+      // Si encontramos resultados principales, buscar automáticamente películas/series relacionadas (Sagas completas, secuelas y recomendaciones)
+      if (rawResults.length > 0) {
+        try {
+          const topMatches = rawResults.slice(0, 2);
+          for (const item of topMatches) {
+            const itemType = item.media_type || (item.title ? 'movie' : 'tv');
+            if (itemType === 'movie') {
+              // 1. Obtener detalles para revisar si pertenece a una saga/colección (ej: Rápidos y Furiosos, Batman, Shrek, Avatar, Marvel)
+              const detRes = await client.get(`/movie/${item.id}`, {
+                params: {
+                  language: 'es-ES',
+                  append_to_response: 'recommendations,similar'
+                }
+              }).catch(() => null);
+
+              if (detRes?.data) {
+                // Si pertenece a una saga o colección, incluir todas las películas de la colección
+                if (detRes.data.belongs_to_collection?.id) {
+                  const collRes = await client.get(`/collection/${detRes.data.belongs_to_collection.id}`, {
+                    params: { language: 'es-ES' }
+                  }).catch(() => null);
+
+                  if (collRes?.data?.parts) {
+                    for (const part of collRes.data.parts) {
+                      const key = `movie_${part.id}`;
+                      if (!seenIds.has(key)) {
+                        seenIds.add(key);
+                        rawResults.push({ ...part, media_type: 'movie' });
+                      }
+                    }
+                  }
+                }
+
+                // Añadir recomendaciones y películas similares del mismo universo o temática
+                const recs = detRes.data.recommendations?.results || [];
+                const sims = detRes.data.similar?.results || [];
+                for (const r of [...recs, ...sims].slice(0, 12)) {
+                  const key = `movie_${r.id}`;
+                  if (!seenIds.has(key)) {
+                    seenIds.add(key);
+                    rawResults.push({ ...r, media_type: 'movie' });
+                  }
+                }
+              }
+            } else if (itemType === 'tv') {
+              // Series relacionadas y recomendaciones del mismo género o universo
+              const recRes = await client.get(`/tv/${item.id}/recommendations`, {
+                params: { language: 'es-ES' }
+              }).catch(() => null);
+
+              if (recRes?.data?.results) {
+                for (const r of recRes.data.results.slice(0, 10)) {
+                  const key = `tv_${r.id}`;
+                  if (!seenIds.has(key)) {
+                    seenIds.add(key);
+                    rawResults.push({ ...r, media_type: 'tv' });
+                  }
+                }
+              }
+            }
+          }
+        } catch (_) {
+          // Si alguna petición de relación falla o tarda, mantener los resultados originales limpios
+        }
+      }
 
       return {
         page: data.page,
         totalPages: data.total_pages,
-        totalResults: data.total_results,
-        results: (data.results || []).map(item => {
+        totalResults: rawResults.length,
+        results: rawResults.map(item => {
           const formatted = this.formatMediaItem(item);
           const forcedConf = this.getForcedTrailerConfig(item) || this.getForcedTrailerConfig(formatted);
           if (forcedConf) {

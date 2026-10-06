@@ -474,40 +474,75 @@
       <!-- SECCIÓN 4: AJUSTES & COBROS -->
       <!-- ============================================================== -->
       <section id="section-settings" style="display: none;">
-        <div style="max-width: 680px; margin: 0 auto;">
-          <div class="stat-card" style="margin-bottom: 20px;">
-            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px;">Configuración de Cobros y Contacto</h3>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Configura tu número de Plin oficial para recibir pagos y tu WhatsApp de atención.</p>
+        <div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+          
+          <!-- CONTROL DE IDENTIDAD & ACCESO MASTER -->
+          <div class="stat-card">
+            <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 4px; color: #fff;">👑 Control de Marca & Acceso Master</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Personaliza el nombre de tu plataforma y tus credenciales de administrador general.</p>
 
             <form onsubmit="submitSettings(event)">
-              <div class="form-group">
-                <label>Número Exclusivo de Pagos (Perú - Solo Plin):</label>
-                <input type="text" id="setting-plin" class="form-control" placeholder="Ej: 962622904" required>
-                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">Este es el número oficial que se les mostrará a tus clientes para pagar por Plin.</small>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Nombre de la Plataforma / Marca:</label>
+                  <input type="text" id="setting-app-name" class="form-control" placeholder="Ej: TOM TV" required>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label>Usuario de Administrador:</label>
+                  <input type="text" id="setting-admin-user" class="form-control" placeholder="Ej: admin" required>
+                </div>
               </div>
 
               <div class="form-group">
-                <label>WhatsApp Oficial de Soporte y Comprobantes:</label>
-                <input type="text" id="setting-whatsapp" class="form-control" placeholder="Ej: +51914598415" required>
-                <small style="color: var(--text-muted); font-size: 11px; display: block; margin-top: 4px;">WhatsApp donde tus clientes te enviarán las capturas de pantalla de Plin.</small>
+                <label>Nueva Contraseña de Administrador (Dejar en blanco para conservar actual):</label>
+                <div style="position: relative; display: flex; align-items: center;">
+                  <input type="password" id="setting-password" class="form-control" placeholder="••••••••" style="padding-right: 40px;">
+                  <button type="button" onclick="toggleInputPass('setting-password')" style="position: absolute; right: 10px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px;">👁️</button>
+                </div>
               </div>
 
-              <div class="form-group">
-                <label>Plantilla de Recordatorio para Clientes:</label>
-                <textarea id="setting-template" class="form-control" rows="3" placeholder="Hola {nombre}, tu suscripción vence pronto. Para renovar por Plin transfiere al 962622904."></textarea>
+              <div style="border-top: 1px solid var(--card-border); margin: 20px 0 16px 0; padding-top: 16px;">
+                <h4 style="font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px;">💳 Canales de Cobro & Contacto</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Configura tu número de Plin oficial para recibir pagos y tu WhatsApp de atención.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>Número Exclusivo de Pagos (Plin / Yape):</label>
+                    <input type="text" id="setting-plin" class="form-control" placeholder="Ej: 962622904" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label>WhatsApp Oficial de Soporte:</label>
+                    <input type="text" id="setting-whatsapp" class="form-control" placeholder="Ej: +51914598415" required>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Plantilla de Recordatorio / Mensaje de Activación (Usa {code} para el código):</label>
+                  <textarea id="setting-template" class="form-control" rows="2" placeholder="Hola, tu código de activación es {code}"></textarea>
+                </div>
               </div>
 
-              <div class="form-group" style="padding-top: 14px; border-top: 1px solid var(--card-border);">
-                <label>Cambiar Contraseña de Administrador (Dejar en blanco para no cambiar):</label>
-                <input type="password" id="setting-password" class="form-control" placeholder="••••••••">
+              <div style="border-top: 1px solid var(--card-border); margin: 20px 0 16px 0; padding-top: 16px;">
+                <h4 style="font-size: 15px; font-weight: 800; color: #fff; margin-bottom: 4px;">🎬 Claves de Streaming (Opcional)</h4>
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Puedes actualizar tus tokens de Real-Debrid y TMDB directamente aquí sin tocar archivos.</p>
+
+                <div class="form-group">
+                  <label>Real-Debrid API Token:</label>
+                  <input type="password" id="setting-debrid-key" class="form-control" placeholder="Token API de Real-Debrid">
+                </div>
+                <div class="form-group">
+                  <label>TMDB API Key (Cine y Series):</label>
+                  <input type="password" id="setting-tmdb-key" class="form-control" placeholder="API Key de TMDB v3">
+                </div>
               </div>
 
-              <button type="submit" class="btn btn-primary" id="btn-save-settings" style="width: 100%; padding: 12px; margin-top: 10px;">💾 Guardar Ajustes</button>
+              <button type="submit" class="btn btn-primary" id="btn-save-settings" style="width: 100%; padding: 13px; font-size: 14px; font-weight: 800;">💾 Guardar Todos los Ajustes</button>
             </form>
           </div>
 
+          <!-- BACKUP & RESTAURACIÓN -->
           <div class="stat-card">
-            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 6px;">Copia de Seguridad (Backup)</h3>
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 6px; color: #fff;">💾 Copia de Seguridad (Backup)</h3>
             <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Descarga o restaura tu base de datos de clientes y revendedores en un clic.</p>
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
               <button class="btn btn-secondary btn-sm" onclick="downloadBackup()">📥 Descargar Backup JSON</button>
@@ -515,6 +550,14 @@
               <input type="file" id="file-restore-input" style="display: none;" accept=".json" onchange="handleFileRestore(event)">
             </div>
           </div>
+
+          <!-- LIMPIEZA TOTAL Y RESET LIMPIO -->
+          <div class="stat-card" style="border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05);">
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 6px; color: var(--danger);">🧹 Dejar Todo Limpio (Reset 100% Vacío)</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Elimina instantáneamente todos los clientes y revendedores de prueba para dejar tu panel en 0 absoluto. Tus ajustes y contraseñas se mantendrán protegidos.</p>
+            <button type="button" class="btn btn-danger btn-sm" onclick="confirmResetClean()">⚠️ Limpiar y Vaciar Todo Ahora (0 Clientes, 0 Revendedores)</button>
+          </div>
+
         </div>
       </section>
 
@@ -679,28 +722,91 @@
     </div>
   </div>
 
-  <!-- MODAL: EDITAR REVENDEDOR -->
+  <!-- MODAL: EDITAR REVENDEDOR COMPLETO -->
   <div class="modal" id="modal-edit-reseller">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="font-weight: 800;">✏️ Editar Revendedor</h3>
+        <h3 style="font-weight: 800;">✏️ Modificar Revendedor (Control Total)</h3>
         <button class="close-btn" onclick="closeModal('modal-edit-reseller')">&times;</button>
       </div>
       <form onsubmit="submitEditReseller(event)">
         <input type="hidden" id="edit-res-id">
         <div class="form-group">
-          <label>Nombre:</label>
+          <label>Nombre Completo o Empresa:</label>
           <input type="text" id="edit-res-name" class="form-control" required>
         </div>
         <div class="form-group">
-          <label>Nueva Contraseña (Dejar en blanco para conservar la actual):</label>
-          <input type="text" id="edit-res-pass" class="form-control" placeholder="••••••••">
+          <label>Nombre de Usuario (Para iniciar sesión en su Sub-Panel):</label>
+          <input type="text" id="edit-res-user" class="form-control" required>
         </div>
         <div class="form-group">
-          <label>WhatsApp:</label>
-          <input type="text" id="edit-res-wsp" class="form-control">
+          <label>Contraseña (Escribe una nueva o deja la actual):</label>
+          <input type="text" id="edit-res-pass" class="form-control" placeholder="Dejar en blanco para no cambiar">
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">Guardar Cambios</button>
+        <div class="form-group">
+          <label>WhatsApp del Distribuidor:</label>
+          <input type="text" id="edit-res-wsp" class="form-control" placeholder="+51999999999">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Saldo de Créditos:</label>
+            <input type="number" id="edit-res-credits" class="form-control" min="0" required>
+          </div>
+          <div class="form-group">
+            <label>Estado de Cuenta:</label>
+            <select id="edit-res-status" class="form-control">
+              <option value="active">🟢 Activo</option>
+              <option value="suspended">🔴 Suspendido</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-edit-reseller" style="width: 100%; padding: 12px; margin-top: 8px;">💾 Guardar Todos los Cambios</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: EDITAR CLIENTE COMPLETO -->
+  <div class="modal" id="modal-edit-client">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">✏️ Modificar Cliente & Pantalla</h3>
+        <button class="close-btn" onclick="closeModal('modal-edit-client')">&times;</button>
+      </div>
+      <form onsubmit="submitEditClient(event)">
+        <input type="hidden" id="edit-client-id">
+        <div class="form-group">
+          <label>Nombre del Cliente:</label>
+          <input type="text" id="edit-client-name" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label>Código TV (Ej: TOM-1234 o VJ-1234):</label>
+          <input type="text" id="edit-client-code" class="form-control" style="text-transform: uppercase;" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Dispositivos Permitidos:</label>
+            <select id="edit-client-devices" class="form-control">
+              <option value="1">1 Dispositivo</option>
+              <option value="2">2 Dispositivos</option>
+              <option value="3">3 Dispositivos</option>
+              <option value="5">5 Dispositivos (Familiar)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Estado del Servicio:</label>
+            <select id="edit-client-status" class="form-control">
+              <option value="active">🟢 Activo</option>
+              <option value="expired">🔴 Vencido</option>
+              <option value="suspended">⏸️ Suspendido</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Fecha de Vencimiento:</label>
+          <input type="date" id="edit-client-expires" class="form-control">
+          <small style="color: var(--text-muted); font-size: 11px;">Puedes fijar la fecha exacta en la que vence el acceso.</small>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-edit-client" style="width: 100%; padding: 12px; margin-top: 8px;">💾 Guardar Cambios de Cliente</button>
       </form>
     </div>
   </div>
@@ -934,9 +1040,26 @@
 
           // Ajustes
           if (data.settings) {
-            document.getElementById('setting-plin').value = data.settings.plinNumber || '962622904';
-            document.getElementById('setting-whatsapp').value = data.settings.whatsappNumber || '+51914598415';
-            document.getElementById('setting-template').value = data.settings.whatsappMessage || '';
+            if (document.getElementById('setting-app-name')) {
+              document.getElementById('setting-app-name').value = data.settings.appName || 'TOM TV';
+            }
+            if (document.getElementById('setting-admin-user')) {
+              document.getElementById('setting-admin-user').value = data.settings.adminUsername || 'admin';
+            }
+            if (document.getElementById('setting-plin')) {
+              document.getElementById('setting-plin').value = data.settings.plinNumber || '962622904';
+            }
+            if (document.getElementById('setting-whatsapp')) {
+              document.getElementById('setting-whatsapp').value = data.settings.whatsappNumber || '+51914598415';
+            }
+            if (document.getElementById('setting-template')) {
+              document.getElementById('setting-template').value = data.settings.whatsappMessage || '';
+            }
+            if (data.settings.appName) {
+              const brandLogos = document.querySelectorAll('.brand-logo');
+              brandLogos.forEach(el => el.textContent = data.settings.appName);
+              document.title = `${data.settings.appName} - Panel de Control Master`;
+            }
           }
         }
         fetchChannels();
@@ -1234,10 +1357,11 @@
             </td>
             <td>${origin}</td>
             <td style="text-align: right;">
+              <button class="btn btn-secondary btn-sm" onclick="openEditClientModal('${c.id}')" title="Modificar cliente">✏️ Editar</button>
               <button class="btn btn-secondary btn-sm" onclick="renewClient('${c.id}', 30)" title="Renovar +30 días">🔄 +30d</button>
-              <button class="btn btn-whatsapp btn-sm" onclick="openClientWhatsApp('${c.name}', '${c.code}', '${days}')" title="Enviar WhatsApp">📲</button>
-              <button class="btn btn-secondary btn-sm" onclick="copyText('${c.code}', '¡Código copiado!')" title="Copiar código">📋</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}', '${c.name}')" title="Eliminar">🗑️</button>
+              <button class="btn btn-whatsapp btn-sm" onclick="openClientWhatsApp('${escapeJs(c.name)}', '${escapeJs(c.code)}', '${days}')" title="Enviar WhatsApp">📲</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.code)}', '¡Código copiado!')" title="Copiar código">📋</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}', '${escapeJs(c.name)}')" title="Eliminar definitivamente">🗑️</button>
             </td>
           </tr>
         `;
@@ -1374,10 +1498,11 @@
             </div>
 
             <div class="reseller-actions">
-              <button class="btn btn-primary btn-sm" onclick="openRechargeModal('${r.id}', '${r.name}', ${r.credits || 0})">⚡ Recargar</button>
-              <button class="btn btn-whatsapp btn-sm" onclick="sendResellerAccess('${r.name}', '${r.username}', '${r.password || '123'}', ${r.credits || 0})">📲 Enviar Acceso</button>
-              <button class="btn btn-secondary btn-sm" onclick="openEditResellerModal('${r.id}', '${r.name}', '${r.whatsapp || ''}')">✏️ Editar</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteReseller('${r.id}', '${r.name}')">🗑️</button>
+              <button class="btn btn-primary btn-sm" onclick="openRechargeModal('${r.id}', '${escapeJs(r.name)}', ${r.credits || 0})">⚡ Recargar</button>
+              <button class="btn btn-whatsapp btn-sm" onclick="sendResellerAccess('${escapeJs(r.name)}', '${escapeJs(r.username)}', '${escapeJs(r.password || '123')}', ${r.credits || 0})">📲 Acceso</button>
+              <button class="btn btn-secondary btn-sm" onclick="openEditResellerModal('${r.id}')">✏️ Editar</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleResellerStatus('${r.id}', '${r.status || 'active'}')">${r.status === 'suspended' ? '▶️ Activar' : '⏸️ Suspender'}</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteReseller('${r.id}', '${escapeJs(r.name)}')">🗑️</button>
             </div>
           </div>
         `;
@@ -1469,11 +1594,16 @@
       }
     }
 
-    function openEditResellerModal(id, name, wsp) {
-      document.getElementById('edit-res-id').value = id;
-      document.getElementById('edit-res-name').value = name;
-      document.getElementById('edit-res-wsp').value = wsp;
+    function openEditResellerModal(id) {
+      const r = resellersData.find(item => item.id === id);
+      if (!r) return;
+      document.getElementById('edit-res-id').value = r.id;
+      document.getElementById('edit-res-name').value = r.name || '';
+      document.getElementById('edit-res-user').value = r.username || '';
       document.getElementById('edit-res-pass').value = '';
+      document.getElementById('edit-res-wsp').value = r.whatsapp || '';
+      document.getElementById('edit-res-credits').value = r.credits || 0;
+      document.getElementById('edit-res-status').value = r.status || 'active';
       document.getElementById('modal-edit-reseller').style.display = 'flex';
     }
 
@@ -1481,10 +1611,13 @@
       e.preventDefault();
       const id = document.getElementById('edit-res-id').value;
       const name = document.getElementById('edit-res-name').value.trim();
+      const username = document.getElementById('edit-res-user').value.trim();
       const whatsapp = document.getElementById('edit-res-wsp').value.trim();
       const password = document.getElementById('edit-res-pass').value.trim();
+      const credits = parseInt(document.getElementById('edit-res-credits').value, 10);
+      const status = document.getElementById('edit-res-status').value;
 
-      const body = { name, whatsapp };
+      const body = { name, username, whatsapp, credits, status };
       if (password) body.password = password;
 
       try {
@@ -1506,8 +1639,31 @@
       }
     }
 
+    async function toggleResellerStatus(id, currentStatus) {
+      const nextStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+      const label = nextStatus === 'active' ? 'activar' : 'suspender';
+      if (!confirm(`¿Deseas ${label} la cuenta de este revendedor?`)) return;
+
+      try {
+        const res = await fetch(`/api/admin/resellers/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ status: nextStatus })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Revendedor ${nextStatus === 'active' ? 'activado' : 'suspendido'} con éxito.`, 'success');
+          fetchData();
+        } else {
+          showToast('Error: ' + data.error, 'error');
+        }
+      } catch (_) {
+        showToast('Error de conexión', 'error');
+      }
+    }
+
     async function deleteReseller(id, name) {
-      if (!confirm(`¿Eliminar al revendedor "${name}"? Perderá acceso a su sub-panel.`)) return;
+      if (!confirm(`¿Eliminar al revendedor "${name}" definitivamente? Perderá acceso a su sub-panel y no se volverá a crear.`)) return;
       try {
         const res = await fetch(`/api/admin/resellers/${id}`, {
           method: 'DELETE',
@@ -1515,13 +1671,72 @@
         });
         const data = await res.json();
         if (data.success) {
-          showToast(`Revendedor "${name}" eliminado.`, 'success');
+          showToast(`Revendedor "${name}" eliminado definitivamente.`, 'success');
           fetchData();
         } else {
           showToast('Error: ' + data.error, 'error');
         }
       } catch (_) {
         showToast('Error de conexión', 'error');
+      }
+    }
+
+    // -------------------------------------------------------------
+    // EDICIÓN DE CLIENTE (CONTROL TOTAL)
+    // -------------------------------------------------------------
+    function openEditClientModal(id) {
+      const c = clientsData.find(item => item.id === id);
+      if (!c) return;
+      document.getElementById('edit-client-id').value = c.id;
+      document.getElementById('edit-client-name').value = c.name || '';
+      document.getElementById('edit-client-code').value = c.code || '';
+      document.getElementById('edit-client-devices').value = c.maxDevices || 1;
+      document.getElementById('edit-client-status').value = c.status || 'active';
+      if (c.expiresAt) {
+        document.getElementById('edit-client-expires').value = new Date(c.expiresAt).toISOString().split('T')[0];
+      } else {
+        document.getElementById('edit-client-expires').value = '';
+      }
+      document.getElementById('modal-edit-client').style.display = 'flex';
+    }
+
+    async function submitEditClient(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-client-id').value;
+      const name = document.getElementById('edit-client-name').value.trim();
+      const code = document.getElementById('edit-client-code').value.trim().toUpperCase();
+      const maxDevices = parseInt(document.getElementById('edit-client-devices').value, 10);
+      const status = document.getElementById('edit-client-status').value;
+      const expiresVal = document.getElementById('edit-client-expires').value;
+
+      const body = { name, code, maxDevices, status };
+      if (expiresVal) {
+        body.expiresAt = new Date(expiresVal + 'T23:59:59').toISOString();
+      }
+
+      const btn = document.getElementById('btn-submit-edit-client');
+      btn.textContent = 'Guardando...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/admin/clients/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeModal('modal-edit-client');
+          showToast('Cliente modificado con éxito.', 'success');
+          fetchData();
+        } else {
+          showToast('Error: ' + data.error, 'error');
+        }
+      } catch (_) {
+        showToast('Error de conexión', 'error');
+      } finally {
+        btn.textContent = '💾 Guardar Cambios de Cliente';
+        btn.disabled = false;
       }
     }
 
@@ -1604,17 +1819,23 @@
     }
 
     // -------------------------------------------------------------
-    // AJUSTES DEL SISTEMA
+    // AJUSTES DEL SISTEMA & CONTROL TOTAL
     // -------------------------------------------------------------
     async function submitSettings(e) {
       e.preventDefault();
+      const appName = document.getElementById('setting-app-name').value.trim();
+      const adminUsername = document.getElementById('setting-admin-user').value.trim();
       const plinNumber = document.getElementById('setting-plin').value.trim();
       const whatsappNumber = document.getElementById('setting-whatsapp').value.trim();
       const whatsappMessage = document.getElementById('setting-template').value.trim();
       const adminPassword = document.getElementById('setting-password').value.trim();
+      const realDebridKey = document.getElementById('setting-debrid-key')?.value.trim();
+      const tmdbKey = document.getElementById('setting-tmdb-key')?.value.trim();
 
-      const body = { plinNumber, whatsappNumber, whatsappMessage };
+      const body = { appName, adminUsername, plinNumber, whatsappNumber, whatsappMessage };
       if (adminPassword) body.adminPassword = adminPassword;
+      if (realDebridKey) body.realDebridKey = realDebridKey;
+      if (tmdbKey) body.tmdbKey = tmdbKey;
 
       const btn = document.getElementById('btn-save-settings');
       btn.textContent = 'Guardando...';
@@ -1633,15 +1854,49 @@
             localStorage.setItem('vj_admin_token', adminToken);
           }
           showToast('¡Ajustes guardados correctamente!', 'success');
+          fetchData();
         } else {
           showToast('Error: ' + data.error, 'error');
         }
       } catch (_) {
         showToast('Error de conexión', 'error');
       } finally {
-        btn.textContent = '💾 Guardar Ajustes';
+        btn.textContent = '💾 Guardar Todos los Ajustes';
         btn.disabled = false;
       }
+    }
+
+    async function confirmResetClean() {
+      const confirmed = confirm('⚠️ ATENCIÓN: ¿Estás seguro de que deseas vaciar y limpiar todo?\n\nEsto dejará la lista de Clientes y Revendedores en 0.\nTus contraseñas y ajustes se mantendrán protegidos.');
+      if (!confirmed) return;
+
+      const code = prompt('Para confirmar la limpieza total, escribe la palabra LIMPIAR:');
+      if (code !== 'LIMPIAR') {
+        showToast('Operación cancelada.', 'info');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/reset-clean', {
+          method: 'POST',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('¡Sistema 100% limpio! Todos los datos de prueba han sido eliminados.', 'success');
+          fetchData();
+        } else {
+          showToast('Error: ' + data.error, 'error');
+        }
+      } catch (_) {
+        showToast('Error de conexión', 'error');
+      }
+    }
+
+    function toggleInputPass(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.type = el.type === 'password' ? 'text' : 'password';
     }
 
     function downloadBackup() {

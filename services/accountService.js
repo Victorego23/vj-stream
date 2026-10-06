@@ -21,50 +21,23 @@ class AccountService {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
 
-    let initialData = {
+    const initialData = {
       admin: {
+        username: 'admin',
         password: DEFAULT_ADMIN_PASSWORD,
       },
       settings: {
+        appName: 'TOM TV',
         whatsappNumber: process.env.WHATSAPP_NUMBER || '+51914598415',
         whatsappMessage: 'Hola, mi código de activación de TOM TV es {code}',
         plinNumber: '962622904',
       },
-      clients: [
-        {
-          id: 'c1f7a089-victor-egocheaga-vj3166',
-          name: 'victor egocheaga',
-          username: 'victor_egocheaga_343',
-          code: 'VJ-3166',
-          status: 'active',
-          planDays: 365,
-          maxDevices: 5,
-          createdAt: '2026-09-26T00:00:00.000Z',
-          expiresAt: '2027-09-26T23:59:59.000Z',
-          devices: []
-        }
-      ],
+      clients: [],
       pendingActivations: [],
-      resellers: [
-        {
-          id: '80723ae7-e8d9-4e8a-b128-073bcfd9cade',
-          name: 'Jesus Daniel Guevara Quispe',
-          username: 'usuario1',
-          password: '2233',
-          whatsapp: '+51 904 416 154',
-          credits: 15,
-          status: 'active',
-          createdAt: '2026-10-04T18:00:00.000Z',
-          history: [
-            {
-              type: 'initial_deposit',
-              amount: 15,
-              date: '2026-10-04T18:00:00.000Z',
-              note: 'Créditos iniciales asignados'
-            }
-          ]
-        }
-      ]
+      resellers: [],
+      usedDemos: [],
+      revokedClients: [],
+      revokedResellers: []
     };
 
     // Auto-recuperación desde Backup si el archivo principal no existe o se reseteó
@@ -73,8 +46,9 @@ class AccountService {
         try {
           const backupRaw = fs.readFileSync(BACKUP_FILE, 'utf8');
           const backupParsed = JSON.parse(backupRaw);
-          if (backupParsed && Array.isArray(backupParsed.clients) && backupParsed.clients.length > 0) {
-            initialData = backupParsed;
+          if (backupParsed && typeof backupParsed === 'object') {
+            fs.writeFileSync(DB_FILE, JSON.stringify(backupParsed, null, 2), 'utf8');
+            return;
           }
         } catch (_) {}
       }
@@ -83,47 +57,35 @@ class AccountService {
         fs.writeFileSync(BACKUP_FILE, JSON.stringify(initialData, null, 2), 'utf8');
       }
     } else {
-      // Sincronizar clientes existentes entre DB y Backup respetando revocaciones y eliminaciones definitivas
+      // Sincronizar clientes y revendedores existentes respetando eliminaciones definitivas
       try {
         const dbData = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+        if (!Array.isArray(dbData.clients)) dbData.clients = [];
+        if (!Array.isArray(dbData.resellers)) dbData.resellers = [];
+        if (!Array.isArray(dbData.pendingActivations)) dbData.pendingActivations = [];
+        if (!Array.isArray(dbData.usedDemos)) dbData.usedDemos = [];
         if (!Array.isArray(dbData.revokedClients)) dbData.revokedClients = [];
+        if (!Array.isArray(dbData.revokedResellers)) dbData.revokedResellers = [];
 
         if (fs.existsSync(BACKUP_FILE)) {
           const backupData = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
           if (!Array.isArray(backupData.revokedClients)) backupData.revokedClients = [];
+          if (!Array.isArray(backupData.revokedResellers)) backupData.revokedResellers = [];
 
           // Unir revocaciones de ambos
           const revokedIds = new Set([...dbData.revokedClients, ...backupData.revokedClients].map(r => r.id));
           const revokedCodes = new Set([...dbData.revokedClients, ...backupData.revokedClients].map(r => (r.code || '').toUpperCase()));
+          const revokedResellerIds = new Set([...(dbData.revokedResellers || []), ...(backupData.revokedResellers || [])]);
 
-          // Limpiar clientes eliminados tanto en dbData como en backupData
+          // Limpiar clientes eliminados
           dbData.clients = (dbData.clients || []).filter(c => !revokedIds.has(c.id) && !revokedCodes.has((c.code || '').toUpperCase()));
-          backupData.clients = (backupData.clients || []).filter(c => !revokedIds.has(c.id) && !revokedCodes.has((c.code || '').toUpperCase()));
-
-          // Fusionar solo clientes legítimos que no hayan sido eliminados
-          const clientMap = new Map();
-          dbData.clients.forEach(c => clientMap.set(c.id, c));
-          backupData.clients.forEach(c => {
-            if (!clientMap.has(c.id) && !revokedIds.has(c.id) && !revokedCodes.has((c.code || '').toUpperCase())) {
-              clientMap.set(c.id, c);
-            }
-          });
-          dbData.clients = Array.from(clientMap.values());
-          dbData.revokedClients = Array.from(new Map([...dbData.revokedClients, ...backupData.revokedClients].map(r => [r.id, r])).values());
-
-          // Fusionar revendedores entre DB, Backup e initialData para que NUNCA se pierdan
-          const resellerMap = new Map();
-          (initialData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
-          (backupData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
-          (dbData.resellers || []).forEach(r => { if (r && r.id) resellerMap.set(r.id, r); });
-          dbData.resellers = Array.from(resellerMap.values());
-
-          const json = JSON.stringify(dbData, null, 2);
-          fs.writeFileSync(DB_FILE, json, 'utf8');
-          fs.writeFileSync(BACKUP_FILE, json, 'utf8');
-        } else {
-          fs.writeFileSync(BACKUP_FILE, JSON.stringify(dbData, null, 2), 'utf8');
+          dbData.resellers = (dbData.resellers || []).filter(r => !revokedResellerIds.has(r.id));
+          dbData.revokedResellers = Array.from(revokedResellerIds);
         }
+
+        const json = JSON.stringify(dbData, null, 2);
+        fs.writeFileSync(DB_FILE, json, 'utf8');
+        fs.writeFileSync(BACKUP_FILE, json, 'utf8');
       } catch (_) {}
     }
   }
@@ -136,38 +98,12 @@ class AccountService {
     try {
       const content = fs.readFileSync(DB_FILE, 'utf8');
       const data = JSON.parse(content);
-      if (!Array.isArray(data.resellers)) {
-        data.resellers = [];
-      }
-      // Auto-recuperación garantizada: Jesus Daniel siempre presente
-      const hasJesus = data.resellers.some(r => 
-        (r.username || '').toLowerCase() === 'usuario1' || 
-        r.id === '80723ae7-e8d9-4e8a-b128-073bcfd9cade' ||
-        (r.password || '').trim() === '2233'
-      );
-      if (!hasJesus) {
-        data.resellers.push({
-          id: '80723ae7-e8d9-4e8a-b128-073bcfd9cade',
-          name: 'Jesus Daniel Guevara Quispe',
-          username: 'usuario1',
-          password: '2233',
-          whatsapp: '+51 904 416 154',
-          credits: 15,
-          status: 'active',
-          createdAt: '2026-10-04T18:00:00.000Z',
-          history: [
-            {
-              type: 'initial_deposit',
-              amount: 15,
-              date: '2026-10-04T18:00:00.000Z',
-              note: 'Créditos iniciales asignados'
-            }
-          ]
-        });
-        try {
-          fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
-        } catch (_) {}
-      }
+      if (!Array.isArray(data.clients)) data.clients = [];
+      if (!Array.isArray(data.resellers)) data.resellers = [];
+      if (!Array.isArray(data.pendingActivations)) data.pendingActivations = [];
+      if (!Array.isArray(data.usedDemos)) data.usedDemos = [];
+      if (!Array.isArray(data.revokedClients)) data.revokedClients = [];
+      if (!Array.isArray(data.revokedResellers)) data.revokedResellers = [];
       this._cache = data;
       return data;
     } catch (e) {
@@ -175,14 +111,26 @@ class AccountService {
       if (fs.existsSync(BACKUP_FILE)) {
         try {
           const bData = JSON.parse(fs.readFileSync(BACKUP_FILE, 'utf8'));
+          if (!Array.isArray(bData.clients)) bData.clients = [];
           if (!Array.isArray(bData.resellers)) bData.resellers = [];
           this._cache = bData;
           return bData;
         } catch (_) {}
       }
-      const fallback = { admin: { password: DEFAULT_ADMIN_PASSWORD }, settings: {}, clients: [], pendingActivations: [], resellers: [] };
+      const fallback = {
+        admin: { username: 'admin', password: DEFAULT_ADMIN_PASSWORD },
+        settings: { appName: 'TOM TV' },
+        clients: [],
+        pendingActivations: [],
+        resellers: [],
+        usedDemos: [],
+        revokedClients: [],
+        revokedResellers: []
+      };
       this._cache = fallback;
       return fallback;
+    }
+  }
     }
   }
 
@@ -370,10 +318,22 @@ class AccountService {
     const envPass = process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.trim();
     const dbPass = db.admin?.password && String(db.admin.password).trim();
 
-    if (envPass && clean === envPass) return true;
-    if (dbPass && clean === dbPass) return true;
-    if (clean === '123456' || clean === DEFAULT_ADMIN_PASSWORD) return true;
-    return false;
+    if (dbPass) {
+      return clean === dbPass;
+    }
+    if (envPass) {
+      return clean === envPass;
+    }
+    return clean === DEFAULT_ADMIN_PASSWORD;
+  }
+
+  verifyAdminCredentials(username, password) {
+    if (!this.verifyAdminPassword(password)) return false;
+    const db = this._readDb();
+    const requiredUser = db.admin?.username && String(db.admin.username).trim().toLowerCase();
+    if (!requiredUser) return true; // Si no hay usuario fijado, cualquier usuario o solo password es válido
+    const cleanUser = String(username || '').trim().toLowerCase();
+    return cleanUser === requiredUser;
   }
 
   generateAdminToken() {
@@ -413,10 +373,19 @@ class AccountService {
     return this.verifyAdminPassword(str);
   }
 
-  updateSettings({ adminPassword, whatsappNumber, whatsappMessage, plinNumber }) {
+  updateSettings({ adminUsername, adminPassword, appName, whatsappNumber, whatsappMessage, plinNumber, realDebridKey, tmdbKey }) {
     const db = this._readDb();
+    if (!db.admin) db.admin = {};
+    if (!db.settings) db.settings = {};
+
+    if (adminUsername && adminUsername.trim()) {
+      db.admin.username = adminUsername.trim();
+    }
     if (adminPassword && adminPassword.trim().length >= 4) {
       db.admin.password = adminPassword.trim();
+    }
+    if (appName !== undefined && appName.trim()) {
+      db.settings.appName = appName.trim();
     }
     if (whatsappNumber !== undefined) {
       db.settings.whatsappNumber = whatsappNumber.trim();
@@ -427,8 +396,28 @@ class AccountService {
     if (plinNumber !== undefined) {
       db.settings.plinNumber = plinNumber.trim();
     }
+    if (realDebridKey !== undefined) {
+      db.settings.realDebridKey = realDebridKey.trim();
+      process.env.REALDEBRID_API_KEY = realDebridKey.trim();
+    }
+    if (tmdbKey !== undefined) {
+      db.settings.tmdbKey = tmdbKey.trim();
+      process.env.TMDB_API_KEY = tmdbKey.trim();
+    }
     this._writeDb(db);
     return db.settings;
+  }
+
+  resetToCleanState() {
+    const db = this._readDb();
+    db.clients = [];
+    db.resellers = [];
+    db.pendingActivations = [];
+    db.usedDemos = [];
+    db.revokedClients = [];
+    db.revokedResellers = [];
+    this._writeDb(db);
+    return { success: true, message: 'Base de datos limpiada al 100% exitosamente.' };
   }
 
   getSettings() {
@@ -743,6 +732,49 @@ class AccountService {
     return client;
   }
 
+  updateClient(clientId, { name, code, maxDevices, planDays, expiresAt, status }) {
+    const db = this._readDb();
+    const cleanId = String(clientId || '').trim();
+    const client = db.clients.find(c => c.id === cleanId || c.code === cleanId);
+    if (!client) throw new Error('Cliente no encontrado.');
+
+    if (name && name.trim()) {
+      client.name = name.trim();
+    }
+    if (code && code.trim()) {
+      const cleanCode = code.trim().toUpperCase();
+      if (cleanCode !== client.code) {
+        const codeExists = db.clients.some(c => c.id !== client.id && c.code === cleanCode);
+        if (codeExists) throw new Error(`El código "${cleanCode}" ya está en uso por otro cliente.`);
+        client.code = cleanCode;
+      }
+    }
+    if (maxDevices !== undefined) {
+      const devNum = parseInt(maxDevices, 10);
+      if (!isNaN(devNum) && devNum >= 1) {
+        client.maxDevices = devNum;
+      }
+    }
+    if (status && ['active', 'expired', 'suspended'].includes(status)) {
+      client.status = status;
+    }
+    if (expiresAt) {
+      client.expiresAt = new Date(expiresAt).toISOString();
+    } else if (planDays !== undefined) {
+      const days = parseInt(planDays, 10);
+      if (!isNaN(days) && days > 0) {
+        const now = new Date();
+        const base = new Date(client.expiresAt) > now ? new Date(client.expiresAt) : now;
+        base.setDate(base.getDate() + days);
+        client.expiresAt = base.toISOString();
+        client.planDays = (client.planDays || 30) + days;
+      }
+    }
+
+    this._writeDb(db);
+    return client;
+  }
+
   toggleClientStatus(clientId) {
     const db = this._readDb();
     const client = db.clients.find(c => c.id === clientId);
@@ -983,15 +1015,37 @@ class AccountService {
     };
   }
 
-  updateReseller(id, { name, whatsapp, status, password }) {
+  updateReseller(id, { name, username, whatsapp, status, password, credits }) {
     const db = this._readDb();
     const reseller = (db.resellers || []).find(r => r.id === id);
     if (!reseller) throw new Error('Revendedor no encontrado.');
 
     if (name && name.trim()) reseller.name = name.trim();
+    if (username && username.trim()) {
+      const cleanUser = username.trim().toLowerCase().replace(/^@+/, '');
+      if (cleanUser !== reseller.username) {
+        const userExists = (db.resellers || []).some(r => r.id !== id && (r.username || '').toLowerCase() === cleanUser);
+        if (userExists) throw new Error(`El usuario "${cleanUser}" ya está en uso.`);
+        reseller.username = cleanUser;
+      }
+    }
     if (whatsapp !== undefined) reseller.whatsapp = whatsapp.trim();
     if (status && ['active', 'suspended'].includes(status)) reseller.status = status;
     if (password && password.trim().length >= 1) reseller.password = password.trim();
+    if (credits !== undefined) {
+      const numCredits = parseInt(credits, 10);
+      if (!isNaN(numCredits) && numCredits >= 0) {
+        const prev = reseller.credits || 0;
+        reseller.credits = numCredits;
+        if (!Array.isArray(reseller.history)) reseller.history = [];
+        reseller.history.push({
+          type: 'admin_adjustment',
+          amount: numCredits - prev,
+          date: new Date().toISOString(),
+          note: `Ajuste manual de créditos a ${numCredits}`
+        });
+      }
+    }
 
     this._writeDb(db);
     return {
@@ -1000,7 +1054,8 @@ class AccountService {
       username: reseller.username,
       whatsapp: reseller.whatsapp,
       credits: reseller.credits,
-      status: reseller.status
+      status: reseller.status,
+      password: reseller.password
     };
   }
 
@@ -1040,11 +1095,17 @@ class AccountService {
 
   deleteReseller(id) {
     const db = this._readDb();
+    if (!Array.isArray(db.revokedResellers)) db.revokedResellers = [];
     const initialLen = (db.resellers || []).length;
+    const target = (db.resellers || []).find(r => r.id === id);
+    if (!target) return false;
+
+    if (!db.revokedResellers.includes(id)) {
+      db.revokedResellers.push(id);
+    }
     db.resellers = (db.resellers || []).filter(r => r.id !== id);
-    const deleted = db.resellers.length < initialLen;
-    if (deleted) this._writeDb(db);
-    return deleted;
+    this._writeDb(db);
+    return true;
   }
 
   authenticateReseller(username, password) {
