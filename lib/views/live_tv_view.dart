@@ -493,25 +493,8 @@ class _LiveTvViewState extends State<LiveTvView> {
       ),
       child: Row(
         children: [
-          // Logo TOM TV + Badge GUÍA TV EN VIVO
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE50914), Color(0xFF990000)],
-              ),
-              borderRadius: BorderRadius.circular(5),
-            ),
-            child: const Text(
-              'TOM TV',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 13,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ),
+          // Logo TOM TV oficial estilo Xuper TV
+          const XuperTomLogo(scale: 0.78),
           const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

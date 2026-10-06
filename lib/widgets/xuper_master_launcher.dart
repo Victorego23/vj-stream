@@ -223,47 +223,8 @@ class XuperTopHeaderBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Logo TOM TV estilizado
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE50914), Color(0xFF990000)],
-              ),
-              borderRadius: BorderRadius.circular(6),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x66E50914),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'TOM',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                SizedBox(width: 4),
-                Text(
-                  'TV',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w400,
-                    fontSize: 18,
-                    letterSpacing: 2.0,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // Logo TOM TV oficial estilo Xuper TV (Pantalla OLED 3D, Play de cristal y badge neón)
+          const XuperTomLogo(),
           const SizedBox(width: 12),
 
           // Badge VIP Premium
@@ -311,6 +272,100 @@ class XuperTopHeaderBar extends StatelessWidget {
             icon: Icons.settings_rounded,
             tooltip: 'Ajustes',
             onTap: onSettings,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Logotipo Oficial TOM TV estilo Xuper TV / Magis TV
+/// Pantalla OLED biselada, Play 3D de cristal facetado y tipografía metálica.
+class XuperTomLogo extends StatelessWidget {
+  final double scale;
+  const XuperTomLogo({super.key, this.scale = 1.0});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10 * scale, vertical: 5 * scale),
+      decoration: BoxDecoration(
+        color: const Color(0xFF10121A),
+        borderRadius: BorderRadius.circular(8 * scale),
+        border: Border.all(color: const Color(0xFFE50914), width: 1.5 * scale),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE50914).withValues(alpha: 0.4),
+            blurRadius: 12 * scale,
+            spreadRadius: 1 * scale,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.8),
+            blurRadius: 6 * scale,
+            offset: Offset(0, 2 * scale),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Emblema Play 3D de cristal facetado
+          Container(
+            width: 22 * scale,
+            height: 22 * scale,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF2A4D), Color(0xFFE50914), Color(0xFF8B0000)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(5 * scale),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFE50914).withValues(alpha: 0.6),
+                  blurRadius: 6 * scale,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 18 * scale,
+            ),
+          ),
+          SizedBox(width: 8 * scale),
+          // Tipografía TOM metálica
+          Text(
+            'TOM',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 18 * scale,
+              letterSpacing: 1.4,
+              shadows: const [
+                Shadow(color: Colors.black, blurRadius: 4, offset: Offset(0, 2)),
+              ],
+            ),
+          ),
+          SizedBox(width: 4 * scale),
+          // Badge TV Rojo Neón
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 5 * scale, vertical: 2 * scale),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFE50914), Color(0xFF990000)],
+              ),
+              borderRadius: BorderRadius.circular(4 * scale),
+            ),
+            child: Text(
+              'TV',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 11 * scale,
+                letterSpacing: 1.0,
+              ),
+            ),
           ),
         ],
       ),

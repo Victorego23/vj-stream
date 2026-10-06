@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'xuper_master_launcher.dart';
 
 /// Modelo de datos para un elemento del menú lateral de Smart TV
 class TvSidebarItemData {
@@ -197,65 +198,32 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
       height: 70,
       alignment: Alignment.centerLeft,
       padding: EdgeInsets.symmetric(horizontal: _isExpanded ? 16 : 14),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE50914), Color(0xFF990000)],
-              ),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x80E50914),
-                  blurRadius: 14,
-                  spreadRadius: 1,
+      child: _isExpanded
+          ? const XuperTomLogo(scale: 0.88)
+          : Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFF2A4D), Color(0xFFE50914), Color(0xFF8B0000)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-              ],
-            ),
-            child: const Text(
-              'TOM',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 16,
-                letterSpacing: 1.0,
-              ),
-            ),
-          ),
-          if (_isExpanded) ...[
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'TV CINEMA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                  Text(
-                    '4K ULTRA HD',
-                    style: TextStyle(
-                      color: Color(0xFFE50914),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                    ),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x66E50914),
+                    blurRadius: 10,
+                    spreadRadius: 1,
                   ),
                 ],
               ),
+              child: const Icon(
+                Icons.play_arrow_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
-          ],
-        ],
-      ),
     );
   }
 

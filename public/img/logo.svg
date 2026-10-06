@@ -1,77 +1,138 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 120" width="100%" height="100%">
   <defs>
-    <!-- Gradientes Principales -->
-    <linearGradient id="tomRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FF1E27" />
-      <stop offset="50%" stop-color="#E50914" />
-      <stop offset="100%" stop-color="#8F0006" />
+    <!-- Gradientes Metálicos y Neón Xuper TV -->
+    <linearGradient id="neonRubyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF2A4D" />
+      <stop offset="45%" stop-color="#E50914" />
+      <stop offset="100%" stop-color="#7A0006" />
     </linearGradient>
 
-    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFE066" />
-      <stop offset="100%" stop-color="#FFB800" />
+    <linearGradient id="crystalPlayGrad" x1="0%" y1="0%" x2="100%" y2="80%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="25%" stop-color="#FF4B63" />
+      <stop offset="70%" stop-color="#E50914" />
+      <stop offset="100%" stop-color="#9E000A" />
     </linearGradient>
 
-    <linearGradient id="tvScreenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#1A1C24" />
-      <stop offset="100%" stop-color="#0B0C10" />
+    <linearGradient id="titaniumMetalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="48%" stop-color="#F2F3F7" />
+      <stop offset="52%" stop-color="#D0D5DD" />
+      <stop offset="100%" stop-color="#8E95A5" />
     </linearGradient>
 
-    <!-- Filtro de Resplandor Neón -->
-    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur" />
+    <linearGradient id="oledBezelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D3142" />
+      <stop offset="50%" stop-color="#12141C" />
+      <stop offset="100%" stop-color="#07080B" />
+    </linearGradient>
+
+    <linearGradient id="goldVipGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF275" />
+      <stop offset="50%" stop-color="#FFD700" />
+      <stop offset="100%" stop-color="#FF9900" />
+    </linearGradient>
+
+    <linearGradient id="glassGlossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.6" />
+      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.15" />
+      <stop offset="70%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Filtros de Resplandor Neón y Relieve 3D -->
+    <filter id="xuperGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="9" result="blur" />
       <feMerge>
         <feMergeNode in="blur" />
         <feMergeNode in="SourceGraphic" />
       </feMerge>
     </filter>
 
-    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.85" />
+    <filter id="intenseNeon" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="14" result="bigBlur" />
+      <feGaussianBlur stdDeviation="5" result="sharpBlur" />
+      <feMerge>
+        <feMergeNode in="bigBlur" />
+        <feMergeNode in="sharpBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="bezelShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#000000" flood-opacity="0.9" />
     </filter>
   </defs>
 
-  <!-- Contenedor del Ícono de la TV (Emblema Izquierdo) -->
-  <g transform="translate(10, 10)">
-    <!-- Brillo Trasero Neón -->
-    <rect x="0" y="0" width="100" height="100" rx="26" fill="#E50914" opacity="0.35" filter="url(#neonGlow)" />
+  <!-- ========================================== -->
+  <!-- 1. EMBLEMA 3D PANTALLA OLED + PLAY CRISTAL -->
+  <!-- ========================================== -->
+  <g transform="translate(14, 10)">
+    <!-- Aura Resplandeciente Trasera Neón -->
+    <rect x="0" y="0" width="100" height="100" rx="28" fill="#E50914" opacity="0.45" filter="url(#intenseNeon)" />
 
-    <!-- Marco de la Pantalla Smart TV -->
-    <rect x="0" y="0" width="100" height="100" rx="26" fill="url(#tomRedGrad)" stroke="rgba(255,255,255,0.3)" stroke-width="2" filter="url(#softShadow)" />
+    <!-- Marco Exterior Biselado Titanio & Neón -->
+    <rect x="0" y="0" width="100" height="100" rx="28" fill="url(#oledBezelGrad)" stroke="url(#neonRubyGrad)" stroke-width="2.5" filter="url(#bezelShadow)" />
 
-    <!-- Pantalla Interior de Cine -->
-    <rect x="10" y="10" width="80" height="80" rx="18" fill="url(#tvScreenGrad)" stroke="rgba(229,9,20,0.5)" stroke-width="1.5" />
+    <!-- Pantalla Interior OLED Negra Profunda -->
+    <rect x="8" y="8" width="84" height="84" rx="20" fill="#0A0B10" stroke="rgba(255,255,255,0.08)" stroke-width="1.2" />
 
-    <!-- Letra T Gigante Estilizada con Relieve 3D -->
-    <path d="M 28 28 L 72 28 C 74 28 75 29 75 31 L 75 39 C 75 41 74 42 72 42 L 56 42 L 56 70 C 56 72 55 73 53 73 L 47 73 C 45 73 44 72 44 70 L 44 42 L 28 42 C 26 42 25 41 25 39 L 25 31 C 25 29 26 28 28 28 Z" fill="#FFFFFF" filter="url(#softShadow)" />
+    <!-- Brillo Reflejo Diagonal de Cristal (Gloss) -->
+    <path d="M 8 28 C 8 16.9 16.9 8 28 8 L 82 8 C 87.5 8 92 12.5 92 18 L 8 68 Z" fill="url(#glassGlossGrad)" opacity="0.75" />
 
-    <!-- Mini Ícono de Play Luminoso en el Centro -->
-    <polygon points="50,46 50,62 62,54" fill="url(#tomRedGrad)" opacity="0.95" />
+    <!-- Anillo Neón Central de Sintonización -->
+    <circle cx="50" cy="50" r="32" fill="none" stroke="url(#neonRubyGrad)" stroke-width="2" opacity="0.3" stroke-dasharray="6,4" />
 
-    <!-- Antena / Ondas de Transmisión Satelital Superior -->
-    <circle cx="50" cy="18" r="3" fill="#FFE066" />
-    <path d="M 43 14 A 8 8 0 0 1 57 14" fill="none" stroke="#FFE066" stroke-width="2" stroke-linecap="round" opacity="0.8" />
+    <!-- Botón Play 3D de Cristal Facetado Central -->
+    <g transform="translate(37, 33)" filter="url(#xuperGlow)">
+      <!-- Sombra propia del botón Play -->
+      <polygon points="2,1 2,33 30,17" fill="#000000" opacity="0.6" transform="translate(0, 3)" />
+      <!-- Faceta inferior Play -->
+      <polygon points="0,0 0,34 28,17" fill="url(#neonRubyGrad)" />
+      <!-- Faceta superior brillante Play -->
+      <polygon points="0,0 28,17 0,17" fill="url(#crystalPlayGrad)" opacity="0.95" />
+      <!-- Borde de luz blanca pura especular -->
+      <polyline points="0,0 28,17 0,34" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+    </g>
+
+    <!-- Indicador LED Estado VIP en esquina -->
+    <circle cx="82" cy="18" r="3.5" fill="#00E676" filter="url(#xuperGlow)" />
   </g>
 
-  <!-- Tipografía Principal: TOM -->
-  <g transform="translate(125, 78)">
-    <text font-family="'Outfit', 'Impact', sans-serif" font-weight="900" font-size="64" letter-spacing="1.5" fill="#FFFFFF" filter="url(#softShadow)">
+  <!-- ========================================== -->
+  <!-- 2. TIPOGRAFÍA METÁLICA: TOM                -->
+  <!-- ========================================== -->
+  <g transform="translate(132, 80)">
+    <!-- Sombra profunda de relieve 3D -->
+    <text font-family="'Outfit', 'Montserrat', 'Impact', sans-serif" font-weight="900" font-size="68" letter-spacing="2" fill="#000000" opacity="0.8" dx="0" dy="5">
+      TOM
+    </text>
+    <!-- Texto Metálico Plateado -->
+    <text font-family="'Outfit', 'Montserrat', 'Impact', sans-serif" font-weight="900" font-size="68" letter-spacing="2" fill="url(#titaniumMetalGrad)">
       TOM
     </text>
   </g>
 
-  <!-- Insignia Brillante: TV -->
-  <g transform="translate(275, 26)">
-    <!-- Contenedor Badge TV -->
-    <rect x="0" y="0" width="95" height="58" rx="14" fill="url(#tomRedGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" filter="url(#neonGlow)" />
-    <!-- Texto TV -->
-    <text x="47" y="42" font-family="'Outfit', 'Arial Black', sans-serif" font-weight="900" font-size="34" letter-spacing="2" fill="#FFFFFF" text-anchor="middle">
+  <!-- ========================================== -->
+  <!-- 3. BADGE ANGULAR XUPER TV: TV + VIP        -->
+  <!-- ========================================== -->
+  <g transform="translate(305, 22)">
+    <!-- Caja Biselada Neón TV con Relieve -->
+    <rect x="0" y="0" width="138" height="62" rx="14" fill="url(#neonRubyGrad)" stroke="#FFFFFF" stroke-width="1.8" stroke-opacity="0.4" filter="url(#xuperGlow)" />
+    
+    <!-- Reflejo Superior en la Caja TV -->
+    <path d="M 0 14 C 0 6.2 6.2 0 14 0 L 124 0 C 131.8 0 138 6.2 138 14 L 0 30 Z" fill="url(#glassGlossGrad)" opacity="0.55" />
+
+    <!-- Texto TV Brillante -->
+    <text x="69" y="44" font-family="'Outfit', 'Montserrat', sans-serif" font-weight="900" font-size="40" letter-spacing="3" fill="#FFFFFF" text-anchor="middle" filter="url(#bezelShadow)">
       TV
     </text>
-    <!-- Tag 4K ULTRA HD -->
-    <rect x="12" y="64" width="71" height="18" rx="5" fill="#000000" stroke="url(#goldAccent)" stroke-width="1" />
-    <text x="47.5" y="77" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="9" letter-spacing="1.5" fill="url(#goldAccent)" text-anchor="middle">
-      ULTRA HD
-    </text>
+
+    <!-- Tag Cinta Inferior VIP / 4K ULTRA HD -->
+    <g transform="translate(12, 70)">
+      <rect x="0" y="0" width="114" height="20" rx="6" fill="#0E1017" stroke="url(#goldVipGrad)" stroke-width="1.2" />
+      <text x="57" y="14" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="10" letter-spacing="1.8" fill="url(#goldVipGrad)" text-anchor="middle">
+        ★ VIP ULTRA HD ★
+      </text>
+    </g>
   </g>
 </svg>

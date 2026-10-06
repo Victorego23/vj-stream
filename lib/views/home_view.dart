@@ -1336,42 +1336,8 @@ class _HomeViewState extends State<HomeView> {
             expandedHeight: 60,
             title: Row(
               children: [
-                // Logo TOM TV
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE50914), Color(0xFF990000)],
-                    ),
-                    borderRadius: BorderRadius.circular(5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.4),
-                        blurRadius: 10,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: const Text(
-                    'TOM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 20,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                const Text(
-                  'TV',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 3,
-                  ),
-                ),
+                // Logo TOM TV oficial estilo Xuper TV
+                const XuperTomLogo(scale: 0.92),
               ],
             ),
             actions: [
