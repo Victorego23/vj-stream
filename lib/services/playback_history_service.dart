@@ -178,6 +178,13 @@ class PlaybackHistoryService {
     } catch (_) {}
   }
 
+  static Future<void> clearHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_historyKey);
+    } catch (_) {}
+  }
+
   // -------------------------------------------------------------
   // MI LISTA (FAVORITOS)
   // -------------------------------------------------------------

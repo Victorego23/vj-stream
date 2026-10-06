@@ -1022,7 +1022,7 @@ class _HomeViewState extends State<HomeView> {
                             trailing: const Icon(Icons.play_circle_fill_rounded, color: TomTokens.primaryAccent, size: 30),
                             onTap: () {
                               Navigator.pop(ctx);
-                              _openDetail(MediaItem(id: item.id, title: item.title, posterMedium: item.posterUrl, mediaType: item.mediaType));
+                              _openDetail(item.toMediaItem());
                             },
                           );
                         },
