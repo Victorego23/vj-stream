@@ -917,7 +917,8 @@ router.get('/version', (req, res) => {
       '✨ Integración Total de Canales Peruanos: Todos los canales nacionales integrados ordenadamente en la parrilla unificada de TV.',
       '🚀 Rendimiento Ultrarrápido: Debounce inteligente de 400ms para hardware de Smart TV, decodificación optimizada y compatibilidad 100% táctil y control remoto.'
     ],
-    downloadUrl: '/api/streaming/download-apk',
+    downloadUrl: `https://github.com/Victorego23/vj-stream/releases/download/v${latestVersion}/TOM-TV-release.apk`,
+    fallbackDownloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,
     announcement: accountService.getAnnouncement()
   });
