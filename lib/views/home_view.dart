@@ -1201,16 +1201,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ),
 
-            // Fila destacada: Próximamente en Español (Solo Tráiler)
-            if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
-              SliverToBoxAdapter(
-                child: MediaRow(
-                  title: 'Próximamente en Cines',
-                  items: _upcomingItems,
-                  onItemTap: _openDetail,
-                  onItemFocus: (focused) => setState(() => _hoveredItem = focused),
-                ),
-              ),
+
 
             // Filas según la pestaña activa
             if (_activeTab == 'Todos' || _activeTab == 'Películas') ...[
@@ -1498,15 +1489,7 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ),
 
-            // Fila destacada: Próximamente en Español (Solo Tráiler)
-            if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
-              SliverToBoxAdapter(
-                child: MediaRow(
-                  title: 'Próximamente en Cines',
-                  items: _upcomingItems,
-                  onItemTap: _openDetail,
-                ),
-              ),
+
 
             // Filas según la pestaña activa
             if (_activeTab == 'Todos' || _activeTab == 'Películas') ...[

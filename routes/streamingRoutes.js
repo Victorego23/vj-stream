@@ -888,8 +888,8 @@ router.get('/version', (req, res) => {
   const path = require('path');
   const fs = require('fs');
 
-  let latestVersion = '3.6.1';
-  let versionCode = 36;
+  let latestVersion = '3.6.2';
+  let versionCode = 37;
 
   try {
     const pubspecPath = path.resolve(__dirname, '..', 'pubspec.yaml');
@@ -911,11 +911,11 @@ router.get('/version', (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-05',
     releaseNotes: [
+      '🛡️ Catálogo 100% Reproducible y Verificado: Eliminadas todas las películas y series no estrenadas, trailers y títulos sin fuentes para garantizar reproducción inmediata.',
       '💎 Nuevo Logotipo Oficial 3D Xuper TV: Emblema biselado OLED con Play de cristal facetado y acento neón rubí/titanio metálico.',
-      '🔥 Nuevo Diseño Maestro Xuper TV / Magis TV: Launcher principal con reloj digital en vivo, fecha en tiempo real y Bloques Gigantes neón (TV En Vivo, Películas, Series, Deportes).',
-      '📺 Guía de TV en Vivo Profesional en 3 Columnas: Panel de Categorías verticales, Lista de Canales con numeración (#01, #02...) y Mini-Reproductor HLS en tiempo real con ficha EPG completa.',
-      '⚡ Zapping Lateral OSD con Control Remoto: Abre el menú de canales deslizando a la izquierda o con flechas sin cortar la reproducción, navega con Arriba/Abajo y sintoniza con Enter/OK.',
-      '🚀 Sistema Anti-Bucle de Actualización OTA: Descarga directa verificada desde GitHub Release CDN de alta velocidad para garantizar siempre la última versión instalada.'
+      '🔥 Diseño Maestro Xuper TV / Magis TV: Launcher principal con reloj digital en vivo, fecha en tiempo real y Bloques Gigantes neón.',
+      '📺 Guía de TV en Vivo en 3 Columnas: Categorías, diales numerados y mini-reproductor HLS en tiempo real con ficha EPG.',
+      '⚡ Zapping Lateral OSD sin Interrupciones: Cambia de canal con D-Pad Arriba/Abajo y Enter sin pausar el video.'
     ],
     downloadUrl: `https://github.com/Victorego23/vj-stream/releases/download/v${latestVersion}/TOM-TV-release.apk`,
     fallbackDownloadUrl: '/api/streaming/download-apk',

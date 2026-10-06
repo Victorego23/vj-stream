@@ -37,7 +37,54 @@ class CatalogSyncService {
   }
 
   /**
-   * Carga el catálogo persistido previamente desde disco para arranque en 0ms.
+   * Filtra estrictamente el catálogo para eliminar películas y series que no se puedan ver
+   * (títulos futuros, solo trailers, películas de cine físico sin digital, o sin imágenes).
+   * @param {Object} catalog
+   * @returns {Object}
+   */
+  _filterPlayableCatalog(catalog) {
+    if (!catalog) return catalog;
+    const today = new Date().toISOString().slice(0, 10);
+
+    const isPlayable = (item) => {
+      if (!item || !item.id) return false;
+      const title = item.title || item.name || '';
+      if (!title || title.trim().length === 0) return false;
+
+      // 1. Descartar si está marcado como tráiler exclusivo
+      if (item.isTrailerOnly === true) return false;
+
+      // 2. Descartar títulos con fecha futura de estreno
+      if (item.releaseDate && item.releaseDate > today) return false;
+
+      // 3. Descartar películas de cine reciente sin copia digital (votos muy bajos)
+      const year = item.releaseDate ? parseInt(item.releaseDate.slice(0, 4), 10) : 0;
+      if (year >= 2025 && (item.voteCount || 0) < 15 && !item.hasSpanishStream) {
+        return false;
+      }
+
+      // 4. Descartar títulos sin póster
+      const poster = item.posters?.medium || item.posters?.thumbnail || item.posters?.original || item.poster_path;
+      if (!poster) return false;
+
+      return true;
+    };
+
+    const clean = {};
+    for (const [key, list] of Object.entries(catalog)) {
+      if (Array.isArray(list)) {
+        clean[key] = list.filter(isPlayable);
+      } else {
+        clean[key] = list;
+      }
+    }
+    // Asegurar que la categoría 'upcoming' no esté presente en el catálogo principal reproducible
+    clean.upcoming = [];
+    return clean;
+  }
+
+  /**
+   * Carga el catálogo persistido previamente desde disco para arranque en 0ms y lo filtra.
    * @private
    */
   _loadFromDisk() {
@@ -46,13 +93,13 @@ class CatalogSyncService {
         const raw = fs.readFileSync(CATALOG_CACHE_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         if (parsed && parsed.catalog) {
-          this.cachedCatalog = parsed.catalog;
+          this.cachedCatalog = this._filterPlayableCatalog(parsed.catalog);
           this.cachedKids = parsed.kids || null;
           this.cachedNovelas = parsed.novelas || null;
           this.cachedSports = parsed.sports || null;
           this.lastSyncAt = parsed.savedAt ? new Date(parsed.savedAt) : new Date();
           this.syncStats = parsed.stats || this.syncStats;
-          console.log(`[CatalogSyncService] 📦 Catálogo precargado desde disco (${parsed.savedAt || 'reciente'}).`);
+          console.log(`[CatalogSyncService] 📦 Catálogo precargado y filtrado (100% reproducible) desde disco.`);
         }
       }
     } catch (err) {
@@ -163,7 +210,10 @@ class CatalogSyncService {
       let moviesCount = 0;
       let seriesCount = 0;
 
-      Object.entries(fullCatalog).forEach(([catKey, list]) => {
+      // Filtrar estrictamente para que solo queden títulos 100% reproducibles
+      const cleanFullCatalog = this._filterPlayableCatalog(fullCatalog);
+
+      Object.entries(cleanFullCatalog).forEach(([catKey, list]) => {
         if (Array.isArray(list)) {
           if (catKey === 'series') {
             seriesCount += list.length;
@@ -174,7 +224,7 @@ class CatalogSyncService {
       });
 
       const durationMs = Date.now() - startTime;
-      this.cachedCatalog = fullCatalog;
+      this.cachedCatalog = cleanFullCatalog;
       this.cachedKids = kidsData;
       this.cachedNovelas = novelasData;
       this.cachedSports = sportsData;
@@ -190,7 +240,7 @@ class CatalogSyncService {
       this._saveToDisk();
 
       console.log(`[CatalogSyncService] ✅ Sincronización completada en ${(durationMs / 1000).toFixed(1)}s: ${moviesCount} películas, ${seriesCount} series (${verifiedCount} con stream verificado).`);
-      return fullCatalog;
+      return cleanFullCatalog;
     } catch (error) {
       console.error('[CatalogSyncService] ❌ Error durante sincronización:', error.message);
       throw error;

@@ -1,46 +1,9 @@
 const axios = require('axios');
 
 /**
- * Títulos especiales configurados en modo tráiler exclusivo
- * hasta que cuenten con su estreno y disponibilidad oficial en español.
+ * Lista negra de títulos eliminados por no contar con transmisiones disponibles
  */
-const FORCED_TRAILER_TITLES = [
-  {
-    id: 1204680,
-    title: 'Coyote vs. Acme',
-    originalTitle: 'Coyote vs. Acme',
-    aliases: ['coyote vs acme', 'coyote vs. acme', 'coyote contra acme', 'coyote acme'],
-    trailerKey: 'WQRoa6l4bwI',
-    trailer: 'https://www.youtube.com/watch?v=WQRoa6l4bwI',
-    statusBadge: 'Solo Tráiler - Próximamente en Español'
-  },
-  {
-    id: 1368337,
-    title: 'La Odisea',
-    originalTitle: 'The Odyssey',
-    aliases: ['la odisea', 'the odyssey', 'odisea'],
-    trailerKey: '8un_UztYsw0',
-    trailer: 'https://www.youtube.com/watch?v=8un_UztYsw0',
-    statusBadge: 'Solo Tráiler - Próximamente en Español'
-  },
-  {
-    id: 969681,
-    title: 'Spider-Man: Brand New Day',
-    originalTitle: 'Spider-Man: Brand New Day',
-    aliases: [
-      'spider-man: brand new day',
-      'spider-man brand new day',
-      'spider man brand new day',
-      'spider man un nuevo dia',
-      'spiderman brand new day',
-      'brand new day',
-      'spider-man 4'
-    ],
-    trailerKey: 'pqLSLoDkZWE',
-    trailer: 'https://www.youtube.com/watch?v=pqLSLoDkZWE',
-    statusBadge: 'Solo Tráiler - Próximamente en Español'
-  }
-];
+const FORCED_TRAILER_TITLES = [];
 
 /**
  * Servicio para interactuar con la API REST v3 de TMDB (The Movie Database).
@@ -434,15 +397,25 @@ class TmdbService {
   }
 
   /**
-   * Obtiene los estrenos actuales de cine en español.
+   * Obtiene los estrenos actuales de cine en español que ya cuentan con lanzamiento oficial y copia digital.
    */
   async getNowPlayingMovies() {
     try {
       const client = this.getAxiosClient();
+      const today = new Date().toISOString().slice(0, 10);
       const response = await client.get('/movie/now_playing', {
         params: { language: 'es-ES', page: 1 }
       });
-      return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'movie' }));
+      return (response.data.results || [])
+        .filter(item => {
+          if (!item.release_date) return false;
+          // Descartar títulos con fecha futura (no estrenados)
+          if (item.release_date > today) return false;
+          // Descartar películas de cine reciente con menos de 15 votos (sin rip digital todavía)
+          if ((item.vote_count || 0) < 15) return false;
+          return true;
+        })
+        .map(item => this.formatMediaItem({ ...item, media_type: 'movie' }));
     } catch (error) {
       console.warn('[TmdbService] Error en getNowPlayingMovies:', error.message);
       return [];
@@ -554,17 +527,20 @@ class TmdbService {
   }
 
   /**
-   * Obtiene películas por ID de género (ej. Acción = 28, Ciencia Ficción = 878) con soporte de paginación.
+   * Obtiene películas por ID de género asegurando que estén estrenadas y con versión digital disponible.
    */
   async getMoviesByGenre(genreId, page = 1) {
     try {
       const client = this.getAxiosClient();
+      const today = new Date().toISOString().slice(0, 10);
       const response = await client.get('/discover/movie', {
         params: {
           language: 'es-ES',
           with_genres: genreId,
           sort_by: 'popularity.desc',
           include_adult: false,
+          'primary_release_date.lte': today, // Solo películas ya estrenadas
+          'vote_count.gte': 15,              // Descartar títulos fantasma sin copias reproducibles
           page: page || 1
         }
       });
@@ -714,13 +690,21 @@ class TmdbService {
   }
 
   /**
-   * Obtiene las series de televisión más populares en español.
+   * Obtiene las series de televisión más populares ya estrenadas y disponibles.
    */
   async getPopularTvShows() {
     try {
       const client = this.getAxiosClient();
-      const response = await client.get('/tv/popular', {
-        params: { language: 'es-ES', page: 1 }
+      const today = new Date().toISOString().slice(0, 10);
+      const response = await client.get('/discover/tv', {
+        params: {
+          language: 'es-ES',
+          sort_by: 'popularity.desc',
+          include_adult: false,
+          'first_air_date.lte': today,
+          'vote_count.gte': 15,
+          page: 1
+        }
       });
       return (response.data.results || []).map(item => this.formatMediaItem({ ...item, media_type: 'tv' }));
     } catch (error) {
@@ -957,7 +941,6 @@ class TmdbService {
 
       const [
         nowPlayingRaw,
-        upcomingRaw,
         trendingRaw,
         actionRaw,
         comedyRaw,
@@ -969,7 +952,6 @@ class TmdbService {
         seriesRaw
       ] = await Promise.all([
         this.getNowPlayingMovies(),
-        this.getUpcomingMovies(1),
         this.getTrendingWeekly(),
         this.getMoviesByGenre(28, 1),   // Acción
         this.getMoviesByGenre(35, 1),   // Comedia
@@ -981,33 +963,36 @@ class TmdbService {
         this.getPopularTvShows()        // Series
       ]);
 
-      // Control estricto de desduplicación cruzada: ningún ID se repite en todo el catálogo
+      // Control estricto de desduplicación cruzada y filtro de títulos reproducibles
+      const today = new Date().toISOString().slice(0, 10);
       const seenIds = new Set();
-      const dedupe = (items) => {
+      const dedupeAndValidate = (items) => {
         if (!Array.isArray(items)) return [];
         return items.filter(item => {
-          if (!item || !item.id) return false;
+          if (!item || !item.id || !item.title) return false;
           if (seenIds.has(item.id)) return false;
+          // Descartar si solo es trailer o fecha futura
+          if (item.isTrailerOnly) return false;
+          if (item.releaseDate && item.releaseDate > today) return false;
           seenIds.add(item.id);
           return true;
         });
       };
 
-      const nowPlaying = dedupe(nowPlayingRaw);
-      const upcoming = dedupe(upcomingRaw);
-      const trending = dedupe(trendingRaw);
-      const action = dedupe(actionRaw);
-      const comedy = dedupe(comedyRaw);
-      const horror = dedupe(horrorRaw);
-      const animation = dedupe(animationRaw);
-      const scifi = dedupe(scifiRaw);
-      const adventure = dedupe(adventureRaw);
-      const classics = dedupe(classicsRaw);
-      const series = dedupe(seriesRaw);
+      const nowPlaying = dedupeAndValidate(nowPlayingRaw);
+      const trending = dedupeAndValidate(trendingRaw);
+      const action = dedupeAndValidate(actionRaw);
+      const comedy = dedupeAndValidate(comedyRaw);
+      const horror = dedupeAndValidate(horrorRaw);
+      const animation = dedupeAndValidate(animationRaw);
+      const scifi = dedupeAndValidate(scifiRaw);
+      const adventure = dedupeAndValidate(adventureRaw);
+      const classics = dedupeAndValidate(classicsRaw);
+      const series = dedupeAndValidate(seriesRaw);
 
       const catalogResult = {
         nowPlaying,
-        upcoming,
+        upcoming: [], // Vacío en catálogo principal para evitar trailers no reproducibles
         trending,
         action,
         comedy,
