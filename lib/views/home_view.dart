@@ -43,7 +43,7 @@ class _HomeViewState extends State<HomeView> {
   List<MediaItem> _seriesItems = [];
 
   // Pestañas de categoría rápida
-  String _activeTab = 'Todos'; // 'Todos', 'Fútbol & Deportes', 'Niños', 'Telenovelas', 'Canales Perú', 'Películas', 'Series', 'TV en Vivo', 'Próximamente', 'Mi Lista'
+  String _activeTab = 'Todos'; // 'Todos', 'Fútbol & Deportes', 'Niños', 'Telenovelas', 'Películas', 'Series', 'TV en Vivo', 'Próximamente', 'Mi Lista'
   List<WatchHistoryItem> _continueWatching = [];
   List<MediaItem> _favorites = [];
 
@@ -1075,12 +1075,6 @@ class _HomeViewState extends State<HomeView> {
         onBackToMovies: () => _returnFocusToTvSidebar('Fútbol & Deportes'),
       );
     }
-    if (_activeTab == 'Canales Perú') {
-      return LiveTvView(
-        initialCategory: '🇵🇪 Canales Peruanos',
-        onBackToMovies: () => _returnFocusToTvSidebar('Canales Perú'),
-      );
-    }
     if (_activeTab == 'TV en Vivo') {
       return LiveTvView(
         onBackToMovies: () => _returnFocusToTvSidebar('TV en Vivo'),
@@ -1381,20 +1375,6 @@ class _HomeViewState extends State<HomeView> {
               hasScrollBody: true,
               child: LiveTvView(
                 initialCategory: 'Deportes',
-                onBackToMovies: () {
-                  setState(() => _activeTab = 'Todos');
-                  if (_scrollController.hasClients) {
-                    _scrollController.animateTo(0, duration: const Duration(milliseconds: 200), curve: Curves.easeOut);
-                  }
-                },
-              ),
-            )
-          // Vista cuando la pestaña activa es "Canales Perú"
-          else if (_activeTab == 'Canales Perú')
-            SliverFillRemaining(
-              hasScrollBody: true,
-              child: LiveTvView(
-                initialCategory: '🇵🇪 Canales Peruanos',
                 onBackToMovies: () {
                   setState(() => _activeTab = 'Todos');
                   if (_scrollController.hasClients) {
@@ -1757,10 +1737,9 @@ class _HomeViewState extends State<HomeView> {
       {'id': 'Fútbol & Deportes', 'label': '⚽ Fútbol & Deportes', 'icon': Icons.sports_soccer_rounded},
       {'id': 'Niños', 'label': '👶 Niños & Dibujos', 'icon': Icons.child_care_rounded},
       {'id': 'Telenovelas', 'label': '🌹 Telenovelas', 'icon': Icons.favorite_rounded},
-      {'id': 'Canales Perú', 'label': '🇵🇪 Canales Perú', 'icon': Icons.live_tv_rounded},
       {'id': 'Películas', 'label': 'Películas', 'icon': Icons.movie_rounded},
       {'id': 'Series', 'label': 'Series', 'icon': Icons.tv_rounded},
-      {'id': 'TV en Vivo', 'label': 'TV en Vivo (1300+)', 'icon': Icons.public_rounded},
+      {'id': 'TV en Vivo', 'label': '📺 TV en Vivo', 'icon': Icons.public_rounded},
       {'id': 'Próximamente', 'label': 'Próximamente', 'icon': Icons.upcoming_rounded},
       {'id': 'Mi Lista', 'label': 'Mi Lista', 'icon': Icons.star_rounded},
     ];

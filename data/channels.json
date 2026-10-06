@@ -28,6 +28,1552 @@
     "order": 2
   },
   {
+    "id": "ch_americatelevision_pe",
+    "name": "América TV HD",
+    "category": "Entretenimiento",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Am%C3%A9rica_Televisi%C3%B3n.svg/500px-Am%C3%A9rica_Televisi%C3%B3n.svg.png",
+    "streamUrl": "http://190.93.224.42/AMERICA-TV/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/AMERICA-TV/index.m3u8",
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/america.stream/playlist.m3u8",
+      "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8",
+      "http://45.171.108.253:8888/AMERICA/index.m3u8",
+      "http://187.102.210.46/AMERICA/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 3
+  },
+  {
+    "id": "ch_atv_pe",
+    "name": "ATV HD",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/eUzYZfg.png",
+    "streamUrl": "http://190.93.224.42/ATV/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/ATV/index.m3u8",
+      "https://d19e55ehz2il4i.cloudfront.net/ts:abr.m3u8",
+      "https://d2b5h5wyivfnfl.cloudfront.net/live/25046411-8673-4dec-8ae8-5b41984f34e1/ts:abr.m3u8",
+      "http://187.102.210.46/ATV/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 4
+  },
+  {
+    "id": "ch_latina_pe",
+    "name": "Latina HD",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/MOsWriY.png",
+    "streamUrl": "http://190.93.224.42/LATINA/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/LATINA/index.m3u8",
+      "http://45.171.108.253:8888/LATINA/index.m3u8",
+      "https://dai.google.com/linear/hls/event/oYQGDqEGTmGdHE_fz9oLlg/master.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 5
+  },
+  {
+    "id": "ch_panamericanatv_pe",
+    "name": "Panamericana TV HD",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/uQhEDES.png",
+    "streamUrl": "http://190.93.224.42/PANAMERICANA/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/PANAMERICANA/index.m3u8",
+      "http://45.171.108.253:8888/PANAMERICANA/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/panamericanaSRT/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 6
+  },
+  {
+    "id": "ch_tvperu_pe",
+    "name": "TV Perú HD",
+    "category": "Cultura",
+    "logoUrl": "https://i.imgur.com/6io0IrX.png",
+    "streamUrl": "http://190.93.224.42/TV-PERU/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/TV-PERU/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/tvperuSRT/playlist.m3u8",
+      "http://187.102.210.46/TVPERU/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 7
+  },
+  {
+    "id": "ch_willaxtv_pe",
+    "name": "Willax TV HD",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/bZnDDPH.png",
+    "streamUrl": "http://190.93.224.42/WILLAX/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/WILLAX/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/willaxSRT/playlist.m3u8",
+      "http://45.171.108.253:8888/WILLAX/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 8
+  },
+  {
+    "id": "ch_l1max_pe",
+    "name": "Liga 1 MAX HD",
+    "category": "Deportes",
+    "logoUrl": "https://i.imgur.com/2fziU2B.png",
+    "streamUrl": "http://190.93.224.42/LIGA-1-MAX/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/LIGA-1-MAX/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 9
+  },
+  {
+    "id": "ch_canaln_pe",
+    "name": "Canal N HD",
+    "category": "Noticias",
+    "logoUrl": "https://i.imgur.com/Xytvw3J.png",
+    "streamUrl": "http://190.108.91.206:9050/play/a0bd/index.m3u8",
+    "sources": [
+      "http://190.108.91.206:9050/play/a0bd/index.m3u8",
+      "http://45.70.201.81:8000/play/a010/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 10
+  },
+  {
+    "id": "ch_rpptv_pe",
+    "name": "RPP Noticias HD",
+    "category": "Noticias",
+    "logoUrl": "https://i.imgur.com/oBz3CgE.png",
+    "streamUrl": "http://190.93.224.42/RPP/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/RPP/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/rpptvSRT/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 11
+  },
+  {
+    "id": "ch_exitosatv_pe",
+    "name": "Exitosa Noticias HD",
+    "category": "Noticias",
+    "logoUrl": "https://i.imgur.com/pu0BSB7.png",
+    "streamUrl": "http://190.93.224.42/EXITOSA/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/EXITOSA/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/exitosatvSRT/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 12
+  },
+  {
+    "id": "ch_atvplus_pe",
+    "name": "ATV+ Noticias HD",
+    "category": "Noticias",
+    "logoUrl": "https://i.imgur.com/fY9256H.png",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvplus.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvplus.stream/playlist.m3u8",
+      "http://190.93.224.42/ATV-PLUS/index.m3u8",
+      "http://45.171.108.253:8888/ATV/index.m3u8",
+      "https://d26l0c7cli5gzs.cloudfront.net/ts:abr.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 13
+  },
+  {
+    "id": "ch_tvperunoticias_pe",
+    "name": "TV Perú Noticias HD",
+    "category": "Noticias",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/TV_Per%C3%BA_Noticias_-_2019_logo.png/960px-TV_Per%C3%BA_Noticias_-_2019_logo.png",
+    "streamUrl": "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8",
+      "https://live-evg8.tv360.bitel.com.pe/bitel/tvperunoticiasSRT/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 14
+  },
+  {
+    "id": "ch_latinanoticias247_pe",
+    "name": "Latina Noticias HD",
+    "category": "Noticias",
+    "logoUrl": "https://assets.rudo.video/assets/latina/live/logoApi_4b43aad719f5bbf7aa2813c2199e6e3e1755620584.png",
+    "streamUrl": "https://dai.google.com/linear/hls/event/oYQGDqEGTmGdHE_fz9oLlg/master.m3u8",
+    "sources": [
+      "https://dai.google.com/linear/hls/event/oYQGDqEGTmGdHE_fz9oLlg/master.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 15
+  },
+  {
+    "id": "ch_latinaclasicos_pe",
+    "name": "Latina Clásicos",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/q0dAWyj.png",
+    "streamUrl": "http://45.171.108.253:8888/LATINA/index.m3u8",
+    "sources": [
+      "http://45.171.108.253:8888/LATINA/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 16
+  },
+  {
+    "id": "ch_globaltv_pe",
+    "name": "Global TV HD",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/yuEou9C.png",
+    "streamUrl": "http://190.93.224.42/GLOBAL/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/GLOBAL/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 17
+  },
+  {
+    "id": "ch_36tvhuacho_pe",
+    "name": "36 TV Huacho",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/F4NZM3s.jpeg",
+    "streamUrl": "https://live-evg10.tv360.bitel.com.pe/bitel/36tvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg10.tv360.bitel.com.pe/bitel/36tvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 18
+  },
+  {
+    "id": "ch_atvsur_pe",
+    "name": "ATV Sur",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/LnyVa5H.png",
+    "streamUrl": "http://190.93.224.42/ATV-SUR/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/ATV-SUR/index.m3u8",
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvsur.stream/playlist.m3u8",
+      "https://dnhmqt6n0lkaq.cloudfront.net/ts:abr.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 19
+  },
+  {
+    "id": "ch_amazoniatv_pe",
+    "name": "Amazonia TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/sSW7d8e.png",
+    "streamUrl": "https://servilive.com:3199/live/amazoniatvlive.m3u8",
+    "sources": [
+      "https://servilive.com:3199/live/amazoniatvlive.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 20
+  },
+  {
+    "id": "ch_amazonicatv_pe",
+    "name": "Amazonica TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/22ebHAX.jpeg",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/amazonicatvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/amazonicatvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 21
+  },
+  {
+    "id": "ch_andestelevision_pe",
+    "name": "Andes Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/CsW4Op8.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/andestvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/andestvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 22
+  },
+  {
+    "id": "ch_antarestelevision_pe",
+    "name": "Antares Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/05gwtk2.png",
+    "streamUrl": "https://5949aa132c8fb.streamlock.net:1963/iptvantares/liveantarestv/playlist.m3u8",
+    "sources": [
+      "https://5949aa132c8fb.streamlock.net:1963/iptvantares/liveantarestv/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 23
+  },
+  {
+    "id": "ch_antena1_pe",
+    "name": "Antena 1",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/Bt0yGtw.jpeg",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/antenauno.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/antenauno.stream/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 24
+  },
+  {
+    "id": "ch_antenasur_pe",
+    "name": "Antena SUR",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/4aHrD2l.jpeg",
+    "streamUrl": "https://cloudpro.servidoresdestream.com:8081/8010/index.m3u8",
+    "sources": [
+      "https://cloudpro.servidoresdestream.com:8081/8010/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 25
+  },
+  {
+    "id": "ch_autenticatelevision_pe",
+    "name": "Autentica Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/bEJK3RN.png",
+    "streamUrl": "https://live.obslivestream.com/autenticatvmux/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/autenticatvmux/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 26
+  },
+  {
+    "id": "ch_bnbdigital_pe",
+    "name": "BNB Digital",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/MgEN1F8.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/bnbSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/bnbSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 27
+  },
+  {
+    "id": "ch_bellaabanquinatv_pe",
+    "name": "Bella Abanquina TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/bORM4rt.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/bellaabanquinaSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/bellaabanquinaSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 28
+  },
+  {
+    "id": "ch_betheltv_pe",
+    "name": "Bethel TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/zCVh765.png",
+    "streamUrl": "https://alfa.betheltv.tv/srt/3_abr/playlist.m3u8",
+    "sources": [
+      "https://alfa.betheltv.tv/srt/3_abr/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 29
+  },
+  {
+    "id": "ch_canalmtelevision_pe",
+    "name": "CANAL M Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/EcdNFuJ.png",
+    "streamUrl": "https://live-evg10.tv360.bitel.com.pe/bitel/anqaratv/playlist.m3u8",
+    "sources": [
+      "https://live-evg10.tv360.bitel.com.pe/bitel/anqaratv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 30
+  },
+  {
+    "id": "ch_crtelevision_pe",
+    "name": "CR Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/oxycMeA.png",
+    "streamUrl": "https://live.obslivestream.com/crtvmux/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/crtvmux/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 31
+  },
+  {
+    "id": "ch_cvntv_pe",
+    "name": "CVN TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/QF5VUcy.png",
+    "streamUrl": "https://7.innovatestream.pe:19360/cvntumbes/cvntumbes.m3u8",
+    "sources": [
+      "https://7.innovatestream.pe:19360/cvntumbes/cvntumbes.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 32
+  },
+  {
+    "id": "ch_cadenatv_pe",
+    "name": "Cadena TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/stvzqzd.png",
+    "streamUrl": "https://live-evg10.tv360.bitel.com.pe/bitel/cadenatv/playlist.m3u8",
+    "sources": [
+      "https://live-evg10.tv360.bitel.com.pe/bitel/cadenatv/playlist.m3u8",
+      "https://tv.bitstreaming.net:3789/live/cdntvlive.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 33
+  },
+  {
+    "id": "ch_cajamarcatv_pe",
+    "name": "Cajamarca TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/pC57NYv.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/cajamarcatvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/cajamarcatvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 34
+  },
+  {
+    "id": "ch_canal8catacaos_pe",
+    "name": "Canal 8 Catacaos",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/O5MrFjY.png",
+    "streamUrl": "https://live.obslivestream.com/canal8/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/canal8/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 35
+  },
+  {
+    "id": "ch_casmatv_pe",
+    "name": "Casma TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/42aE0nm.jpeg",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/casmatvSRT-TRA/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/casmatvSRT-TRA/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 36
+  },
+  {
+    "id": "ch_charapatv_pe",
+    "name": "Charapa TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/tFRmMkf.png",
+    "streamUrl": "https://live-evg10.tv360.bitel.com.pe/bitel/charapatvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg10.tv360.bitel.com.pe/bitel/charapatvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 37
+  },
+  {
+    "id": "ch_chikitoonz_pe",
+    "name": "Chikitoonz",
+    "category": "Entretenimiento",
+    "logoUrl": "https://chikitoonz.com/site/wp-content/uploads/2024/08/logochikitoonz2.png",
+    "streamUrl": "http://45.70.201.81:8000/play/a00p/index.m3u8",
+    "sources": [
+      "http://45.70.201.81:8000/play/a00p/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 38
+  },
+  {
+    "id": "ch_conecta2tv_pe",
+    "name": "Conecta2TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/W6FDUwt.png",
+    "streamUrl": "https://live.obslivestream.com/conecta2/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/conecta2/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 39
+  },
+  {
+    "id": "ch_cultura24_pe",
+    "name": "Cultura 24",
+    "category": "Cultura",
+    "logoUrl": "https://i.imgur.com/h0LxXsx.png",
+    "streamUrl": "https://www.opencaster.com/resources/hls_stream/cultura24.m3u8",
+    "sources": [
+      "https://www.opencaster.com/resources/hls_stream/cultura24.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 40
+  },
+  {
+    "id": "ch_dtv_pe",
+    "name": "DTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/OSvegAq.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/sabormixtvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/sabormixtvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 41
+  },
+  {
+    "id": "ch_dactv_pe",
+    "name": "Dac TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/g4pZ3ZW.jpeg",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/dactvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/dactvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 42
+  },
+  {
+    "id": "ch_deltatv_pe",
+    "name": "DeltaTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/crttwAR.png",
+    "streamUrl": "https://tv2.bitstreaming.net:3539/live/deltanetlive.m3u8",
+    "sources": [
+      "https://tv2.bitstreaming.net:3539/live/deltanetlive.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 43
+  },
+  {
+    "id": "ch_doblectelevision_pe",
+    "name": "Doble C Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/2zCD4TB.png",
+    "streamUrl": "https://live20.bozztv.com/giatv/giatv-doblec1/doblec1/playlist.m3u8",
+    "sources": [
+      "https://live20.bozztv.com/giatv/giatv-doblec1/doblec1/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 44
+  },
+  {
+    "id": "ch_forotv_pe",
+    "name": "Foro TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTarTiQHz2Pl0Bpx9g7JV_eaz4V4f61wtGyRw&s",
+    "streamUrl": "https://mc.servidor.stream:19360/8274/8274.m3u8",
+    "sources": [
+      "https://mc.servidor.stream:19360/8274/8274.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 45
+  },
+  {
+    "id": "ch_fuegotv_pe",
+    "name": "FuegoTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/1LuNEX4.png",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/fuegotv.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/fuegotv.stream/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 46
+  },
+  {
+    "id": "ch_geniostv_pe",
+    "name": "Genios TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/iH2Lx6E.png",
+    "streamUrl": "https://sc3.wasidata.com/Genios2_1902/video.m3u8",
+    "sources": [
+      "https://sc3.wasidata.com/Genios2_1902/video.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 47
+  },
+  {
+    "id": "ch_huachoperutv_pe",
+    "name": "Huacho Peru TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/PevmfqK.png",
+    "streamUrl": "https://tv.huachotv.com/stream.m3u8",
+    "sources": [
+      "https://tv.huachotv.com/stream.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 48
+  },
+  {
+    "id": "ch_impactotelevision_pe",
+    "name": "Impacto Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/bkpCGP6.png",
+    "streamUrl": "https://cloudvideo.servers10.com:8081/impactotv/index.m3u8",
+    "sources": [
+      "https://cloudvideo.servers10.com:8081/impactotv/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 49
+  },
+  {
+    "id": "ch_imperialtelevision_pe",
+    "name": "Imperial Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/eYXqkyN.png",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/imperialSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/imperialSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 50
+  },
+  {
+    "id": "ch_jnetv_pe",
+    "name": "JNE TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/b25XfCj.png",
+    "streamUrl": "https://lbgo.bozztv.com/ssh101/ssh101/jnetv/playlist.m3u8",
+    "sources": [
+      "https://lbgo.bozztv.com/ssh101/ssh101/jnetv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 51
+  },
+  {
+    "id": "ch_juntostv_pe",
+    "name": "Juntos TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/b/bd/Juntos_TV_Logo.png",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/juntos_tv.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/juntos_tv.stream/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 52
+  },
+  {
+    "id": "ch_justiciatv_pe",
+    "name": "Justicia TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/VOjLXJd.png",
+    "streamUrl": "http://190.93.224.42/JUSTICIA-TV/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/JUSTICIA-TV/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 53
+  },
+  {
+    "id": "ch_lafabulosatv_pe",
+    "name": "La Fabulosa TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/GjME5H0.png",
+    "streamUrl": "https://eu1.servers10.com:8081/8004/index.m3u8",
+    "sources": [
+      "https://eu1.servers10.com:8081/8004/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 54
+  },
+  {
+    "id": "ch_latele_pe",
+    "name": "La Tele",
+    "category": "Entretenimiento",
+    "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/LaTele_Per%C3%BA_2018_Logo.png/960px-LaTele_Per%C3%BA_2018_Logo.png",
+    "streamUrl": "http://190.93.224.42/LA-TELE/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/LA-TELE/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 55
+  },
+  {
+    "id": "ch_lidertv_pe",
+    "name": "Lider TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/naZXUdR.jpeg",
+    "streamUrl": "https://chankillo.agenciastreaming.com/lidertv/index.m3u8",
+    "sources": [
+      "https://chankillo.agenciastreaming.com/lidertv/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 56
+  },
+  {
+    "id": "ch_megatvjaen_pe",
+    "name": "Mega TV Jaen",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/zK1YcpJ.png",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/megatv/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/megatv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 57
+  },
+  {
+    "id": "ch_mieltv_pe",
+    "name": "Miel TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/dPSFrCs.png",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/mieltvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/mieltvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 58
+  },
+  {
+    "id": "ch_milenialtv_pe",
+    "name": "Milenial TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/8ZiNoEa.png",
+    "streamUrl": "https://www.milenial.news/salida/milenial.m3u8",
+    "sources": [
+      "https://www.milenial.news/salida/milenial.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 59
+  },
+  {
+    "id": "ch_monterricotv_pe",
+    "name": "Monterrico TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/SuVO9T7.png",
+    "streamUrl": "https://h.jcp.live.opencaster.com/play_src/index.m3u8",
+    "sources": [
+      "https://h.jcp.live.opencaster.com/play_src/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 60
+  },
+  {
+    "id": "ch_nzktelevision_pe",
+    "name": "NZK Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/IqsB6VR.jpeg",
+    "streamUrl": "https://eu1.servers10.com:8081/8258/index.m3u8",
+    "sources": [
+      "https://eu1.servers10.com:8081/8258/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 61
+  },
+  {
+    "id": "ch_nacionaltvperu_pe",
+    "name": "Nacional Tv Peru",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/ad0GNqa.png",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/nacionaltv_peru.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/nacionaltv_peru.stream/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 62
+  },
+  {
+    "id": "ch_nativa_pe",
+    "name": "Nativa",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/Y9k9XSO.png",
+    "streamUrl": "http://187.102.210.46/NATIVATV/index.m3u8",
+    "sources": [
+      "http://187.102.210.46/NATIVATV/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 63
+  },
+  {
+    "id": "ch_nativatvsatipo_pe",
+    "name": "Nativa TV Satipo",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/ScCAgGB.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/nativachanchamayoSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/nativachanchamayoSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 64
+  },
+  {
+    "id": "ch_ovaciontv_pe",
+    "name": "Ovacion TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/7Xndgxk.png",
+    "streamUrl": "http://cdn2.ujjina.com:1935/iptvovacion1/liveovacion1tv/playlist.m3u8",
+    "sources": [
+      "http://cdn2.ujjina.com:1935/iptvovacion1/liveovacion1tv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 65
+  },
+  {
+    "id": "ch_pbo_pe",
+    "name": "PBO",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/vBpxX4S.png",
+    "streamUrl": "http://190.93.224.42/PBO/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/PBO/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 66
+  },
+  {
+    "id": "ch_pequestv_pe",
+    "name": "Peques TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://img-evg3.tv360.bitel.com.pe/peru-image/2026/01/06/04/1767647409377/6123aa5e7fc7.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/pequestv/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/pequestv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 67
+  },
+  {
+    "id": "ch_piuratv_pe",
+    "name": "PiuraTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/KnJAqbd.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/piuratvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/piuratvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 68
+  },
+  {
+    "id": "ch_planeatv_pe",
+    "name": "Planea TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/EoLhvBN.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/planeatvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/planeatvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 69
+  },
+  {
+    "id": "ch_primavera15_pe",
+    "name": "Primavera 15",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/wsJ8Ag2.png",
+    "streamUrl": "https://mc.servidor.stream:19360/8244/8244.m3u8",
+    "sources": [
+      "https://mc.servidor.stream:19360/8244/8244.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 70
+  },
+  {
+    "id": "ch_qollasuyotv_pe",
+    "name": "Qollasuyo TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/6bi7fGB.jpeg",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/qollasuyotv/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/qollasuyotv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 71
+  },
+  {
+    "id": "ch_qosqotimes_pe",
+    "name": "Qosqo Times",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/oWJauwQ.png",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/qosqo/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/qosqo/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 72
+  },
+  {
+    "id": "ch_rntelevision_pe",
+    "name": "RN Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/oFGiW7u.png",
+    "streamUrl": "https://videoserver.tmcreativos.com:19360/rnyurimaguas/rnyurimaguas.m3u8",
+    "sources": [
+      "https://videoserver.tmcreativos.com:19360/rnyurimaguas/rnyurimaguas.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 73
+  },
+  {
+    "id": "ch_rselvatv_pe",
+    "name": "RSelvaTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/DAK5ZnD.png",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/selvaticaSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/selvaticaSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 74
+  },
+  {
+    "id": "ch_radiochalaca_pe",
+    "name": "Radio Chalaca",
+    "category": "Música",
+    "logoUrl": "https://i.imgur.com/9A6DBG7.png",
+    "streamUrl": "https://servilive.com:3414/hybrid/play.m3u8",
+    "sources": [
+      "https://servilive.com:3414/hybrid/play.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 75
+  },
+  {
+    "id": "ch_radiomaster_pe",
+    "name": "Radio Master",
+    "category": "Música",
+    "logoUrl": "https://i.imgur.com/AUoxyzP.png",
+    "streamUrl": "https://videoserver.tmcreativos.com:19360/radiomaster/radiomaster.m3u8",
+    "sources": [
+      "https://videoserver.tmcreativos.com:19360/radiomaster/radiomaster.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 76
+  },
+  {
+    "id": "ch_radioondadigital_pe",
+    "name": "Radio Onda Digital",
+    "category": "Música",
+    "logoUrl": "https://i.imgur.com/Lid5RTv.png",
+    "streamUrl": "https://live.ondadigitaltv.com/RADIOODTV/index.m3u8",
+    "sources": [
+      "https://live.ondadigitaltv.com/RADIOODTV/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 77
+  },
+  {
+    "id": "ch_radiorumbatv_pe",
+    "name": "Radio Rumba TV",
+    "category": "Música",
+    "logoUrl": "https://i.imgur.com/BYcxI03.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/rumba/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/rumba/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 78
+  },
+  {
+    "id": "ch_radiotvoriente_pe",
+    "name": "RadioTV Oriente",
+    "category": "Música",
+    "logoUrl": "https://i.imgur.com/iHaFLHX.png",
+    "streamUrl": "https://live.obslivestream.com/tvoriente/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/tvoriente/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 79
+  },
+  {
+    "id": "ch_realtelevision_pe",
+    "name": "Real Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/7KECyh5.jpeg",
+    "streamUrl": "https://live-evg10.tv360.bitel.com.pe/bitel/realtv/playlist.m3u8",
+    "sources": [
+      "https://live-evg10.tv360.bitel.com.pe/bitel/realtv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 80
+  },
+  {
+    "id": "ch_regiontvcallao_pe",
+    "name": "Region TV Callao",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/I4grcqk.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/regiontvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/regiontvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 81
+  },
+  {
+    "id": "ch_rumbamixtv_pe",
+    "name": "RumbaMix TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/rwA3HIp.png",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/mixtvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/mixtvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 82
+  },
+  {
+    "id": "ch_rumbominerotv_pe",
+    "name": "Rumbo Minero TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://www.rumbominero.com/wp-content/uploads/2021/05/logo_RM_AM_2.png",
+    "streamUrl": "http://45.70.201.81:8000/play/a018/index.m3u8",
+    "sources": [
+      "http://45.70.201.81:8000/play/a018/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 83
+  },
+  {
+    "id": "ch_solartelevision_pe",
+    "name": "Solar Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/ufnWpUf.png",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/solartvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/solartvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 84
+  },
+  {
+    "id": "ch_sqalatv_pe",
+    "name": "Sqala TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/DJ05m8s.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/studiotvhuanta/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/studiotvhuanta/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 85
+  },
+  {
+    "id": "ch_studiopascotv_pe",
+    "name": "Studio Pasco TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/zgyNuVE.jpeg",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/studiopasco/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/studiopasco/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 86
+  },
+  {
+    "id": "ch_tvbellaasuncion_pe",
+    "name": "TV Bella Asuncion",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/H69eLFW.png",
+    "streamUrl": "https://s2.tvdatta.com:3687/hybrid/play.m3u8",
+    "sources": [
+      "https://s2.tvdatta.com:3687/hybrid/play.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 87
+  },
+  {
+    "id": "ch_tvcosmos_pe",
+    "name": "TV Cosmos",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/nr4ctt4.png",
+    "streamUrl": "https://videoserver.tmcreativos.com:19360/tvcosmos/tvcosmos.m3u8",
+    "sources": [
+      "https://videoserver.tmcreativos.com:19360/tvcosmos/tvcosmos.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 88
+  },
+  {
+    "id": "ch_tvmax_pe",
+    "name": "TV MAX",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/JFBpDJ1.jpeg",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/nexSRT_TRA/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/nexSRT_TRA/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 89
+  },
+  {
+    "id": "ch_tvnortechiclayo_pe",
+    "name": "TV Norte Chiclayo",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/0fg6m2L.png",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/tvnorte/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/tvnorte/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 90
+  },
+  {
+    "id": "ch_tvperuanisima_pe",
+    "name": "TV Peruanisima",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/m50qAVY.png",
+    "streamUrl": "https://k20.usastreams.com:8081/tvperuanisima/index.m3u8",
+    "sources": [
+      "https://k20.usastreams.com:8081/tvperuanisima/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 91
+  },
+  {
+    "id": "ch_tvpluschincha_pe",
+    "name": "TV+ Chincha",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/bjQpQsu.jpeg",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/tvchincha/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/tvchincha/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 92
+  },
+  {
+    "id": "ch_tvuno_pe",
+    "name": "TVUNO",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/dht94P4.png",
+    "streamUrl": "https://streamtv.onliv3.online:1936/karibtv/karibtv/playlist.m3u8",
+    "sources": [
+      "https://streamtv.onliv3.online:1936/karibtv/karibtv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 93
+  },
+  {
+    "id": "ch_tvenlinea_pe",
+    "name": "TVenLinea",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/txV8lw0.png",
+    "streamUrl": "https://srt.tvdatta.com/tvenlinea/index.m3u8",
+    "sources": [
+      "https://srt.tvdatta.com/tvenlinea/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 94
+  },
+  {
+    "id": "ch_telecoloryurimaguas_pe",
+    "name": "Telecolor Yurimaguas",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/Ug6XNIU.png",
+    "streamUrl": "https://live.obslivestream.com/telecolormux/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/telecolormux/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 95
+  },
+  {
+    "id": "ch_telelima_pe",
+    "name": "Telelima",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/HzWRvXc.png",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/telelima.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/telelima.stream/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 96
+  },
+  {
+    "id": "ch_teleselva_pe",
+    "name": "Teleselva",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/cu7hTn8.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/teleselva/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/teleselva/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 97
+  },
+  {
+    "id": "ch_televisiontarapoto_pe",
+    "name": "Television Tarapoto",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/Dzen7sh.png",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/tvtarapotoSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/tvtarapotoSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 98
+  },
+  {
+    "id": "ch_teveempresa_pe",
+    "name": "Teve Empresa",
+    "category": "Entretenimiento",
+    "logoUrl": "https://img-evg3.tv360.bitel.com.pe/peru-image/2026/04/07/02/1775503150878/c34840061c94_480_270.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/tvempresaSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/tvempresaSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 99
+  },
+  {
+    "id": "ch_tevesur_pe",
+    "name": "Tevesur",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/LcZ2Hhd.jpeg",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/tevesurSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/tevesurSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 100
+  },
+  {
+    "id": "ch_trivu_pe",
+    "name": "Trivu",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/QrUYjOS.png",
+    "streamUrl": "http://190.93.224.42/TRIVU-TV/index.m3u8",
+    "sources": [
+      "http://190.93.224.42/TRIVU-TV/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 101
+  },
+  {
+    "id": "ch_turbomixradiotv_pe",
+    "name": "Turbo Mix Radio TV",
+    "category": "Música",
+    "logoUrl": "https://i.imgur.com/AsdBQa3.png",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/turbomixSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/turbomixSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 102
+  },
+  {
+    "id": "ch_usmptv_pe",
+    "name": "USMPTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/9cmIv3q.png",
+    "streamUrl": "http://187.102.210.46/USMP/index.m3u8",
+    "sources": [
+      "http://187.102.210.46/USMP/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 103
+  },
+  {
+    "id": "ch_uchutv_pe",
+    "name": "Uchu TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/xYGkUR9.png",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/ucayalitvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/ucayalitvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 104
+  },
+  {
+    "id": "ch_unitel_pe",
+    "name": "Unitel",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/F0PWpyc.png",
+    "streamUrl": "https://play.agenciastreaming.com:8081/uniteltv/index.m3u8",
+    "sources": [
+      "https://play.agenciastreaming.com:8081/uniteltv/index.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 105
+  },
+  {
+    "id": "ch_uraniotv_pe",
+    "name": "Uranio TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/EeNpfIr.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/uranioyurimaguasSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/uranioyurimaguasSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 106
+  },
+  {
+    "id": "ch_vnp_pe",
+    "name": "VNP",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/TOnknEW.png",
+    "streamUrl": "https://videoserver.tmcreativos.com:19360/visionnoticias/visionnoticias.m3u8",
+    "sources": [
+      "https://videoserver.tmcreativos.com:19360/visionnoticias/visionnoticias.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 107
+  },
+  {
+    "id": "ch_vrcanal21nasca_pe",
+    "name": "VR Canal 21 Nasca",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/rxzz6kD.jpeg",
+    "streamUrl": "https://live-evg10.tv360.bitel.com.pe/bitel/nasca/playlist.m3u8",
+    "sources": [
+      "https://live-evg10.tv360.bitel.com.pe/bitel/nasca/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 108
+  },
+  {
+    "id": "ch_viaaltomayo_pe",
+    "name": "Via Altomayo",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/aJ4XExn.png",
+    "streamUrl": "https://live.obslivestream.com/viaaltomayomux/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/viaaltomayomux/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 109
+  },
+  {
+    "id": "ch_viatelevision_pe",
+    "name": "Via Television",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/FiptbGQ.png",
+    "streamUrl": "https://videoserver.tmcreativos.com:19360/cablerasvia/cablerasvia.m3u8",
+    "sources": [
+      "https://videoserver.tmcreativos.com:19360/cablerasvia/cablerasvia.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 110
+  },
+  {
+    "id": "ch_vision_pe",
+    "name": "Vision",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/gyuoNZk.png",
+    "streamUrl": "https://lbgo.bozztv.com/ssh101/ssh101/visiononline/playlist.m3u8",
+    "sources": [
+      "https://lbgo.bozztv.com/ssh101/ssh101/visiononline/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 111
+  },
+  {
+    "id": "ch_visionsur_pe",
+    "name": "Vision Sur",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/AbZYWEQ.png",
+    "streamUrl": "https://live-evg8.tv360.bitel.com.pe/bitel/visionsur/playlist.m3u8",
+    "sources": [
+      "https://live-evg8.tv360.bitel.com.pe/bitel/visionsur/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 112
+  },
+  {
+    "id": "ch_vivatvyurimaguas_pe",
+    "name": "Viva TV Yurimaguas",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/GkSoxhx.png",
+    "streamUrl": "https://live.obslivestream.com/vivatv/index.m3u8",
+    "sources": [
+      "https://live.obslivestream.com/vivatv/index.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 113
+  },
+  {
+    "id": "ch_vivatv_pe",
+    "name": "VivaTV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/m44jTZK.png",
+    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/vivatv.stream/playlist.m3u8",
+    "sources": [
+      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/vivatv.stream/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 114
+  },
+  {
+    "id": "ch_west_pe",
+    "name": "WEST",
+    "category": "Entretenimiento",
+    "logoUrl": "https://aptcperu.org/wp-content/uploads/2026/04/logoMesa-de-trabajo-1-copia-5.png",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/west/playlist.m3u8",
+    "sources": [
+      "https://cablered.iptvperu.tv:1936/cablered/west/playlist.m3u8"
+    ],
+    "quality": "1080p HD",
+    "isActive": true,
+    "order": 115
+  },
+  {
+    "id": "ch_wayratv_pe",
+    "name": "Wayra TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/eQLRVFp.png",
+    "streamUrl": "https://live-evg11.tv360.bitel.com.pe/bitel/wayratv/playlist.m3u8",
+    "sources": [
+      "https://live-evg11.tv360.bitel.com.pe/bitel/wayratv/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 116
+  },
+  {
+    "id": "ch_wtv_pe",
+    "name": "Wtv",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/V10iVeh.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/ncanalSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/ncanalSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 117
+  },
+  {
+    "id": "ch_yurimaguastv_pe",
+    "name": "Yurimaguas TV",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/VWC6Pt1.png",
+    "streamUrl": "https://live-evg7.tv360.bitel.com.pe/bitel/yurimaguastvSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg7.tv360.bitel.com.pe/bitel/yurimaguastvSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 118
+  },
+  {
+    "id": "ch_yurivision_pe",
+    "name": "Yurivision",
+    "category": "Entretenimiento",
+    "logoUrl": "https://i.imgur.com/VhWuaER.jpeg",
+    "streamUrl": "https://live-evg5.tv360.bitel.com.pe/bitel/yurivisionSRT/playlist.m3u8",
+    "sources": [
+      "https://live-evg5.tv360.bitel.com.pe/bitel/yurivisionSRT/playlist.m3u8"
+    ],
+    "quality": "720p HD",
+    "isActive": true,
+    "order": 119
+  },
+  {
     "id": "dep-redbull",
     "name": "Red Bull TV Deportes Extremos",
     "category": "Deportes",
@@ -35,7 +1581,7 @@
     "streamUrl": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
     "quality": "1080p HD",
     "isActive": true,
-    "order": 3,
+    "order": 120,
     "sources": [
       "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8"
     ]
@@ -51,7 +1597,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 4
+    "order": 121
   },
   {
     "id": "ch_aztecadeportesnetwork_mx",
@@ -64,7 +1610,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 5
+    "order": 122
   },
   {
     "id": "ch_crtv_cl",
@@ -77,7 +1623,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 6
+    "order": 123
   },
   {
     "id": "ch_deportespormovistarplusplus_es",
@@ -90,7 +1636,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 7
+    "order": 124
   },
   {
     "id": "ch_dsports_us",
@@ -103,7 +1649,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 8
+    "order": 125
   },
   {
     "id": "ch_fierroafondotv_us",
@@ -116,7 +1662,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 9
+    "order": 126
   },
   {
     "id": "ch_fifaplus_uk",
@@ -130,7 +1676,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 10
+    "order": 127
   },
   {
     "id": "ch_foxdeportes_us",
@@ -143,7 +1689,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 11
+    "order": 128
   },
   {
     "id": "ch_ftv_bo",
@@ -156,7 +1702,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 12
+    "order": 129
   },
   {
     "id": "ch_futv_cr",
@@ -169,7 +1715,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 13
+    "order": 130
   },
   {
     "id": "ch_garagetvlatinamerica_ar",
@@ -182,7 +1728,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 14
+    "order": 131
   },
   {
     "id": "ch_itvdeportes_mx",
@@ -195,7 +1741,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 15
+    "order": 132
   },
   {
     "id": "ch_ligadecampeonespormovistarplusplus_es",
@@ -208,7 +1754,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 16
+    "order": 133
   },
   {
     "id": "ch_mlbstrikezone_us",
@@ -221,7 +1767,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 17
+    "order": 134
   },
   {
     "id": "ch_msg_us",
@@ -234,7 +1780,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 18
+    "order": 135
   },
   {
     "id": "ch_plutotvdeportes_us",
@@ -247,7 +1793,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 19
+    "order": 136
   },
   {
     "id": "ch_plutotvesports_us",
@@ -260,7 +1806,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 20
+    "order": 137
   },
   {
     "id": "ch_plutotvmotor_de",
@@ -273,7 +1819,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 21
+    "order": 138
   },
   {
     "id": "ch_plutotvsnooker900_de",
@@ -286,7 +1832,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 22
+    "order": 139
   },
   {
     "id": "ch_redbulltv_at",
@@ -299,7 +1845,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 23
+    "order": 140
   },
   {
     "id": "ch_turfmovil_cl",
@@ -312,7 +1858,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 24
+    "order": 141
   },
   {
     "id": "ch_tvcuatro43_mx",
@@ -325,7 +1871,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 25
+    "order": 142
   },
   {
     "id": "ch_tycsportsusa_ar",
@@ -338,7 +1884,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 26
+    "order": 143
   },
   {
     "id": "ch_winsports_co",
@@ -351,7 +1897,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 27
+    "order": 144
   },
   {
     "id": "ch_winplusfutbol_co",
@@ -364,7 +1910,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 28
+    "order": 145
   },
   {
     "id": "cine-pluto-estelares",
@@ -374,7 +1920,7 @@
     "streamUrl": "https://jmp2.uk/plu-5dcde437229eff00091b6c30.m3u8",
     "quality": "1080p HD",
     "isActive": true,
-    "order": 29,
+    "order": 146,
     "sources": [
       "https://jmp2.uk/plu-5dcde437229eff00091b6c30.m3u8",
       "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de57ee45f1b130009695627/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj1&targetparams=none"
@@ -388,7 +1934,7 @@
     "streamUrl": "https://jmp2.uk/plu-5de802659167b10009e7deba.m3u8",
     "quality": "1080p HD",
     "isActive": true,
-    "order": 30,
+    "order": 147,
     "sources": [
       "https://jmp2.uk/plu-5de802659167b10009e7deba.m3u8",
       "https://service-stitcher.clusters.pluto.tv/stitch/hls/channel/5de5877c5f1b130009695628/master.m3u8?advertisingId=&appName=web&appStoreUrl=&architecture=&buildVersion=&deviceDNT=0&deviceId=vjstream&deviceLat=&deviceLon=&deviceMake=Chrome&deviceModel=web&deviceType=web&deviceVersion=unknown&includeExtendedEvents=false&sid=vj3&targetparams=none"
@@ -405,7 +1951,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 31
+    "order": 148
   },
   {
     "id": "ch_acapulcoshore_us",
@@ -418,7 +1964,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 32
+    "order": 149
   },
   {
     "id": "ch_adrenalinapuratv_us",
@@ -431,7 +1977,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 33
+    "order": 150
   },
   {
     "id": "ch_alternatv_ar",
@@ -444,7 +1990,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 34
+    "order": 151
   },
   {
     "id": "ch_anaylos7_us",
@@ -457,7 +2003,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 35
+    "order": 152
   },
   {
     "id": "ch_andromeda_us",
@@ -470,7 +2016,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 36
+    "order": 153
   },
   {
     "id": "ch_avirewind_us",
@@ -483,7 +2029,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 37
+    "order": 154
   },
   {
     "id": "ch_axnlatinamerica_us",
@@ -499,7 +2045,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 38
+    "order": 155
   },
   {
     "id": "ch_bbcdrama_uk",
@@ -512,7 +2058,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 39
+    "order": 156
   },
   {
     "id": "ch_boreal_do",
@@ -525,7 +2071,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 40
+    "order": 157
   },
   {
     "id": "ch_canalcinedios_co",
@@ -538,7 +2084,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 41
+    "order": 158
   },
   {
     "id": "ch_cineadrenalina_us",
@@ -551,7 +2097,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 42
+    "order": 159
   },
   {
     "id": "ch_cineamor_us",
@@ -564,7 +2110,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 43
+    "order": 160
   },
   {
     "id": "ch_cinepremiere_us",
@@ -577,7 +2123,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 44
+    "order": 161
   },
   {
     "id": "ch_cineterror_us",
@@ -591,7 +2137,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 45
+    "order": 162
   },
   {
     "id": "ch_cinecanal_us",
@@ -605,7 +2151,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 46
+    "order": 163
   },
   {
     "id": "ch_cinemaxhits_us",
@@ -618,7 +2164,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 47
+    "order": 164
   },
   {
     "id": "ch_comedycentralsouthpark_us",
@@ -631,7 +2177,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 48
+    "order": 165
   },
   {
     "id": "ch_currojimenez_us",
@@ -644,7 +2190,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 49
+    "order": 166
   },
   {
     "id": "ch_depeliculalatinamerica_mx",
@@ -657,7 +2203,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 50
+    "order": 167
   },
   {
     "id": "ch_depeliculaus_us",
@@ -670,7 +2216,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 51
+    "order": 168
   },
   {
     "id": "ch_detectiveconan_us",
@@ -683,7 +2229,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 52
+    "order": 169
   },
   {
     "id": "ch_dreikotv_pa",
@@ -696,7 +2242,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 53
+    "order": 170
   },
   {
     "id": "ch_elcomisario_us",
@@ -709,7 +2255,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 54
+    "order": 171
   },
   {
     "id": "ch_elencantadordeperros_us",
@@ -722,7 +2268,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 55
+    "order": 172
   },
   {
     "id": "ch_empenosalobestia_us",
@@ -735,7 +2281,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 56
+    "order": 173
   },
   {
     "id": "ch_esportsmaxtv_ve",
@@ -748,7 +2294,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 57
+    "order": 174
   },
   {
     "id": "ch_europaeuropa_ar",
@@ -761,7 +2307,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 58
+    "order": 175
   },
   {
     "id": "ch_extremakidstv_cr",
@@ -774,7 +2320,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 59
+    "order": 176
   },
   {
     "id": "ch_giktvmx_mx",
@@ -787,7 +2333,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 60
+    "order": 177
   },
   {
     "id": "ch_hbohits_us",
@@ -800,7 +2346,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 61
+    "order": 178
   },
   {
     "id": "ch_hbomovies_us",
@@ -813,7 +2359,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 62
+    "order": 179
   },
   {
     "id": "ch_icarly_us",
@@ -826,7 +2372,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 63
+    "order": 180
   },
   {
     "id": "ch_investiga_us",
@@ -839,7 +2385,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 64
+    "order": 181
   },
   {
     "id": "ch_kenankel_us",
@@ -852,7 +2398,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 65
+    "order": 182
   },
   {
     "id": "ch_lastortugasninja_us",
@@ -865,7 +2411,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 66
+    "order": 183
   },
   {
     "id": "ch_losarchivosdelfbi_us",
@@ -878,7 +2424,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 67
+    "order": 184
   },
   {
     "id": "ch_losasesinatosdemidsomer_us",
@@ -891,7 +2437,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 68
+    "order": 185
   },
   {
     "id": "ch_macgyver_us",
@@ -904,7 +2450,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 69
+    "order": 186
   },
   {
     "id": "ch_medium_de",
@@ -917,7 +2463,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 70
+    "order": 187
   },
   {
     "id": "ch_megacinetv_do",
@@ -930,7 +2476,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 71
+    "order": 188
   },
   {
     "id": "ch_misteriossinresolver_us",
@@ -943,7 +2489,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 72
+    "order": 189
   },
   {
     "id": "ch_mrbeananimated_uk",
@@ -956,7 +2502,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 73
+    "order": 190
   },
   {
     "id": "ch_mtvteenmom_us",
@@ -969,7 +2515,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 74
+    "order": 191
   },
   {
     "id": "ch_mytimemovienetwork_mx",
@@ -982,7 +2528,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 75
+    "order": 192
   },
   {
     "id": "ch_mytimemovienetwork_es",
@@ -995,7 +2541,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 76
+    "order": 193
   },
   {
     "id": "ch_ncis_us",
@@ -1008,7 +2554,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 77
+    "order": 194
   },
   {
     "id": "ch_nexthd_py",
@@ -1021,7 +2567,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 78
+    "order": 195
   },
   {
     "id": "ch_numeros_us",
@@ -1034,7 +2580,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 79
+    "order": 196
   },
   {
     "id": "ch_onepiece_us",
@@ -1048,7 +2594,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 80
+    "order": 197
   },
   {
     "id": "ch_plimplim_ar",
@@ -1061,7 +2607,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 81
+    "order": 198
   },
   {
     "id": "ch_plutotvalamexicana_us",
@@ -1074,7 +2620,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 82
+    "order": 199
   },
   {
     "id": "ch_plutotvaventura_us",
@@ -1087,7 +2633,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 83
+    "order": 200
   },
   {
     "id": "ch_plutotvcatastrofes_de",
@@ -1100,7 +2646,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 84
+    "order": 201
   },
   {
     "id": "ch_plutotvcineaccion_us",
@@ -1113,7 +2659,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 85
+    "order": 202
   },
   {
     "id": "ch_plutotvcineclasico_us",
@@ -1126,7 +2672,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 86
+    "order": 203
   },
   {
     "id": "ch_plutotvcinecomedia_de",
@@ -1139,7 +2685,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 87
+    "order": 204
   },
   {
     "id": "ch_plutotvcinecomedia_us",
@@ -1153,7 +2699,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 88
+    "order": 205
   },
   {
     "id": "ch_plutotvcinecrimen_us",
@@ -1166,7 +2712,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 89
+    "order": 206
   },
   {
     "id": "ch_plutotvcinedeautor_de",
@@ -1179,7 +2725,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 90
+    "order": 207
   },
   {
     "id": "ch_plutotvcinedrama_us",
@@ -1192,7 +2738,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 91
+    "order": 208
   },
   {
     "id": "ch_plutotvcinefamilia_us",
@@ -1205,7 +2751,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 92
+    "order": 209
   },
   {
     "id": "ch_plutotvcineinspirador_us",
@@ -1218,7 +2764,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 93
+    "order": 210
   },
   {
     "id": "ch_plutotvcineromance_us",
@@ -1231,7 +2777,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 94
+    "order": 211
   },
   {
     "id": "ch_plutotvcineromantico_de",
@@ -1244,7 +2790,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 95
+    "order": 212
   },
   {
     "id": "ch_plutotvcinesuspenso_us",
@@ -1257,7 +2803,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 96
+    "order": 213
   },
   {
     "id": "ch_plutotvcomediasromanticas_de",
@@ -1270,7 +2816,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 97
+    "order": 214
   },
   {
     "id": "ch_plutotvdogelcazarrecompensas_us",
@@ -1283,7 +2829,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 98
+    "order": 215
   },
   {
     "id": "ch_plutotvestrellasdeaccion_us",
@@ -1296,7 +2842,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 99
+    "order": 216
   },
   {
     "id": "ch_plutotvinvasionalien_de",
@@ -1309,7 +2855,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 100
+    "order": 217
   },
   {
     "id": "ch_plutotvminutoparaganar_us",
@@ -1322,7 +2868,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 101
+    "order": 218
   },
   {
     "id": "ch_plutotvmisteriosmedicos_us",
@@ -1335,7 +2881,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 102
+    "order": 219
   },
   {
     "id": "ch_plutotvnuestrocine_us",
@@ -1348,7 +2894,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 103
+    "order": 220
   },
   {
     "id": "ch_plutotvparanormal_de",
@@ -1361,7 +2907,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 104
+    "order": 221
   },
   {
     "id": "ch_plutotvpsycho_de",
@@ -1374,7 +2920,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 105
+    "order": 222
   },
   {
     "id": "ch_plutotvscifi_de",
@@ -1387,7 +2933,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 106
+    "order": 223
   },
   {
     "id": "ch_plutotvscifi_us",
@@ -1401,7 +2947,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 107
+    "order": 224
   },
   {
     "id": "ch_plutotvseries_us",
@@ -1414,7 +2960,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 108
+    "order": 225
   },
   {
     "id": "ch_plutotvseriescriminales_de",
@@ -1427,7 +2973,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 109
+    "order": 226
   },
   {
     "id": "ch_plutotvseriesdeaccion_us",
@@ -1440,7 +2986,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 110
+    "order": 227
   },
   {
     "id": "ch_plutotvseriesdecomedia_us",
@@ -1453,7 +2999,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 111
+    "order": 228
   },
   {
     "id": "ch_plutotvseriesdecrimen_us",
@@ -1466,7 +3012,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 112
+    "order": 229
   },
   {
     "id": "ch_plutotvseriesdedrama_us",
@@ -1479,7 +3025,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 113
+    "order": 230
   },
   {
     "id": "ch_plutotvseriesdeotroscontinentes_us",
@@ -1492,7 +3038,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 114
+    "order": 231
   },
   {
     "id": "ch_plutotvseriesdescifi_us",
@@ -1505,7 +3051,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 115
+    "order": 232
   },
   {
     "id": "ch_plutotvserieslatinas_us",
@@ -1518,7 +3064,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 116
+    "order": 233
   },
   {
     "id": "ch_plutotvseriesscifi_de",
@@ -1531,7 +3077,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 117
+    "order": 234
   },
   {
     "id": "ch_plutotvthrillers_de",
@@ -1544,7 +3090,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 118
+    "order": 235
   },
   {
     "id": "ch_plutotvtruecrime_de",
@@ -1557,7 +3103,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 119
+    "order": 236
   },
   {
     "id": "ch_plutotvwestern_de",
@@ -1570,7 +3116,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 120
+    "order": 237
   },
   {
     "id": "ch_plutotvzombies_de",
@@ -1583,7 +3129,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 121
+    "order": 238
   },
   {
     "id": "ch_popcorncentral_mx",
@@ -1596,7 +3142,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 122
+    "order": 239
   },
   {
     "id": "ch_rakutentvactionmovies_es",
@@ -1609,7 +3155,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 123
+    "order": 240
   },
   {
     "id": "ch_rakutentvcomedymovies_es",
@@ -1622,7 +3168,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 124
+    "order": 241
   },
   {
     "id": "ch_rakutentvfamilymovies_es",
@@ -1635,7 +3181,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 125
+    "order": 242
   },
   {
     "id": "ch_rakutentvtopmovies_es",
@@ -1648,7 +3194,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 126
+    "order": 243
   },
   {
     "id": "ch_runtimeespanol_us",
@@ -1661,7 +3207,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 127
+    "order": 244
   },
   {
     "id": "ch_sensacinetvxpluto_de",
@@ -1674,7 +3220,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 128
+    "order": 245
   },
   {
     "id": "ch_sintetasnohayparaiso_us",
@@ -1687,7 +3233,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 129
+    "order": 246
   },
   {
     "id": "ch_southpark_de",
@@ -1700,7 +3246,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 130
+    "order": 247
   },
   {
     "id": "ch_southparkversionoriginal_de",
@@ -1713,7 +3259,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 131
+    "order": 248
   },
   {
     "id": "ch_southparkcoleccioncartman_us",
@@ -1726,7 +3272,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 132
+    "order": 249
   },
   {
     "id": "ch_southparkcoleccionkenny_us",
@@ -1739,7 +3285,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 133
+    "order": 250
   },
   {
     "id": "ch_southparkcoleccionkyle_us",
@@ -1752,7 +3298,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 134
+    "order": 251
   },
   {
     "id": "ch_southparkcoleccionstan_us",
@@ -1765,7 +3311,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 135
+    "order": 252
   },
   {
     "id": "ch_starchannel_cl",
@@ -1778,7 +3324,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 136
+    "order": 253
   },
   {
     "id": "ch_startrek_us",
@@ -1791,7 +3337,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 137
+    "order": 254
   },
   {
     "id": "ch_starzcinema_us",
@@ -1804,7 +3350,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 138
+    "order": 255
   },
   {
     "id": "ch_thenewdetectives_us",
@@ -1817,7 +3363,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 139
+    "order": 256
   },
   {
     "id": "ch_tvestar_es",
@@ -1831,7 +3377,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 140
+    "order": 257
   },
   {
     "id": "ch_tvsretro_gt",
@@ -1844,7 +3390,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 141
+    "order": 258
   },
   {
     "id": "ch_xtremaaccion_ar",
@@ -1857,7 +3403,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 142
+    "order": 259
   },
   {
     "id": "ch_xtremacineclasico_ar",
@@ -1870,7 +3416,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 143
+    "order": 260
   },
   {
     "id": "ch_xtrematerror_ar",
@@ -1883,7 +3429,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 144
+    "order": 261
   },
   {
     "id": "ch_6wisetv_us",
@@ -1896,7 +3442,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 145
+    "order": 262
   },
   {
     "id": "ch_avatarlaleyendadeaang_us",
@@ -1909,7 +3455,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 146
+    "order": 263
   },
   {
     "id": "ch_babyfirst_us",
@@ -1923,7 +3469,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 147
+    "order": 264
   },
   {
     "id": "ch_bobesponja_de",
@@ -1936,7 +3482,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 148
+    "order": 265
   },
   {
     "id": "ch_bobesponjapantalonescuadrados_us",
@@ -1949,7 +3495,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 149
+    "order": 266
   },
   {
     "id": "ch_diostevekids_hn",
@@ -1962,7 +3508,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 150
+    "order": 267
   },
   {
     "id": "ch_disneychannel_us",
@@ -1976,7 +3522,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 151
+    "order": 268
   },
   {
     "id": "ch_disneychannellatinamerica_ar",
@@ -1993,7 +3539,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 152
+    "order": 269
   },
   {
     "id": "ch_disneyjrlatinamerica_ar",
@@ -2009,7 +3555,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 153
+    "order": 270
   },
   {
     "id": "ch_disneyxd_us",
@@ -2022,7 +3568,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 154
+    "order": 271
   },
   {
     "id": "ch_elchavotv_mx",
@@ -2035,7 +3581,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 155
+    "order": 272
   },
   {
     "id": "ch_estrellagames_us",
@@ -2048,7 +3594,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 156
+    "order": 273
   },
   {
     "id": "ch_heyarnold_us",
@@ -2061,7 +3607,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 157
+    "order": 274
   },
   {
     "id": "ch_logostvkids_es",
@@ -2074,7 +3620,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 158
+    "order": 275
   },
   {
     "id": "ch_maxanime_ve",
@@ -2087,7 +3633,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 159
+    "order": 276
   },
   {
     "id": "ch_narutoenespanol_us",
@@ -2100,7 +3646,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 160
+    "order": 277
   },
   {
     "id": "ch_narutoshippuden_us",
@@ -2113,7 +3659,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 161
+    "order": 278
   },
   {
     "id": "ch_nickjrclub_us",
@@ -2126,7 +3672,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 162
+    "order": 279
   },
   {
     "id": "ch_nickelodeonclasico_us",
@@ -2139,7 +3685,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 163
+    "order": 280
   },
   {
     "id": "ch_nickelodeonteen_us",
@@ -2152,7 +3698,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 164
+    "order": 281
   },
   {
     "id": "ch_nickelodeontoons_us",
@@ -2165,7 +3711,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 165
+    "order": 282
   },
   {
     "id": "ch_plutotvanime_us",
@@ -2178,7 +3724,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 166
+    "order": 283
   },
   {
     "id": "ch_plutotvjunior_us",
@@ -2191,7 +3737,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 167
+    "order": 284
   },
   {
     "id": "ch_plutotvkids_us",
@@ -2204,7 +3750,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 168
+    "order": 285
   },
   {
     "id": "ch_plutotvkidsclassics_de",
@@ -2217,7 +3763,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 169
+    "order": 286
   },
   {
     "id": "ch_plutotvteen_de",
@@ -2230,7 +3776,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 170
+    "order": 287
   },
   {
     "id": "ch_rugrats_de",
@@ -2243,7 +3789,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 171
+    "order": 288
   },
   {
     "id": "ch_rugrats_us",
@@ -2256,7 +3802,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 172
+    "order": 289
   },
   {
     "id": "ch_somosentrerios_ar",
@@ -2269,7 +3815,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 173
+    "order": 290
   },
   {
     "id": "ch_starzkidsfamily_us",
@@ -2282,7 +3828,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 174
+    "order": 291
   },
   {
     "id": "ch_telenovisa43_do",
@@ -2295,7 +3841,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 175
+    "order": 292
   },
   {
     "id": "ch_xtremacartoons_ar",
@@ -2308,7 +3854,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 176
+    "order": 293
   },
   {
     "id": "ch_13c_cl",
@@ -2321,7 +3867,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 177
+    "order": 294
   },
   {
     "id": "ch_archivosforenses_us",
@@ -2334,7 +3880,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 178
+    "order": 295
   },
   {
     "id": "ch_campustv_hn",
@@ -2347,7 +3893,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 179
+    "order": 296
   },
   {
     "id": "ch_canal17rtvd_do",
@@ -2360,7 +3906,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 180
+    "order": 297
   },
   {
     "id": "ch_clicktvchile_cl",
@@ -2373,7 +3919,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 181
+    "order": 298
   },
   {
     "id": "ch_crimenhistoria_es",
@@ -2386,7 +3932,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 182
+    "order": 299
   },
   {
     "id": "ch_culturaonline_cl",
@@ -2399,7 +3945,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 183
+    "order": 300
   },
   {
     "id": "ch_ecovision_do",
@@ -2412,7 +3958,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 184
+    "order": 301
   },
   {
     "id": "ch_educatv_ec",
@@ -2425,7 +3971,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 185
+    "order": 302
   },
   {
     "id": "ch_eduvision_co",
@@ -2438,7 +3984,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 186
+    "order": 303
   },
   {
     "id": "ch_forensicfiles_us",
@@ -2451,7 +3997,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 187
+    "order": 304
   },
   {
     "id": "ch_guaymatetv_do",
@@ -2464,7 +4010,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 188
+    "order": 305
   },
   {
     "id": "ch_gvision_cl",
@@ -2477,7 +4023,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 189
+    "order": 306
   },
   {
     "id": "ch_hamaikatelebista_es",
@@ -2490,7 +4036,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 190
+    "order": 307
   },
   {
     "id": "ch_historiayvida_es",
@@ -2503,7 +4049,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 191
+    "order": 308
   },
   {
     "id": "ch_history2latinamerica_us",
@@ -2516,7 +4062,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 192
+    "order": 309
   },
   {
     "id": "ch_holvoettv_cl",
@@ -2529,7 +4075,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 193
+    "order": 310
   },
   {
     "id": "ch_jaliscotv_mx",
@@ -2542,7 +4088,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 194
+    "order": 311
   },
   {
     "id": "ch_nationalgeographic_mx",
@@ -2555,7 +4101,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 195
+    "order": 312
   },
   {
     "id": "ch_naturetime_ca",
@@ -2570,7 +4116,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 196
+    "order": 313
   },
   {
     "id": "ch_platzitv_es",
@@ -2583,7 +4129,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 197
+    "order": 314
   },
   {
     "id": "ch_plutotvanimales_de",
@@ -2596,7 +4142,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 198
+    "order": 315
   },
   {
     "id": "ch_plutotvhistoria_de",
@@ -2609,7 +4155,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 199
+    "order": 316
   },
   {
     "id": "ch_plutotvmisterios_us",
@@ -2622,7 +4168,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 200
+    "order": 317
   },
   {
     "id": "ch_plutotvnaturaleza_us",
@@ -2635,7 +4181,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 201
+    "order": 318
   },
   {
     "id": "ch_plutotvvidareal_us",
@@ -2648,7 +4194,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 202
+    "order": 319
   },
   {
     "id": "ch_presumiendomexico_mx",
@@ -2661,7 +4207,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 203
+    "order": 320
   },
   {
     "id": "ch_radio3_es",
@@ -2674,7 +4220,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 204
+    "order": 321
   },
   {
     "id": "ch_radiouniversitariasanandres_bo",
@@ -2687,7 +4233,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 205
+    "order": 322
   },
   {
     "id": "ch_smithsonianchannelplutotv_us",
@@ -2700,7 +4246,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 206
+    "order": 323
   },
   {
     "id": "ch_stvetelebasica_hn",
@@ -2713,7 +4259,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 207
+    "order": 324
   },
   {
     "id": "ch_tvcuatro42_mx",
@@ -2726,7 +4272,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 208
+    "order": 325
   },
   {
     "id": "ch_tvcuatro44_mx",
@@ -2739,7 +4285,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 209
+    "order": 326
   },
   {
     "id": "ch_tvuniversidad_ar",
@@ -2752,7 +4298,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 210
+    "order": 327
   },
   {
     "id": "ch_tvusach_cl",
@@ -2765,7 +4311,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 211
+    "order": 328
   },
   {
     "id": "ch_uaatv_mx",
@@ -2778,7 +4324,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 212
+    "order": 329
   },
   {
     "id": "ch_ucl_uy",
@@ -2791,7 +4337,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 213
+    "order": 330
   },
   {
     "id": "ch_umagtv_cl",
@@ -2804,7 +4350,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 214
+    "order": 331
   },
   {
     "id": "ch_umsatvuinternacional_bo",
@@ -2817,7 +4363,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 215
+    "order": 332
   },
   {
     "id": "ch_utalcatv_cl",
@@ -2830,7 +4376,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 216
+    "order": 333
   },
   {
     "id": "ch_versotv_cl",
@@ -2843,7 +4389,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 217
+    "order": 334
   },
   {
     "id": "ch_xhunestdt_mx",
@@ -2856,7 +4402,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 218
+    "order": 335
   },
   {
     "id": "ch_zoom_co",
@@ -2869,7 +4415,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 219
+    "order": 336
   },
   {
     "id": "ch_247canaldenoticias_ar",
@@ -2882,7 +4428,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 220
+    "order": 337
   },
   {
     "id": "ch_24horas_es",
@@ -2895,7 +4441,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 221
+    "order": 338
   },
   {
     "id": "ch_24horascatalunya_es",
@@ -2908,7 +4454,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 222
+    "order": 339
   },
   {
     "id": "ch_acentotv_do",
@@ -2921,7 +4467,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 223
+    "order": 340
   },
   {
     "id": "ch_actualidad360_es",
@@ -2934,7 +4480,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 224
+    "order": 341
   },
   {
     "id": "ch_amxnoticias_mx",
@@ -2947,7 +4493,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 225
+    "order": 342
   },
   {
     "id": "ch_atacamanoticias_cl",
@@ -2960,7 +4506,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 226
+    "order": 343
   },
   {
     "id": "ch_bbcnews_uk",
@@ -2973,7 +4519,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 227
+    "order": 344
   },
   {
     "id": "ch_buendiatv_hn",
@@ -2986,7 +4532,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 228
+    "order": 345
   },
   {
     "id": "ch_cablenoticias_co",
@@ -2999,7 +4545,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 229
+    "order": 346
   },
   {
     "id": "ch_canal26_ar",
@@ -3012,7 +4558,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 230
+    "order": 347
   },
   {
     "id": "ch_canal33tijuana_mx",
@@ -3025,7 +4571,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 231
+    "order": 348
   },
   {
     "id": "ch_canalpyc_co",
@@ -3038,7 +4584,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 232
+    "order": 349
   },
   {
     "id": "ch_catamarcatv_ar",
@@ -3051,7 +4597,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 233
+    "order": 350
   },
   {
     "id": "ch_citricotv_do",
@@ -3064,7 +4610,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 234
+    "order": 351
   },
   {
     "id": "ch_contivision_cl",
@@ -3077,7 +4623,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 235
+    "order": 352
   },
   {
     "id": "ch_cosmostv_ar",
@@ -3092,7 +4638,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 236
+    "order": 353
   },
   {
     "id": "ch_dw_de",
@@ -3105,7 +4651,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 237
+    "order": 354
   },
   {
     "id": "ch_elatinamerica_us",
@@ -3119,7 +4665,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 238
+    "order": 355
   },
   {
     "id": "ch_ecoteltv_ec",
@@ -3132,7 +4678,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 239
+    "order": 356
   },
   {
     "id": "ch_elnuevodiariotv_do",
@@ -3145,7 +4691,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 240
+    "order": 357
   },
   {
     "id": "ch_estrellanews_us",
@@ -3158,7 +4704,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 241
+    "order": 358
   },
   {
     "id": "ch_france24_fr",
@@ -3171,7 +4717,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 242
+    "order": 359
   },
   {
     "id": "ch_hch_hn",
@@ -3184,7 +4730,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 243
+    "order": 360
   },
   {
     "id": "ch_hermanasmirabaltv_do",
@@ -3197,7 +4743,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 244
+    "order": 361
   },
   {
     "id": "ch_icndigital_hn",
@@ -3210,7 +4756,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 245
+    "order": 362
   },
   {
     "id": "ch_megatv_py",
@@ -3223,7 +4769,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 246
+    "order": 363
   },
   {
     "id": "ch_mercurionoticias_ar",
@@ -3236,7 +4782,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 247
+    "order": 364
   },
   {
     "id": "ch_mileniotelevision_mx",
@@ -3249,7 +4795,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 248
+    "order": 365
   },
   {
     "id": "ch_momento24_co",
@@ -3262,7 +4808,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 249
+    "order": 366
   },
   {
     "id": "ch_nanduti_py",
@@ -3275,7 +4821,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 250
+    "order": 367
   },
   {
     "id": "ch_nctv_cl",
@@ -3288,7 +4834,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 251
+    "order": 368
   },
   {
     "id": "ch_newsoftheworld_us",
@@ -3301,7 +4847,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 252
+    "order": 369
   },
   {
     "id": "ch_newsmaxspanish_us",
@@ -3314,7 +4860,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 253
+    "order": 370
   },
   {
     "id": "ch_noticiasrcn_co",
@@ -3327,7 +4873,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 254
+    "order": 371
   },
   {
     "id": "ch_noticiero90minutos_co",
@@ -3340,7 +4886,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 255
+    "order": 372
   },
   {
     "id": "ch_nowmediatelevision_us",
@@ -3353,7 +4899,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 256
+    "order": 373
   },
   {
     "id": "ch_npy_py",
@@ -3366,7 +4912,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 257
+    "order": 374
   },
   {
     "id": "ch_ntn24_co",
@@ -3379,7 +4925,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 258
+    "order": 375
   },
   {
     "id": "ch_prensalatinatv_cu",
@@ -3392,7 +4938,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 259
+    "order": 376
   },
   {
     "id": "ch_psn_mx",
@@ -3405,7 +4951,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 260
+    "order": 377
   },
   {
     "id": "ch_psncanal452_mx",
@@ -3418,7 +4964,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 261
+    "order": 378
   },
   {
     "id": "ch_puranoticiatv_cl",
@@ -3431,7 +4977,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 262
+    "order": 379
   },
   {
     "id": "ch_quanticatv_ar",
@@ -3444,7 +4990,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 263
+    "order": 380
   },
   {
     "id": "ch_radioancon_pa",
@@ -3457,7 +5003,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 264
+    "order": 381
   },
   {
     "id": "ch_rcvtv_hn",
@@ -3470,7 +5016,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 265
+    "order": 382
   },
   {
     "id": "ch_rdn_do",
@@ -3483,7 +5029,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 266
+    "order": 383
   },
   {
     "id": "ch_redplus_co",
@@ -3496,7 +5042,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 267
+    "order": 384
   },
   {
     "id": "ch_rnn_do",
@@ -3510,7 +5056,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 268
+    "order": 385
   },
   {
     "id": "ch_rtu_ec",
@@ -3523,7 +5069,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 269
+    "order": 386
   },
   {
     "id": "ch_sccurrents_us",
@@ -3536,7 +5082,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 270
+    "order": 387
   },
   {
     "id": "ch_t13envivo_cl",
@@ -3549,7 +5095,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 271
+    "order": 388
   },
   {
     "id": "ch_telecauquenes_cl",
@@ -3562,7 +5108,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 272
+    "order": 389
   },
   {
     "id": "ch_telesur_ve",
@@ -3576,7 +5122,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 273
+    "order": 390
   },
   {
     "id": "ch_televisiondeleste_do",
@@ -3589,7 +5135,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 274
+    "order": 391
   },
   {
     "id": "ch_turno_cl",
@@ -3602,7 +5148,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 275
+    "order": 392
   },
   {
     "id": "ch_tvn24_do",
@@ -3615,7 +5161,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 276
+    "order": 393
   },
   {
     "id": "ch_umsatvulp_bo",
@@ -3628,7 +5174,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 277
+    "order": 394
   },
   {
     "id": "ch_unetv_hn",
@@ -3641,7 +5187,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 278
+    "order": 395
   },
   {
     "id": "ch_unifranz_bo",
@@ -3654,7 +5200,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 279
+    "order": 396
   },
   {
     "id": "ch_weatherspy_mx",
@@ -3667,7 +5213,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 280
+    "order": 397
   },
   {
     "id": "ch_13festival_cl",
@@ -3680,7 +5226,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 281
+    "order": 398
   },
   {
     "id": "ch_88stereo_cr",
@@ -3693,7 +5239,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 282
+    "order": 399
   },
   {
     "id": "ch_aeradiotv_cl",
@@ -3706,7 +5252,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 283
+    "order": 400
   },
   {
     "id": "ch_alcancefmplaytv_py",
@@ -3719,7 +5265,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 284
+    "order": 401
   },
   {
     "id": "ch_audiokiss_bo",
@@ -3732,7 +5278,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 285
+    "order": 402
   },
   {
     "id": "ch_azaharesradiovisualmultimedia_ar",
@@ -3745,7 +5291,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 286
+    "order": 403
   },
   {
     "id": "ch_bandamax_mx",
@@ -3758,7 +5304,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 287
+    "order": 404
   },
   {
     "id": "ch_beatsradio_ar",
@@ -3771,7 +5317,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 288
+    "order": 405
   },
   {
     "id": "ch_btatv_ve",
@@ -3784,7 +5330,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 289
+    "order": 406
   },
   {
     "id": "ch_cadenaelite_es",
@@ -3797,7 +5343,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 290
+    "order": 407
   },
   {
     "id": "ch_canal3kmktv_cr",
@@ -3810,7 +5356,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 291
+    "order": 408
   },
   {
     "id": "ch_conectatv_mx",
@@ -3823,7 +5369,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 292
+    "order": 409
   },
   {
     "id": "ch_cumbiamix_ar",
@@ -3836,7 +5382,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 293
+    "order": 410
   },
   {
     "id": "ch_dancefm_cl",
@@ -3849,7 +5395,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 294
+    "order": 411
   },
   {
     "id": "ch_dismarradiotv_py",
@@ -3862,7 +5408,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 295
+    "order": 412
   },
   {
     "id": "ch_e40_py",
@@ -3875,7 +5421,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 296
+    "order": 413
   },
   {
     "id": "ch_elsolnetworktv_ec",
@@ -3888,7 +5434,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 297
+    "order": 414
   },
   {
     "id": "ch_exatv_mx",
@@ -3901,7 +5447,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 298
+    "order": 415
   },
   {
     "id": "ch_farraplay_py",
@@ -3914,7 +5460,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 299
+    "order": 416
   },
   {
     "id": "ch_fmmundo_ec",
@@ -3927,7 +5473,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 300
+    "order": 417
   },
   {
     "id": "ch_fmplustv_cl",
@@ -3940,7 +5486,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 301
+    "order": 418
   },
   {
     "id": "ch_fmtv_uk",
@@ -3953,7 +5499,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 302
+    "order": 419
   },
   {
     "id": "ch_fuegotv_do",
@@ -3966,7 +5512,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 303
+    "order": 420
   },
   {
     "id": "ch_heinow_py",
@@ -3979,7 +5525,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 304
+    "order": 421
   },
   {
     "id": "ch_imagenfm1051_hn",
@@ -3992,7 +5538,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 305
+    "order": 422
   },
   {
     "id": "ch_infinitatv_ec",
@@ -4005,7 +5551,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 306
+    "order": 423
   },
   {
     "id": "ch_kandelatv_ve",
@@ -4018,7 +5564,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 307
+    "order": 424
   },
   {
     "id": "ch_la100_ar",
@@ -4031,7 +5577,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 308
+    "order": 425
   },
   {
     "id": "ch_laclave_cl",
@@ -4044,7 +5590,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 309
+    "order": 426
   },
   {
     "id": "ch_lagranjatv_cl",
@@ -4057,7 +5603,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 310
+    "order": 427
   },
   {
     "id": "ch_lakalle_co",
@@ -4070,7 +5616,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 311
+    "order": 428
   },
   {
     "id": "ch_lamoradaradiotv_co",
@@ -4083,7 +5629,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 312
+    "order": 429
   },
   {
     "id": "ch_latop1029_hn",
@@ -4096,7 +5642,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 313
+    "order": 430
   },
   {
     "id": "ch_latop1077_hn",
@@ -4109,7 +5655,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 314
+    "order": 431
   },
   {
     "id": "ch_lax_pr",
@@ -4122,7 +5668,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 315
+    "order": 432
   },
   {
     "id": "ch_lobotv_mx",
@@ -4135,7 +5681,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 316
+    "order": 433
   },
   {
     "id": "ch_losangelestvradio_py",
@@ -4148,7 +5694,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 317
+    "order": 434
   },
   {
     "id": "ch_makaotv_do",
@@ -4161,7 +5707,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 318
+    "order": 435
   },
   {
     "id": "ch_maquitv_cl",
@@ -4174,7 +5720,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 319
+    "order": 436
   },
   {
     "id": "ch_mas23tv_pa",
@@ -4187,7 +5733,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 320
+    "order": 437
   },
   {
     "id": "ch_masfm_ar",
@@ -4200,7 +5746,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 321
+    "order": 438
   },
   {
     "id": "ch_masmusicafm_co",
@@ -4213,7 +5759,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 322
+    "order": 439
   },
   {
     "id": "ch_megabox_ni",
@@ -4226,7 +5772,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 323
+    "order": 440
   },
   {
     "id": "ch_metropolimediostv_ec",
@@ -4239,7 +5785,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 324
+    "order": 441
   },
   {
     "id": "ch_montonestv_do",
@@ -4252,7 +5798,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 325
+    "order": 442
   },
   {
     "id": "ch_mtvbiggestpop_us",
@@ -4265,7 +5811,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 326
+    "order": 443
   },
   {
     "id": "ch_mtvclassic_us",
@@ -4278,7 +5824,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 327
+    "order": 444
   },
   {
     "id": "ch_mtvflowlatino_us",
@@ -4291,7 +5837,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 328
+    "order": 445
   },
   {
     "id": "ch_musictvgranada_es",
@@ -4304,7 +5850,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 329
+    "order": 446
   },
   {
     "id": "ch_nuevavidafm_pr",
@@ -4317,7 +5863,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 330
+    "order": 447
   },
   {
     "id": "ch_parrandavallenata_co",
@@ -4330,7 +5876,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 331
+    "order": 448
   },
   {
     "id": "ch_pindintv_pa",
@@ -4343,7 +5889,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 332
+    "order": 449
   },
   {
     "id": "ch_planet1009fm_pa",
@@ -4356,7 +5902,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 333
+    "order": 450
   },
   {
     "id": "ch_radiobonita1067_ec",
@@ -4369,7 +5915,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 334
+    "order": 451
   },
   {
     "id": "ch_radiocarnavaltv_es",
@@ -4382,7 +5928,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 335
+    "order": 452
   },
   {
     "id": "ch_radiocolmenar925fm_py",
@@ -4395,7 +5941,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 336
+    "order": 453
   },
   {
     "id": "ch_radioconexionwebtv_ar",
@@ -4408,7 +5954,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 337
+    "order": 454
   },
   {
     "id": "ch_radiocuencaestereo_ec",
@@ -4421,7 +5967,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 338
+    "order": 455
   },
   {
     "id": "ch_radioduna_cl",
@@ -4434,7 +5980,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 339
+    "order": 456
   },
   {
     "id": "ch_radioedelweiss_cl",
@@ -4447,7 +5993,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 340
+    "order": 457
   },
   {
     "id": "ch_radiofantastica989fm_ec",
@@ -4460,7 +6006,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 341
+    "order": 458
   },
   {
     "id": "ch_radioideal_hn",
@@ -4473,7 +6019,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 342
+    "order": 459
   },
   {
     "id": "ch_radiolaserenatv_cl",
@@ -4486,7 +6032,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 343
+    "order": 460
   },
   {
     "id": "ch_radiomonumentaltv_ec",
@@ -4499,7 +6045,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 344
+    "order": 461
   },
   {
     "id": "ch_radiozona903_cl",
@@ -4512,7 +6058,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 345
+    "order": 462
   },
   {
     "id": "ch_retroplus2_cl",
@@ -4525,7 +6071,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 346
+    "order": 463
   },
   {
     "id": "ch_retromusicatelevision_cl",
@@ -4538,7 +6084,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 347
+    "order": 464
   },
   {
     "id": "ch_rewindtv_cl",
@@ -4551,7 +6097,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 348
+    "order": 465
   },
   {
     "id": "ch_reyali_co",
@@ -4564,7 +6110,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 349
+    "order": 466
   },
   {
     "id": "ch_rtvvida_es",
@@ -4577,7 +6123,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 350
+    "order": 467
   },
   {
     "id": "ch_salsagordatelevision_co",
@@ -4590,7 +6136,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 351
+    "order": 468
   },
   {
     "id": "ch_sensacioncosta_cl",
@@ -4603,7 +6149,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 352
+    "order": 469
   },
   {
     "id": "ch_showventv_ve",
@@ -4616,7 +6162,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 353
+    "order": 470
   },
   {
     "id": "ch_solmusica_es",
@@ -4629,7 +6175,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 354
+    "order": 471
   },
   {
     "id": "ch_solobailalo_cl",
@@ -4642,7 +6188,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 355
+    "order": 472
   },
   {
     "id": "ch_spektratv_es",
@@ -4655,7 +6201,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 356
+    "order": 473
   },
   {
     "id": "ch_stingrayclassica_ca",
@@ -4668,7 +6214,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 357
+    "order": 474
   },
   {
     "id": "ch_superqpanama_pa",
@@ -4681,7 +6227,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 358
+    "order": 475
   },
   {
     "id": "ch_supermusicatv_co",
@@ -4694,7 +6240,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 359
+    "order": 476
   },
   {
     "id": "ch_teledominicanatv_do",
@@ -4707,7 +6253,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 360
+    "order": 477
   },
   {
     "id": "ch_teleangolradio_cl",
@@ -4720,7 +6266,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 361
+    "order": 478
   },
   {
     "id": "ch_telehit_mx",
@@ -4733,7 +6279,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 362
+    "order": 479
   },
   {
     "id": "ch_telehitmusica_mx",
@@ -4746,7 +6292,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 363
+    "order": 480
   },
   {
     "id": "ch_totalmusic80s_uk",
@@ -4759,7 +6305,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 364
+    "order": 481
   },
   {
     "id": "ch_totalmusic2000s_uk",
@@ -4772,7 +6318,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 365
+    "order": 482
   },
   {
     "id": "ch_totalmusic_uk",
@@ -4785,7 +6331,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 366
+    "order": 483
   },
   {
     "id": "ch_totalmusicconcerts_uk",
@@ -4798,7 +6344,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 367
+    "order": 484
   },
   {
     "id": "ch_totalmusicdance_uk",
@@ -4811,7 +6357,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 368
+    "order": 485
   },
   {
     "id": "ch_tropiq997fm_pa",
@@ -4824,7 +6370,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 369
+    "order": 486
   },
   {
     "id": "ch_tvexitos_do",
@@ -4837,7 +6383,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 370
+    "order": 487
   },
   {
     "id": "ch_tvomix_es",
@@ -4850,7 +6396,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 371
+    "order": 488
   },
   {
     "id": "ch_tvonenicaragua_ni",
@@ -4863,7 +6409,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 372
+    "order": 489
   },
   {
     "id": "ch_urbanotv_cr",
@@ -4876,7 +6422,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 373
+    "order": 490
   },
   {
     "id": "ch_vclassictv_cl",
@@ -4889,7 +6435,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 374
+    "order": 491
   },
   {
     "id": "ch_venusmedia_py",
@@ -4902,7 +6448,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 375
+    "order": 492
   },
   {
     "id": "ch_vintagemusic_cr",
@@ -4915,7 +6461,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 376
+    "order": 493
   },
   {
     "id": "ch_visiontelevision_mx",
@@ -4928,7 +6474,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 377
+    "order": 494
   },
   {
     "id": "ch_vmlatino_cr",
@@ -4941,7 +6487,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 378
+    "order": 495
   },
   {
     "id": "ch_voiceoverradiotv_cr",
@@ -4954,7 +6500,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 379
+    "order": 496
   },
   {
     "id": "ch_vosytv_ec",
@@ -4967,7 +6513,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 380
+    "order": 497
   },
   {
     "id": "ch_xlevelmedia_ar",
@@ -4980,7 +6526,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 381
+    "order": 498
   },
   {
     "id": "ch_xitenuevolatino_us",
@@ -4993,7 +6539,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 382
+    "order": 499
   },
   {
     "id": "ch_xitesiemprelatino_us",
@@ -5006,7 +6552,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 383
+    "order": 500
   },
   {
     "id": "ch_3abnlatino_us",
@@ -5019,7 +6565,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 384
+    "order": 501
   },
   {
     "id": "ch_aelatinamerica_us",
@@ -5032,7 +6578,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 385
+    "order": 502
   },
   {
     "id": "ch_adultswimlatinamerica_us",
@@ -5045,7 +6591,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 386
+    "order": 503
   },
   {
     "id": "ch_alientovision_us",
@@ -5058,7 +6604,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 387
+    "order": 504
   },
   {
     "id": "ch_atl26_us",
@@ -5071,7 +6617,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 388
+    "order": 505
   },
   {
     "id": "ch_aztecainternacional_mx",
@@ -5084,7 +6630,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 389
+    "order": 506
   },
   {
     "id": "ch_bitme_mx",
@@ -5097,7 +6643,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 390
+    "order": 507
   },
   {
     "id": "ch_bitmelatinamerica_mx",
@@ -5110,7 +6656,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 391
+    "order": 508
   },
   {
     "id": "ch_canalrcn_co",
@@ -5123,7 +6669,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 392
+    "order": 509
   },
   {
     "id": "ch_caracolhd2_co",
@@ -5136,7 +6682,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 393
+    "order": 510
   },
   {
     "id": "ch_caracolinternacional_co",
@@ -5149,7 +6695,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 394
+    "order": 511
   },
   {
     "id": "ch_cbnespanol_us",
@@ -5162,7 +6708,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 395
+    "order": 512
   },
   {
     "id": "ch_comedycentralenespanol_us",
@@ -5175,7 +6721,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 396
+    "order": 513
   },
   {
     "id": "ch_comedycentralplutotv_us",
@@ -5188,7 +6734,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 397
+    "order": 514
   },
   {
     "id": "ch_comerciotv_us",
@@ -5201,7 +6747,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 398
+    "order": 515
   },
   {
     "id": "ch_creatvchannel30_us",
@@ -5214,7 +6760,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 399
+    "order": 516
   },
   {
     "id": "ch_cruztv_us",
@@ -5227,7 +6773,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 400
+    "order": 517
   },
   {
     "id": "ch_csienespanol_us",
@@ -5240,7 +6786,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 401
+    "order": 518
   },
   {
     "id": "ch_ctv_us",
@@ -5253,7 +6799,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 402
+    "order": 519
   },
   {
     "id": "ch_daria_us",
@@ -5266,7 +6812,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 403
+    "order": 520
   },
   {
     "id": "ch_elsembradornuevaevangelizacionesne_us",
@@ -5279,7 +6825,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 404
+    "order": 521
   },
   {
     "id": "ch_enelpuntodemira_us",
@@ -5292,7 +6838,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 405
+    "order": 522
   },
   {
     "id": "ch_estrellatv_us",
@@ -5305,7 +6851,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 406
+    "order": 523
   },
   {
     "id": "ch_ewtn_us",
@@ -5319,7 +6865,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 407
+    "order": 524
   },
   {
     "id": "ch_fxlatinamerica_us",
@@ -5333,7 +6879,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 408
+    "order": 525
   },
   {
     "id": "ch_galavision_us",
@@ -5348,7 +6894,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 409
+    "order": 526
   },
   {
     "id": "ch_goldenedge_mx",
@@ -5361,7 +6907,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 410
+    "order": 527
   },
   {
     "id": "ch_imagenuniversaltv_do",
@@ -5374,7 +6920,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 411
+    "order": 528
   },
   {
     "id": "ch_ksce381_us",
@@ -5387,7 +6933,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 412
+    "order": 529
   },
   {
     "id": "ch_lasestrellas_mx",
@@ -5400,7 +6946,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 413
+    "order": 530
   },
   {
     "id": "ch_lifetimelatinamerica_us",
@@ -5413,7 +6959,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 414
+    "order": 531
   },
   {
     "id": "ch_livingfaithtv_us",
@@ -5426,7 +6972,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 415
+    "order": 532
   },
   {
     "id": "ch_ministeriolavozdeunremanentetv_us",
@@ -5439,7 +6985,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 416
+    "order": 533
   },
   {
     "id": "ch_misionescuatro_ar",
@@ -5452,7 +6998,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 417
+    "order": 534
   },
   {
     "id": "ch_mtv2_us",
@@ -5465,7 +7011,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 418
+    "order": 535
   },
   {
     "id": "ch_mtvcatfish_us",
@@ -5478,7 +7024,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 419
+    "order": 536
   },
   {
     "id": "ch_mtvdrag_us",
@@ -5491,7 +7037,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 420
+    "order": 537
   },
   {
     "id": "ch_mtvenespanol_us",
@@ -5504,7 +7050,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 421
+    "order": 538
   },
   {
     "id": "ch_mtvplutotv_us",
@@ -5517,7 +7063,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 422
+    "order": 539
   },
   {
     "id": "ch_mtvreality_us",
@@ -5530,7 +7076,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 423
+    "order": 540
   },
   {
     "id": "ch_mtvridiculousness_us",
@@ -5543,7 +7089,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 424
+    "order": 541
   },
   {
     "id": "ch_mtvrocks_us",
@@ -5556,7 +7102,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 425
+    "order": 542
   },
   {
     "id": "ch_phxtv_us",
@@ -5569,7 +7115,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 426
+    "order": 543
   },
   {
     "id": "ch_plutotvcompetencias_us",
@@ -5582,7 +7128,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 427
+    "order": 544
   },
   {
     "id": "ch_plutotvdocumentales_us",
@@ -5595,7 +7141,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 428
+    "order": 545
   },
   {
     "id": "ch_plutotvelreinoinfantil_us",
@@ -5608,7 +7154,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 429
+    "order": 546
   },
   {
     "id": "ch_plutotvestilodevida_us",
@@ -5621,7 +7167,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 430
+    "order": 547
   },
   {
     "id": "ch_plutotvhistoria_us",
@@ -5634,7 +7180,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 431
+    "order": 548
   },
   {
     "id": "ch_plutotvhistoriasdeultratumba_us",
@@ -5647,7 +7193,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 432
+    "order": 549
   },
   {
     "id": "ch_plutotvhumor_us",
@@ -5660,7 +7206,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 433
+    "order": 550
   },
   {
     "id": "ch_plutotvlosnuevosdetectives_us",
@@ -5673,7 +7219,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 434
+    "order": 551
   },
   {
     "id": "ch_plutotvmelroseplace_us",
@@ -5686,7 +7232,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 435
+    "order": 552
   },
   {
     "id": "ch_plutotvpeleas_us",
@@ -5699,7 +7245,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 436
+    "order": 553
   },
   {
     "id": "ch_plutotvreality_us",
@@ -5712,7 +7258,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 437
+    "order": 554
   },
   {
     "id": "ch_plutotvvelocidad_us",
@@ -5725,7 +7271,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 438
+    "order": 555
   },
   {
     "id": "ch_rcnhd2_co",
@@ -5738,7 +7284,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 439
+    "order": 556
   },
   {
     "id": "ch_rcnmas_co",
@@ -5751,7 +7297,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 440
+    "order": 557
   },
   {
     "id": "ch_redtveventanas_ec",
@@ -5764,7 +7310,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 441
+    "order": 558
   },
   {
     "id": "ch_revrylatinx_us",
@@ -5777,7 +7323,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 442
+    "order": 559
   },
   {
     "id": "ch_sonychannel_ar",
@@ -5790,7 +7336,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 443
+    "order": 560
   },
   {
     "id": "ch_starzcomedy_us",
@@ -5803,7 +7349,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 444
+    "order": 561
   },
   {
     "id": "ch_sumtvlatino_us",
@@ -5816,7 +7362,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 445
+    "order": 562
   },
   {
     "id": "ch_telefeinternacional_ar",
@@ -5829,7 +7375,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 446
+    "order": 563
   },
   {
     "id": "ch_telefesalta_ar",
@@ -5842,7 +7388,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 447
+    "order": 564
   },
   {
     "id": "ch_telemundo_us",
@@ -5856,7 +7402,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 448
+    "order": 565
   },
   {
     "id": "ch_telemundocorpuschristi_us",
@@ -5869,7 +7415,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 449
+    "order": 566
   },
   {
     "id": "ch_telemundointernacional_us",
@@ -5883,7 +7429,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 450
+    "order": 567
   },
   {
     "id": "ch_thewalkingdeadenespanol_us",
@@ -5896,7 +7442,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 451
+    "order": 568
   },
   {
     "id": "ch_trece_py",
@@ -5909,7 +7455,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 452
+    "order": 569
   },
   {
     "id": "ch_trece_es",
@@ -5922,7 +7468,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 453
+    "order": 570
   },
   {
     "id": "ch_tvcuatro41_mx",
@@ -5935,7 +7481,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 454
+    "order": 571
   },
   {
     "id": "ch_tvquisqueya_us",
@@ -5948,7 +7494,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 455
+    "order": 572
   },
   {
     "id": "ch_tvuniversalecuador_ec",
@@ -5961,7 +7507,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 456
+    "order": 573
   },
   {
     "id": "ch_tveinternacionalamerica_es",
@@ -5975,7 +7521,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 457
+    "order": 574
   },
   {
     "id": "ch_tveinternacionalasiaoceania_es",
@@ -5989,7 +7535,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 458
+    "order": 575
   },
   {
     "id": "ch_tveinternacionaleurope_es",
@@ -6003,7 +7549,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 459
+    "order": 576
   },
   {
     "id": "ch_tvsapublicchannel_us",
@@ -6016,7 +7562,7 @@
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 460
+    "order": 577
   },
   {
     "id": "ch_unidaddeinvestigacion_us",
@@ -6029,7 +7575,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 461
+    "order": 578
   },
   {
     "id": "ch_usanetworklatinamerica_us",
@@ -6042,7 +7588,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 462
+    "order": 579
   },
   {
     "id": "ch_vayasemanita_us",
@@ -6055,7 +7601,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 463
+    "order": 580
   },
   {
     "id": "ch_vidamejortv_us",
@@ -6068,7 +7614,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 464
+    "order": 581
   },
   {
     "id": "ch_visionlatinanetwork_us",
@@ -6081,7 +7627,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 465
+    "order": 582
   },
   {
     "id": "ch_youdotgov_us",
@@ -6094,7 +7640,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 466
+    "order": 583
   },
   {
     "id": "ch_yumachannel72_us",
@@ -6107,7 +7653,7 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 467
+    "order": 584
   },
   {
     "id": "ch_yumachannel73_us",
@@ -6120,6 +7666,6 @@
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 468
+    "order": 585
   }
 ]

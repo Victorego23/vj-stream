@@ -24,7 +24,7 @@ class _LiveTvViewState extends State<LiveTvView> {
   List<String> _recentChannelIds = [];
 
   List<LiveChannel> _allChannels = [];
-  List<String> _categories = ['Favoritos', '🇵🇪 Canales Peruanos', 'Todos', 'Recientes'];
+  List<String> _categories = ['Todos', 'Favoritos', 'Recientes'];
   late String _selectedCategory;
   bool _isLoading = true;
   String? _errorMessage;
@@ -196,12 +196,9 @@ class _LiveTvViewState extends State<LiveTvView> {
         setState(() {
           _allChannels = channels;
           final cleanCats = categories
-              .where((c) => c != 'Todos' && c != 'Favoritos' && c != 'Recientes')
+              .where((c) => c != 'Todos' && c != 'Favoritos' && c != 'Recientes' && !c.contains('Peruanos') && !c.contains('Perú'))
               .toList();
-          final otherCats = cleanCats
-              .where((c) => !c.contains('Peruanos') && !c.contains('Perú'))
-              .toList();
-          _categories = ['Favoritos', '🇵🇪 Canales Peruanos', 'Todos', 'Recientes', ...otherCats];
+          _categories = ['Todos', 'Favoritos', 'Recientes', ...cleanCats];
           _isLoading = false;
           if (_filteredChannels.isNotEmpty) {
             _focusedChannelNotifier.value = _filteredChannels.first;
@@ -236,15 +233,10 @@ class _LiveTvViewState extends State<LiveTvView> {
     }
 
     return _allChannels.where((channel) {
-      final isPeruCat = _selectedCategory.contains('Peruanos') || _selectedCategory.contains('Perú');
       if (_selectedCategory == 'Todos') {
         return true;
       } else if (_selectedCategory == 'Favoritos') {
         return _favoriteChannelIds.contains(channel.id);
-      } else if (isPeruCat) {
-        return channel.category.contains('Perú') ||
-            channel.category.contains('Peruanos') ||
-            getChannelCountry(channel) == 'pe';
       } else {
         return channel.category.toLowerCase() == _selectedCategory.toLowerCase();
       }
@@ -252,9 +244,9 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   String _getCategoryIcon(String cat) {
+    if (cat == 'Todos') return '🌐 ';
     if (cat == 'Favoritos') return '⭐ ';
     if (cat == 'Recientes') return '🕒 ';
-    if (cat.contains('Perú') || cat.contains('Peruanos')) return '🇵🇪 ';
     final lower = cat.toLowerCase();
     if (lower.contains('depor')) return '⚽ ';
     if (lower.contains('cine') || lower.contains('series')) return '🎬 ';
