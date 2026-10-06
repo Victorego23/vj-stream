@@ -19,8 +19,44 @@ class RealDebridService {
    * Obtiene una instancia configurada de Axios con las cabeceras de autorización.
    * @private
    */
-  getAxiosClient() {
-    const apiKey = process.env.REALDEBRID_API_KEY;
+  /**
+   * Obtiene la clave de API activa o realiza rotación/balanceo si se configuraron múltiples claves.
+   * Soporta REALDEBRID_API_KEYS (separadas por coma) y la clave única REALDEBRID_API_KEY.
+   */
+  getApiKey() {
+    const multi = process.env.REALDEBRID_API_KEYS;
+    if (multi) {
+      const keys = multi.split(',').map(k => k.trim()).filter(Boolean);
+      if (keys.length > 0) {
+        // Balanceo aleatorio entre el pool de claves configuradas
+        const idx = Math.floor(Math.random() * keys.length);
+        return keys[idx];
+      }
+    }
+    return process.env.REALDEBRID_API_KEY || null;
+  }
+
+  /**
+   * Obtiene la lista de todas las claves de Real-Debrid configuradas en el entorno.
+   * @returns {string[]}
+   */
+  getAllApiKeys() {
+    const multi = process.env.REALDEBRID_API_KEYS;
+    if (multi) {
+      const keys = multi.split(',').map(k => k.trim()).filter(Boolean);
+      if (keys.length > 0) return keys;
+    }
+    const single = process.env.REALDEBRID_API_KEY;
+    return single ? [single.trim()] : [];
+  }
+
+  /**
+   * Obtiene una instancia configurada de Axios con las cabeceras de autorización.
+   * @param {string} [apiKeyOverride] - Opcionalmente fuerza una clave específica del pool.
+   * @private
+   */
+  getAxiosClient(apiKeyOverride = null) {
+    const apiKey = apiKeyOverride || this.getApiKey();
 
     if (!apiKey) {
       throw new Error('REALDEBRID_API_KEY no está configurada en las variables de entorno.');
@@ -34,6 +70,39 @@ class RealDebridService {
       },
       timeout: 15000
     });
+  }
+
+  /**
+   * Consulta el estado de la cuenta de Real-Debrid (días premium restantes, expiración y puntos).
+   * @returns {Promise<Object>}
+   */
+  async checkAccountStatus() {
+    try {
+      const client = this.getAxiosClient();
+      const res = await client.get('/user');
+      const u = res.data;
+      const nowSec = Math.floor(Date.now() / 1000);
+      const isPremium = u.type === 'premium';
+      const daysLeft = isPremium && u.expiration
+        ? Math.max(0, Math.floor((new Date(u.expiration).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : 0;
+
+      return {
+        success: true,
+        username: u.username,
+        email: u.email,
+        type: u.type,
+        isPremium,
+        daysLeft,
+        expiration: u.expiration,
+        points: u.points || 0
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.error || err.message
+      };
+    }
   }
 
   /**
@@ -61,6 +130,7 @@ class RealDebridService {
 
   /**
    * Analiza el nombre de un archivo y extrae metadatos de calidad comercial (1080p, 4K, HDR, BluRay, WEB-DL).
+   * Penaliza códecs pesados o incompatibles con Smart TVs económicas (TrueHD, DTS-HD, AV1, remuxes >30GB).
    * @param {string} filename 
    * @returns {{label: string, resolution: string, source: string, isHdr: boolean, score: number}}
    */
@@ -76,7 +146,7 @@ class RealDebridService {
       score += 40;
     } else if (/\b(1080p|1080i|fhd)\b/i.test(name)) {
       resolution = '1080p';
-      score += 45; // Fluidez y compatibilidad instantánea en Android TV y móvil
+      score += 55; // Fluidez y compatibilidad instantánea en Android TV y móvil
     } else if (/\b(720p|hd)\b/i.test(name)) {
       resolution = '720p';
       score += 20;
@@ -90,7 +160,7 @@ class RealDebridService {
       score += 30;
     } else if (/\b(remux)\b/i.test(name)) {
       source = 'REMUX';
-      score += 15; // Despriorizar remux gigantescos (>50GB con TrueHD incompatible)
+      score -= 50; // Despriorizar remux gigantescos (>40GB con TrueHD incompatible)
     }
 
     if (/\b(hdr|hdr10|hdr10\+|dv|dolby\s*vision)\b/i.test(name)) {
@@ -98,8 +168,17 @@ class RealDebridService {
       score += 10;
     }
 
+    // Compatibilidad nativa de códecs de audio en Smart TV (ExoPlayer)
+    if (/\b(aac|ac3|eac3|ddp|dd\+|dd5\.1|dolby\s*digital)\b/i.test(name)) {
+      score += 30; // Audio garantizado en todas las marcas de TV (TCL, Xiaomi, Samsung, LG)
+    }
+    if (/\b(truehd|atmos|dts-hd|dts:x|dts-x|pcm|flac)\b/i.test(name)) {
+      score -= 40; // Tiende a causar pantalla muda o buffer en Smart TVs sin teatro en casa
+    }
+
+    // Formato de contenedor (MP4 arranca con cero latencia de búfer)
     if (name.endsWith('.mp4') || /\b\.mp4\b/i.test(name)) {
-      score += 25; // Formato MP4 con soporte nativo absoluto en ExoPlayer
+      score += 30;
     }
 
     return {

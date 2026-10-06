@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -1107,516 +1108,525 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF141414),
+      backgroundColor: Colors.transparent,
       barrierColor: Colors.black54,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: Color(0x33E50914), width: 1),
-      ),
       builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (ctx, setSheetState) {
-            final audioStreams = _availableStreams.where((s) => s['isBackup'] != true).toList();
-            final serverStreams = _availableStreams;
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xF00D0F17),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(color: const Color(0x26FFFFFF), width: 1),
+              ),
+              child: StatefulBuilder(
+                builder: (ctx, setSheetState) {
+                  final audioStreams = _availableStreams.where((s) => s['isBackup'] != true).toList();
+                  final serverStreams = _availableStreams;
 
-            return SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: Colors.white24,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.tune_rounded, color: Color(0xFFE50914), size: 22),
-                        const SizedBox(width: 10),
-                        const Text(
-                          'Ajustes de Reproducción',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close_rounded, color: Colors.white70),
-                          onPressed: () => Navigator.pop(sheetContext),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-
-                    // SECCIÓN TV EN VIVO: FUENTES Y SEÑALES ALTERNATIVAS
-                    if (widget.isLive && _liveSources.length > 1) ...[
-                      const Row(
+                  return SafeArea(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.satellite_alt_rounded, color: Colors.cyanAccent, size: 18),
-                          SizedBox(width: 8),
-                          Text(
-                            'Señales y Fuentes de Transmisión (Failover)',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ..._liveSources.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final url = entry.value;
-                        final isSelected = url == _currentVideoUrl;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0x2200E5FF) : const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isSelected ? Colors.cyanAccent : Colors.transparent,
-                              width: 1.2,
-                            ),
-                          ),
-                          child: ListTile(
-                            dense: true,
-                            leading: Icon(
-                              isSelected ? Icons.check_circle_rounded : Icons.cell_tower_rounded,
-                              color: isSelected ? Colors.cyanAccent : Colors.white60,
-                            ),
-                            title: Text(
-                              'Señal ${index + 1}${index == 0 ? " (Principal)" : " (Respaldo $index)"}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 13,
+                          Center(
+                            child: Container(
+                              width: 44,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.white24,
+                                borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                            subtitle: Text(
-                              url.length > 50 ? '${url.substring(0, 48)}...' : url,
-                              style: const TextStyle(color: Colors.white38, fontSize: 11),
-                            ),
-                            trailing: isSelected
-                                ? const Text('EN VIVO', style: TextStyle(color: Colors.cyanAccent, fontWeight: FontWeight.bold, fontSize: 11))
-                                : null,
-                            onTap: () {
-                              Navigator.pop(sheetContext);
-                              _currentLiveSourceIndex = index;
-                              setState(() {
-                                _currentVideoUrl = url;
-                                _isInitialized = false;
-                                _hasError = false;
-                                _errorMessage = null;
-                              });
-                              _initializePlayer();
-                            },
                           ),
-                        );
-                      }),
-                      const SizedBox(height: 14),
-                    ],
-
-                    // SECCIÓN 1: IDIOMA Y DOBLAJE (Para Películas y Series)
-                    if (!widget.isLive) ...[
-                      const Row(
-                        children: [
-                          Icon(Icons.record_voice_over_rounded, color: Colors.amber, size: 18),
-                          SizedBox(width: 8),
-                          Text(
-                            'Idioma de Audio y Doblaje',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-
-                    if (audioStreams.isNotEmpty)
-                      ...audioStreams.map((st) {
-                        final isSelected = (st['id'] == _currentStreamId) || (st['streamUrl'] == _currentVideoUrl);
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0x22E50914) : const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isSelected ? const Color(0xFFE50914) : Colors.transparent,
-                              width: 1.2,
-                            ),
-                          ),
-                          child: ListTile(
-                            dense: true,
-                            leading: Icon(
-                              (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
-                                  ? Icons.headphones_rounded
-                                  : Icons.volume_up_rounded,
-                              color: isSelected ? const Color(0xFFE50914) : Colors.white60,
-                            ),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    st['label'] ?? st['language'] ?? 'Español Latino Estéreo',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                      fontSize: 14,
-                                    ),
-                                  ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              const Icon(Icons.tune_rounded, color: Color(0xFFE50914), size: 22),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Ajustes de Reproducción',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                if (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0x3322C55E),
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: const Color(0xFF22C55E), width: 0.8),
-                                    ),
-                                    child: const Text(
-                                      'ESTÉREO',
-                                      style: TextStyle(color: Color(0xFF22C55E), fontSize: 9, fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            subtitle: Text(
-                              (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
-                                  ? '🎧 Estéreo 2.0 balanceado · Diálogos nítidos sin volumen bajo · ${st['qualityLabel'] ?? 'HD'}'
-                                  : (st['qualityLabel'] ?? 'Calidad HD'),
-                              style: const TextStyle(color: Colors.white54, fontSize: 11),
-                            ),
-                            trailing: isSelected
-                                ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
-                                : null,
-                            onTap: () {
-                              Navigator.pop(sheetContext);
-                              _switchStream(st);
-                            },
-                          ),
-                        );
-                      })
-                    else
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          '🎧 Audio en Español Latino (Estéreo 2.0) activo por defecto.',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
-                        ),
-                      ),
-
-                    const SizedBox(height: 14),
-
-                    // SECCIÓN 2: SERVIDOR / FUENTE (Para Películas y Series)
-                    if (!widget.isLive && serverStreams.length > 1) ...[
-                      const Row(
-                        children: [
-                          Icon(Icons.dns_rounded, color: Colors.cyanAccent, size: 18),
-                          SizedBox(width: 8),
-                          Text(
-                            'Servidor de Transmisión',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ...serverStreams.map((st) {
-                        final isSelected = st['streamUrl'] == _currentVideoUrl;
-                        final isBackup = st['isBackup'] == true;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0x2200E5FF) : const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isSelected ? Colors.cyanAccent : Colors.transparent,
-                              width: 1.2,
-                            ),
-                          ),
-                          child: ListTile(
-                            dense: true,
-                            leading: Icon(
-                              isBackup ? Icons.cloud_queue_rounded : Icons.cloud_done_rounded,
-                              color: isSelected ? Colors.cyanAccent : Colors.white60,
-                            ),
-                            title: Text(
-                              isBackup ? 'Servidor 2 (Alternativo / Respaldo)' : 'Servidor 1 (Alta Velocidad Principal)',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 13,
                               ),
-                            ),
-                            subtitle: Text(
-                              '${st['language'] ?? 'Español'} • ${st['qualityLabel'] ?? 'HD'}',
-                              style: const TextStyle(color: Colors.white38, fontSize: 11),
-                            ),
-                            trailing: isSelected
-                                ? const Icon(Icons.check_circle_rounded, color: Colors.cyanAccent, size: 20)
-                                : null,
-                            onTap: () {
-                              Navigator.pop(sheetContext);
-                              _switchStream(st);
-                            },
-                          ),
-                        );
-                      }),
-                      const SizedBox(height: 14),
-                    ],
-
-                    // SECCIÓN 3: FORMATO DE PANTALLA (ASPECT RATIO)
-                    const Row(
-                      children: [
-                        Icon(Icons.aspect_ratio_rounded, color: Colors.greenAccent, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'Ajuste de Pantalla (Zoom y Proporción)',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildAspectOption(
-                      title: 'Original (16:9)',
-                      subtitle: 'Formato cinematográfico con barras negras naturales',
-                      fit: BoxFit.contain,
-                      icon: Icons.fit_screen_rounded,
-                      onSelect: () {
-                        setState(() => _videoFit = BoxFit.contain);
-                        setSheetState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 6),
-                    _buildAspectOption(
-                      title: 'Ajustar a Pantalla (Sin Barras)',
-                      subtitle: 'Zoom inteligente para cubrir toda la pantalla del móvil',
-                      fit: BoxFit.cover,
-                      icon: Icons.crop_free_rounded,
-                      onSelect: () {
-                        setState(() => _videoFit = BoxFit.cover);
-                        setSheetState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 6),
-                    _buildAspectOption(
-                      title: 'Estirar Pantalla Completa',
-                      subtitle: 'Estira la imagen para ocupar el 100% de la pantalla',
-                      fit: BoxFit.fill,
-                      icon: Icons.fullscreen_rounded,
-                      onSelect: () {
-                        setState(() => _videoFit = BoxFit.fill);
-                        setSheetState(() {});
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    // SECCIÓN 4: SUBTÍTULOS EN ESPAÑOL
-                    const Row(
-                      children: [
-                        Icon(Icons.subtitles_rounded, color: Colors.amber, size: 18),
-                        SizedBox(width: 8),
-                        Text(
-                          'Subtítulos en Español',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Opción: Desactivar Subtítulos
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        color: !_subtitlesEnabled ? const Color(0x22E50914) : const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: !_subtitlesEnabled ? const Color(0xFFE50914) : Colors.transparent,
-                          width: 1.2,
-                        ),
-                      ),
-                      child: ListTile(
-                        dense: true,
-                        leading: Icon(
-                          Icons.subtitles_off_rounded,
-                          color: !_subtitlesEnabled ? const Color(0xFFE50914) : Colors.white60,
-                        ),
-                        title: const Text(
-                          'Desactivar Subtítulos',
-                          style: TextStyle(color: Colors.white, fontSize: 14),
-                        ),
-                        trailing: !_subtitlesEnabled
-                            ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _subtitlesEnabled = false;
-                            _activeSubtitleText = null;
-                          });
-                          setSheetState(() {});
-                          Navigator.pop(sheetContext);
-                        },
-                      ),
-                    ),
-
-                    if (_subtitles.isNotEmpty)
-                      ..._subtitles.map((sub) {
-                        final isSelected = _subtitlesEnabled && (_currentSubtitleUrl == sub['url']);
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 6),
-                          decoration: BoxDecoration(
-                            color: isSelected ? const Color(0x22FFC107) : const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isSelected ? Colors.amber : Colors.transparent,
-                              width: 1.2,
-                            ),
-                          ),
-                          child: ListTile(
-                            dense: true,
-                            leading: Icon(
-                              Icons.closed_caption_rounded,
-                              color: isSelected ? Colors.amber : Colors.white60,
-                            ),
-                            title: Text(
-                              sub['label'] ?? 'Español',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                fontSize: 14,
+                              const Spacer(),
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                                onPressed: () => Navigator.pop(sheetContext),
                               ),
-                            ),
-                            subtitle: Text(
-                              sub['fileName'] ?? 'Sincronizado',
-                              style: const TextStyle(color: Colors.white38, fontSize: 11),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: isSelected
-                                ? const Icon(Icons.check_circle_rounded, color: Colors.amber, size: 20)
-                                : null,
-                            onTap: () {
-                              _loadSubtitle(sub);
-                              setState(() {
-                                _subtitlesEnabled = true;
-                              });
-                              setSheetState(() {});
-                              Navigator.pop(sheetContext);
-                            },
+                            ],
                           ),
-                        );
-                      })
-                    else
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          'Sin subtítulos adicionales para este contenido.',
-                          style: TextStyle(color: Colors.white54, fontSize: 13),
-                        ),
-                      ),
-                    if (_subtitlesEnabled) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.amber.withOpacity(0.35), width: 1.2),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                          const SizedBox(height: 14),
+
+                          // SECCIÓN TV EN VIVO: FUENTES Y SEÑALES ALTERNATIVAS
+                          if (widget.isLive && _liveSources.length > 1) ...[
+                            const Row(
                               children: [
-                                const Icon(Icons.sync_rounded, color: Colors.amber, size: 18),
-                                const SizedBox(width: 8),
+                                Icon(Icons.satellite_alt_rounded, color: Colors.white70, size: 18),
+                                SizedBox(width: 8),
                                 Text(
-                                  'Sincronización: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                                const Spacer(),
-                                if (_subtitleDelaySeconds != 0.0)
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() => _subtitleDelaySeconds = 0.0);
-                                      setSheetState(() {});
-                                      _showFeedbackIndicator('Subtítulos restablecidos (0.0s)');
-                                    },
-                                    child: const Text('Restablecer', style: TextStyle(color: Colors.amber, fontSize: 12)),
+                                  'Señales y Fuentes de Transmisión',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.fast_rewind_rounded, size: 16),
-                                  label: const Text('-0.5s (Adelantar)'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2C2C2C),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ..._liveSources.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final url = entry.value;
+                              final isSelected = url == _currentVideoUrl;
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF1C2233) : const Color(0xFF141722),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF2E3B57) : const Color(0xFF1E2333),
+                                    width: 1.0,
                                   ),
-                                  onPressed: () {
-                                    setState(() => _subtitleDelaySeconds -= 0.5);
-                                    setSheetState(() {});
-                                    _showFeedbackIndicator('Subtítulos: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s');
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    isSelected ? Icons.check_circle_rounded : Icons.cell_tower_rounded,
+                                    color: isSelected ? const Color(0xFFE50914) : Colors.white54,
+                                  ),
+                                  title: Text(
+                                    'Señal ${index + 1}${index == 0 ? " (Principal)" : " (Respaldo $index)"}',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    url.length > 50 ? '${url.substring(0, 48)}...' : url,
+                                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                                      : null,
+                                  onTap: () {
+                                    Navigator.pop(sheetContext);
+                                    _currentLiveSourceIndex = index;
+                                    setState(() {
+                                      _currentVideoUrl = url;
+                                      _isInitialized = false;
+                                      _hasError = false;
+                                      _errorMessage = null;
+                                    });
+                                    _initializePlayer();
                                   },
                                 ),
-                                const SizedBox(width: 8),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.fast_forward_rounded, size: 16),
-                                  label: const Text('+0.5s (Retrasar)'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF2C2C2C),
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              );
+                            }),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // SECCIÓN 1: IDIOMA Y DOBLAJE (Para Películas y Series)
+                          if (!widget.isLive) ...[
+                            const Row(
+                              children: [
+                                Icon(Icons.record_voice_over_rounded, color: Colors.white70, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Audio y Doblaje',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                  onPressed: () {
-                                    setState(() => _subtitleDelaySeconds += 0.5);
-                                    setSheetState(() {});
-                                    _showFeedbackIndicator('Subtítulos: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s');
-                                  },
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 8),
                           ],
-                        ),
+
+                          if (audioStreams.isNotEmpty)
+                            ...audioStreams.map((st) {
+                              final isSelected = (st['id'] == _currentStreamId) || (st['streamUrl'] == _currentVideoUrl);
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF1C2233) : const Color(0xFF141722),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF2E3B57) : const Color(0xFF1E2333),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
+                                        ? Icons.headphones_rounded
+                                        : Icons.volume_up_rounded,
+                                    color: isSelected ? const Color(0xFFE50914) : Colors.white54,
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          st['label'] ?? st['language'] ?? 'Español Latino',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      if (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(alpha: 0.10),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: Colors.white24, width: 0.7),
+                                          ),
+                                          child: const Text(
+                                            'ESTÉREO',
+                                            style: TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  subtitle: Text(
+                                    (st['audioChannels'] == 'Estéreo 2.0' || (st['label'] ?? '').toString().contains('Estéreo'))
+                                        ? 'Estéreo 2.0 balanceado · Diálogos nítidos · ${st['qualityLabel'] ?? 'HD'}'
+                                        : (st['qualityLabel'] ?? 'Calidad HD'),
+                                    style: const TextStyle(color: Colors.white54, fontSize: 11),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                                      : null,
+                                  onTap: () {
+                                    Navigator.pop(sheetContext);
+                                    _switchStream(st);
+                                  },
+                                ),
+                              );
+                            })
+                          else if (!widget.isLive)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                'Audio en Español Latino (Estéreo 2.0) activo por defecto.',
+                                style: TextStyle(color: Colors.white70, fontSize: 13),
+                              ),
+                            ),
+
+                          const SizedBox(height: 14),
+
+                          // SECCIÓN 2: SERVIDOR / FUENTE (Para Películas y Series)
+                          if (!widget.isLive && serverStreams.length > 1) ...[
+                            const Row(
+                              children: [
+                                Icon(Icons.dns_rounded, color: Colors.white70, size: 18),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Servidor de Transmisión',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            ...serverStreams.map((st) {
+                              final isSelected = st['streamUrl'] == _currentVideoUrl;
+                              final isBackup = st['isBackup'] == true;
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF1C2233) : const Color(0xFF141722),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF2E3B57) : const Color(0xFF1E2333),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    isBackup ? Icons.cloud_queue_rounded : Icons.cloud_done_rounded,
+                                    color: isSelected ? const Color(0xFFE50914) : Colors.white54,
+                                  ),
+                                  title: Text(
+                                    isBackup ? 'Servidor 2 (Alternativo / Respaldo)' : 'Servidor 1 (Alta Velocidad Principal)',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    '${st['language'] ?? 'Español'} • ${st['qualityLabel'] ?? 'HD'}',
+                                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                                      : null,
+                                  onTap: () {
+                                    Navigator.pop(sheetContext);
+                                    _switchStream(st);
+                                  },
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 14),
+                          ],
+
+                          // SECCIÓN 3: FORMATO DE PANTALLA (ASPECT RATIO)
+                          const Row(
+                            children: [
+                              Icon(Icons.aspect_ratio_rounded, color: Colors.white70, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'Ajuste de Pantalla',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          _buildAspectOption(
+                            title: 'Original (16:9)',
+                            subtitle: 'Formato cinematográfico con barras negras naturales',
+                            fit: BoxFit.contain,
+                            icon: Icons.fit_screen_rounded,
+                            onSelect: () {
+                              setState(() => _videoFit = BoxFit.contain);
+                              setSheetState(() {});
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          _buildAspectOption(
+                            title: 'Ajustar a Pantalla (Sin Barras)',
+                            subtitle: 'Zoom para cubrir toda la pantalla del dispositivo',
+                            fit: BoxFit.cover,
+                            icon: Icons.crop_free_rounded,
+                            onSelect: () {
+                              setState(() => _videoFit = BoxFit.cover);
+                              setSheetState(() {});
+                            },
+                          ),
+                          const SizedBox(height: 6),
+                          _buildAspectOption(
+                            title: 'Estirar Pantalla Completa',
+                            subtitle: 'Estira la imagen para ocupar el 100% de la pantalla',
+                            fit: BoxFit.fill,
+                            icon: Icons.fullscreen_rounded,
+                            onSelect: () {
+                              setState(() => _videoFit = BoxFit.fill);
+                              setSheetState(() {});
+                            },
+                          ),
+                          const SizedBox(height: 14),
+
+                          // SECCIÓN 4: SUBTÍTULOS EN ESPAÑOL
+                          const Row(
+                            children: [
+                              Icon(Icons.subtitles_rounded, color: Colors.white70, size: 18),
+                              SizedBox(width: 8),
+                              Text(
+                                'Subtítulos',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          // Opción: Desactivar Subtítulos
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: !_subtitlesEnabled ? const Color(0xFF1C2233) : const Color(0xFF141722),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: !_subtitlesEnabled ? const Color(0xFF2E3B57) : const Color(0xFF1E2333),
+                                width: 1.0,
+                              ),
+                            ),
+                            child: ListTile(
+                              dense: true,
+                              leading: Icon(
+                                Icons.subtitles_off_rounded,
+                                color: !_subtitlesEnabled ? const Color(0xFFE50914) : Colors.white54,
+                              ),
+                              title: const Text(
+                                'Desactivar Subtítulos',
+                                style: TextStyle(color: Colors.white, fontSize: 13),
+                              ),
+                              trailing: !_subtitlesEnabled
+                                  ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                                  : null,
+                              onTap: () {
+                                setState(() {
+                                  _subtitlesEnabled = false;
+                                  _activeSubtitleText = null;
+                                });
+                                setSheetState(() {});
+                                Navigator.pop(sheetContext);
+                              },
+                            ),
+                          ),
+
+                          if (_subtitles.isNotEmpty)
+                            ..._subtitles.map((sub) {
+                              final isSelected = _subtitlesEnabled && (_currentSubtitleUrl == sub['url']);
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 8),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? const Color(0xFF1C2233) : const Color(0xFF141722),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: isSelected ? const Color(0xFF2E3B57) : const Color(0xFF1E2333),
+                                    width: 1.0,
+                                  ),
+                                ),
+                                child: ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    Icons.closed_caption_rounded,
+                                    color: isSelected ? const Color(0xFFE50914) : Colors.white54,
+                                  ),
+                                  title: Text(
+                                    sub['label'] ?? 'Español',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    sub['fileName'] ?? 'Sincronizado',
+                                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  trailing: isSelected
+                                      ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
+                                      : null,
+                                  onTap: () {
+                                    _loadSubtitle(sub);
+                                    setState(() {
+                                      _subtitlesEnabled = true;
+                                    });
+                                    setSheetState(() {});
+                                    Navigator.pop(sheetContext);
+                                  },
+                                ),
+                              );
+                            })
+                          else
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: Text(
+                                'Sin subtítulos adicionales para este contenido.',
+                                style: TextStyle(color: Colors.white54, fontSize: 13),
+                              ),
+                            ),
+                          if (_subtitlesEnabled) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF141722),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFF1E2333), width: 1.0),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.sync_rounded, color: Colors.white70, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Sincronización: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s',
+                                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                      ),
+                                      const Spacer(),
+                                      if (_subtitleDelaySeconds != 0.0)
+                                        TextButton(
+                                          onPressed: () {
+                                            setState(() => _subtitleDelaySeconds = 0.0);
+                                            setSheetState(() {});
+                                            _showFeedbackIndicator('Subtítulos restablecidos (0.0s)');
+                                          },
+                                          child: const Text('Restablecer', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.fast_rewind_rounded, size: 16),
+                                        label: const Text('-0.5s'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF1C2233),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        ),
+                                        onPressed: () {
+                                          setState(() => _subtitleDelaySeconds -= 0.5);
+                                          setSheetState(() {});
+                                          _showFeedbackIndicator('Subtítulos: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s');
+                                        },
+                                      ),
+                                      const SizedBox(width: 12),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.fast_forward_rounded, size: 16),
+                                        label: const Text('+0.5s'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF1C2233),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                        ),
+                                        onPressed: () {
+                                          setState(() => _subtitleDelaySeconds += 0.5);
+                                          setSheetState(() {});
+                                          _showFeedbackIndicator('Subtítulos: ${_subtitleDelaySeconds >= 0 ? "+" : ""}${_subtitleDelaySeconds.toStringAsFixed(1)}s');
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                        ],
                       ),
-                    ],
-                    const SizedBox(height: 12),
-                  ],
-                ),
+                    ),
+                  );
+                },
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     ).whenComplete(() {
@@ -1633,26 +1643,27 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   }) {
     final isSelected = _videoFit == fit;
     return Container(
+      margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0x2200E676) : const Color(0xFF1E1E1E),
+        color: isSelected ? const Color(0xFF1C2233) : const Color(0xFF141722),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: isSelected ? Colors.greenAccent : Colors.transparent,
-          width: 1.2,
+          color: isSelected ? const Color(0xFF2E3B57) : const Color(0xFF1E2333),
+          width: 1.0,
         ),
       ),
       child: ListTile(
         dense: true,
         leading: Icon(
           icon,
-          color: isSelected ? Colors.greenAccent : Colors.white60,
+          color: isSelected ? const Color(0xFFE50914) : Colors.white54,
         ),
         title: Text(
           title,
           style: TextStyle(
             color: Colors.white,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
+            fontSize: 13,
           ),
         ),
         subtitle: Text(
@@ -1660,7 +1671,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
           style: const TextStyle(color: Colors.white38, fontSize: 11),
         ),
         trailing: isSelected
-            ? const Icon(Icons.check_circle_rounded, color: Colors.greenAccent, size: 20)
+            ? const Icon(Icons.check_circle_rounded, color: Color(0xFFE50914), size: 20)
             : null,
         onTap: onSelect,
       ),
@@ -1968,33 +1979,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
               // Superficie principal de video
               _buildVideoSurface(),
 
-              // Indicador flotante en el centro (+10s, -10s, play/pausa)
-              if (_seekIndicatorText != null)
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.78),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE50914), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFE50914).withValues(alpha: 0.35),
-                          blurRadius: 18,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Text(
-                      _seekIndicatorText!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
+              // Micro-feedback animado moderno lateral (+10s, -10s) sin colisión central
+              _buildFeedbackOverlay(),
 
               // Botón flotante 'Siguiente Episodio' cuando queda poco tiempo en la serie
               if (!widget.isLive && _shouldShowNextEpisodeButton)
@@ -2692,6 +2678,127 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     );
   }
 
+  Widget _buildFeedbackOverlay() {
+    if (_seekIndicatorText == null) return const SizedBox.shrink();
+
+    final text = _seekIndicatorText!;
+    final isForward = text.startsWith('+');
+    final isRewind = text.startsWith('-');
+
+    if (isForward) {
+      return Positioned(
+        right: 48,
+        top: 0,
+        bottom: 0,
+        child: Center(
+          child: AnimatedOpacity(
+            opacity: 1.0,
+            duration: const Duration(milliseconds: 150),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xE60D0F17),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white12),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 4)),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.fast_forward_rounded, color: Colors.white, size: 24),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (isRewind) {
+      return Positioned(
+        left: 48,
+        top: 0,
+        bottom: 0,
+        child: Center(
+          child: AnimatedOpacity(
+            opacity: 1.0,
+            duration: const Duration(milliseconds: 150),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xE60D0F17),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white12),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black54, blurRadius: 18, offset: Offset(0, 4)),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.fast_rewind_rounded, color: Colors.white, size: 24),
+                  const SizedBox(width: 8),
+                  Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (text == '▶' || text == '⏸') {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      top: 68,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+          decoration: BoxDecoration(
+            color: const Color(0xE60D0F17),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white12),
+            boxShadow: const [
+              BoxShadow(color: Colors.black54, blurRadius: 14),
+            ],
+          ),
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildControlsOverlay() {
     if (!_isInitialized || _controller == null) return const SizedBox.shrink();
 
@@ -2743,26 +2850,24 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   ),
                   if (widget.isLive) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE50914),
+                        color: const Color(0x33E50914),
                         borderRadius: BorderRadius.circular(4),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x88E50914), blurRadius: 8, spreadRadius: 1),
-                        ],
+                        border: Border.all(color: const Color(0x88E50914), width: 0.8),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.fiber_manual_record, color: Colors.white, size: 8),
+                          Icon(Icons.fiber_manual_record, color: Color(0xFFE50914), size: 7),
                           SizedBox(width: 4),
                           Text(
                             'EN VIVO',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.8,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ],
@@ -2771,21 +2876,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     if (_liveSources.length > 1) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF00E676).withValues(alpha: 0.18),
+                          color: Colors.white.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(
-                            color: const Color(0xFF00E676).withValues(alpha: 0.5),
-                            width: 0.8,
-                          ),
+                          border: Border.all(color: Colors.white12, width: 0.8),
                         ),
                         child: Text(
                           'SEÑAL ${_currentLiveSourceIndex + 1}/${_liveSources.length}',
                           style: const TextStyle(
-                            color: Color(0xFF00E676),
+                            color: Colors.white70,
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
@@ -2793,42 +2895,41 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     const SizedBox(width: 6),
                   ],
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFE50914), Color(0xFF990000)],
-                      ),
+                      color: Colors.white.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.white24, width: 0.7),
                     ),
                     child: Text(
                       _currentQualityLabel ?? '1080p FHD',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.8,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
                       ),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1B5E20),
+                      color: Colors.white.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.greenAccent, width: 0.8),
+                      border: Border.all(color: Colors.white24, width: 0.7),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.volume_up_rounded, color: Colors.greenAccent, size: 12),
+                        const Icon(Icons.volume_up_rounded, color: Colors.white70, size: 12),
                         const SizedBox(width: 4),
                         Text(
                           _currentAudioLanguage ?? 'Español',
                           style: const TextStyle(
-                            color: Colors.greenAccent,
+                            color: Colors.white70,
                             fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -2838,14 +2939,14 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     const SizedBox(width: 4),
                     if (_liveChannelsList.length > 1)
                       IconButton(
-                        icon: const Icon(Icons.format_list_bulleted_rounded, color: Colors.white, size: 24),
+                        icon: const Icon(Icons.format_list_bulleted_rounded, color: Colors.white70, size: 22),
                         tooltip: 'Guía de Canales (◀)',
                         onPressed: () {
                           setState(() => _showChannelDrawer = !_showChannelDrawer);
                         },
                       ),
                     IconButton(
-                      icon: const Icon(Icons.analytics_outlined, color: Colors.white, size: 23),
+                      icon: const Icon(Icons.analytics_outlined, color: Colors.white70, size: 22),
                       tooltip: 'Diagnóstico de Señal',
                       onPressed: _showSignalHealthModal,
                     ),
@@ -2853,7 +2954,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       icon: Icon(
                         _isFavoriteChannel ? Icons.star_rounded : Icons.star_border_rounded,
                         color: _isFavoriteChannel ? Colors.amber : Colors.white70,
-                        size: 26,
+                        size: 24,
                       ),
                       tooltip: _isFavoriteChannel ? 'Quitar de Favoritos' : 'Añadir a Favoritos',
                       onPressed: _toggleFavoriteLiveChannel,
@@ -2862,7 +2963,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   if (_isPipSupported) ...[
                     const SizedBox(width: 4),
                     IconButton(
-                      icon: const Icon(Icons.picture_in_picture_alt_rounded, color: Colors.white, size: 23),
+                      icon: const Icon(Icons.picture_in_picture_alt_rounded, color: Colors.white70, size: 22),
                       tooltip: 'Ventana Flotante (PiP)',
                       onPressed: _enterPictureInPicture,
                     ),
@@ -2872,7 +2973,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     IconButton(
                       icon: Icon(
                         _subtitlesEnabled ? Icons.closed_caption_rounded : Icons.closed_caption_disabled_outlined,
-                        color: _subtitlesEnabled ? Colors.amber : Colors.white70,
+                        color: _subtitlesEnabled ? Colors.white : Colors.white60,
                         size: 24,
                       ),
                       tooltip: 'Subtítulos',
@@ -2889,7 +2990,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   ],
                   const SizedBox(width: 4),
                   IconButton(
-                    icon: const Icon(Icons.settings_rounded, color: Colors.white, size: 24),
+                    icon: const Icon(Icons.settings_rounded, color: Colors.white70, size: 22),
                     tooltip: 'Ajustes de Audio y Pantalla',
                     onPressed: _showSettingsModal,
                   ),
@@ -3053,64 +3154,132 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: const Color(0xFFE50914),
-                            inactiveTrackColor: Colors.white24,
-                            thumbColor: const Color(0xFFE50914),
-                            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-                            overlayColor: const Color(0x33E50914),
-                            trackHeight: 3.5,
-                          ),
-                          child: Slider(
-                            value: position.inMilliseconds
-                                .toDouble()
-                                .clamp(0.0, duration.inMilliseconds.toDouble()),
-                            min: 0.0,
-                            max: duration.inMilliseconds.toDouble() > 0
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final totalMs = duration.inMilliseconds.toDouble() > 0
                                 ? duration.inMilliseconds.toDouble()
-                                : 1.0,
-                            onChanged: (val) {
-                              setState(() {
-                                _dragPosition = Duration(milliseconds: val.toInt());
-                              });
-                              _startHideTimer();
-                            },
-                            onChangeEnd: (val) async {
-                              final dest = Duration(milliseconds: val.toInt());
-                              setState(() {
-                                _dragPosition = null;
-                                _isSeeking = true;
-                              });
-                              try {
-                                await _controller?.seekTo(dest);
-                                if (mounted && !_controller!.value.isPlaying) {
-                                  await _controller?.play();
+                                : 1.0;
+                            final currentMs = position.inMilliseconds
+                                .toDouble()
+                                .clamp(0.0, totalMs);
+                            final progressFraction = (currentMs / totalMs).clamp(0.0, 1.0);
+
+                            // Búfer cargado
+                            double bufferedFraction = 0.0;
+                            if (_controller != null && _controller!.value.buffered.isNotEmpty) {
+                              double maxBufferedMs = 0;
+                              for (final range in _controller!.value.buffered) {
+                                if (range.end.inMilliseconds > maxBufferedMs) {
+                                  maxBufferedMs = range.end.inMilliseconds.toDouble();
                                 }
-                              } catch (_) {}
-                              if (mounted) {
-                                setState(() {
-                                  _isSeeking = false;
-                                });
-                                _resetBufferingWatchdog();
                               }
-                            },
-                          ),
+                              bufferedFraction = (maxBufferedMs / totalMs).clamp(0.0, 1.0);
+                            }
+                            if (bufferedFraction < progressFraction) {
+                              bufferedFraction = progressFraction;
+                            }
+
+                            final trackWidth = (constraints.maxWidth - 48).clamp(0.0, double.infinity);
+
+                            return Stack(
+                              alignment: Alignment.centerLeft,
+                              children: [
+                                // Capa 1: Fondo base inactivo (gris oscuro translúcido)
+                                Positioned(
+                                  left: 24,
+                                  right: 24,
+                                  child: Container(
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                                // Capa 2: Búfer cargado (blanco translúcido)
+                                Positioned(
+                                  left: 24,
+                                  child: Container(
+                                    height: 4,
+                                    width: trackWidth * bufferedFraction,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.38),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ),
+                                // Capa 3: Progreso activo interactivo (Rojo streaming)
+                                SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    activeTrackColor: const Color(0xFFE50914),
+                                    inactiveTrackColor: Colors.transparent,
+                                    thumbColor: const Color(0xFFE50914),
+                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                                    overlayColor: const Color(0x33E50914),
+                                    trackHeight: 4,
+                                  ),
+                                  child: Slider(
+                                    value: currentMs,
+                                    min: 0.0,
+                                    max: totalMs,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _dragPosition = Duration(milliseconds: val.toInt());
+                                      });
+                                      _startHideTimer();
+                                    },
+                                    onChangeEnd: (val) async {
+                                      final dest = Duration(milliseconds: val.toInt());
+                                      setState(() {
+                                        _dragPosition = null;
+                                        _isSeeking = true;
+                                      });
+                                      try {
+                                        await _controller?.seekTo(dest);
+                                        if (mounted && !_controller!.value.isPlaying) {
+                                          await _controller?.play();
+                                        }
+                                      } catch (_) {}
+                                      if (mounted) {
+                                        setState(() {
+                                          _isSeeking = false;
+                                        });
+                                        _resetBufferingWatchdog();
+                                      }
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
 
-                        // Tiempos
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              _formatDuration(position),
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
-                            ),
-                            Text(
-                              _formatDuration(duration),
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
-                            ),
-                          ],
+                        // Tiempos con cifras tabulares para evitar oscilaciones de números
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                _formatDuration(position),
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                              Text(
+                                _formatDuration(duration),
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  fontFeatures: [FontFeature.tabularFigures()],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

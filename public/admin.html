@@ -335,6 +335,9 @@
       <button class="tab-pill" onclick="switchTab('settings')" id="tab-btn-settings">
         ⚙️ Ajustes & Cobros (Plin / WhatsApp)
       </button>
+      <button class="tab-pill" onclick="switchTab('debrid')" id="tab-btn-debrid">
+        🎬 Streaming & Real-Debrid
+      </button>
     </nav>
 
     <!-- Contenido Principal -->
@@ -510,6 +513,61 @@
               <button class="btn btn-secondary btn-sm" onclick="downloadBackup()">📥 Descargar Backup JSON</button>
               <button class="btn btn-secondary btn-sm" onclick="triggerRestore()">📤 Restaurar desde JSON</button>
               <input type="file" id="file-restore-input" style="display: none;" accept=".json" onchange="handleFileRestore(event)">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- SECCIÓN 5: STREAMING, REAL-DEBRID & CATÁLOGO AUTÓNOMO -->
+      <!-- ============================================================== -->
+      <section id="section-debrid" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2 style="font-size: 20px; font-weight: 800;">🎬 Estado de Streaming, Real-Debrid y Catálogo</h2>
+            <p style="color: var(--text-muted); font-size: 13px;">Monitoreo en tiempo real del motor de reproducción, claves y sincronización continua</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="forceCatalogRefresh()" id="btn-force-catalog">⚡ Actualizar Catálogo Ahora</button>
+        </div>
+
+        <div class="stats-row" style="margin-bottom: 24px;">
+          <div class="stat-card">
+            <div class="stat-value" id="debrid-premium-days" style="color: var(--gold);">--</div>
+            <div class="stat-label">Días Premium Real-Debrid</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="debrid-keys-pool">1 Clave</div>
+            <div class="stat-label">Pool de Claves API</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="catalog-total-movies" style="color: var(--accent);">--</div>
+            <div class="stat-label">Películas en Catálogo</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="catalog-total-series" style="color: var(--success);">--</div>
+            <div class="stat-label">Series y Telenovelas</div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+          <div class="card" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; color: var(--gold);">🛡️ Cuenta Real-Debrid</h3>
+            <div style="font-size: 13px; line-height: 2; color: #ccc;" id="debrid-account-details">
+              Cargando información de cuenta...
+            </div>
+            <div style="margin-top: 15px;">
+              <button class="btn btn-secondary btn-sm" onclick="fetchDebridStatus()">🔄 Comprobar Conexión RD</button>
+            </div>
+          </div>
+
+          <div class="card" style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 14px; color: var(--accent);">🤖 Motor de Actualización Continua</h3>
+            <div style="font-size: 13px; line-height: 2; color: #ccc;" id="catalog-sync-details">
+              Cargando estado del catálogo...
+            </div>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+              <button class="btn btn-secondary btn-sm" onclick="fetchCatalogStatus()">📊 Refrescar Estado</button>
+              <button class="btn btn-primary btn-sm" onclick="forceCatalogRefresh()">⚡ Sincronizar Ahora</button>
             </div>
           </div>
         </div>
@@ -760,13 +818,98 @@
 
     // Navegación entre pestañas
     function switchTab(tab) {
-      const tabs = ['clients', 'resellers', 'channels', 'settings'];
+      const tabs = ['clients', 'resellers', 'channels', 'settings', 'debrid'];
       tabs.forEach(t => {
         const sec = document.getElementById(`section-${t}`);
         const btn = document.getElementById(`tab-btn-${t}`);
         if (sec) sec.style.display = (t === tab) ? 'block' : 'none';
         if (btn) btn.classList.toggle('active', t === tab);
       });
+      if (tab === 'debrid') {
+        fetchDebridStatus();
+        fetchCatalogStatus();
+      }
+    }
+
+    async function fetchDebridStatus() {
+      const container = document.getElementById('debrid-account-details');
+      if (!container) return;
+      try {
+        const res = await fetch('/api/admin/debrid-status', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.isPremium) {
+          document.getElementById('debrid-premium-days').textContent = data.daysLeft + 'd';
+          document.getElementById('debrid-keys-pool').textContent = (data.poolSize || 1) + ' Clave(s)';
+          container.innerHTML = `
+            <div>Usuario: <strong>${data.username}</strong></div>
+            <div>Tipo: <span style="background: rgba(34, 197, 94, 0.2); color: #22C55E; font-weight: 700; padding: 2px 8px; border-radius: 6px;">Premium Activo</span></div>
+            <div>Días restantes: <strong>${data.daysLeft} días</strong> (Vence: ${new Date(data.expiration).toLocaleDateString()})</div>
+            <div>Puntos Fidelidad: <strong>${data.points} pts</strong></div>
+            <div>Claves configuradas: <strong>${data.poolSize || 1}</strong></div>
+          `;
+        } else {
+          document.getElementById('debrid-premium-days').textContent = 'Inactivo';
+          container.innerHTML = `<div style="color: var(--danger);">⚠️ Cuenta de Real-Debrid no activa o sin suscripción premium. ${data.error || ''}</div>`;
+        }
+      } catch (err) {
+        container.innerHTML = `<div style="color: var(--danger);">Error conectando con Real-Debrid: ${err.message}</div>`;
+      }
+    }
+
+    async function fetchCatalogStatus() {
+      const container = document.getElementById('catalog-sync-details');
+      if (!container) return;
+      try {
+        const res = await fetch('/api/admin/catalog/status', {
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          const stats = data.stats || {};
+          document.getElementById('catalog-total-movies').textContent = stats.totalMovies || '0';
+          document.getElementById('catalog-total-series').textContent = stats.totalSeries || '0';
+          const lastDate = data.lastSyncAt ? new Date(data.lastSyncAt).toLocaleTimeString() : 'Pendiente';
+          container.innerHTML = `
+            <div>Estado del Sincronizador: <span style="background: ${data.status === 'syncing' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(34, 197, 94, 0.2)'}; color: ${data.status === 'syncing' ? '#F59E0B' : '#22C55E'}; font-weight: 700; padding: 2px 8px; border-radius: 6px;">${data.status === 'syncing' ? 'Sincronizando...' : 'Activo (En espera)'}</span></div>
+            <div>Última actualización: <strong>${lastDate}</strong></div>
+            <div>Próximo ciclo automático en: <strong>${data.nextSyncInMinutes} min</strong></div>
+            <div>Películas con stream verificado: <strong style="color: var(--success);">${stats.verifiedSpanishCount || 0}</strong></div>
+            <div>Duración última sincronización: <strong>${((stats.lastDurationMs || 0) / 1000).toFixed(1)}s</strong></div>
+          `;
+        }
+      } catch (err) {
+        container.innerHTML = `<div>Error consultando catálogo: ${err.message}</div>`;
+      }
+    }
+
+    async function forceCatalogRefresh() {
+      const btn = document.getElementById('btn-force-catalog');
+      if (btn) {
+        btn.textContent = '⏳ Sincronizando...';
+        btn.disabled = true;
+      }
+      try {
+        const res = await fetch('/api/admin/catalog/refresh', {
+          method: 'POST',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('✅ Catálogo actualizado exitosamente desde TMDB');
+          fetchCatalogStatus();
+        } else {
+          showToast('❌ Error: ' + (data.error || 'No se pudo actualizar'));
+        }
+      } catch (err) {
+        showToast('❌ Error de conexión: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.textContent = '⚡ Actualizar Catálogo Ahora';
+          btn.disabled = false;
+        }
+      }
     }
 
     // Cargar todos los datos

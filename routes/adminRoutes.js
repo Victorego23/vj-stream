@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const accountService = require('../services/accountService');
 const channelService = require('../services/channelService');
+const realDebridService = require('../services/realDebridService');
+const catalogSyncService = require('../services/catalogSyncService');
 const { loginRateLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // Middleware para verificar token o contraseña del Administrador
@@ -707,6 +709,52 @@ router.get('/server-health', (req, res) => {
         totalSessions: sessions.length
       }
     }
+  });
+});
+
+/**
+ * @route   GET /api/admin/debrid-status
+ * @desc    Consulta el estado en vivo de la cuenta Real-Debrid (días premium, cuotas y pool de claves)
+ */
+router.get('/debrid-status', async (req, res) => {
+  try {
+    const status = await realDebridService.checkAccountStatus();
+    const allKeys = realDebridService.getAllApiKeys();
+    return res.json({
+      success: true,
+      poolSize: allKeys.length,
+      ...status
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/admin/catalog/refresh
+ * @desc    Fuerza la actualización inmediata de todo el catálogo desde TMDB con pre-verificación de streams
+ */
+router.post('/catalog/refresh', async (req, res) => {
+  try {
+    await catalogSyncService.syncCatalog(true);
+    return res.json({
+      success: true,
+      message: 'Catálogo actualizado exitosamente desde TMDB.',
+      ...catalogSyncService.getStatus()
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   GET /api/admin/catalog/status
+ * @desc    Consulta el estado de la sincronización en segundo plano del catálogo
+ */
+router.get('/catalog/status', (req, res) => {
+  return res.json({
+    success: true,
+    ...catalogSyncService.getStatus()
   });
 });
 

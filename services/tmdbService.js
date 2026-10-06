@@ -63,11 +63,15 @@ class TmdbService {
    */
   getForcedTrailerConfig(item) {
     if (!item) return null;
+    if (item.unlocked || item.hasSpanishStream || process.env.DISABLE_FORCED_TRAILERS === 'true') {
+      return null;
+    }
     const itemId = Number(item.id);
     const title = (item.title || item.name || '').toLowerCase().trim();
     const origTitle = (item.originalTitle || item.original_title || '').toLowerCase().trim();
 
     for (const conf of FORCED_TRAILER_TITLES) {
+      if (conf.unlocked) continue;
       if (itemId && itemId === conf.id) return conf;
       for (const alias of conf.aliases) {
         if (title.includes(alias) || origTitle.includes(alias)) {

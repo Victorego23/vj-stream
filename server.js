@@ -6,6 +6,7 @@ const streamingRoutes = require('./routes/streamingRoutes');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const resellerRoutes = require('./routes/resellerRoutes');
+const catalogSyncService = require('./services/catalogSyncService');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -187,6 +188,9 @@ const server = app.listen(PORT, () => {
   console.log(`🩺 Health check: http://localhost:${PORT}/health`);
   console.log(`🎬 API Endpoints: http://localhost:${PORT}/api/streaming`);
   console.log(`====================================================`);
+
+  // Iniciar motor autónomo de actualización continua del catálogo
+  catalogSyncService.startBackgroundWorker();
 });
 
 // ====================================================================

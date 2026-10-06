@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const axios = require('axios');
 const realDebridService = require('../services/realDebridService');
 const tmdbService = require('../services/tmdbService');
 const streamResolverService = require('../services/streamResolverService');
 const channelService = require('../services/channelService');
 const accountService = require('../services/accountService');
+const catalogSyncService = require('../services/catalogSyncService');
 const hmacSecurityMiddleware = require('../middlewares/hmacSecurityMiddleware');
 
 // Blindaje de seguridad: Solo la app oficial VJ STREAM puede acceder a los servicios
@@ -12,21 +14,49 @@ router.use(hmacSecurityMiddleware);
 
 /**
  * ====================================================================
- * RUTAS DE CATÁLOGO Y METADATOS (TMDB)
+ * RUTAS DE CATÁLOGO Y METADATOS (TMDB & CATALOG SYNC SERVICE)
  * ====================================================================
  */
 
 /**
  * @route   GET /api/streaming/catalog
- * @desc    Obtiene el catálogo consolidado de 5 categorías en paralelo en español
+ * @desc    Obtiene el catálogo consolidado sincronizado continuamente en segundo plano (0ms de latencia)
  */
 router.get('/catalog', async (req, res, next) => {
   try {
-    const catalog = await tmdbService.getFullCatalog();
+    const catalog = await catalogSyncService.getCatalog();
     return res.json({
       success: true,
-      app: 'VJ STREAM',
+      app: 'TOM TV',
       data: catalog
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * @route   GET /api/streaming/catalog/status
+ * @desc    Devuelve el estado de la sincronización continua y salud del catálogo
+ */
+router.get('/catalog/status', (req, res) => {
+  return res.json({
+    success: true,
+    ...catalogSyncService.getStatus()
+  });
+});
+
+/**
+ * @route   POST /api/streaming/catalog/refresh
+ * @desc    Fuerza la actualización inmediata del catálogo completo en segundo plano
+ */
+router.post('/catalog/refresh', async (req, res, next) => {
+  try {
+    const fresh = await catalogSyncService.syncCatalog(true);
+    return res.json({
+      success: true,
+      message: 'Catálogo sincronizado y actualizado exitosamente.',
+      stats: catalogSyncService.getStatus().stats
     });
   } catch (error) {
     next(error);
@@ -39,10 +69,10 @@ router.get('/catalog', async (req, res, next) => {
  */
 router.get('/catalog/kids', async (req, res, next) => {
   try {
-    const catalog = await tmdbService.getKidsCatalog();
+    const catalog = await catalogSyncService.getKidsCatalog();
     return res.json({
       success: true,
-      app: 'VJ STREAM',
+      app: 'TOM TV',
       data: catalog
     });
   } catch (error) {
@@ -56,10 +86,10 @@ router.get('/catalog/kids', async (req, res, next) => {
  */
 router.get('/catalog/telenovelas', async (req, res, next) => {
   try {
-    const catalog = await tmdbService.getTelenovelasCatalog();
+    const catalog = await catalogSyncService.getTelenovelasCatalog();
     return res.json({
       success: true,
-      app: 'VJ STREAM',
+      app: 'TOM TV',
       data: catalog
     });
   } catch (error) {
@@ -73,10 +103,10 @@ router.get('/catalog/telenovelas', async (req, res, next) => {
  */
 router.get('/catalog/action-sports', async (req, res, next) => {
   try {
-    const catalog = await tmdbService.getActionSportsCatalog();
+    const catalog = await catalogSyncService.getActionSportsCatalog();
     return res.json({
       success: true,
-      app: 'VJ STREAM',
+      app: 'TOM TV',
       data: catalog
     });
   } catch (error) {
@@ -784,6 +814,73 @@ router.get('/vod/movie/:id', async (req, res) => {
 });
 
 /**
+ * @route   GET /api/streaming/proxy
+ * @route   GET /api/streaming/stream-proxy
+ * @desc    Streaming relay / proxy de alta disponibilidad con soporte de HTTP Range (RFC 7233).
+ *          Canaliza el tráfico a través de la IP fija del servidor eliminando bloqueos multi-IP de Real-Debrid
+ *          y permitiendo avance rápido (scrubbing/seek) en ExoPlayer y Smart TV.
+ */
+router.get(['/proxy', '/stream-proxy'], async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl || typeof targetUrl !== 'string') {
+    return res.status(400).send('Parámetro "url" es obligatorio.');
+  }
+
+  // Prevenir bucles infinitos
+  if (targetUrl.includes('/api/streaming/proxy') || targetUrl.includes('/stream-proxy')) {
+    return res.status(400).send('Bucle de proxy detectado.');
+  }
+
+  try {
+    const upstreamHeaders = {
+      'user-agent': req.headers['user-agent'] || 'TOM-TV-Player/3.0'
+    };
+
+    if (req.headers.range) {
+      upstreamHeaders.range = req.headers.range;
+    }
+
+    const upstream = await axios.get(targetUrl, {
+      responseType: 'stream',
+      headers: upstreamHeaders,
+      timeout: 12000,
+      validateStatus: status => status >= 200 && status < 400
+    });
+
+    res.status(upstream.status);
+
+    const forwardHeaders = [
+      'content-type',
+      'content-length',
+      'content-range',
+      'accept-ranges',
+      'content-disposition',
+      'last-modified',
+      'etag'
+    ];
+
+    forwardHeaders.forEach(h => {
+      if (upstream.headers[h]) {
+        res.setHeader(h, upstream.headers[h]);
+      }
+    });
+
+    upstream.data.pipe(res);
+
+    req.on('close', () => {
+      if (upstream.data && typeof upstream.data.destroy === 'function') {
+        upstream.data.destroy();
+      }
+    });
+  } catch (err) {
+    console.warn('[Stream Proxy] Error transmitiendo fragmento:', err.message);
+    if (!res.headersSent) {
+      res.status(err.response?.status || 502).send('Error en streaming relay: ' + err.message);
+    }
+  }
+});
+
+/**
  * @route   GET /api/streaming/version
  * @desc    Devuelve los metadatos de la última versión y notas de la versión para OTA
  */
@@ -814,12 +911,12 @@ router.get('/version', (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: '2026-10-05',
     releaseNotes: [
-      '📺 Guía Electrónica de Programación (EPG) en Vivo: Ahora los canales muestran qué programa se está emitiendo en directo, horarios y barra de progreso.',
-      '☁️ Sincronización en la Nube: Tu progreso de "Continuar Viendo" y "Mi Lista" se sincroniza automáticamente entre todas tus pantallas y dispositivos.',
-      '⏩ Sincronización y Retardo de Subtítulos: Nuevos controles en el reproductor (±0.5s) para calibrar subtítulos al instante desde el control remoto.',
-      '⚡ Optimización Extrema para Smart TV: Aceleración de memoria y carga fluida de portadas en TV Boxes de 1GB/2GB de RAM sin cierres inesperados.',
-      '🛡️ Redundancia Multi-Scraper: Enlaces siempre disponibles con respaldo automático ante caídas de proveedores.',
-      '🖼️ Banner Oficial 16:9 en Android TV: Integración perfecta y sin distorsión en la pantalla principal de Android TV y Google TV.'
+      '🎬 Reproductor HUD Rediseñado: Micro-feedback lateral (+10s/-10s) sin interferir con Play/Pausa y barra de tiempo ergonómica de 3 capas con búfer dinámico.',
+      '✨ Nueva Interfaz Senior UI/UX: Estilo cinematográfico Apple TV / Netflix con cinta de metadatos unificada (4K UHD, HDR, 5.1) y menú sin bordes semáforo.',
+      '⚡ Motor Real-Debrid Multi-Pool: Soporte de múltiples llaves API con failover automático y verificación en tiempo real de reproducción.',
+      '🔄 Sincronización Continua de Catálogo: Worker autónomo cada 2 horas con los últimos estrenos de cine y series actualizados.',
+      '🚀 Streaming Proxy RFC 7233: Salto instantáneo en línea de tiempo y protección de direcciones IP.',
+      '📺 Optimización Total para Android TV y Móvil: Máxima fluidez y compatibilidad con control remoto D-Pad.'
     ],
     downloadUrl: '/api/streaming/download-apk',
     forceUpdate: false,

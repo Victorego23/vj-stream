@@ -14,9 +14,9 @@ const tmdbService = require('./tmdbService');
 class StreamResolverService {
   constructor() {
     this.timeout = 7000;
-    // Caché en memoria: key -> { timestamp, data }
+    // Caché en memoria: key -> { timestamp, data } (45 min para evitar tokens Real-Debrid vencidos)
     this.cache = new Map();
-    this.CACHE_TTL_MS = 2.5 * 60 * 60 * 1000; // 2.5 horas
+    this.CACHE_TTL_MS = 45 * 60 * 1000; // 45 minutos
   }
 
   /**
@@ -244,18 +244,35 @@ class StreamResolverService {
       audioLanguage = 'Dual (Español Estéreo)';
       score += 2200;
     } else {
-      // REGLA ESTRICTA VJ STREAM: Descartar totalmente si no tiene audio en español (latino/castellano)
-      return {
-        stream,
-        score: -999999,
-        audioLanguage: 'Inglés / Sin Español',
-        isSpanishAudio: false
-      };
+      // Stream en idioma original / multi-lenguaje (conservado para subtítulos en español si no existe doblaje)
+      isSpanishAudio = false;
+      audioLanguage = isStereo ? 'Audio Original Estéreo' : 'Audio Original';
+      score += 800; // Puntuación positiva para no descartar como respaldo subtitulado
     }
 
     // Ventaja para pistas Estéreo 2.0: Diálogos nítidos y sin problemas de voces bajas en Smart TV sin soundbar
     if (isStereo) {
       score += 150;
+    }
+
+    // Compatibilidad de audio en Smart TV (ExoPlayer)
+    if (/\b(aac|ac3|eac3|ddp|dd\+|dd5\.1|dolby\s*digital)\b/i.test(fullText)) {
+      score += 180;
+    }
+    // Penalizar pistas TrueHD, Atmos o DTS-HD que causan pantalla congelada o muda en Smart TVs básicas
+    if (/\b(truehd|atmos|dts-hd|dts:x|dts-x|pcm|flac)\b/i.test(fullText)) {
+      score -= 350;
+    }
+
+    // Control de tamaño de archivo para evitar buffering continuo en conexiones residenciales
+    const sizeMatch = fullText.match(/(\d+(?:\.\d+)?)\s*(gb|gigabytes)/i);
+    if (sizeMatch) {
+      const sizeGb = parseFloat(sizeMatch[1]);
+      if (sizeGb > 25) {
+        score -= 400; // Demasiado pesado para streaming fluido en TV
+      } else if (sizeGb >= 1.5 && sizeGb <= 12) {
+        score += 200; // Peso balanceado óptimo
+      }
     }
 
     // Calidad de video
@@ -269,7 +286,7 @@ class StreamResolverService {
 
     // Formato de contenedor (MP4 arranca veloz y con soporte directo)
     if (fullText.includes('.mp4') || filename.endsWith('.mp4')) {
-      score += 120;
+      score += 140;
     }
 
     // Bonificación por fidelidad de título
@@ -428,25 +445,26 @@ class StreamResolverService {
    * @private
    */
   async _searchInstantCachedStreams(imdbId, mediaType = 'movie', season = 1, episode = 1, mediaInfo = null) {
-    const apiKey = process.env.REALDEBRID_API_KEY;
+    const apiKey = realDebridService.getApiKey() || process.env.REALDEBRID_API_KEY;
     if (!apiKey || !imdbId) return { latino: [], castellano: [], original: [] };
 
     try {
       const target = mediaType === 'tv' ? `${imdbId}:${season}:${episode}` : imdbId;
       const endpoint = mediaType === 'tv' ? 'series' : 'movie';
 
-      // Configuración Multi-Scraper Turbo para Real-Debrid:
-      // 1. Scraper principal de alta velocidad
-      // 2. Scraper con ordenamiento por tamaño/calidad y filtro Anti-CAM
-      // 3. Scraper multi-proveedor con 14+ trackers públicos y especializados
+      // Multi-Scraper Concurrente Turbo:
+      // Consulta en paralelo Torrentio + Knightcrawler + Comet + MediaFusion
+      // Eliminando caídas individuales y acelerando el tiempo de respuesta a < 2 segundos
       const scraperEndpoints = [
-        `https://torrentio.strem.fun/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
         `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://torrentio.strem.fun/providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,commandotorrent|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`
+        `https://torrentio.strem.fun/providers=yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,commandotorrent|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://knightcrawler.elfhosted.com/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://comet.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
+        `https://mediafusion.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`
       ];
 
       const responses = await Promise.allSettled(
-        scraperEndpoints.map(u => axios.get(u, { timeout: 6500 }))
+        scraperEndpoints.map(u => axios.get(u, { timeout: 4800 }).catch(() => null))
       );
 
       const streamMap = new Map();
@@ -456,30 +474,6 @@ class StreamResolverService {
             const key = s.url || s.behaviorHints?.filename || s.title;
             if (key && !streamMap.has(key)) {
               streamMap.set(key, s);
-            }
-          }
-        }
-      }
-
-      if (streamMap.size === 0) {
-        // Redundancia Multi-Scraper de Respaldo: Si el proveedor principal falla o no tiene enlaces, consultar proveedores secundarios
-        const fallbackScraperEndpoints = [
-          `https://knightcrawler.elfhosted.com/sort=qualitysize|qualityfilter=scr,cam|realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-          `https://mediafusion.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`,
-          `https://comet.elfhosted.com/realdebrid=${apiKey}/stream/${endpoint}/${target}.json`
-        ];
-
-        const fallbackResponses = await Promise.allSettled(
-          fallbackScraperEndpoints.map(u => axios.get(u, { timeout: 4500 }).catch(() => null))
-        );
-
-        for (const r of fallbackResponses) {
-          if (r.status === 'fulfilled' && Array.isArray(r.value?.data?.streams)) {
-            for (const s of r.value.data.streams) {
-              const key = s.url || s.behaviorHints?.filename || s.title;
-              if (key && !streamMap.has(key)) {
-                streamMap.set(key, s);
-              }
             }
           }
         }
@@ -547,11 +541,40 @@ class StreamResolverService {
   }
 
   /**
-   * Respaldo: Busca magnets en APIs públicas de torrents comerciales.
+   * Respaldo: Busca magnets en APIs públicas de alta fidelidad (YTS) para películas.
    * @private
    */
   async searchPublicTrackers(query, year) {
-    return [];
+    if (!query) return [];
+    try {
+      const q = encodeURIComponent(query.trim());
+      const res = await axios.get(`https://yts.mx/api/v2/list_movies.json?query_term=${q}&limit=6`, { timeout: 3800 });
+      const movies = res.data?.data?.movies || [];
+      const magnets = [];
+      const trs = [
+        'udp://open.demonii.com:1337/announce',
+        'udp://tracker.openbittorrent.com:80',
+        'udp://tracker.opentrackr.org:1337/announce',
+        'udp://tracker.torrent.eu.org:451/announce'
+      ].map(tr => `&tr=${encodeURIComponent(tr)}`).join('');
+
+      for (const m of movies) {
+        if (year && m.year && Math.abs(m.year - parseInt(year, 10)) > 1) continue;
+        const torrents = m.torrents || [];
+        for (const t of torrents) {
+          if (t.hash) {
+            magnets.push({
+              magnet: `magnet:?xt=urn:btih:${t.hash}&dn=${encodeURIComponent(m.title_long || m.title)}${trs}`,
+              name: `${m.title} (${m.year}) [${t.quality}] [YTS]`,
+              isOriginal: true
+            });
+          }
+        }
+      }
+      return magnets;
+    } catch (_) {
+      return [];
+    }
   }
 
   /**
@@ -572,11 +595,17 @@ class StreamResolverService {
         const isExcluded = excludeUrls.length > 0 && excludeUrls.includes(cached.data?.streamUrl);
         const isErrorVideo = this.isErrorVideoUrl(cached.data?.streamUrl);
 
-        if (!isExcluded && !isErrorVideo) {
+        // Si el enlace tiene más de 12 minutos en caché, verificar que aún no haya caducado en Real-Debrid
+        let isStillAlive = true;
+        if (!isExcluded && !isErrorVideo && (Date.now() - cached.timestamp > 12 * 60 * 1000)) {
+          isStillAlive = await this.isStreamPlayable(cached.data?.streamUrl);
+        }
+
+        if (!isExcluded && !isErrorVideo && isStillAlive) {
           console.log(`[VJ STREAM Auto-Resolver] ⚡ Transmisión servida desde CACHÉ ULTRA-RÁPIDO para: "${title}"`);
           return cached.data;
         } else {
-          console.log(`[VJ STREAM Auto-Resolver] 🔄 Entrada en caché descartada (excluida o error anterior). Re-resolviendo...`);
+          console.log(`[VJ STREAM Auto-Resolver] 🔄 Entrada en caché descartada (expirada o no reproducible). Re-resolviendo...`);
           this.cache.delete(cacheKey);
         }
       }

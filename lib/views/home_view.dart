@@ -341,11 +341,11 @@ class _HomeViewState extends State<HomeView> {
       final series = categories['series'] ?? [];
 
       final extraFromCatalog = <Map<String, dynamic>>[];
-      if (comedy.isNotEmpty) extraFromCatalog.add({'title': '😂 Comedias y Risas Aseguradas', 'items': comedy});
-      if (horror.isNotEmpty) extraFromCatalog.add({'title': '😱 Terror, Horror y Suspenso', 'items': horror});
-      if (animation.isNotEmpty) extraFromCatalog.add({'title': '🎨 Animación y Éxitos Familiares', 'items': animation});
-      if (adventure.isNotEmpty) extraFromCatalog.add({'title': '🗺️ Aventuras Épicas y Fantasía', 'items': adventure});
-      if (classics.isNotEmpty) extraFromCatalog.add({'title': '👑 Grandes Éxitos y Clásicos (2000-2015)', 'items': classics});
+      if (comedy.isNotEmpty) extraFromCatalog.add({'title': 'Comedias', 'items': comedy});
+      if (horror.isNotEmpty) extraFromCatalog.add({'title': 'Terror y Suspenso', 'items': horror});
+      if (animation.isNotEmpty) extraFromCatalog.add({'title': 'Animación y Familia', 'items': animation});
+      if (adventure.isNotEmpty) extraFromCatalog.add({'title': 'Aventuras y Fantasía', 'items': adventure});
+      if (classics.isNotEmpty) extraFromCatalog.add({'title': 'Grandes Clásicos', 'items': classics});
 
       setState(() {
         _trendingItems = trending;
@@ -1158,7 +1158,7 @@ class _HomeViewState extends State<HomeView> {
             if (_activeTab == 'Todos' && _favorites.isNotEmpty)
               SliverToBoxAdapter(
                 child: MediaRow(
-                  title: '⭐ Mi Lista Guardada',
+                  title: 'Mi Lista',
                   items: _favorites,
                   onItemTap: _openDetail,
                   onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1169,7 +1169,7 @@ class _HomeViewState extends State<HomeView> {
             if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
               SliverToBoxAdapter(
                 child: MediaRow(
-                  title: '🍿 Próximamente en Español (Solo Tráiler)',
+                  title: 'Próximamente en Cines',
                   items: _upcomingItems,
                   onItemTap: _openDetail,
                   onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1181,7 +1181,7 @@ class _HomeViewState extends State<HomeView> {
               if (_nowPlayingItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '🍿 Estrenos de Cine (Calidad Limpia)',
+                    title: 'Estrenos en Cartelera',
                     items: _nowPlayingItems,
                     onItemTap: _openDetail,
                     onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1191,8 +1191,8 @@ class _HomeViewState extends State<HomeView> {
                 SliverToBoxAdapter(
                   child: MediaRow(
                     title: _activeTab == 'Películas'
-                        ? '🔥 Películas en Tendencia'
-                        : '🔥 Tendencias de la Semana',
+                        ? 'Películas en Tendencia'
+                        : 'Tendencias de la Semana',
                     items: _activeTab == 'Películas'
                         ? _trendingItems.where((i) => i.mediaType == 'movie').toList()
                         : _trendingItems,
@@ -1203,7 +1203,7 @@ class _HomeViewState extends State<HomeView> {
               if (_actionItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '💥 Acción y Adrenalina',
+                    title: 'Acción y Aventura',
                     items: _actionItems,
                     onItemTap: _openDetail,
                     onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1212,7 +1212,7 @@ class _HomeViewState extends State<HomeView> {
               if (_scifiItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '🚀 Ciencia Ficción y Fantasía',
+                    title: 'Ciencia Ficción y Fantasía',
                     items: _scifiItems,
                     onItemTap: _openDetail,
                     onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1224,7 +1224,7 @@ class _HomeViewState extends State<HomeView> {
               if (_seriesItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '📺 Series Populares (Latino / Castellano)',
+                    title: 'Series Populares',
                     items: _seriesItems,
                     onItemTap: _openDetail,
                     onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1233,7 +1233,7 @@ class _HomeViewState extends State<HomeView> {
               if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '🔥 Series en Tendencia',
+                    title: 'Series en Tendencia',
                     items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
                     onItemTap: _openDetail,
                     onItemFocus: (focused) => setState(() => _hoveredItem = focused),
@@ -1489,7 +1489,7 @@ class _HomeViewState extends State<HomeView> {
             if (_activeTab == 'Todos' && _favorites.isNotEmpty)
               SliverToBoxAdapter(
                 child: MediaRow(
-                  title: '⭐ Mi Lista Guardada',
+                  title: 'Mi Lista',
                   items: _favorites,
                   onItemTap: _openDetail,
                 ),
@@ -1499,7 +1499,7 @@ class _HomeViewState extends State<HomeView> {
             if (_upcomingItems.isNotEmpty && (_activeTab == 'Todos' || _activeTab == 'Películas'))
               SliverToBoxAdapter(
                 child: MediaRow(
-                  title: '🍿 Próximamente en Español (Solo Tráiler)',
+                  title: 'Próximamente en Cines',
                   items: _upcomingItems,
                   onItemTap: _openDetail,
                 ),
@@ -1510,7 +1510,7 @@ class _HomeViewState extends State<HomeView> {
               if (_nowPlayingItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '🍿 Estrenos de Cine (Calidad Limpia)',
+                    title: 'Estrenos en Cartelera',
                     items: _nowPlayingItems,
                     onItemTap: _openDetail,
                   ),
@@ -1519,8 +1519,8 @@ class _HomeViewState extends State<HomeView> {
                 SliverToBoxAdapter(
                   child: MediaRow(
                     title: _activeTab == 'Películas'
-                        ? '🔥 Películas en Tendencia'
-                        : '🔥 Tendencias de la Semana',
+                        ? 'Películas en Tendencia'
+                        : 'Tendencias de la Semana',
                     items: _activeTab == 'Películas'
                         ? _trendingItems.where((i) => i.mediaType == 'movie').toList()
                         : _trendingItems,
@@ -1530,7 +1530,7 @@ class _HomeViewState extends State<HomeView> {
               if (_actionItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '💥 Acción y Adrenalina',
+                    title: 'Acción y Aventura',
                     items: _actionItems,
                     onItemTap: _openDetail,
                   ),
@@ -1538,7 +1538,7 @@ class _HomeViewState extends State<HomeView> {
               if (_scifiItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '🚀 Ciencia Ficción y Fantasía',
+                    title: 'Ciencia Ficción y Fantasía',
                     items: _scifiItems,
                     onItemTap: _openDetail,
                   ),
@@ -1549,7 +1549,7 @@ class _HomeViewState extends State<HomeView> {
               if (_seriesItems.isNotEmpty)
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '📺 Series Populares (Latino / Castellano)',
+                    title: 'Series Populares',
                     items: _seriesItems,
                     onItemTap: _openDetail,
                   ),
@@ -1557,7 +1557,7 @@ class _HomeViewState extends State<HomeView> {
               if (_activeTab == 'Series' && _trendingItems.any((i) => i.mediaType == 'tv'))
                 SliverToBoxAdapter(
                   child: MediaRow(
-                    title: '🔥 Series en Tendencia',
+                    title: 'Series en Tendencia',
                     items: _trendingItems.where((i) => i.mediaType == 'tv').toList(),
                     onItemTap: _openDetail,
                   ),

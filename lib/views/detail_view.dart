@@ -715,159 +715,182 @@ class _DetailViewState extends State<DetailView> {
     );
   }
 
+  String _formatRuntime(int? minutes) {
+    if (minutes == null || minutes <= 0) return '';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (h > 0 && m > 0) return '${h}h ${m}m';
+    if (h > 0) return '${h}h';
+    return '${m}m';
+  }
+
   Widget _buildMetadataBadges() {
+    final List<Widget> items = [];
+
+    // Calificación de estrellas (estilo Apple TV / IMDb)
+    if (_currentItem.rating > 0) {
+      items.add(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.star_rounded, color: Color(0xFFFFC107), size: 16),
+            const SizedBox(width: 3),
+            Text(
+              _currentItem.formattedRating,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Año de estreno
+    if (_currentItem.releaseYear.isNotEmpty) {
+      items.add(
+        Text(
+          _currentItem.releaseYear,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    // Duración o tipo de contenido
+    final runtimeStr = _formatRuntime(_currentItem.runtime);
+    if (runtimeStr.isNotEmpty) {
+      items.add(
+        Text(
+          runtimeStr,
+          style: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    } else if (_currentItem.mediaType == 'tv') {
+      items.add(
+        const Text(
+          'Serie',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      );
+    }
+
+    // Clasificación de edad (Insignia sutil minimalista)
+    items.add(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(color: Colors.white24, width: 0.7),
+        ),
+        child: const Text(
+          '16+',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+
+    // Resolución 4K UHD
+    items.add(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(color: Colors.white24, width: 0.7),
+        ),
+        child: const Text(
+          '4K UHD',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.3,
+          ),
+        ),
+      ),
+    );
+
+    // Audio 5.1
+    items.add(
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(3),
+          border: Border.all(color: Colors.white24, width: 0.7),
+        ),
+        child: const Text(
+          '5.1',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+
+    // Solo tráiler si aplica
+    if (_isTrailerOnly) {
+      items.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0x33F59E0B),
+            borderRadius: BorderRadius.circular(3),
+            border: Border.all(color: const Color(0x88F59E0B), width: 0.8),
+          ),
+          child: const Text(
+            'PRÓXIMAMENTE',
+            style: TextStyle(
+              color: Color(0xFFF59E0B),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final List<Widget> ribbonChildren = [];
+    for (int i = 0; i < items.length; i++) {
+      ribbonChildren.add(items[i]);
+      if (i < items.length - 1) {
+        ribbonChildren.add(
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 6),
+            child: Text(
+              '•',
+              style: TextStyle(color: Colors.white30, fontSize: 12),
+            ),
+          ),
+        );
+      }
+    }
+
     return Wrap(
-      spacing: 10,
-      runSpacing: 6,
       crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        if (_currentItem.rating > 0) ...[
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.star, color: Colors.amber, size: 16),
-              const SizedBox(width: 4),
-              Text(
-                _currentItem.formattedRating,
-                style: const TextStyle(
-                  color: Colors.amber,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ],
-        if (_currentItem.releaseYear.isNotEmpty) ...[
-          Text(
-            _currentItem.releaseYear,
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-        ],
-        if (_isTrailerOnly) ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.movie_creation_rounded, color: Colors.black, size: 12),
-                SizedBox(width: 4),
-                Text(
-                  'SOLO TRÁILER',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1705),
-              border: Border.all(color: const Color(0xFFF59E0B), width: 0.8),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_isCheckingAvailability) ...[
-                  const SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
-                    ),
-                  ),
-                  const SizedBox(width: 5),
-                ],
-                const Text(
-                  'PRÓXIMAMENTE EN ESPAÑOL',
-                  style: TextStyle(
-                    color: Color(0xFFF59E0B),
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              border: Border.all(color: Colors.white24, width: 0.8),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: const Text(
-              'ORIGINAL (CINE / INGLÉS)',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ] else ...[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE50914).withValues(alpha: 0.2),
-              border: Border.all(color: const Color(0xFFE50914), width: 0.8),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: const Text(
-              'CALIDAD 4K / 1080p',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.2),
-              border: Border.all(color: Colors.greenAccent, width: 0.8),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: const Text(
-              'ANTI-CAM CERTIFICADO',
-              style: TextStyle(
-                color: Colors.greenAccent,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              border: Border.all(color: Colors.white30, width: 0.6),
-              borderRadius: BorderRadius.circular(3),
-            ),
-            child: const Text(
-              'AUDIO ESPAÑOL',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ],
+      children: ribbonChildren,
     );
   }
 
@@ -887,35 +910,7 @@ class _DetailViewState extends State<DetailView> {
   }
 
   Widget _buildFeaturesSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D0D0D),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF1F1F1F)),
-      ),
-      child: Column(
-        children: [
-          _buildFeatureRow(
-            icon: Icons.high_quality_rounded,
-            title: 'Máxima Calidad Garantizada',
-            subtitle: 'Filtro Anti-CAM estricto. Fuentes en 4K UHD, HDR y 1080p BluRay / WEB-DL.',
-          ),
-          const Divider(color: Color(0xFF1E1E1E), height: 20),
-          _buildFeatureRow(
-            icon: Icons.language_rounded,
-            title: 'Prioridad de Audio en Español',
-            subtitle: 'Preferente en Español Latino y Castellano con subtítulos sincronizados.',
-          ),
-          const Divider(color: Color(0xFF1E1E1E), height: 20),
-          _buildFeatureRow(
-            icon: Icons.speed_rounded,
-            title: 'Servidores CDN Ultrarrápidos',
-            subtitle: 'Sin esperas ni buffering mediante desbridado en la nube de alta velocidad.',
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildAutoPlayButton() {
@@ -952,28 +947,25 @@ class _DetailViewState extends State<DetailView> {
           }
         },
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 150),
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: _isTrailerOnly
-                  ? const [Color(0xFFF59E0B), Color(0xFFD97706)]
-                  : const [Color(0xFFE50914), Color(0xFF990000)],
-            ),
-            borderRadius: BorderRadius.circular(6),
+            color: _isTrailerOnly
+                ? const Color(0xFFF59E0B)
+                : const Color(0xFFE50914),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: _playButtonFocus.hasFocus
-                  ? (_isTrailerOnly ? Colors.amberAccent : Colors.white)
+                  ? Colors.white
                   : Colors.transparent,
-              width: 2.5,
+              width: 2.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: (_isTrailerOnly ? const Color(0xFFF59E0B) : const Color(0xFFE50914))
-                    .withValues(alpha: _playButtonFocus.hasFocus ? 0.6 : 0.25),
-                blurRadius: _playButtonFocus.hasFocus ? 18 : 10,
-                spreadRadius: _playButtonFocus.hasFocus ? 2 : 0,
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -983,16 +975,16 @@ class _DetailViewState extends State<DetailView> {
               Icon(
                 _isTrailerOnly ? Icons.movie_creation_rounded : Icons.play_arrow_rounded,
                 color: _isTrailerOnly ? Colors.black : Colors.white,
-                size: 28,
+                size: 26,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Text(
-                _isTrailerOnly ? 'Ver Tráiler Oficial' : 'Reproducir en TOM TV',
+                _isTrailerOnly ? 'Ver Tráiler Oficial' : 'Reproducir',
                 style: TextStyle(
                   color: _isTrailerOnly ? Colors.black : Colors.white,
                   fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 0.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
                 ),
               ),
             ],
