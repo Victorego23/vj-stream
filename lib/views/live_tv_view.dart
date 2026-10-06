@@ -84,6 +84,20 @@ class _LiveTvViewState extends State<LiveTvView> {
     });
   }
 
+  @override
+  void didUpdateWidget(covariant LiveTvView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialCategory != null && widget.initialCategory != oldWidget.initialCategory) {
+      setState(() {
+        _selectedCategory = widget.initialCategory!;
+        if (_filteredChannels.isNotEmpty) {
+          _focusedChannelNotifier.value = _filteredChannels.first;
+          _triggerPreviewUpdate(_filteredChannels.first);
+        }
+      });
+    }
+  }
+
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     final show = _scrollController.offset > 240;

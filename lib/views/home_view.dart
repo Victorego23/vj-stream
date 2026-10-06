@@ -18,6 +18,7 @@ import 'detail_view.dart';
 import 'search_view.dart';
 import 'video_player_view.dart';
 import 'live_tv_view.dart';
+import 'sports_view.dart';
 import 'profile_view.dart';
 import '../widgets/xuper_master_launcher.dart';
 import '../widgets/tom_hero_carousel.dart';
@@ -1243,13 +1244,14 @@ class _HomeViewState extends State<HomeView> {
   Widget _buildTvContentArea() {
     // Si la pestaña seleccionada es TV en vivo, ocupar 100% del área con la grilla optimizada
     if (_activeTab == 'Fútbol & Deportes') {
-      return LiveTvView(
-        initialCategory: 'Deportes',
+      return SportsView(
+        key: const ValueKey('sports_view_tv'),
         onBackToMovies: () => _returnFocusToTvSidebar('Fútbol & Deportes'),
       );
     }
     if (_activeTab == 'TV en Vivo') {
       return LiveTvView(
+        key: const ValueKey('live_tv_view_tv'),
         onBackToMovies: () => _returnFocusToTvSidebar('TV en Vivo'),
       );
     }
@@ -1515,8 +1517,8 @@ class _HomeViewState extends State<HomeView> {
           if (_activeTab == 'Fútbol & Deportes')
             SliverFillRemaining(
               hasScrollBody: true,
-              child: LiveTvView(
-                initialCategory: 'Deportes',
+              child: SportsView(
+                key: const ValueKey('sports_view_mobile'),
                 onBackToMovies: () {
                   setState(() => _activeTab = 'Todos');
                   if (_scrollController.hasClients) {
@@ -1530,6 +1532,7 @@ class _HomeViewState extends State<HomeView> {
             SliverFillRemaining(
               hasScrollBody: true,
               child: LiveTvView(
+                key: const ValueKey('live_tv_view_mobile'),
                 onBackToMovies: () {
                   setState(() => _activeTab = 'Todos');
                   if (_scrollController.hasClients) {
