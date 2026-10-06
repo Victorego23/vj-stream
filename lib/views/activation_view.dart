@@ -56,7 +56,7 @@ class _ActivationViewState extends State<ActivationView> {
 
     setState(() {
       _isLoading = false;
-      _code = info.code ?? 'VJ-....';
+      _code = info.code ?? 'TOM-....';
       _whatsappNumber = info.whatsappNumber;
       if (info.isExpired) {
         _errorMessage = 'Tu membresía ha vencido. Contacta a tu proveedor para renovar.';
@@ -136,7 +136,7 @@ class _ActivationViewState extends State<ActivationView> {
                 textCapitalization: TextCapitalization.characters,
                 style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 2),
                 decoration: InputDecoration(
-                  hintText: 'VJ-XXXX',
+                  hintText: 'TOM-XXXX',
                   hintStyle: const TextStyle(color: Colors.white38),
                   filled: true,
                   fillColor: const Color(0xFF0D0D0D),
@@ -333,7 +333,7 @@ class _ActivationViewState extends State<ActivationView> {
                           ),
                           const SizedBox(height: 8),
                           SelectableText(
-                            _code ?? 'VJ-....',
+                            _code ?? 'TOM-....',
                             style: TextStyle(
                               color: const Color(0xFFE50914),
                               fontSize: isTv ? 42 : 34,
@@ -341,6 +341,28 @@ class _ActivationViewState extends State<ActivationView> {
                               letterSpacing: 4,
                             ),
                           ),
+                          if (_code != null && _whatsappNumber != null && _whatsappNumber!.isNotEmpty) ...[
+                            const SizedBox(height: 16),
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Image.network(
+                                'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${Uri.encodeComponent("https://wa.me/${_whatsappNumber!.replaceAll(RegExp(r'[^0-9]'), '')}?text=Hola,%20deseo%20activar%20mi%20pantalla%20TOM%20TV%20C%C3%B3digo:%20$_code")}',
+                                width: isTv ? 130 : 110,
+                                height: isTv ? 130 : 110,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              '📷 Escanea con tu celular para enviar a WhatsApp',
+                              style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ],
                       ),
                     ),

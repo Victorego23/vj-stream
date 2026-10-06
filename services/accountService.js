@@ -2,6 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
+let MongoClient = null;
+try {
+  MongoClient = require('mongodb').MongoClient;
+} catch (_) {}
+
 const DATA_DIR = path.resolve(__dirname, '..', 'data');
 const DB_FILE = path.resolve(DATA_DIR, 'accounts.json');
 const BACKUP_FILE = path.resolve(DATA_DIR, 'accounts_backup.json');
@@ -9,11 +14,75 @@ const BACKUP_FILE = path.resolve(DATA_DIR, 'accounts_backup.json');
 // Contraseña de administrador por defecto (configurable por variable de entorno)
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '123456';
 const SIGNING_SECRET = process.env.JWT_SECRET || DEFAULT_ADMIN_PASSWORD + '_vj_secure_stream_2026';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://egocheagav_db_user:Tomtv2026@cluster0.b3rdzbc.mongodb.net/tomtv?retryWrites=true&w=majority&appName=Cluster0';
 
 class AccountService {
   constructor() {
     this._cache = null;
+    this._mongoClient = null;
+    this._mongoDb = null;
+    this._mongoCollection = null;
+    this._isMongoConnected = false;
     this._ensureDb();
+    this._initMongo();
+  }
+
+  async _initMongo() {
+    if (!MongoClient || !MONGODB_URI) return;
+    try {
+      this._mongoClient = new MongoClient(MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        connectTimeoutMS: 10000
+      });
+      await this._mongoClient.connect();
+      this._mongoDb = this._mongoClient.db('tomtv');
+      this._mongoCollection = this._mongoDb.collection('accounts_state');
+      this._isMongoConnected = true;
+      console.log('🍃 [MongoDB Atlas] Conexión permanente establecida con éxito.');
+
+      // Leer estado de la nube
+      const cloudDoc = await this._mongoCollection.findOne({ _id: 'accounts_state' });
+      if (cloudDoc) {
+        delete cloudDoc._id;
+        const hasResellers = Array.isArray(cloudDoc.resellers) && cloudDoc.resellers.length > 0;
+        const hasClients = Array.isArray(cloudDoc.clients) && cloudDoc.clients.length > 0;
+        if (hasResellers || hasClients) {
+          console.log(`🍃 [MongoDB Atlas] Restaurados desde la nube: ${(cloudDoc.resellers || []).length} revendedores, ${(cloudDoc.clients || []).length} clientes.`);
+          this._cache = cloudDoc;
+          this._saveDisk(cloudDoc);
+        } else {
+          // Si la nube está vacía pero local tiene datos, sembrar la nube
+          const local = this._readDb();
+          if ((local.resellers && local.resellers.length > 0) || (local.clients && local.clients.length > 0)) {
+            await this._mongoCollection.updateOne({ _id: 'accounts_state' }, { $set: local }, { upsert: true });
+          }
+        }
+      } else {
+        // Inicializar documento en la nube
+        const local = this._readDb();
+        await this._mongoCollection.updateOne({ _id: 'accounts_state' }, { $set: local }, { upsert: true });
+        console.log('🍃 [MongoDB Atlas] Documento inicial creado en la nube.');
+      }
+    } catch (err) {
+      console.warn('⚠️ [MongoDB Atlas] Conexión en la nube en espera (usando disco local seguro):', err.message);
+      this._isMongoConnected = false;
+    }
+  }
+
+  _saveDisk(data) {
+    try {
+      const jsonStr = JSON.stringify(data, null, 2);
+      const tmpFile = DB_FILE + '.tmp';
+      fs.writeFileSync(tmpFile, jsonStr, 'utf8');
+      fs.renameSync(tmpFile, DB_FILE);
+      const tmpBackup = BACKUP_FILE + '.tmp';
+      fs.writeFileSync(tmpBackup, jsonStr, 'utf8');
+      fs.renameSync(tmpBackup, BACKUP_FILE);
+      return true;
+    } catch (e) {
+      console.error('[AccountService] Error guardando en disco:', e);
+      return false;
+    }
   }
 
   _ensureDb() {
@@ -133,21 +202,21 @@ class AccountService {
   }
 
   _writeDb(data) {
-    try {
-      this._cache = data;
-      const jsonStr = JSON.stringify(data, null, 2);
-      const tmpFile = DB_FILE + '.tmp';
-      fs.writeFileSync(tmpFile, jsonStr, 'utf8');
-      fs.renameSync(tmpFile, DB_FILE);
-      // Guardar copia de seguridad redundante simultáneamente
-      const tmpBackup = BACKUP_FILE + '.tmp';
-      fs.writeFileSync(tmpBackup, jsonStr, 'utf8');
-      fs.renameSync(tmpBackup, BACKUP_FILE);
-      return true;
-    } catch (e) {
-      console.error('[AccountService] Error escribiendo en DB:', e);
-      return false;
+    this._cache = data;
+    this._saveDisk(data);
+
+    // Persistir de inmediato en MongoDB Atlas en segundo plano
+    if (this._isMongoConnected && this._mongoCollection) {
+      const payload = { ...data };
+      delete payload._id;
+      this._mongoCollection.updateOne(
+        { _id: 'accounts_state' },
+        { $set: payload },
+        { upsert: true }
+      ).catch(e => console.error('[MongoDB Atlas] Error al sincronizar:', e.message));
     }
+
+    return true;
   }
 
   // -------------------------------------------------------------
@@ -1405,7 +1474,7 @@ class AccountService {
 
     let pending = db.pendingActivations.find(p => normalize(p.deviceId) === cleanDeviceId && p.status === 'pending');
     if (!pending) {
-      const randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+      const randomCode = 'TOM-' + Math.floor(1000 + Math.random() * 9000);
       pending = {
         code: randomCode,
         deviceId: cleanDeviceId,
@@ -1467,6 +1536,15 @@ class AccountService {
         if (!targetClient.devices) targetClient.devices = [];
         const existingDev = targetClient.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
         if (!existingDev) {
+          const maxScreens = targetClient.maxDevices || 1;
+          if (targetClient.devices.length >= maxScreens) {
+            return {
+              status: 'device_limit_reached',
+              maxDevices: maxScreens,
+              currentDevices: targetClient.devices.length,
+              message: `Límite de pantallas alcanzado (${targetClient.devices.length}/${maxScreens}). Desconecta un dispositivo previo o amplía tu suscripción.`
+            };
+          }
           targetClient.devices.push({
             deviceId: cleanDeviceId,
             deviceModel,
@@ -1571,6 +1649,15 @@ class AccountService {
           if (!client.devices) client.devices = [];
           const existingDev = client.devices.find(d => normalize(d.deviceId) === cleanDeviceId);
           if (!existingDev) {
+            const maxScreens = client.maxDevices || 1;
+            if (client.devices.length >= maxScreens) {
+              return {
+                status: 'device_limit_reached',
+                maxDevices: maxScreens,
+                currentDevices: client.devices.length,
+                message: `Límite de pantallas alcanzado (${client.devices.length}/${maxScreens}). Desconecta un dispositivo previo o amplía tu suscripción.`
+              };
+            }
             client.devices.push({
               deviceId: cleanDeviceId,
               deviceModel,
@@ -1646,7 +1733,7 @@ class AccountService {
     let pending = db.pendingActivations.find(p => normalize(p.deviceId) === cleanDeviceId && p.status === 'pending');
 
     if (!pending) {
-      const randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
+      const randomCode = 'TOM-' + Math.floor(1000 + Math.random() * 9000);
       pending = {
         code: randomCode,
         deviceId: cleanDeviceId,
@@ -2002,6 +2089,14 @@ class AccountService {
 
         if (!client.devices) client.devices = [];
         if (!client.devices.some(d => (d.deviceId || '').trim() === cleanDeviceId)) {
+          const maxScreens = client.maxDevices || 1;
+          if (client.devices.length >= maxScreens) {
+            return {
+              active: false,
+              reason: 'device_limit_reached',
+              message: `Límite de pantallas alcanzado (${client.devices.length}/${maxScreens}).`
+            };
+          }
           client.devices.push({
             deviceId: cleanDeviceId,
             deviceModel: 'Dispositivo Vinculado',
@@ -2125,6 +2220,61 @@ class AccountService {
     return {
       whatsappNumber: settings.whatsappNumber || process.env.WHATSAPP_NUMBER || '+51914598415',
       whatsappMessage: settings.whatsappMessage || 'Hola, deseo solicitar información de TOM TV'
+    };
+  }
+
+  /**
+   * Expulsa y desconecta un dispositivo registrado de un cliente para liberar cupo
+   */
+  removeClientDevice(clientId, deviceId) {
+    const db = this._readDb();
+    const client = (db.clients || []).find(c => c.id === clientId);
+    if (!client) throw new Error('Cliente no encontrado.');
+    if (!Array.isArray(client.devices)) client.devices = [];
+    const prevLen = client.devices.length;
+    client.devices = client.devices.filter(d => (d.deviceId || '').trim() !== (deviceId || '').trim());
+    this._writeDb(db);
+    return {
+      success: true,
+      remainingDevices: client.devices.length,
+      removed: prevLen !== client.devices.length
+    };
+  }
+
+  /**
+   * Vincula una pantalla pendiente directamente a un cliente existente (Multi-Pantalla)
+   */
+  linkPendingDeviceToClient(code, clientId) {
+    const db = this._readDb();
+    const cleanCode = (code || '').toUpperCase().trim();
+    const pending = (db.pendingActivations || []).find(p => (p.code || '').toUpperCase().trim() === cleanCode);
+    if (!pending) throw new Error('Pantalla pendiente no encontrada o código expirado.');
+
+    const client = (db.clients || []).find(c => c.id === clientId);
+    if (!client) throw new Error('Cliente no encontrado.');
+
+    if (!Array.isArray(client.devices)) client.devices = [];
+    const existingDev = client.devices.find(d => (d.deviceId || '').trim() === (pending.deviceId || '').trim());
+    if (!existingDev) {
+      client.devices.push({
+        deviceId: pending.deviceId,
+        deviceModel: pending.deviceModel || 'Smart TV',
+        lastSeen: new Date().toISOString()
+      });
+      // Asegurar que maxDevices acomode la nueva pantalla si el cliente la vinculó
+      if (client.devices.length > (client.maxDevices || 1)) {
+        client.maxDevices = client.devices.length;
+      }
+    }
+
+    pending.status = 'activated';
+    pending.clientId = client.id;
+    this._writeDb(db);
+
+    return {
+      success: true,
+      client,
+      deviceModel: pending.deviceModel
     };
   }
 }

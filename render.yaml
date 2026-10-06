@@ -18,3 +18,5 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: MONGODB_URI
+        value: mongodb+srv://egocheagav_db_user:Tomtv2026@cluster0.b3rdzbc.mongodb.net/tomtv?retryWrites=true&w=majority&appName=Cluster0

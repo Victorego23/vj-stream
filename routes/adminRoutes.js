@@ -314,6 +314,36 @@ router.delete('/pending/:code', handleRejectPending);
 router.post('/reject-pending', handleRejectPending);
 
 /**
+ * @route   POST /api/admin/link-pending-device
+ * @desc    Vincula una pantalla pendiente directamente a un cliente existente
+ */
+router.post('/link-pending-device', (req, res) => {
+  const { code, clientId } = req.body;
+  if (!code || !clientId) {
+    return res.status(400).json({ success: false, error: 'Código de pantalla y ID de cliente son requeridos.' });
+  }
+  try {
+    const result = accountService.linkPendingDeviceToClient(code, clientId);
+    return res.json({ success: true, ...result, message: 'Pantalla vinculada exitosamente al cliente.' });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   DELETE /api/admin/clients/:id/devices/:deviceId
+ * @desc    Expulsa y desconecta una pantalla específica de un cliente
+ */
+router.delete('/clients/:id/devices/:deviceId', (req, res) => {
+  try {
+    const result = accountService.removeClientDevice(req.params.id, req.params.deviceId);
+    return res.json({ success: true, ...result, message: 'Dispositivo desconectado correctamente.' });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * @route   POST /api/admin/settings
  * @desc    Actualiza la configuración general del sistema, panel, marca y accesos
  */

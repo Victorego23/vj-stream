@@ -1037,6 +1037,46 @@
   <!-- MODALES DE ACCIÓN -->
   <!-- ============================================================== -->
 
+  <!-- MODAL: VINCULAR PANTALLA PENDIENTE A CLIENTE EXISTENTE -->
+  <div class="modal" id="modal-link-pending">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;">🔗 Vincular Pantalla a Cliente</h3>
+        <button class="close-btn" onclick="closeModal('modal-link-pending')">&times;</button>
+      </div>
+      <form onsubmit="submitLinkPending(event)">
+        <input type="hidden" id="link-code">
+        <div class="form-group">
+          <label>Pantalla a Vincular:</label>
+          <div id="link-code-preview" style="padding: 10px 14px; background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 8px; font-weight: 800; color: #38bdf8; font-family: monospace;"></div>
+        </div>
+        <div class="form-group">
+          <label>Seleccionar Cliente Existente:</label>
+          <select id="link-client-select" class="form-control" required style="background: #0d0f15; color: #fff;">
+            <option value="">Cargando clientes...</option>
+          </select>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">
+            💡 La pantalla se sumará a los dispositivos autorizados del cliente y compartirá su fecha de vencimiento.
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-link" style="width: 100%; padding: 12px; margin-top: 10px;">
+          🔗 Confirmar Vinculación
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GESTOR DE DISPOSITIVOS DE CLIENTE -->
+  <div class="modal" id="modal-devices">
+    <div class="modal-content" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;" id="modal-devices-title">📱 Pantallas Conectadas</h3>
+        <button class="close-btn" onclick="closeModal('modal-devices')">&times;</button>
+      </div>
+      <div id="modal-devices-body" style="padding: 10px 0;"></div>
+    </div>
+  </div>
+
   <!-- MODAL: NUEVO CLIENTE -->
   <div class="modal" id="modal-client">
     <div class="modal-content">
@@ -1679,6 +1719,9 @@
                     <button class="btn btn-primary btn-sm" onclick="quickActivate('${item.code}', '365d', '${escapeJs(model)}')" title="Activa 1 año">
                       💎 1 Año
                     </button>
+                    <button class="btn btn-outline btn-sm" onclick="openLinkPendingModal('${item.code}', '${escapeJs(model)}')" style="color: #38bdf8; border-color: rgba(56,189,248,0.4);" title="Vincular a cliente existente">
+                      🔗 Vincular a Existente
+                    </button>
                     <button class="btn btn-secondary btn-sm" onclick="openCustomActivateModal('${item.code}', '${escapeJs(model)}')" title="Personalizar nombre y plan">
                       ✏️ Personalizar
                     </button>
@@ -1870,7 +1913,7 @@
               <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">${expFormatted}</div>
             </td>
             <td>
-              <span style="font-size: 12px; color: #fff;">${(c.devices || []).length} / ${c.maxDevices || 1}</span>
+              <span style="font-size: 12px; color: #fff; cursor: pointer; text-decoration: underline;" onclick="openDevicesModal('${c.id}')" title="Ver y administrar pantallas conectadas">📱 ${(c.devices || []).length} / ${c.maxDevices || 1}</span>
             </td>
             <td>${origin}</td>
             <td style="text-align: right;">
@@ -1915,8 +1958,8 @@
                   <span>${escapeHtml(c.code || 'SIN CÓDIGO')}</span>
                   <span style="font-size: 13px; opacity: 0.8;">📋</span>
                 </div>
-                <div class="client-mob-devices">
-                  📱 ${(c.devices || []).length}/${c.maxDevices || 1} disp.
+                <div class="client-mob-devices" onclick="openDevicesModal('${c.id}')" style="cursor: pointer; text-decoration: underline;" title="Toca para administrar pantallas">
+                  📱 ${(c.devices || []).length}/${c.maxDevices || 1} disp. ⚙️
                 </div>
               </div>
 
@@ -1982,6 +2025,113 @@
       } finally {
         btn.textContent = 'Activar Cliente';
         btn.disabled = false;
+      }
+    }
+
+    function openLinkPendingModal(code, model) {
+      document.getElementById('link-code').value = code;
+      document.getElementById('link-code-preview').textContent = `${code} (${model || 'Dispositivo'})`;
+      const select = document.getElementById('link-client-select');
+      select.innerHTML = '<option value="">-- Elige un cliente existente --</option>' +
+        clientsData.map(c => {
+          const devs = (c.devices || []).length;
+          const max = c.maxDevices || 1;
+          return `<option value="${c.id}">${escapeHtml(c.name)} (${c.code}) - [${devs}/${max} pantallas]</option>`;
+        }).join('');
+      document.getElementById('modal-link-pending').style.display = 'flex';
+    }
+
+    async function submitLinkPending(e) {
+      e.preventDefault();
+      const code = document.getElementById('link-code').value;
+      const clientId = document.getElementById('link-client-select').value;
+      if (!clientId) {
+        showToast('Por favor selecciona un cliente de la lista.', 'error');
+        return;
+      }
+      const btn = document.getElementById('btn-submit-link');
+      btn.textContent = 'Vinculando...';
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/admin/link-pending-device', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify({ code, clientId })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeModal('modal-link-pending');
+          showToast(`¡Pantalla ${code} vinculada exitosamente a ${data.client?.name || 'cliente'}!`, 'success');
+          fetchData();
+        } else {
+          showToast('Error: ' + (data.error || 'No se pudo vincular'), 'error');
+        }
+      } catch (_) {
+        showToast('Error de red al vincular.', 'error');
+      } finally {
+        btn.textContent = '🔗 Confirmar Vinculación';
+        btn.disabled = false;
+      }
+    }
+
+    function openDevicesModal(clientId) {
+      const client = clientsData.find(c => c.id === clientId);
+      if (!client) return;
+      const modal = document.getElementById('modal-devices');
+      const title = document.getElementById('modal-devices-title');
+      const body = document.getElementById('modal-devices-body');
+      title.textContent = `📱 Pantallas: ${client.name} (${(client.devices || []).length}/${client.maxDevices || 1})`;
+
+      const devices = client.devices || [];
+      if (devices.length === 0) {
+        body.innerHTML = `
+          <div style="text-align: center; color: var(--text-muted); padding: 25px 15px;">
+            <p>No hay pantallas conectadas en este momento.</p>
+            <p style="font-size: 11px; margin-top: 8px;">Cuando el cliente abra la app e ingrese el código <code style="color:#38bdf8;">${client.code}</code>, su pantalla aparecerá aquí.</p>
+          </div>
+        `;
+      } else {
+        body.innerHTML = `
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            ${devices.map(d => `
+              <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <div style="font-weight: 700; color: #fff; font-size: 13px;">${escapeHtml(d.deviceModel || 'Dispositivo')}</div>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                    ID: <code style="color: #94a3b8;">${escapeHtml((d.deviceId || '').substring(0, 16))}...</code>
+                  </div>
+                  <div style="font-size: 10px; color: #38bdf8; margin-top: 2px;">
+                    Último acceso: ${d.lastSeen ? new Date(d.lastSeen).toLocaleString('es-ES') : 'Reciente'}
+                  </div>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="disconnectDevice('${client.id}', '${escapeJs(d.deviceId)}', '${escapeJs(d.deviceModel || 'pantalla')}')" title="Desconectar esta pantalla remótamente">
+                  ⛔ Expulsar
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      modal.style.display = 'flex';
+    }
+
+    async function disconnectDevice(clientId, deviceId, modelName) {
+      if (!confirm(`¿Expulsar la pantalla "${modelName}"? Tendrá que volver a vincularse si desea entrar.`)) return;
+      try {
+        const res = await fetch(`/api/admin/clients/${clientId}/devices/${encodeURIComponent(deviceId)}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Pantalla expulsada con éxito.', 'success');
+          await fetchData();
+          openDevicesModal(clientId);
+        } else {
+          showToast('Error: ' + (data.error || 'No se pudo expulsar'), 'error');
+        }
+      } catch (_) {
+        showToast('Error de red al expulsar dispositivo.', 'error');
       }
     }
 
