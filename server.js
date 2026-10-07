@@ -94,6 +94,34 @@ app.get('/api/version', (req, res) => {
   res.redirect('/api/streaming/version');
 });
 
+// URLs directas de release del APK para descarga inmediata sin saltos en Smart TV y navegadores
+let currentApkDownloadUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v4.1.0/TOM-TV-release.apk';
+
+const updateLatestApkUrl = () => {
+  try {
+    const https = require('https');
+    https.get('https://api.github.com/repos/Victorego23/vj-stream/releases/latest', {
+      headers: { 'User-Agent': 'TOM-TV-Server' }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const apkAsset = json.assets && json.assets.find(a => a.name && a.name.endsWith('.apk'));
+          if (apkAsset && apkAsset.browser_download_url) {
+            currentApkDownloadUrl = apkAsset.browser_download_url;
+          }
+        } catch (_) {}
+      });
+    }).on('error', () => {});
+  } catch (_) {}
+};
+
+// Actualizar periódicamente en background
+setInterval(updateLatestApkUrl, 60 * 60 * 1000);
+updateLatestApkUrl();
+
 // Controlador unificado para servir el APK directamente sin redirecciones intermedias
 const serveApkDirect = (req, res) => {
   if (req.query.source === 'local') {
@@ -109,10 +137,10 @@ const serveApkDirect = (req, res) => {
     }
   }
 
-  // Redirigir siempre al APK del release oficial más reciente en GitHub CDN
-  const githubReleaseUrl = 'https://github.com/Victorego23/vj-stream/releases/latest/download/TOM-TV-release.apk';
+  // Redirigir directamente al binario de release sin pasar por el resolve intermedio de /latest/
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  return res.redirect(githubReleaseUrl);
+  res.setHeader('Pragma', 'no-cache');
+  return res.redirect(302, currentApkDownloadUrl);
 };
 
 // Endpoints universales directos de descarga de APK (200 OK directo para Downloader TV y Navegadores)
