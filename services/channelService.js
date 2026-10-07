@@ -415,17 +415,9 @@ class ChannelService {
   startBackgroundMonitor(intervalHours = 6) {
     if (this._monitorTimer) clearInterval(this._monitorTimer);
 
-    // Verificación inicial diferida (1 minuto tras arranque)
-    setTimeout(() => {
-      this.auditAndAutoHealChannels().catch(e => console.error('[ChannelMonitor] Error en pase inicial:', e.message));
-    }, 60000);
-
-    const ms = intervalHours * 60 * 60 * 1000;
-    this._monitorTimer = setInterval(() => {
-      this.auditAndAutoHealChannels().catch(e => console.error('[ChannelMonitor] Error en pase periódico:', e.message));
-    }, ms);
-
-    console.log(`[ChannelService] 🛡️ Monitor autónomo de canales 24/7 ACTIVO (Supervisión cada ${intervalHours}h)`);
+    // Auditoría de canales cargada en memoria; validación de streams se ejecuta bajo demanda
+    // para preservar el límite estricto de 512 MB de Render y evitar caídas por OOM.
+    console.log(`[ChannelService] 🛡️ Canales cargados en memoria (${this._channels.length} canales listos para streaming bajo demanda).`);
   }
 
   /**

@@ -254,8 +254,8 @@ const server = app.listen(PORT, () => {
   // Iniciar motor autónomo de actualización continua del catálogo
   catalogSyncService.startBackgroundWorker();
 
-  // Iniciar monitor autónomo de canales de TV en vivo 24/7 (Auditoría continua cada 6h)
-  channelService.startBackgroundMonitor(6);
+  // Cargar canales de TV en vivo en memoria de forma instantánea (Auditoría de streams solo bajo demanda)
+  channelService.reload();
 
   // Iniciar limpiador autónomo de TorBox (elimina torrents estancados cada 15 min)
   const torboxService = require('./services/torboxService');

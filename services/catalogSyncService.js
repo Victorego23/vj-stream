@@ -187,24 +187,8 @@ class CatalogSyncService {
       const novelasData = novelasRes.status === 'fulfilled' ? novelasRes.value : this.cachedNovelas;
       const sportsData = sportsRes.status === 'fulfilled' ? sportsRes.value : this.cachedSports;
 
-      // 3. Pre-verificación de disponibilidad en Español en segundo plano para las películas más populares
-      // Evaluamos los primeros 8 títulos de Tendencias y Estrenos para marcarlos como 100% listos
+      // Pre-verificación ligera de catálogo (sin resoluciones pesadas de streams en segundo plano)
       let verifiedCount = 0;
-      const topItemsToCheck = [
-        ...(fullCatalog.nowPlaying || []).slice(0, 5),
-        ...(fullCatalog.trending || []).slice(0, 5)
-      ];
-
-      for (const item of topItemsToCheck) {
-        try {
-          const avail = await streamResolverService.checkSpanishAvailability(item);
-          if (avail && avail.available) {
-            item.hasSpanishStream = true;
-            item.streamQuality = avail.qualityLabel || '1080p FHD';
-            verifiedCount++;
-          }
-        } catch (_) {}
-      }
 
       // Calcular conteos globales
       let moviesCount = 0;

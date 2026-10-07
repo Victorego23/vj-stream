@@ -266,8 +266,9 @@ class TorBoxService {
 
       for (const t of list) {
         const state = (t.download_state || '').toLowerCase();
-        // Detectar si está estancado sin semillas, fallido o en 0%
-        const isStalled = state.includes('stalled') ||
+        // Detectar si está estancado sin semillas, en metadatos, fallido o en 0%
+        const isStalled = state.includes('metadl') ||
+                          state.includes('stalled') ||
                           state.includes('failed') ||
                           (state === 'downloading' && (t.seeds === 0 || !t.seeds) && (t.progress === 0 || t.progress < 0.2));
 

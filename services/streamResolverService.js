@@ -302,12 +302,22 @@ class StreamResolverService {
       }
     }
 
-    // 1. FILTRO ANTI-CAM ESTRICTO: Descartar de inmediato grabaciones de cine
+    // 1. FILTRO DE CACHÉ DEBRID ESTRICTO: Descartar torrents no cacheados que requieren descarga
+    if (name.includes('download') || name.includes('descargar')) {
+      return {
+        stream,
+        score: -999999,
+        audioLanguage: 'Descarga Pendiente (No en Caché)',
+        isSpanishAudio: false
+      };
+    }
+
+    // 2. FILTRO ANTI-CAM ESTRICTO: Descartar de inmediato grabaciones de cine
     if (realDebridService.isCamOrLowQuality(fullText)) {
       return { stream, score: -999999, audioLanguage: 'CAM', isSpanishAudio: false };
     }
 
-    // 2. DETECCIÓN DE PROVEEDORES 100% EN ESPAÑOL
+    // 3. DETECCIÓN DE PROVEEDORES 100% EN ESPAÑOL
     const isCinecalidad = fullText.includes('cinecalidad');
     const isMejorTorrent = fullText.includes('mejortorrent');
     const isWolfmax4k = fullText.includes('wolfmax4k');
@@ -604,7 +614,9 @@ class StreamResolverService {
         // 1. Proveedores dedicados de Español Latino (Cinecalidad) y Castellano (MejorTorrent, Wolfmax4k)
         `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k|sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
         // 2. Filtro nativo de Torrentio con pistas de audio en Español y Latino
-        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|language=spanish,latino|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`
+        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|language=spanish,latino|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        // 3. Consulta general debrid (para títulos en audio original subtitulados en español)
+        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`
       ];
 
       const responses = await Promise.allSettled(
@@ -964,182 +976,10 @@ class StreamResolverService {
       }
     }
 
-    // Si ya encontramos Español Latino directamente en la caché instantánea, retornar de inmediato
-    if (bestSpanishStream && bestSpanishStream.audioLanguage.includes('Latino')) {
-      const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
-      const result = {
-        success: true,
-        streamUrl: bestSpanishStream.streamUrl,
-        qualityLabel: bestSpanishStream.qualityLabel,
-        audioLanguage: bestSpanishStream.audioLanguage,
-        isSpanishAudio: true,
-        filename: bestSpanishStream.filename,
-        title: title,
-        provider: bestProviderName,
-        availableStreams: allAvailableStreams,
-        subtitles: subtitles
-      };
-      this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
-      return result;
-    }
-
-    // 3. PASO 2: RESPALDO CON MAGNETS Y SCRAPERS NATIVOS (Especializado en Cinecalidad y fuentes en Español)
-    console.log(`[VJ STREAM Auto-Resolver] 🔄 Consultando respaldo Cinecalidad y scrapers en español para "${title}"...`);
-    let fallbackMagnets = [];
-
-    if (imdbId) {
-      try {
-        const target = mediaType === 'tv' ? `${imdbId}:${season}:${episode}` : imdbId;
-        const endpoint = mediaType === 'tv' ? 'series' : 'movie';
-
-        // Consultar Torrentio con proveedores dedicados de español y también con trackers globales
-        const scrapeUrls = [
-          `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k/stream/${endpoint}/${target}.json`,
-          `https://torrentio.strem.fun/language=spanish,latino/stream/${endpoint}/${target}.json`,
-          `https://torrentio.strem.fun/stream/${endpoint}/${target}.json`,
-          `https://knightcrawler.elfhosted.com/stream/${endpoint}/${target}.json`
-        ];
-
-        const settled = await Promise.allSettled(
-          scrapeUrls.map(u => axios.get(u, { timeout: 4500 }).catch(() => null))
-        );
-
-        for (const res of settled) {
-          const streams = res.value?.data?.streams;
-          if (Array.isArray(streams)) {
-            for (const st of streams) {
-              if (st.infoHash) {
-                const filename = st.behaviorHints?.filename || st.title?.split('\n')[0] || 'VJ-STREAM';
-                if (!realDebridService.isCamOrLowQuality(filename)) {
-                  const matchCheck = this.validateTitleMatch(filename, mediaInfo);
-                  if (matchCheck.isMatch) {
-                    fallbackMagnets.push({
-                      magnet: `magnet:?xt=urn:btih:${st.infoHash}&dn=${encodeURIComponent(filename)}&tr=udp://open.demonii.com:1337/announce`,
-                      name: filename
-                    });
-                  }
-                }
-              }
-            }
-          }
-        }
-      } catch (_) {}
-    }
-
-    // Buscar en YTS / Trackers públicos si es película y aún no hay magnets
-    if (fallbackMagnets.length === 0 && mediaType !== 'tv') {
-      if (title && title !== originalTitle) {
-        const span = await this.searchPublicTrackers(title, year);
-        fallbackMagnets.push(...span);
-      }
-      if (originalTitle) {
-        const orig = await this.searchPublicTrackers(originalTitle, year);
-        fallbackMagnets.push(...orig);
-      }
-    }
-
-    // Filtrar y ordenar magnets: 1° Cinecalidad / Latino, 2° Castellano
-    const spanishMagnets = fallbackMagnets.filter(m => {
-      const mName = (m.name || '').toLowerCase();
-      return /cinecalidad|latino|dual[\s._-]*lat|latam|mexico|mejortorrent|wolfmax4k|castellano|español|\b(lat|cast|esp|spa)\b/i.test(mName);
-    });
-
-    const candidateMagnets = spanishMagnets.length > 0 ? spanishMagnets : fallbackMagnets;
-
-    candidateMagnets.sort((a, b) => {
-      const aName = (a.name || '').toLowerCase();
-      const bName = (b.name || '').toLowerCase();
-      const aLat = /cinecalidad|latino|dual[\s._-]*lat|latam|mexico|\blat\b/i.test(aName);
-      const bLat = /cinecalidad|latino|dual[\s._-]*lat|latam|mexico|\blat\b/i.test(bName);
-      if (aLat && !bLat) return -1;
-      if (!aLat && bLat) return 1;
-
-      const aEsp = /castellano|mejortorrent|wolfmax4k|español|\bcast\b/i.test(aName);
-      const bEsp = /castellano|mejortorrent|wolfmax4k|español|\bcast\b/i.test(bName);
-      if (aEsp && !bEsp) return -1;
-      if (!aEsp && bEsp) return 1;
-
-      return 0;
-    });
-
-    for (const candidate of candidateMagnets.slice(0, 2)) {
-      try {
-        let result = null;
-        if (torboxService.isAvailable()) {
-          try {
-            result = await torboxService.resolveMagnetToStream(candidate.magnet, mediaInfo);
-          } catch (_) {
-            result = null;
-          }
-        }
-        if (!result || !result.streamUrl) {
-          result = await realDebridService.resolveMagnetToStream(candidate.magnet, {
-            files: 'all',
-            unrestrictAll: true
-          });
-        }
-
-        const streamOptions = (result && Array.isArray(result.streams) && result.streams.length > 0)
-          ? result.streams
-          : (result && result.streamUrl ? [result] : []);
-
-        if (streamOptions.length > 0) {
-          for (const streamOption of streamOptions) {
-            if (excludeUrls.includes(streamOption.streamUrl)) continue;
-
-            const titleMatch = this.validateTitleMatch(streamOption.filename, mediaInfo);
-            if (!titleMatch.isMatch) continue;
-
-            const isClean = await this.isStreamPlayable(streamOption.streamUrl);
-            if (!isClean) continue;
-
-            const isLatino = /cinecalidad|latino|dual[\s._-]*lat|latam|mexico|\blat\b/i.test(streamOption.filename);
-            const isCastellano = /mejortorrent|wolfmax4k|castellano|español|\bcast\b/i.test(streamOption.filename);
-            const isSpanish = isLatino || isCastellano;
-
-            // Si estábamos buscando mejorar a Latino y encontramos Latino, o si no teníamos ningún stream en español:
-            if (isLatino || !bestSpanishStream) {
-              const langLabel = isLatino
-                ? 'Español Latino'
-                : (isCastellano ? 'Castellano' : 'Audio Original (Subtitulado al Español)');
-
-              console.log(`[VJ STREAM Auto-Resolver] ✅ Transmisión de respaldo verificada: [${langLabel}] "${streamOption.filename}"`);
-              const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
-              const streamData = {
-                success: true,
-                streamUrl: streamOption.streamUrl,
-                qualityLabel: streamOption.qualityLabel || '1080p Full HD',
-                audioLanguage: langLabel,
-                isSpanishAudio: isSpanish,
-                filename: streamOption.filename,
-                title: title,
-                availableStreams: [
-                  {
-                    id: isLatino ? 'latino' : (isCastellano ? 'castellano' : 'original_sub'),
-                    label: isLatino
-                      ? 'Español Latino (Estéreo 2.0 🎧 🇲🇽)'
-                      : (isCastellano ? 'Castellano (Estéreo 🇪🇸)' : 'Audio Original (Subtítulos en Español 🇲🇽)'),
-                    language: langLabel,
-                    audioChannels: 'Estéreo 2.0',
-                    streamUrl: streamOption.streamUrl,
-                    qualityLabel: streamOption.qualityLabel || '1080p',
-                    filename: streamOption.filename,
-                    isBackup: false
-                  }
-                ],
-                subtitles: subtitles
-              };
-
-              this.cache.set(cacheKey, { timestamp: Date.now(), data: streamData });
-              return streamData;
-            }
-          }
-        }
-      } catch (_) {}
-    }
-
-    // Si teníamos un stream en Castellano verificado en el Paso 1 y el Paso 2 no encontró Latino
+    // 3. SELECCIÓN DE STREAM ÓPTIMO (Ultra-Rápido, 100% Caché Debrid Directo):
+    // Prioridad 1: Audio en Español verificado (Latino o Castellano)
     if (bestSpanishStream) {
+      console.log(`[TOM TV Auto-Resolver] ✅ Seleccionando transmisión en español verificada: [${bestSpanishStream.audioLanguage}] "${bestSpanishStream.filename}"`);
       const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
       const result = {
         success: true,
@@ -1157,9 +997,9 @@ class StreamResolverService {
       return result;
     }
 
-    // Si NO existe doblaje en español en ningún servidor, pero se tiene versión original subtitulada:
+    // Prioridad 2: Si no existe doblaje en español en caché, activar Audio Original con subtítulos en español
     if (fallbackOriginalStream) {
-      console.log(`[VJ STREAM Auto-Resolver] 🌐 Sin doblaje oficial disponible. Activando Audio Original con subtítulos en español para "${title}".`);
+      console.log(`[TOM TV Auto-Resolver] 🌐 Sin doblaje oficial en caché. Activando Audio Original con subtítulos en español para "${title}".`);
       const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
       const result = {
         success: true,
