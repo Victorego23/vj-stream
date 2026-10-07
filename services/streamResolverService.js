@@ -132,10 +132,10 @@ class StreamResolverService {
   extractTvSeasonEpisode(text) {
     if (!text) return { season: null, episode: null };
     const lower = text.toLowerCase();
-    const m1 = lower.match(/\bs(\d{1,2})[.\s_-]*e(\d{1,3})\b/);
+    const m1 = lower.match(/\bs?(\d{1,2})[.\s_-]*[ex](\d{1,3})\b/);
     if (m1) return { season: parseInt(m1[1], 10), episode: parseInt(m1[2], 10) };
-    const m2 = lower.match(/\b(\d{1,2})x(\d{1,3})\b/);
-    if (m2) return { season: parseInt(m2[1], 10), episode: parseInt(m2[2], 10) };
+    const mCap = lower.match(/\bcap(?:itulo)?[.\s_-]*(\d)(\d{2})\b/);
+    if (mCap) return { season: parseInt(mCap[1], 10), episode: parseInt(mCap[2], 10) };
     const m3 = lower.match(/\b(?:ep|episodio|cap|capitulo)[.\s_-]*(\d{1,3})\b/);
     if (m3) return { season: null, episode: parseInt(m3[1], 10) };
     return { season: null, episode: null };
@@ -534,28 +534,39 @@ class StreamResolverService {
    */
   async _resolveDirectCdnUrl(resolveUrl) {
     if (!resolveUrl) return null;
+    let currentUrl = resolveUrl;
     try {
-      const response = await axios.get(resolveUrl, {
-        maxRedirects: 0,
-        validateStatus: status => status >= 200 && status < 400,
-        timeout: 4800
-      });
-      const location = response.headers.location;
-      if (!location) return resolveUrl;
+      for (let hop = 0; hop < 5; hop++) {
+        let location = null;
+        try {
+          const response = await axios.get(currentUrl, {
+            maxRedirects: 0,
+            validateStatus: status => status >= 200 && status < 400,
+            timeout: 4800
+          });
+          location = response.headers?.location;
+        } catch (e) {
+          if (e.response && e.response.headers && e.response.headers.location) {
+            location = e.response.headers.location;
+          } else {
+            break;
+          }
+        }
 
-      if (this.isErrorVideoUrl(location)) {
-        console.warn(`[VJ STREAM Auto-Resolver] 🚫 Redirección detectada a advertencia de error de debrid: ${location}`);
-        return null;
-      }
+        if (!location) {
+          break;
+        }
 
-      return location;
-    } catch (e) {
-      if (e.response && e.response.headers && e.response.headers.location) {
-        const location = e.response.headers.location;
-        if (this.isErrorVideoUrl(location)) return null;
-        return location;
+        if (this.isErrorVideoUrl(location)) {
+          console.warn(`[VJ STREAM Auto-Resolver] 🚫 Redirección detectada a advertencia de error de debrid: ${location}`);
+          return null;
+        }
+
+        currentUrl = location;
       }
-      return null;
+      return currentUrl;
+    } catch (_) {
+      return currentUrl;
     }
   }
 
@@ -1074,7 +1085,7 @@ class StreamResolverService {
         let result = null;
         if (torboxService.isAvailable()) {
           try {
-            result = await torboxService.resolveMagnetToStream(candidate.magnet);
+            result = await torboxService.resolveMagnetToStream(candidate.magnet, mediaInfo);
           } catch (_) {
             result = null;
           }

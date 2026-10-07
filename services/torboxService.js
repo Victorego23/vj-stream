@@ -153,7 +153,7 @@ class TorBoxService {
    * @param {string} magnet
    * @returns {Promise<Object>}
    */
-  async resolveMagnetToStream(magnet) {
+  async resolveMagnetToStream(magnet, mediaInfo = null) {
     const added = await this.addMagnet(magnet);
     const torrentId = added.torrentId;
 
@@ -185,7 +185,29 @@ class TorBoxService {
       return isVideo && !isCam;
     });
 
-    const chosen = videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0))[0] || info.files[0];
+    let chosen = null;
+    if (mediaInfo && mediaInfo.mediaType === 'tv' && mediaInfo.episode) {
+      const targetEp = parseInt(mediaInfo.episode, 10);
+      const targetSeason = parseInt(mediaInfo.season, 10) || 1;
+      // Buscar archivo que coincida con temporada y episodio (ej: S01E01, 1x01, Cap.101)
+      chosen = videoFiles.find(f => {
+        const name = (f.name || f.short_name || '').toLowerCase();
+        const sMatch = name.match(/\bs?0*(\d{1,2})[.\s_-]*[ex]0*(\d{1,3})\b/i);
+        if (sMatch) {
+          return parseInt(sMatch[1], 10) === targetSeason && parseInt(sMatch[2], 10) === targetEp;
+        }
+        const capMatch = name.match(/\bcap(?:itulo)?[.\s_-]*(\d)(\d{2})\b/i);
+        if (capMatch) {
+          return parseInt(capMatch[1], 10) === targetSeason && parseInt(capMatch[2], 10) === targetEp;
+        }
+        return false;
+      });
+    }
+
+    if (!chosen) {
+      chosen = videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0))[0] || info.files[0];
+    }
+
     const streamUrl = await this.requestDownloadLink(torrentId, chosen.id);
 
     return {

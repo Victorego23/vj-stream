@@ -461,7 +461,7 @@ router.post('/resolve-stream', async (req, res, next) => {
  */
 router.post('/auto-resolve', async (req, res, next) => {
   try {
-    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1, bypassCache = false, excludeUrls = [] } = req.body;
+    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1, bypassCache = false, excludeUrls = [], imdbId } = req.body;
 
     if (!title) {
       return res.status(400).json({
@@ -476,6 +476,7 @@ router.post('/auto-resolve', async (req, res, next) => {
       year,
       mediaType,
       id,
+      imdbId,
       season: parseInt(season, 10) || 1,
       episode: parseInt(episode, 10) || 1,
       bypassCache: Boolean(bypassCache),
