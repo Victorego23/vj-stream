@@ -99,6 +99,11 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
           icon: Icons.star_rounded,
         ),
         TvSidebarItemData(
+          id: 'Perfil',
+          label: 'Mi Cuenta',
+          icon: Icons.person_rounded,
+        ),
+        TvSidebarItemData(
           id: 'refresh',
           label: 'Recargar',
           icon: Icons.refresh_rounded,

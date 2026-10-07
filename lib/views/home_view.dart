@@ -1390,6 +1390,13 @@ class _HomeViewState extends State<HomeView> {
         onBackToMovies: () => _returnFocusToTvSidebar('Telenovelas'),
       );
     }
+    if (_activeTab == 'Perfil') {
+      return ProfileView(
+        onOpenFavorites: () => setState(() => _activeTab = 'Mi Lista'),
+        onOpenHistory: _openHistoryDialog,
+        onOpenSearch: _openSearch,
+      );
+    }
 
     return RefreshIndicator(
       color: const Color(0xFFE50914),

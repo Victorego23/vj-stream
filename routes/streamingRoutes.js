@@ -1223,17 +1223,17 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '4.2.5',
-  versionCode: 51,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.5/TOM-TV-release.apk',
+  latestVersion: '4.2.6',
+  versionCode: 52,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.6/TOM-TV-release.apk',
   releaseDate: '2026-10-07'
 };
 
-const RELEASE_CACHE_MS = 10 * 60 * 1000;
+const RELEASE_CACHE_MS = 60 * 1000; // 1 minuto para reflejar nuevos lanzamientos de inmediato
 
-async function getPublishedRelease() {
+async function getPublishedRelease(forceRefresh = false) {
   const now = Date.now();
-  if (_publishedReleaseCache.data && now - _publishedReleaseCache.fetchedAt < RELEASE_CACHE_MS) {
+  if (!forceRefresh && _publishedReleaseCache.data && now - _publishedReleaseCache.fetchedAt < RELEASE_CACHE_MS) {
     return _publishedReleaseCache.data;
   }
   try {
@@ -1267,7 +1267,8 @@ async function getPublishedRelease() {
  * @desc    Devuelve los metadatos de la última versión DESCARGABLE y notas de la versión para OTA
  */
 router.get('/version', async (req, res) => {
-  const published = (await getPublishedRelease()) || CURRENT_OFFICIAL_RELEASE;
+  const force = req.query.force === 'true' || req.query.refresh === 'true' || req.query.r === '1';
+  const published = (await getPublishedRelease(force)) || CURRENT_OFFICIAL_RELEASE;
 
   return res.json({
     success: true,
