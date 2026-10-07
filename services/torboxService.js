@@ -22,8 +22,8 @@ class TorBoxService {
    */
   getApiKey() {
     const key = (process.env.TORBOX_API_KEY || '').trim();
-    if (!key || key === '4a49eb84-49f8-4acf-b93b-b6754c53093d') {
-      return 'dc49cb4d-f89d-403e-8826-c490edff6fa7';
+    if (!key || key === '4a49eb84-49f8-4acf-b93b-b6754c53093d' || key === 'dc49cb4d-f89d-403e-8826-c490edff6fa7') {
+      return '11a9b153-866d-444a-b4a3-c4edd5ca1d11';
     }
     return key;
   }
