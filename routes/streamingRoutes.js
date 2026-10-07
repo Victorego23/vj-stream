@@ -1070,6 +1070,12 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
     return res.status(400).send('Bucle de proxy detectado.');
   }
 
+  // 1. Si la URL pertenece al CDN de TorBox, redirigir directamente (HTTP 302)
+  // ya que TorBox admite streaming multi-IP sin restricciones y no requiere relay por Render.
+  if (targetUrl.includes('torbox.app') || targetUrl.includes('torbox')) {
+    return res.redirect(302, targetUrl);
+  }
+
   try {
     const upstreamHeaders = {
       'user-agent': req.headers['user-agent'] || 'TOM-TV-Player/3.0'
@@ -1104,13 +1110,19 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
       }
     });
 
-    upstream.data.pipe(res);
-
-    req.on('close', () => {
+    // Control estricto de backpressure y desconexión inmediata de socket para liberar RAM
+    const cleanUp = () => {
       if (upstream.data && typeof upstream.data.destroy === 'function') {
         upstream.data.destroy();
       }
-    });
+    };
+
+    req.on('close', cleanUp);
+    res.on('close', cleanUp);
+    res.on('finish', cleanUp);
+    upstream.data.on('error', cleanUp);
+
+    upstream.data.pipe(res);
   } catch (err) {
     console.warn('[Stream Proxy] Error transmitiendo fragmento:', err.message);
     if (!res.headersSent) {

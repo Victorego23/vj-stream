@@ -18,6 +18,19 @@ class StreamResolverService {
     // Caché en memoria: key -> { timestamp, data } (6 horas para máxima velocidad y 0% de uso de CPU en reproducciones repetidas)
     this.cache = new Map();
     this.CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 horas
+    this.MAX_CACHE_ENTRIES = 120;
+  }
+
+  /**
+   * Guarda en caché en memoria aplicando desalojo LRU para proteger los 512 MB de Render.
+   * @private
+   */
+  _setCache(key, value) {
+    if (this.cache.size >= this.MAX_CACHE_ENTRIES) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+    }
+    this.cache.set(key, { timestamp: Date.now(), data: value });
   }
 
   /**
@@ -518,28 +531,37 @@ class StreamResolverService {
       if (e.response && (e.response.status === 403 || e.response.status === 451 || e.response.status === 404)) {
         return false;
       }
-      // Si el servidor CDN no admite HEAD (405 Method Not Allowed), probar con un GET de rango mínimo (1 KB)
+      // Si el servidor CDN no admite HEAD (405 Method Not Allowed), probar con un GET stream de rango mínimo (1 KB)
+      // destruyendo el stream inmediatamente tras verificar cabeceras para CERO consumo de RAM en Render.
       if (e.response && e.response.status === 405) {
         try {
           const rangeRes = await axios.get(url, {
             headers: { 'Range': 'bytes=0-1024' },
+            responseType: 'stream',
             timeout: 3500,
             validateStatus: status => status === 200 || status === 206
           });
           const ct = (rangeRes.headers['content-type'] || '').toLowerCase();
-          return !ct.includes('text/html');
+          const isHtml = ct.includes('text/html');
+          if (rangeRes.data && typeof rangeRes.data.destroy === 'function') {
+            rangeRes.data.destroy();
+          }
+          return !isHtml;
         } catch (_) {
           return false;
         }
       }
-      // Si falla por timeout pero apunta a un CDN genuino de Real-Debrid (.cloud o .com) y no es video de error
-      return (url.toLowerCase().includes('real-debrid') && !this.isErrorVideoUrl(url));
+      // Si falla por timeout pero apunta a un CDN genuino de Real-Debrid (.cloud o .com) o Torbox y no es video de error
+      return ((url.toLowerCase().includes('real-debrid') || url.toLowerCase().includes('torbox')) && !this.isErrorVideoUrl(url));
     }
   }
 
   /**
-   * Resuelve el enlace directo al CDN de Real-Debrid siguiendo la redirección HTTP 302
-   * y descarta enlaces que redirijan a videos de advertencia por copyright.
+   * Resuelve el enlace directo al CDN de TorBox o Real-Debrid siguiendo redirecciones HTTP 302
+   * con CERO consumo de memoria en Render:
+   * 1. Utiliza peticiones HEAD para no descargar un solo byte de archivo multimedia.
+   * 2. Si un CDN requiere GET (405), utiliza 'responseType: stream' y destruye el socket de inmediato.
+   * 3. Descarta de inmediato pantallas de error de derechos de autor.
    * @private
    */
   async _resolveDirectCdnUrl(resolveUrl) {
@@ -549,26 +571,48 @@ class StreamResolverService {
       for (let hop = 0; hop < 5; hop++) {
         let location = null;
         try {
-          const response = await axios.get(currentUrl, {
+          // Petición HEAD: Obtiene cabeceras y redirección sin descargar ningún byte del video
+          const response = await axios.head(currentUrl, {
             maxRedirects: 0,
             validateStatus: status => status >= 200 && status < 400,
-            timeout: 4800
+            timeout: 3800
           });
           location = response.headers?.location;
         } catch (e) {
-          if (e.response && e.response.headers && e.response.headers.location) {
+          if (e.response?.headers?.location) {
             location = e.response.headers.location;
+          } else if (e.response && (e.response.status === 405 || e.response.status === 403)) {
+            // Si el servidor CDN no acepta HEAD (405/403), usar GET con stream destruido de inmediato
+            try {
+              const streamCheck = await axios.get(currentUrl, {
+                responseType: 'stream',
+                maxRedirects: 0,
+                validateStatus: status => status >= 200 && status < 400,
+                timeout: 3800
+              });
+              location = streamCheck.headers?.location;
+              if (streamCheck.data && typeof streamCheck.data.destroy === 'function') {
+                streamCheck.data.destroy();
+              }
+            } catch (streamErr) {
+              if (streamErr.response?.headers?.location) {
+                location = streamErr.response.headers.location;
+              } else {
+                break;
+              }
+            }
           } else {
             break;
           }
         }
 
+        // Si no hay redirección adicional (HTTP 200), currentUrl es el enlace directo reproducible
         if (!location) {
           break;
         }
 
         if (this.isErrorVideoUrl(location)) {
-          console.warn(`[VJ STREAM Auto-Resolver] 🚫 Redirección detectada a advertencia de error de debrid: ${location}`);
+          console.warn(`[VJ STREAM Auto-Resolver] 🚫 Redirección descartada por video de advertencia: ${location}`);
           return null;
         }
 
@@ -629,7 +673,13 @@ class StreamResolverService {
           for (const s of r.value.data.streams) {
             const key = s.url || s.behaviorHints?.filename || s.title;
             if (key && !streamMap.has(key)) {
-              streamMap.set(key, s);
+              // Extraer ÚNICAMENTE los campos indispensables para no retener metadatos pesados en RAM
+              streamMap.set(key, {
+                url: s.url,
+                title: s.title || '',
+                name: s.name || '',
+                behaviorHints: s.behaviorHints ? { filename: s.behaviorHints.filename } : undefined
+              });
             }
           }
         }
@@ -637,21 +687,37 @@ class StreamResolverService {
 
       if (streamMap.size === 0) return { latino: [], castellano: [], original: [] };
 
-      const scored = Array.from(streamMap.values())
-        .map(s => this.scoreStream(s, mediaInfo))
-        .filter(x => x.score > 0);
+      // Evaluar y podar streams inmediatamente
+      const scored = [];
+      for (const s of streamMap.values()) {
+        const item = this.scoreStream(s, mediaInfo);
+        if (item.score > 0) {
+          // Guardar solo lo indispensable en item.stream
+          item.stream = {
+            url: s.url,
+            title: s.title,
+            filename: item.filename
+          };
+          scored.push(item);
+        }
+      }
+      streamMap.clear(); // Liberar memoria del Map de inmediato
 
+      // Limitar a máximo top 2 por categoría para no saturar memoria en Render 512 MB
       const latino = scored
         .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Latino') || x.audioLanguage.includes('Dual')))
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 2);
 
       const castellano = scored
         .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Castellano') || x.audioLanguage.includes('Español')))
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 2);
 
       const original = scored
         .filter(x => !x.isSpanishAudio)
-        .sort((a, b) => b.score - a.score);
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 2);
 
       console.log(`[TOM TV Multi-Scraper] 🎯 [${provider.toUpperCase()}] Fuentes válidas para ${mediaInfo?.title || imdbId} (${imdbId}): ${latino.length} Latino, ${castellano.length} Castellano, ${original.length} Original`);
       return { latino, castellano, original };
@@ -662,7 +728,9 @@ class StreamResolverService {
   }
 
   /**
-   * Evalúa y verifica la reproducibilidad de candidatos cacheados para un proveedor.
+   * Evalúa y verifica la reproducibilidad de candidatos cacheados con CORTE RÁPIDO (Early-Exit):
+   * En cuanto encuentra la primera fuente válida con audio prioritario (Latino), detiene de inmediato
+   * la evaluación del resto sin hacer peticiones ni gastar CPU/RAM adicional.
    * @private
    */
   async _evaluateCandidateStreams(instant, excludeUrls, providerName = 'Real-Debrid', allowOriginal = false) {
@@ -690,53 +758,51 @@ class StreamResolverService {
     const availableStreams = [];
     let primaryStream = null;
 
-    // 1. Probar y resolver el mejor Latino (máximo top 2 para respuesta instantánea sin sobrecargar CPU)
-    for (const cand of (instant.latino || []).slice(0, 2)) {
+    // 1. Probar y resolver Latino (secuencial con CORTE RÁPIDO / Early-Exit al primer acierto)
+    for (const cand of (instant.latino || [])) {
       const verified = await verifyCandidate(cand);
       if (verified) {
-        if (!primaryStream) {
-          primaryStream = verified;
-          availableStreams.push({
-            id: 'latino',
-            label: `Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
-            language: 'Español Latino Estéreo',
-            audioChannels: verified.audioChannels || 'Estéreo 2.0',
-            streamUrl: verified.streamUrl,
-            qualityLabel: verified.qualityLabel,
-            filename: verified.filename,
-            provider: providerName,
-            isBackup: false
-          });
-          break; // Primer latino verificado es el óptimo
-        }
+        primaryStream = verified;
+        availableStreams.push({
+          id: 'latino',
+          label: `Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
+          language: 'Español Latino Estéreo',
+          audioChannels: verified.audioChannels || 'Estéreo 2.0',
+          streamUrl: verified.streamUrl,
+          qualityLabel: verified.qualityLabel,
+          filename: verified.filename,
+          provider: providerName,
+          isBackup: false
+        });
+        // CORTE RÁPIDO: Tenemos Latino verificado, detener evaluación de inmediato
+        return { primaryStream, availableStreams };
       }
     }
 
-    // 2. Probar y resolver el mejor Castellano (máximo top 2)
-    if (!primaryStream) {
-      for (const cand of (instant.castellano || []).slice(0, 2)) {
-        const verified = await verifyCandidate(cand);
-        if (verified) {
-          primaryStream = verified;
-          availableStreams.push({
-            id: 'castellano',
-            label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
-            language: 'Castellano Estéreo',
-            audioChannels: verified.audioChannels || 'Estéreo 2.0',
-            streamUrl: verified.streamUrl,
-            qualityLabel: verified.qualityLabel,
-            filename: verified.filename,
-            provider: providerName,
-            isBackup: false
-          });
-          break;
-        }
+    // 2. Probar y resolver Castellano (solo si no hubo Latino, con corte rápido)
+    for (const cand of (instant.castellano || [])) {
+      const verified = await verifyCandidate(cand);
+      if (verified) {
+        primaryStream = verified;
+        availableStreams.push({
+          id: 'castellano',
+          label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
+          language: 'Castellano Estéreo',
+          audioChannels: verified.audioChannels || 'Estéreo 2.0',
+          streamUrl: verified.streamUrl,
+          qualityLabel: verified.qualityLabel,
+          filename: verified.filename,
+          provider: providerName,
+          isBackup: false
+        });
+        // CORTE RÁPIDO: Castellano verificado, detener evaluación
+        return { primaryStream, availableStreams };
       }
     }
 
-    // 3. Probar y resolver versión en Audio Original con Subtítulos en Español ÚNICAMENTE si allowOriginal es true y no se halló doblaje
-    if (allowOriginal && !primaryStream && (instant.original || []).length > 0) {
-      for (const cand of instant.original.slice(0, 8)) {
+    // 3. Probar versión en Audio Original ÚNICAMENTE si allowOriginal es true y no hubo doblaje
+    if (allowOriginal && (instant.original || []).length > 0) {
+      for (const cand of instant.original.slice(0, 2)) {
         const verified = await verifyCandidate(cand);
         if (verified) {
           primaryStream = {
@@ -756,7 +822,8 @@ class StreamResolverService {
             provider: providerName,
             isBackup: false
           });
-          break;
+          // CORTE RÁPIDO
+          return { primaryStream, availableStreams };
         }
       }
     }
@@ -964,8 +1031,9 @@ class StreamResolverService {
           }
         }
 
-        // Si este proveedor tiene fuentes originales, guardar la mejor como último recurso por si el título no tiene doblaje
-        if (!fallbackOriginalStream && (instant.original || []).length > 0) {
+        // Si no hay ninguna fuente en español encontrada hasta el momento y este proveedor tiene originales,
+        // guardar como último recurso únicamente si no existe doblaje
+        if (!bestSpanishStream && !fallbackOriginalStream && (instant.original || []).length > 0) {
           const evalOrig = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, true);
           if (evalOrig.primaryStream) {
             fallbackOriginalStream = evalOrig.primaryStream;
@@ -993,7 +1061,7 @@ class StreamResolverService {
         availableStreams: allAvailableStreams,
         subtitles: subtitles
       };
-      this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
+      this._setCache(cacheKey, result);
       return result;
     }
 
@@ -1014,7 +1082,7 @@ class StreamResolverService {
         availableStreams: fallbackOriginalAvailable,
         subtitles: subtitles
       };
-      this.cache.set(cacheKey, { timestamp: Date.now(), data: result });
+      this._setCache(cacheKey, result);
       return result;
     }
 
