@@ -4,7 +4,7 @@
   "description": "Servidor backend de streaming VJ STREAM con Real-Debrid y TMDB en español",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node --max-old-space-size=384 --optimize-for-size server.js",
     "dev": "node --watch server.js",
     "sync-iptv": "node scripts/syncIptv.js"
   },

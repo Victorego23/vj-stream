@@ -265,25 +265,26 @@ class MovieIngestionService {
   }
 
   /**
-   * Programa la ingesta automática diaria
+   * Programa la sincronización periódica ligera respetando el límite de memoria
    */
   startScheduledSync() {
-    // Si la base de datos tiene menos de 200 títulos, ejecutar ingesta inicial
+    // Inicializar conexión a base de datos sin disparar bucle masivo pesado en el arranque
     setTimeout(async () => {
       try {
         await movieDatabaseService.init();
-        const stats = await movieDatabaseService.getStats();
-        if (stats.connected && stats.total < 300) {
-          console.log(`[MovieIngestionService] 📦 Base de datos con catálogo reducido (${stats.total} títulos). Iniciando ingesta masiva inicial...`);
-          this.runMassiveIngestion(20).catch(console.error);
-        }
+        console.log('[MovieIngestionService] ✅ MovieDatabaseService listo.');
       } catch (_) {}
-    }, 10000);
+    }, 5000);
 
-    // Ciclo recurrente cada 24 horas para agregar estrenos diarios
+    // Ciclo recurrente cada 24 horas para agregar estrenos diarios (en micro-lotes de 2 páginas)
     setInterval(() => {
-      console.log('[MovieIngestionService] ⏰ Iniciando ciclo diario de ingesta y actualización de estrenos...');
-      this.runMassiveIngestion(15).catch(console.error);
+      const mem = process.memoryUsage();
+      if (mem.rss < 280 * 1024 * 1024) {
+        console.log('[MovieIngestionService] ⏰ Sincronizando estrenos diarios ligeros...');
+        this.runMassiveIngestion(2).catch(console.error);
+      } else {
+        console.log('[MovieIngestionService] ⏸️ Memoria ocupada (>280MB), posponiendo sincronización periódica.');
+      }
     }, 24 * 60 * 60 * 1000);
   }
 }

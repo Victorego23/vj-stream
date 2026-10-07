@@ -129,6 +129,13 @@ const serveApkDirect = (req, res) => {
   const publicApkPath = path.resolve(__dirname, 'public', 'TOM-TV.apk');
   const targetPath = fs.existsSync(tomReleasePath) ? tomReleasePath : (fs.existsSync(publicApkPath) ? publicApkPath : null);
 
+  // Protección de memoria RAM para el contenedor de 512MB de Render
+  const mem = process.memoryUsage();
+  if (mem.rss > 350 * 1024 * 1024) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    return res.redirect(302, currentApkDownloadUrl);
+  }
+
   if (targetPath) {
     const stat = fs.statSync(targetPath);
     res.setHeader('Content-Type', 'application/vnd.android.package-archive');
