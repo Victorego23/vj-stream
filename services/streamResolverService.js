@@ -15,9 +15,9 @@ const tmdbService = require('./tmdbService');
 class StreamResolverService {
   constructor() {
     this.timeout = 7000;
-    // Caché en memoria: key -> { timestamp, data } (45 min para evitar tokens Real-Debrid vencidos)
+    // Caché en memoria: key -> { timestamp, data } (6 horas para máxima velocidad y 0% de uso de CPU en reproducciones repetidas)
     this.cache = new Map();
-    this.CACHE_TTL_MS = 45 * 60 * 1000; // 45 minutos
+    this.CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 horas
   }
 
   /**
@@ -599,24 +599,16 @@ class StreamResolverService {
       const target = mediaType === 'tv' ? `${imdbId}:${season}:${episode}` : imdbId;
       const endpoint = mediaType === 'tv' ? 'series' : 'movie';
 
-      // Multi-Scraper Concurrente Turbo:
-      // Consulta en paralelo Torrentio + Knightcrawler + Comet + MediaFusion
-      // Eliminando caídas individuales y acelerando el tiempo de respuesta a < 2 segundos
+      // Scraper Optimizado de Alto Rendimiento (Ultra-ligero para evitar picos de CPU en Render):
       const scraperEndpoints = [
-        // 1. Prioridad #1: Proveedores dedicados de Español Latino (Cinecalidad) y Castellano (MejorTorrent, Wolfmax4k)
+        // 1. Proveedores dedicados de Español Latino (Cinecalidad) y Castellano (MejorTorrent, Wolfmax4k)
         `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k|sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
-        // 2. Prioridad #2: Filtro nativo de Torrentio forzando pistas de audio en Español y Latino
-        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|language=spanish,latino|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
-        // 3. Consulta global con TODOS los proveedores (incluyendo Cinecalidad, MejorTorrent, Wolfmax4k y trackers globales)
-        `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k,yts,eztv,rarbg,1337x,thepiratebay,kickasstorrents,torrentgalaxy,magnetdl,horriblesubs,nyaasi,tokyotosho,anidex,rutor,rutracker,comando,bludv,micoleaodublado,torrent9,ilcorsaronero,besttorrents|sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
-        // 4. Scrapers de respaldo complementarios
-        `https://knightcrawler.elfhosted.com/sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://comet.elfhosted.com/${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
-        `https://mediafusion.elfhosted.com/${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`
+        // 2. Filtro nativo de Torrentio con pistas de audio en Español y Latino
+        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|language=spanish,latino|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`
       ];
 
       const responses = await Promise.allSettled(
-        scraperEndpoints.map(u => axios.get(u, { timeout: 4800 }).catch(() => null))
+        scraperEndpoints.map(u => axios.get(u, { timeout: 3500 }).catch(() => null))
       );
 
       const streamMap = new Map();
@@ -686,8 +678,8 @@ class StreamResolverService {
     const availableStreams = [];
     let primaryStream = null;
 
-    // 1. Probar y resolver el mejor Latino (y un servidor de respaldo)
-    for (const cand of (instant.latino || []).slice(0, 10)) {
+    // 1. Probar y resolver el mejor Latino (máximo top 2 para respuesta instantánea sin sobrecargar CPU)
+    for (const cand of (instant.latino || []).slice(0, 2)) {
       const verified = await verifyCandidate(cand);
       if (verified) {
         if (!primaryStream) {
@@ -703,40 +695,30 @@ class StreamResolverService {
             provider: providerName,
             isBackup: false
           });
-        } else if (availableStreams.filter(s => s.id.startsWith('latino')).length < 2) {
+          break; // Primer latino verificado es el óptimo
+        }
+      }
+    }
+
+    // 2. Probar y resolver el mejor Castellano (máximo top 2)
+    if (!primaryStream) {
+      for (const cand of (instant.castellano || []).slice(0, 2)) {
+        const verified = await verifyCandidate(cand);
+        if (verified) {
+          primaryStream = verified;
           availableStreams.push({
-            id: 'latino_backup',
-            label: `Español Latino - Servidor 2 (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
-            language: 'Español Latino (Servidor 2)',
+            id: 'castellano',
+            label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
+            language: 'Castellano Estéreo',
             audioChannels: verified.audioChannels || 'Estéreo 2.0',
             streamUrl: verified.streamUrl,
             qualityLabel: verified.qualityLabel,
             filename: verified.filename,
             provider: providerName,
-            isBackup: true
+            isBackup: false
           });
           break;
         }
-      }
-    }
-
-    // 2. Probar y resolver el mejor Castellano
-    for (const cand of (instant.castellano || []).slice(0, 10)) {
-      const verified = await verifyCandidate(cand);
-      if (verified) {
-        if (!primaryStream) primaryStream = verified;
-        availableStreams.push({
-          id: 'castellano',
-          label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
-          language: 'Castellano Estéreo',
-          audioChannels: verified.audioChannels || 'Estéreo 2.0',
-          streamUrl: verified.streamUrl,
-          qualityLabel: verified.qualityLabel,
-          filename: verified.filename,
-          provider: providerName,
-          isBackup: false
-        });
-        break;
       }
     }
 
@@ -1080,7 +1062,7 @@ class StreamResolverService {
       return 0;
     });
 
-    for (const candidate of candidateMagnets.slice(0, 8)) {
+    for (const candidate of candidateMagnets.slice(0, 2)) {
       try {
         let result = null;
         if (torboxService.isAvailable()) {
