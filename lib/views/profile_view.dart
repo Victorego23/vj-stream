@@ -151,6 +151,9 @@ class ProfileView extends StatefulWidget {
 class _ProfileViewState extends State<ProfileView> {
   String _userId = '';
   String _username = 'Visitante';
+  String _clientCode = '';
+  String _expiresAt = '';
+  bool _isAccountActivated = false;
   String _linkedEmail = '';
   String _linkedPhone = '';
   bool _isAdultEnabled = false;
@@ -165,27 +168,46 @@ class _ProfileViewState extends State<ProfileView> {
   Future<void> _loadProfileData() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // Generar o cargar ID de 9 dígitos
-    var id = prefs.getString('tom_tv_user_id');
-    if (id == null || id.isEmpty) {
+    // Comprobar si hay una cuenta vinculada o sesión activa en la base de datos
+    final hasValidSession = await AuthService.hasValidSavedSession();
+    final clientName = prefs.getString('vj_stream_client_name');
+    final clientCode = prefs.getString('vj_stream_client_code');
+    final clientId = prefs.getString('vj_stream_client_id');
+    final expiresAt = prefs.getString('vj_stream_expires_at') ?? '';
+
+    // ID de respaldo solo para modo visitante
+    var guestId = prefs.getString('tom_tv_user_id');
+    if (guestId == null || guestId.isEmpty) {
       final random = Random();
       final num = 900000000 + random.nextInt(99999999);
-      id = num.toString();
-      await prefs.setString('tom_tv_user_id', id);
+      guestId = num.toString();
+      await prefs.setString('tom_tv_user_id', guestId);
     }
 
-    final user = prefs.getString('tom_tv_username') ?? 'Visitante';
+    final isActivated = hasValidSession &&
+        ((clientName != null && clientName.isNotEmpty) || (clientCode != null && clientCode.isNotEmpty));
+
     final email = prefs.getString('tom_tv_email') ?? '';
     final phone = prefs.getString('tom_tv_phone') ?? '';
     final adult = prefs.getBool('tom_tv_adult_switch') ?? false;
 
     if (mounted) {
       setState(() {
-        _userId = id!;
-        _username = user;
+        _isAccountActivated = isActivated;
+        if (isActivated) {
+          // Sustituir la etiqueta 'Visitante' por el nombre real del usuario registrado en base de datos
+          _username = (clientName != null && clientName.isNotEmpty) ? clientName : 'Usuario TOM TV';
+          // Sustituir el ID genérico por su respectivo identificador único o ID de cuenta registrado en la base de datos
+          _userId = (clientCode != null && clientCode.isNotEmpty) ? clientCode : (clientId ?? guestId);
+        } else {
+          _username = 'Visitante';
+          _userId = guestId;
+        }
+        _clientCode = clientCode ?? '';
+        _expiresAt = expiresAt;
         _linkedEmail = email;
         _linkedPhone = phone;
-        _hasCredentialsLinked = email.isNotEmpty;
+        _hasCredentialsLinked = email.isNotEmpty || isActivated;
         _isAdultEnabled = adult && _hasCredentialsLinked;
       });
     }
@@ -362,64 +384,113 @@ class _ProfileViewState extends State<ProfileView> {
 
   void _showRedeemCodeModal() {
     final codeCtrl = TextEditingController();
+    bool isLoading = false;
     showDialog(
       context: context,
-      builder: (dlgContext) => AlertDialog(
-        backgroundColor: TomTokens.surfaceCard,
-        shape: RoundedRectangleBorder(borderRadius: TomTokens.borderLg),
-        title: const Row(
-          children: [
-            Icon(Icons.card_giftcard_rounded, color: TomTokens.primaryAccent),
-            SizedBox(width: 10),
-            Text('Centro de Canjear', style: TextStyle(color: Colors.white, fontSize: 18)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Ingresa tu código promocional o cupón de suscripción VIP:',
-              style: TextStyle(color: TomTokens.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: codeCtrl,
-              textCapitalization: TextCapitalization.characters,
-              style: const TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                hintText: 'EJ: TOMTV-VIP-2026',
-                hintStyle: const TextStyle(color: Colors.white30, letterSpacing: 0),
-                filled: true,
-                fillColor: TomTokens.backgroundMain,
-                border: OutlineInputBorder(borderRadius: TomTokens.borderMd, borderSide: BorderSide.none),
+      builder: (dlgContext) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          backgroundColor: TomTokens.surfaceCard,
+          shape: RoundedRectangleBorder(borderRadius: TomTokens.borderLg),
+          title: const Row(
+            children: [
+              Icon(Icons.vpn_key_rounded, color: TomTokens.primaryAccent),
+              SizedBox(width: 10),
+              Text('Activar Cuenta', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Ingresa tu código de activación único (ej: VJ-3166) registrado en la base de datos para vincular tu perfil:',
+                style: TextStyle(color: TomTokens.textSecondary, fontSize: 13),
               ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: codeCtrl,
+                textCapitalization: TextCapitalization.characters,
+                style: const TextStyle(color: Colors.white, letterSpacing: 2, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintText: 'EJ: VJ-3166',
+                  hintStyle: const TextStyle(color: Colors.white30, letterSpacing: 0),
+                  filled: true,
+                  fillColor: TomTokens.backgroundMain,
+                  border: OutlineInputBorder(borderRadius: TomTokens.borderMd, borderSide: BorderSide.none),
+                ),
+              ),
+              if (isLoading) ...[
+                const SizedBox(height: 14),
+                const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: TomTokens.primaryAccent),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isLoading ? null : () => Navigator.pop(dlgContext),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TomTokens.primaryAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: TomTokens.borderSm),
+              ),
+              onPressed: isLoading ? null : () async {
+                final code = codeCtrl.text.trim().toUpperCase();
+                if (code.isEmpty) return;
+
+                setDlgState(() => isLoading = true);
+                final res = await AuthService.activateWithManualCode(code);
+                setDlgState(() => isLoading = false);
+
+                if (!dlgContext.mounted) return;
+                Navigator.pop(dlgContext);
+
+                if (res.isActive) {
+                  await _loadProfileData();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: const Color(0xFF1B5E20),
+                        behavior: SnackBarBehavior.floating,
+                        content: Row(
+                          children: [
+                            const Icon(Icons.verified_rounded, color: Colors.white),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '¡Cuenta activada para ${res.clientName ?? "Usuario"}! Perfil actualizado.',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                } else {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: TomTokens.accentRed,
+                        behavior: SnackBarBehavior.floating,
+                        content: Text(res.message ?? 'Código inválido o aún no activado por el administrador.'),
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Vincular y Activar', style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dlgContext),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.white54)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TomTokens.primaryAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: TomTokens.borderSm),
-            ),
-            onPressed: () {
-              Navigator.pop(dlgContext);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  backgroundColor: TomTokens.primaryAccent,
-                  content: Text('Código validado. ¡Disfruta de TOM TV VIP!'),
-                ),
-              );
-            },
-            child: const Text('Canjear Ahora'),
-          ),
-        ],
       ),
     );
   }
@@ -430,7 +501,13 @@ class _ProfileViewState extends State<ProfileView> {
       builder: (dlgContext) => AlertDialog(
         backgroundColor: TomTokens.surfaceCard,
         shape: RoundedRectangleBorder(borderRadius: TomTokens.borderLg),
-        title: const Text('Mi Pedido / Suscripción', style: TextStyle(color: Colors.white)),
+        title: const Row(
+          children: [
+            Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 24),
+            SizedBox(width: 10),
+            Text('Mi Suscripción y Cuenta', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -442,21 +519,65 @@ class _ProfileViewState extends State<ProfileView> {
                 borderRadius: TomTokens.borderMd,
                 border: Border.all(color: Colors.white12),
               ),
-              child: const Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.workspace_premium_rounded, color: Colors.amber, size: 32),
-                  SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
                     children: [
-                      Text('Plan TOM TV VIP Ilimitado', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                      SizedBox(height: 4),
-                      Text('Estado: Activo de por vida', style: TextStyle(color: TomTokens.accentGreen, fontSize: 12)),
+                      const Icon(Icons.badge_rounded, color: TomTokens.primaryAccent, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _isAccountActivated ? _username : 'Modo Demo',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Identificador Único en BD: $_userId',
+                    style: const TextStyle(color: TomTokens.textSecondary, fontSize: 13),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    _isAccountActivated
+                        ? (_expiresAt.isNotEmpty ? 'Vigencia: ${_expiresAt.split("T").first}' : 'Estado: Membresía Activa en Base de Datos')
+                        : 'Estado: Versión Demo antes de activación',
+                    style: TextStyle(
+                      color: _isAccountActivated ? TomTokens.accentGreen : Colors.amber,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
             ),
+            if (_isAccountActivated) ...[
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFFF5252),
+                    side: const BorderSide(color: Color(0xFFFF5252)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  icon: const Icon(Icons.logout_rounded, size: 18),
+                  label: const Text('Cerrar Sesión / Desvincular'),
+                  onPressed: () async {
+                    Navigator.pop(dlgContext);
+                    await AuthService.logout();
+                    await _loadProfileData();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Cuenta desvinculada. Perfil en modo visitante.')),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
           ],
         ),
         actions: [
@@ -616,67 +737,123 @@ class _ProfileViewState extends State<ProfileView> {
                         Row(
                           children: [
                             Container(
-                              width: 66,
-                              height: 66,
+                              width: 68,
+                              height: 68,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: const LinearGradient(
-                                  colors: [TomTokens.primaryAccent, TomTokens.primaryAccentGlow],
+                                gradient: LinearGradient(
+                                  colors: _isAccountActivated
+                                      ? const [Color(0xFFE50914), Color(0xFFFF5252)]
+                                      : const [Color(0xFF2C3247), Color(0xFF1B1E2B)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: TomTokens.primaryAccent.withValues(alpha: 0.35),
+                                    color: (_isAccountActivated ? const Color(0xFFE50914) : Colors.black)
+                                        .withValues(alpha: 0.35),
                                     blurRadius: 16,
                                     offset: const Offset(0, 4),
                                   ),
                                 ],
+                                border: Border.all(
+                                  color: _isAccountActivated ? Colors.white70 : Colors.white24,
+                                  width: 2,
+                                ),
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: Icon(
-                                  Icons.person_rounded,
+                                  _isAccountActivated ? Icons.verified_user_rounded : Icons.person_rounded,
                                   color: Colors.white,
-                                  size: 38,
+                                  size: 36,
                                 ),
                               ),
                             ),
                             const SizedBox(width: 16),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _username,
-                                  style: const TextStyle(
-                                    color: TomTokens.textPrimary,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'ID: $_userId',
-                                      style: const TextStyle(
-                                        color: TomTokens.textSecondary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          _username,
+                                          style: const TextStyle(
+                                            color: TomTokens.textPrimary,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
+                                      if (_isAccountActivated) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF2E7D32).withValues(alpha: 0.25),
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: const Color(0xFF4CAF50), width: 1),
+                                          ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(Icons.check_circle_rounded, color: Color(0xFF4CAF50), size: 12),
+                                              SizedBox(width: 3),
+                                              Text(
+                                                'ACTIVO',
+                                                style: TextStyle(
+                                                  color: Color(0xFF4CAF50),
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _isAccountActivated ? 'ID Cuenta: $_userId' : 'ID Demo: $_userId',
+                                        style: TextStyle(
+                                          color: _isAccountActivated ? Colors.white70 : TomTokens.textSecondary,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      GestureDetector(
+                                        onTap: () {
+                                          Clipboard.setData(ClipboardData(text: _userId));
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('ID copiado al portapapeles')),
+                                          );
+                                        },
+                                        child: const Icon(Icons.copy_rounded, color: TomTokens.textSecondary, size: 14),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _isAccountActivated
+                                        ? (_expiresAt.isNotEmpty ? 'Vigencia: ${_expiresAt.split("T").first}' : 'Membresía vinculada en base de datos')
+                                        : 'Versión Demo antes de la activación',
+                                    style: TextStyle(
+                                      color: _isAccountActivated ? const Color(0xFF81C784) : Colors.amber.withValues(alpha: 0.8),
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    const SizedBox(width: 8),
-                                    GestureDetector(
-                                      onTap: () {
-                                        Clipboard.setData(ClipboardData(text: _userId));
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('ID copiado al portapapeles')),
-                                        );
-                                      },
-                                      child: const Icon(Icons.copy_rounded, color: TomTokens.textSecondary, size: 14),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -688,66 +865,137 @@ class _ProfileViewState extends State<ProfileView> {
             ),
           ),
 
-          // 6.2 Banner de Captación (Lead Magnet)
+          // 6.2 Tarjeta de Activación / Membresía
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: TomTokens.surfaceCard,
-                  borderRadius: TomTokens.borderLg,
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 1.2),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              child: _isAccountActivated
+                  ? Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF13231B), Color(0xFF0F1A15)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: TomTokens.borderLg,
+                        border: Border.all(color: const Color(0xFF2E7D32).withValues(alpha: 0.5), width: 1.2),
+                      ),
+                      child: Row(
                         children: [
-                          const Text(
-                            'Regístrate en tu cuenta',
-                            style: TextStyle(
-                              color: TomTokens.textPrimary,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(
+                              color: Color(0x264CAF50),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.verified_rounded, color: Color(0xFF4CAF50), size: 24),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Cuenta Vinculada: $_username',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Text(
+                                  'ID: $_userId • ${_expiresAt.isNotEmpty ? "Vence: ${_expiresAt.split("T").first}" : "Activo"}',
+                                  style: const TextStyle(
+                                    color: Colors.white60,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Vía correo electrónico o número de teléfono para obtener 7 días de prueba gratuita.',
-                            style: TextStyle(
-                              color: TomTokens.textSecondary,
-                              fontSize: 12,
-                              height: 1.35,
+                          const SizedBox(width: 10),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white24),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
+                            onPressed: _showOrdersModal,
+                            child: const Text('Detalles', style: TextStyle(fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1E2235), Color(0xFF141724)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: TomTokens.borderLg,
+                        border: Border.all(color: const Color(0xFFE50914).withValues(alpha: 0.4), width: 1.2),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Row(
+                                  children: [
+                                    Icon(Icons.lock_open_rounded, color: Color(0xFFE50914), size: 18),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Vincular y Activar Cuenta',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                const Text(
+                                  'Ingresa tu código único de activación para sustituir la etiqueta Visitante por tu nombre e ID oficial.',
+                                  style: TextStyle(
+                                    color: TomTokens.textSecondary,
+                                    fontSize: 12,
+                                    height: 1.35,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE50914),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: TomTokens.borderMd,
+                              ),
+                            ),
+                            icon: const Icon(Icons.key_rounded, size: 16),
+                            label: const Text(
+                              'Activar',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onPressed: _showRedeemCodeModal,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: TomTokens.primaryAccent,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: TomTokens.borderMd,
-                        ),
-                      ),
-                      onPressed: _showAccountManagementModal,
-                      child: const Text(
-                        'Prueba gratuita',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ),
 
@@ -838,19 +1086,19 @@ class _ProfileViewState extends State<ProfileView> {
                   children: [
                     _buildSettingsItem(
                       icon: Icons.manage_accounts_outlined,
-                      title: 'Gestión',
+                      title: 'Gestión de Credenciales',
                       onTap: _showAccountManagementModal,
                     ),
                     const Divider(height: 1, color: Colors.white12, indent: 52),
                     _buildSettingsItem(
                       icon: Icons.receipt_long_outlined,
-                      title: 'Mi pedido',
+                      title: 'Mi Suscripción y Cuenta',
                       onTap: _showOrdersModal,
                     ),
                     const Divider(height: 1, color: Colors.white12, indent: 52),
                     _buildSettingsItem(
-                      icon: Icons.redeem_outlined,
-                      title: 'Centro de canjear',
+                      icon: Icons.vpn_key_outlined,
+                      title: _isAccountActivated ? 'Vincular otro código / Renovar' : 'Activar Código de Cuenta',
                       onTap: _showRedeemCodeModal,
                     ),
                     const Divider(height: 1, color: Colors.white12, indent: 52),

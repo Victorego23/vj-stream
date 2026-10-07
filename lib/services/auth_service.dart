@@ -36,6 +36,8 @@ class AuthService {
   static const String _prefSessionTokenKey = 'vj_stream_session_token';
   static const String _prefClientCodeKey = 'vj_stream_client_code';
   static const String _prefClientNameKey = 'vj_stream_client_name';
+  static const String _prefClientIdKey = 'vj_stream_client_id';
+  static const String _prefClientUsernameKey = 'vj_stream_client_username';
   static const String _prefExpiresAtKey = 'vj_stream_expires_at';
 
   static String? _cachedDeviceId;
@@ -88,6 +90,12 @@ class AuthService {
             if (client != null) {
               await prefs.setString(_prefClientNameKey, client['name'] ?? '');
               await prefs.setString(_prefExpiresAtKey, client['expiresAt'] ?? '');
+              if (client['id'] != null && client['id'].toString().isNotEmpty) {
+                await prefs.setString(_prefClientIdKey, client['id'].toString());
+              }
+              if (client['username'] != null && client['username'].toString().isNotEmpty) {
+                await prefs.setString(_prefClientUsernameKey, client['username'].toString());
+              }
               if (client['code'] != null && client['code'].toString().isNotEmpty) {
                 await prefs.setString(_prefClientCodeKey, client['code'].toString());
               }
@@ -142,6 +150,12 @@ class AuthService {
             if (client != null) {
               await prefs.setString(_prefClientNameKey, client['name'] ?? '');
               await prefs.setString(_prefExpiresAtKey, client['expiresAt'] ?? '');
+              if (client['id'] != null && client['id'].toString().isNotEmpty) {
+                await prefs.setString(_prefClientIdKey, client['id'].toString());
+              }
+              if (client['username'] != null && client['username'].toString().isNotEmpty) {
+                await prefs.setString(_prefClientUsernameKey, client['username'].toString());
+              }
               if (client['code'] != null && client['code'].toString().isNotEmpty) {
                 await prefs.setString(_prefClientCodeKey, client['code'].toString());
               }
@@ -245,6 +259,16 @@ class AuthService {
     return prefs.getString(_prefClientCodeKey);
   }
 
+  static Future<String?> getClientId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefClientIdKey);
+  }
+
+  static Future<String?> getClientUsername() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefClientUsernameKey);
+  }
+
   static Future<String?> getExpiresAt() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_prefExpiresAtKey);
@@ -255,6 +279,8 @@ class AuthService {
     await prefs.remove(_prefSessionTokenKey);
     await prefs.remove(_prefClientCodeKey);
     await prefs.remove(_prefClientNameKey);
+    await prefs.remove(_prefClientIdKey);
+    await prefs.remove(_prefClientUsernameKey);
     await prefs.remove(_prefExpiresAtKey);
   }
 }

@@ -52,6 +52,7 @@ class _HomeViewState extends State<HomeView> {
   // Pestañas de categoría rápida
   String _activeTab = 'Todos'; // 'Todos', 'Fútbol & Deportes', 'Niños', 'Telenovelas', 'Películas', 'Series', 'TV en Vivo', 'Próximamente', 'Mi Lista'
   List<WatchHistoryItem> _continueWatching = [];
+  bool _isEditingContinueWatching = false;
   List<MediaItem> _favorites = [];
 
   // Categorías especializadas para Niños y Telenovelas
@@ -1754,15 +1755,6 @@ class _HomeViewState extends State<HomeView> {
                 ),
               ),
 
-            // 3.4 Banner Publicitario Nativo intercalado
-            SliverToBoxAdapter(
-              child: TomNativeAdBanner(
-                title: 'TOM TV VIP Ilimitado',
-                subtitle: 'Acceso total a más de 10,000 películas y series en 4K UHD sin interrupciones.',
-                ctaText: 'ENTRAR AHORA',
-                onTap: () => setState(() => _activeTab = 'Perfil'),
-              ),
-            ),
 
             // Fila: Continuar Viendo
             SliverToBoxAdapter(
@@ -2227,11 +2219,11 @@ class _HomeViewState extends State<HomeView> {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: isTv ? 48.0 : 20.0, vertical: 8.0),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.history_rounded, color: Color(0xFFE50914), size: 20),
-                SizedBox(width: 8),
-                Text(
+                const Icon(Icons.history_rounded, color: Color(0xFFE50914), size: 20),
+                const SizedBox(width: 8),
+                const Text(
                   'Continuar Viendo',
                   style: TextStyle(
                     color: Colors.white,
@@ -2240,6 +2232,80 @@ class _HomeViewState extends State<HomeView> {
                     letterSpacing: 0.3,
                   ),
                 ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${filtered.length}',
+                    style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const Spacer(),
+                if (_isEditingContinueWatching) ...[
+                  // Botón eliminación masiva
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFFE50914),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      backgroundColor: const Color(0xFFE50914).withValues(alpha: 0.15),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    icon: const Icon(Icons.delete_sweep_rounded, size: 17),
+                    label: const Text(
+                      'Borrar Todo',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    onPressed: () => _confirmClearAllContinueWatching(context),
+                  ),
+                  const SizedBox(width: 8),
+                  // Botón finalizar edición
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      backgroundColor: Colors.white12,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
+                    icon: const Icon(Icons.check_rounded, size: 16),
+                    label: const Text(
+                      'Listo',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                    onPressed: () => setState(() => _isEditingContinueWatching = false),
+                  ),
+                ] else ...[
+                  InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: () => setState(() => _isEditingContinueWatching = true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.edit_note_rounded, color: Colors.white70, size: 17),
+                          SizedBox(width: 4),
+                          Text(
+                            'Editar',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -2256,14 +2322,55 @@ class _HomeViewState extends State<HomeView> {
                 final item = filtered[index];
                 final cardWidth = isTv ? 240.0 : 210.0;
 
-                return _TvContinueWatchingCard(
-                  item: item,
-                  width: cardWidth,
-                  onTap: () => _resumePlayback(item),
-                  onRemove: () async {
+                return Dismissible(
+                  key: ValueKey('continue_${item.id}_${item.season}_${item.episode}'),
+                  direction: DismissDirection.vertical,
+                  confirmDismiss: (direction) async {
+                    return await _confirmDeleteSingleContinueWatching(context, item);
+                  },
+                  onDismissed: (_) async {
                     await PlaybackHistoryService.removeFromHistory(item.id);
                     _loadHistoryAndFavorites();
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('"${item.title}" eliminado de Continuar Viendo'),
+                          backgroundColor: const Color(0xFF222222),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
                   },
+                  background: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE50914).withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.delete_forever_rounded, color: Colors.white, size: 34),
+                  ),
+                  child: _TvContinueWatchingCard(
+                    item: item,
+                    width: cardWidth,
+                    isEditing: _isEditingContinueWatching,
+                    onTap: () => _resumePlayback(item),
+                    onRemove: () async {
+                      final confirm = await _confirmDeleteSingleContinueWatching(context, item);
+                      if (confirm == true) {
+                        await PlaybackHistoryService.removeFromHistory(item.id);
+                        _loadHistoryAndFavorites();
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('"${item.title}" eliminado de Continuar Viendo'),
+                              backgroundColor: const Color(0xFF222222),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
                 );
               },
             ),
@@ -2271,6 +2378,96 @@ class _HomeViewState extends State<HomeView> {
         ],
       ),
     );
+  }
+
+  Future<bool> _confirmDeleteSingleContinueWatching(BuildContext context, WatchHistoryItem item) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.remove_circle_outline_rounded, color: Color(0xFFE50914), size: 22),
+            SizedBox(width: 8),
+            Text('Quitar título', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Text(
+          '¿Deseas quitar "${item.title}" de tu lista Continuar Viendo?',
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE50914),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Quitar', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _confirmClearAllContinueWatching(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.delete_sweep_rounded, color: Color(0xFFE50914), size: 24),
+            SizedBox(width: 10),
+            Text('¿Borrar todo el historial?', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Se eliminarán todos los títulos de tu lista "Continuar Viendo". Esta acción no se puede deshacer.',
+          style: TextStyle(color: Colors.white70, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE50914),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar Todo', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await PlaybackHistoryService.clearHistory();
+      if (mounted) {
+        setState(() {
+          _isEditingContinueWatching = false;
+        });
+        _loadHistoryAndFavorites();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Se eliminaron todos los títulos de Continuar Viendo.'),
+            backgroundColor: Color(0xFFE50914),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildMyListTab(bool isTv) {
@@ -3037,12 +3234,14 @@ class _TvTabChipState extends State<_TvTabChip> {
 class _TvContinueWatchingCard extends StatefulWidget {
   final WatchHistoryItem item;
   final double width;
+  final bool isEditing;
   final VoidCallback onTap;
   final VoidCallback onRemove;
 
   const _TvContinueWatchingCard({
     required this.item,
     required this.width,
+    this.isEditing = false,
     required this.onTap,
     required this.onRemove,
   });
@@ -3101,7 +3300,11 @@ class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
           if (event.logicalKey == LogicalKeyboardKey.select ||
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.space) {
-            widget.onTap();
+            if (widget.isEditing) {
+              widget.onRemove();
+            } else {
+              widget.onTap();
+            }
             return KeyEventResult.handled;
           }
           if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
@@ -3124,7 +3327,11 @@ class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
       child: GestureDetector(
         onTap: () {
           _focusNode.requestFocus();
-          widget.onTap();
+          if (widget.isEditing) {
+            widget.onRemove();
+          } else {
+            widget.onTap();
+          }
         },
         child: AnimatedScale(
           scale: _isFocused ? 1.06 : 1.0,
@@ -3136,8 +3343,10 @@ class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
               color: const Color(0xFF141414),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: _isFocused ? const Color(0xFFE50914) : const Color(0xFF262626),
-                width: _isFocused ? 3 : 1,
+                color: _isFocused
+                    ? const Color(0xFFE50914)
+                    : (widget.isEditing ? const Color(0x99E50914) : const Color(0xFF262626)),
+                width: _isFocused ? 3 : (widget.isEditing ? 1.8 : 1),
               ),
               boxShadow: _isFocused
                   ? [
@@ -3147,7 +3356,14 @@ class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
                         spreadRadius: 2,
                       )
                     ]
-                  : null,
+                  : (widget.isEditing
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFE50914).withValues(alpha: 0.25),
+                            blurRadius: 8,
+                          )
+                        ]
+                      : null),
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(
@@ -3188,27 +3404,38 @@ class _TvContinueWatchingCardState extends State<_TvContinueWatchingCard> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: _isFocused
+                            color: widget.isEditing
                                 ? const Color(0xFFE50914)
-                                : Colors.black.withValues(alpha: 0.65),
+                                : (_isFocused ? const Color(0xFFE50914) : Colors.black.withValues(alpha: 0.65)),
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white),
                           ),
-                          child: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 24),
+                          child: Icon(
+                            widget.isEditing ? Icons.delete_outline_rounded : Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
                         ),
                       ),
                       Positioned(
-                        top: 4,
-                        right: 4,
+                        top: 6,
+                        right: 6,
                         child: GestureDetector(
                           onTap: widget.onRemove,
                           child: Container(
-                            padding: const EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(5),
                             decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.7),
+                              color: widget.isEditing
+                                  ? const Color(0xFFE50914)
+                                  : Colors.black.withValues(alpha: 0.75),
                               shape: BoxShape.circle,
+                              border: widget.isEditing ? Border.all(color: Colors.white, width: 1.5) : null,
                             ),
-                            child: const Icon(Icons.close_rounded, color: Colors.white70, size: 14),
+                            child: Icon(
+                              widget.isEditing ? Icons.delete_rounded : Icons.close_rounded,
+                              color: Colors.white,
+                              size: 14,
+                            ),
                           ),
                         ),
                       ),

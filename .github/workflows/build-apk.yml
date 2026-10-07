@@ -76,12 +76,13 @@ jobs:
           body: |
             ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
+            - 🎞️ **Corrección de Decodificación de Video**: Detección y filtrado de flujos Dolby Vision Profile 5 incompatibles con hardware móvil/TV para eliminar distorsión de color púrpura/verde y artefactos visuales (ej. serie "El Chapo"). Priorización de H.264/SDR universal.
+            - 📋 **Gestión de "Continuar Viendo"**: Nueva función de control para eliminar títulos individualmente (botón de edición y gesto deslizar/swipe) o limpieza masiva de historial con confirmación OLED.
+            - 🎯 **Interfaz Demo Limpia**: Remoción de banners publicitarios y promocionales de la pantalla de inicio para una experiencia sin distracciones.
+            - 👤 **Identificación Real de Cuenta en Perfil**: Reemplazo de 'Visitante' y código aleatorio por el nombre de usuario y código de cliente real sincronizado con la base de datos de activación.
             - 🎙️ **Prioridad Absoluta Español Latino (🇲🇽) y Cinecalidad**: Reproducción automática garantizada en audio Latino / Mexicano en Full HD por defecto.
-            - 📡 **444 Canales de TV en Vivo 100% Operativos**: Auditoría exhaustiva y eliminación permanente de enlaces caídos (Cero Bajas).
-            - 🛡️ **Auto-Failover Inteligente 24/7**: Conmutación automática a fuentes de respaldo si una señal primaria falla.
-            - 📺 **Modo Smart TV Cinemático (10-Foot UI)**: Interfaz fluida estilo Apple TV/Netflix, halo neón de enfoque, reloj en vivo y detección en TV Box.
-            - 🎮 **Controles Remotos D-Pad Completos**: Salto de 10s con animación OSD, cambio rápido de canales con flechas Arriba/Abajo y previsualización dinámica.
-            - ⚡ **Sincronización Total con el Servidor TOM TV**: Anuncios en pantalla en vivo, activación inmediata y catálogo optimizado.
+            - 📡 **444 Canales de TV en Vivo 100% Operativos**: Auditoría exhaustiva y auto-failover inteligente con cero enlaces caídos.
+            - 📺 **Modo Smart TV Cinemático (10-Foot UI)**: Interfaz fluida estilo Apple TV/Netflix, halo neón de enfoque, reloj en vivo y controles remotos D-Pad.
           files: |
             TOM-TV-release.apk
         env:

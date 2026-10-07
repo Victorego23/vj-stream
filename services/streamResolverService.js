@@ -458,8 +458,12 @@ class StreamResolverService {
       }
     }
 
-    // 7. DETECCIÓN Y PRIORIZACIÓN DE CÓDECS DE VIDEO (Prevención de estática/líneas horizontales y franjas verdes)
-    // A) Detección de HEVC / x265 / 10-bit / HDR / AV1 (Causante de pantalla con estática o líneas en contenidos como El Chapo)
+    // 7. DETECCIÓN Y PRIORIZACIÓN DE CÓDECS DE VIDEO (Prevención de estática/líneas horizontales, franjas verdes y distorsión de color)
+    // A) Detección de Dolby Vision, HEVC / x265 / 10-bit / HDR / AV1 (Causante de pantalla verde/magenta y estática en contenidos como El Chapo)
+    const isDolbyVision = /\b(dovi|dv|dolby\s*vision|dvh1|dvhe)\b/i.test(fullText);
+    const hasHdrFallback = /\b(hdr10\+|hdr10)\b/i.test(fullText);
+    const isPureDolbyVision = isDolbyVision && !hasHdrFallback; // Perfil 5 (IPT sin capa HDR10/SDR, causante de distorsión morado/verde)
+
     const isHevc = /\b(hevc|h265|h\.265|x265|265)\b/i.test(fullText);
     const is10Bit = /\b(10bit|10-bit|10\s*bit|hi10p)\b/i.test(fullText);
     const isHdr = /\b(hdr|hdr10|hdr10\+|dovi|dv|dolby\s*vision)\b/i.test(fullText);
@@ -471,31 +475,44 @@ class StreamResolverService {
     // C) Detección de H.264 / AVC (8 bits, perfiles Main/High estándar garantizados para aceleración universal)
     const isExplicitH264 = /\b(h264|h\.264|x264|264|avc|avc1)\b/i.test(fullText);
     const isStandardWebContainer = /\b(mp4|web-dl|webrip|bluray|bdrip|hdtv)\b/i.test(fullText);
-    const isH264 = (isExplicitH264 || (!isHevc && !isAv1 && isStandardWebContainer)) && !isLegacySD;
+    const isH264 = (isExplicitH264 || (!isHevc && !isAv1 && isStandardWebContainer)) && !isLegacySD && !isDolbyVision;
     const is8Bit = !is10Bit;
 
     let videoCodecLabel = 'H.264 (AVC)';
-    if (isAv1) videoCodecLabel = 'AV1';
+    if (isPureDolbyVision) videoCodecLabel = 'Dolby Vision P5 (No compatible SDR)';
+    else if (isDolbyVision) videoCodecLabel = 'Dolby Vision / HDR';
+    else if (isAv1) videoCodecLabel = 'AV1';
     else if (isHevc && is10Bit) videoCodecLabel = 'HEVC 10-bit';
     else if (isHevc) videoCodecLabel = 'HEVC (H.265)';
     else if (isLegacySD) videoCodecLabel = 'MPEG-4 (SD)';
 
-    // REGLA 1: Máxima prioridad para H.264 / AVC (8 bits estándar) para aceleración universal por hardware
+    // REGLA 1: Máxima prioridad para H.264 / AVC (8 bits estándar SDR) para aceleración universal y colores 100% correctos
     if (isH264 && is8Bit) {
-      score += 1200; // Garantiza que una variante H.264 supere a una HEVC del mismo idioma
+      score += 1600; // Garantiza que una variante H.264 supere a cualquier variante HEVC o Dolby Vision del mismo contenido
     }
 
-    // REGLA 2: Mantener HEVC/x265 o AV1 estrictamente como fallback secundario (no se descartan, pero ceden el primer lugar)
+    // REGLA 2: Penalización estricta para Dolby Vision Perfil 5 (sin capa base HDR10/SDR)
+    // El Perfil 5 utiliza el espacio de color IPT; al reproducirse en decodificadores estándar genera distorsión magenta/verde
+    if (isPureDolbyVision) {
+      score -= 6500; // Descalifica el Perfil 5 para evitar que gane sobre cualquier versión compatible
+    } else if (isDolbyVision) {
+      score -= 2500; // Incluso versiones híbridas ceden prioridad ante H.264/SDR limpio
+    }
+
+    // REGLA 3: Mantener HEVC/x265 o AV1 estrictamente como fallback secundario
     if (isHevc || isAv1) {
       score -= 800;
     }
 
-    // Penalización adicional para perfiles 10-bit o HDR que causan líneas horizontales/estática en decodificadores estándar
-    if (is10Bit || isHdr) {
-      score -= 700;
+    // Penalización adicional para perfiles 10-bit o HDR que causan artefactos o colores lavados en pantallas y decodificadores estándar
+    if (is10Bit) {
+      score -= 1200;
+    }
+    if (isHdr) {
+      score -= 800;
     }
 
-    // REGLA 3: Penalizar formatos legados SD (XviD / DivX / AVI) con riesgo de resoluciones no pares y franja verde inferior
+    // REGLA 4: Penalizar formatos legados SD (XviD / DivX / AVI) con riesgo de resoluciones no pares y franja verde inferior
     if (isLegacySD) {
       score -= 900;
     }
@@ -513,6 +530,8 @@ class StreamResolverService {
       qualityLabel,
       videoCodec: videoCodecLabel,
       isH264: Boolean(isH264 && is8Bit),
+      isDolbyVision: Boolean(isDolbyVision),
+      isPureDolbyVision: Boolean(isPureDolbyVision),
       filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
     };
   }

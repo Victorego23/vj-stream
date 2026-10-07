@@ -163,9 +163,20 @@ class RealDebridService {
       score -= 50; // Despriorizar remux gigantescos (>40GB con TrueHD incompatible)
     }
 
-    if (/\b(hdr|hdr10|hdr10\+|dv|dolby\s*vision)\b/i.test(name)) {
+    const isDolbyVision = /\b(dv|dovi|dolby\s*vision)\b/i.test(name);
+    const hasHdr10 = /\b(hdr10\+|hdr10)\b/i.test(name);
+    const isStandardHdr = /\b(hdr|hdr10|hdr10\+)\b/i.test(name);
+
+    if (isDolbyVision && !hasHdr10) {
+      // Perfil 5 genera pantalla verde/magenta en Smart TV y móviles sin motor Dolby Vision dedicado
       isHdr = true;
-      score += 10;
+      score -= 70;
+    } else if (isDolbyVision) {
+      isHdr = true;
+      score -= 25;
+    } else if (isStandardHdr) {
+      isHdr = true;
+      score += 5;
     }
 
     // Compatibilidad nativa de códecs de audio en Smart TV (ExoPlayer)
