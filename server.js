@@ -122,19 +122,20 @@ const updateLatestApkUrl = () => {
 setInterval(updateLatestApkUrl, 60 * 60 * 1000);
 updateLatestApkUrl();
 
-// Controlador unificado para servir el APK directamente sin redirecciones intermedias
+// Controlador unificado para servir el APK directamente con 200 OK sin redirecciones intermedias
 const serveApkDirect = (req, res) => {
-  if (req.query.source === 'local') {
-    const fs = require('fs');
-    const tomReleasePath = path.resolve(__dirname, 'TOM-TV-release.apk');
-    if (fs.existsSync(tomReleasePath)) {
-      const stat = fs.statSync(tomReleasePath);
-      res.setHeader('Content-Type', 'application/vnd.android.package-archive');
-      res.setHeader('Content-Length', stat.size);
-      res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      return res.sendFile(tomReleasePath);
-    }
+  const fs = require('fs');
+  const tomReleasePath = path.resolve(__dirname, 'TOM-TV-release.apk');
+  const publicApkPath = path.resolve(__dirname, 'public', 'TOM-TV.apk');
+  const targetPath = fs.existsSync(tomReleasePath) ? tomReleasePath : (fs.existsSync(publicApkPath) ? publicApkPath : null);
+
+  if (targetPath) {
+    const stat = fs.statSync(targetPath);
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.sendFile(targetPath);
   }
 
   // Redirigir directamente al binario de release sin pasar por el resolve intermedio de /latest/
@@ -144,7 +145,7 @@ const serveApkDirect = (req, res) => {
 };
 
 // Endpoints universales directos de descarga de APK (200 OK directo para Downloader TV y Navegadores)
-app.get(['/download-apk', '/api/download-apk', '/apk', '/tv'], serveApkDirect);
+app.get(['/download-apk', '/api/download-apk', '/apk', '/tv', '/TOM-TV.apk', '/tom-tv.apk', '/tomtv.apk'], serveApkDirect);
 
 // Endpoints universales de lista M3U para Smart TV / IBO Player / IPTV Smarters
 app.get('/playlist.m3u', (req, res) => {
