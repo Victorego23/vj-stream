@@ -13,6 +13,7 @@ const CAM_REGEX = /\b(cam|camrip|ts|telesync|hdcam|hd-cam|pdvd|scr|screener|dvds
 class TorBoxService {
   constructor() {
     this.baseURL = 'https://api.torbox.app/v1/api';
+    this._authError = false;
   }
 
   /**
@@ -29,10 +30,12 @@ class TorBoxService {
 
   /**
    * Indica si TorBox está configurado y listo para ser utilizado como Base 1.
+   * Si la suscripción de TorBox venció o la clave devuelve 403, se desactiva
+   * automáticamente para transferir todo el tráfico a Real-Debrid Base 2.
    * @returns {boolean}
    */
   isAvailable() {
-    return Boolean(this.getApiKey());
+    return Boolean(this.getApiKey()) && !this._authError;
   }
 
   /**
@@ -320,6 +323,11 @@ class TorBoxService {
       }
       return deletedCount;
     } catch (err) {
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        this._authError = true;
+        console.warn(`[TorBox Auto-Clean] ⚠️ La clave de TorBox devolvió código ${err.response.status} (Suscripción inactiva o clave no autorizada). Pausando TorBox y conmutando automáticamente todo el streaming a Real-Debrid.`);
+        return 0;
+      }
       console.warn('[TorBox Auto-Clean] Error en ciclo de limpieza:', err.message);
       return 0;
     }
