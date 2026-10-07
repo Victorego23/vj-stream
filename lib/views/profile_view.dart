@@ -176,16 +176,29 @@ class _ProfileViewState extends State<ProfileView> {
     final expiresAt = prefs.getString('vj_stream_expires_at') ?? '';
 
     // ID de respaldo solo para modo visitante
-    var guestId = prefs.getString('tom_tv_user_id');
-    if (guestId == null || guestId.isEmpty) {
+    String effectiveGuestId = prefs.getString('tom_tv_user_id') ?? '';
+    if (effectiveGuestId.isEmpty) {
       final random = Random();
       final num = 900000000 + random.nextInt(99999999);
-      guestId = num.toString();
-      await prefs.setString('tom_tv_user_id', guestId);
+      effectiveGuestId = num.toString();
+      await prefs.setString('tom_tv_user_id', effectiveGuestId);
     }
 
     final isActivated = hasValidSession &&
         ((clientName != null && clientName.isNotEmpty) || (clientCode != null && clientCode.isNotEmpty));
+
+    final String resolvedUserId;
+    if (isActivated) {
+      if (clientCode != null && clientCode.isNotEmpty) {
+        resolvedUserId = clientCode;
+      } else if (clientId != null && clientId.isNotEmpty) {
+        resolvedUserId = clientId;
+      } else {
+        resolvedUserId = effectiveGuestId;
+      }
+    } else {
+      resolvedUserId = effectiveGuestId;
+    }
 
     final email = prefs.getString('tom_tv_email') ?? '';
     final phone = prefs.getString('tom_tv_phone') ?? '';
@@ -197,12 +210,10 @@ class _ProfileViewState extends State<ProfileView> {
         if (isActivated) {
           // Sustituir la etiqueta 'Visitante' por el nombre real del usuario registrado en base de datos
           _username = (clientName != null && clientName.isNotEmpty) ? clientName : 'Usuario TOM TV';
-          // Sustituir el ID genérico por su respectivo identificador único o ID de cuenta registrado en la base de datos
-          _userId = (clientCode != null && clientCode.isNotEmpty) ? clientCode : (clientId ?? guestId);
         } else {
           _username = 'Visitante';
-          _userId = guestId;
         }
+        _userId = resolvedUserId;
         _clientCode = clientCode ?? '';
         _expiresAt = expiresAt;
         _linkedEmail = email;
