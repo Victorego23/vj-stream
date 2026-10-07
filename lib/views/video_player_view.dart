@@ -2188,9 +2188,12 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     Widget videoWidget;
     if (_videoFit == BoxFit.contain) {
       videoWidget = Center(
-        child: AspectRatio(
-          aspectRatio: videoAspect,
-          child: VideoPlayer(_controller!),
+        child: ClipRect(
+          clipBehavior: Clip.hardEdge,
+          child: AspectRatio(
+            aspectRatio: videoAspect,
+            child: VideoPlayer(_controller!),
+          ),
         ),
       );
     } else if (_videoFit == BoxFit.cover) {

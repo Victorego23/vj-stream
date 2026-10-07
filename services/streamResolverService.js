@@ -458,6 +458,48 @@ class StreamResolverService {
       }
     }
 
+    // 7. DETECCIÓN Y PRIORIZACIÓN DE CÓDECS DE VIDEO (Prevención de estática/líneas horizontales y franjas verdes)
+    // A) Detección de HEVC / x265 / 10-bit / HDR / AV1 (Causante de pantalla con estática o líneas en contenidos como El Chapo)
+    const isHevc = /\b(hevc|h265|h\.265|x265|265)\b/i.test(fullText);
+    const is10Bit = /\b(10bit|10-bit|10\s*bit|hi10p)\b/i.test(fullText);
+    const isHdr = /\b(hdr|hdr10|hdr10\+|dovi|dv|dolby\s*vision)\b/i.test(fullText);
+    const isAv1 = /\b(av1|av01)\b/i.test(fullText);
+
+    // B) Detección de formatos legados propensos a desalineación de dimensiones y franjas verdes en SD (XviD / DivX / AVI)
+    const isLegacySD = /\b(xvid|divx|dvdrip|avi|tvrip|vcd)\b/i.test(fullText) || filename.endsWith('.avi');
+
+    // C) Detección de H.264 / AVC (8 bits, perfiles Main/High estándar garantizados para aceleración universal)
+    const isExplicitH264 = /\b(h264|h\.264|x264|264|avc|avc1)\b/i.test(fullText);
+    const isStandardWebContainer = /\b(mp4|web-dl|webrip|bluray|bdrip|hdtv)\b/i.test(fullText);
+    const isH264 = (isExplicitH264 || (!isHevc && !isAv1 && isStandardWebContainer)) && !isLegacySD;
+    const is8Bit = !is10Bit;
+
+    let videoCodecLabel = 'H.264 (AVC)';
+    if (isAv1) videoCodecLabel = 'AV1';
+    else if (isHevc && is10Bit) videoCodecLabel = 'HEVC 10-bit';
+    else if (isHevc) videoCodecLabel = 'HEVC (H.265)';
+    else if (isLegacySD) videoCodecLabel = 'MPEG-4 (SD)';
+
+    // REGLA 1: Máxima prioridad para H.264 / AVC (8 bits estándar) para aceleración universal por hardware
+    if (isH264 && is8Bit) {
+      score += 1200; // Garantiza que una variante H.264 supere a una HEVC del mismo idioma
+    }
+
+    // REGLA 2: Mantener HEVC/x265 o AV1 estrictamente como fallback secundario (no se descartan, pero ceden el primer lugar)
+    if (isHevc || isAv1) {
+      score -= 800;
+    }
+
+    // Penalización adicional para perfiles 10-bit o HDR que causan líneas horizontales/estática en decodificadores estándar
+    if (is10Bit || isHdr) {
+      score -= 700;
+    }
+
+    // REGLA 3: Penalizar formatos legados SD (XviD / DivX / AVI) con riesgo de resoluciones no pares y franja verde inferior
+    if (isLegacySD) {
+      score -= 900;
+    }
+
     let qualityLabel = '1080p FHD';
     if (/4k|2160p|uhd/i.test(fullText)) qualityLabel = '4K UHD';
     else if (/720p/i.test(fullText)) qualityLabel = '720p HD';
@@ -469,6 +511,8 @@ class StreamResolverService {
       isSpanishAudio,
       audioChannels,
       qualityLabel,
+      videoCodec: videoCodecLabel,
+      isH264: Boolean(isH264 && is8Bit),
       filename: stream.behaviorHints?.filename || stream.title?.split('\n')[0] || 'VJ-STREAM'
     };
   }
@@ -750,6 +794,8 @@ class StreamResolverService {
         audioLanguage: candidate.audioLanguage,
         isSpanishAudio: candidate.isSpanishAudio,
         audioChannels: candidate.audioChannels || 'Estéreo 2.0',
+        videoCodec: candidate.videoCodec || 'H.264 (AVC)',
+        isH264: candidate.isH264 !== false,
         filename: candidate.filename,
         provider: providerName
       };
@@ -770,6 +816,7 @@ class StreamResolverService {
           audioChannels: verified.audioChannels || 'Estéreo 2.0',
           streamUrl: verified.streamUrl,
           qualityLabel: verified.qualityLabel,
+          videoCodec: verified.videoCodec,
           filename: verified.filename,
           provider: providerName,
           isBackup: false
@@ -791,6 +838,7 @@ class StreamResolverService {
           audioChannels: verified.audioChannels || 'Estéreo 2.0',
           streamUrl: verified.streamUrl,
           qualityLabel: verified.qualityLabel,
+          videoCodec: verified.videoCodec,
           filename: verified.filename,
           provider: providerName,
           isBackup: false
@@ -818,6 +866,7 @@ class StreamResolverService {
             audioChannels: verified.audioChannels || 'Estéreo 2.0',
             streamUrl: verified.streamUrl,
             qualityLabel: verified.qualityLabel,
+            videoCodec: verified.videoCodec,
             filename: verified.filename,
             provider: providerName,
             isBackup: false
@@ -1047,13 +1096,14 @@ class StreamResolverService {
     // 3. SELECCIÓN DE STREAM ÓPTIMO (Ultra-Rápido, 100% Caché Debrid Directo):
     // Prioridad 1: Audio en Español verificado (Latino o Castellano)
     if (bestSpanishStream) {
-      console.log(`[TOM TV Auto-Resolver] ✅ Seleccionando transmisión en español verificada: [${bestSpanishStream.audioLanguage}] "${bestSpanishStream.filename}"`);
+      console.log(`[TOM TV Auto-Resolver] ✅ Seleccionando transmisión en español verificada: [${bestSpanishStream.audioLanguage}] [${bestSpanishStream.videoCodec || 'H.264'}] "${bestSpanishStream.filename}"`);
       const subtitles = await this.fetchSubtitles(imdbId, mediaType, season, episode);
       const result = {
         success: true,
         streamUrl: bestSpanishStream.streamUrl,
         qualityLabel: bestSpanishStream.qualityLabel,
         audioLanguage: bestSpanishStream.audioLanguage,
+        videoCodec: bestSpanishStream.videoCodec || 'H.264 (AVC)',
         isSpanishAudio: true,
         filename: bestSpanishStream.filename,
         title: title,
@@ -1074,6 +1124,7 @@ class StreamResolverService {
         streamUrl: fallbackOriginalStream.streamUrl,
         qualityLabel: fallbackOriginalStream.qualityLabel,
         audioLanguage: 'Audio Original (Subtitulado al Español)',
+        videoCodec: fallbackOriginalStream.videoCodec || 'H.264 (AVC)',
         isSpanishAudio: false,
         isSubtitled: true,
         filename: fallbackOriginalStream.filename,
