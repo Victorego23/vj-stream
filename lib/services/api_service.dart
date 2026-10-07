@@ -719,6 +719,7 @@ class ApiService {
     int episode = 1,
     bool bypassCache = false,
     List<String>? excludeUrls,
+    bool preferH264 = false,
   }) async {
     try {
       final uri = Uri.parse('$baseUrl/auto-resolve');
@@ -735,8 +736,9 @@ class ApiService {
           'episode': episode,
           'bypassCache': bypassCache,
           'excludeUrls': excludeUrls ?? [],
+          'preferH264': preferH264,
         }),
-      ).timeout(const Duration(seconds: 35));
+      ).timeout(const Duration(seconds: 45));
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = json.decode(utf8.decode(response.bodyBytes));

@@ -55,7 +55,7 @@ class TorBoxService {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
       },
-      timeout: 8000
+      timeout: 20000 // Timeout ampliado a 20 segundos con tolerancia a picos de red
     });
   }
 
@@ -169,10 +169,84 @@ class TorBoxService {
   }
 
   /**
+   * Identifica el archivo exacto correspondiente a un episodio dentro de un torrent multi-archivo (Batch).
+   * Soporta anime, series occidentales, packs de temporadas completas y diferentes convenciones de nombres.
+   * @param {Array} videoFiles - Lista de archivos de video disponibles
+   * @param {number} targetSeason - Temporada buscada (default 1)
+   * @param {number} targetEp - Episodio buscado (default 1)
+   * @returns {Object|null} Archivo seleccionado
+   */
+  _matchEpisodeInBatch(videoFiles, targetSeason = 1, targetEp = 1) {
+    if (!Array.isArray(videoFiles) || videoFiles.length === 0) return null;
+    if (videoFiles.length === 1) return videoFiles[0];
+
+    const s = parseInt(targetSeason, 10) || 1;
+    const e = parseInt(targetEp, 10) || 1;
+    const pad2 = String(e).padStart(2, '0');
+    const pad3 = String(e).padStart(3, '0');
+
+    // Descartar archivos ubicados en carpetas de OTRA temporada si es pack multi-temporada
+    const validSeasonFiles = videoFiles.filter(f => {
+      const name = (f.name || f.short_name || '').toLowerCase();
+      const seasonFolderMatch = name.match(/(?:season|temporada|temp|s)\s*0*(\d{1,2})/i);
+      if (seasonFolderMatch) {
+        const folderSeason = parseInt(seasonFolderMatch[1], 10);
+        if (folderSeason !== s) return false;
+      }
+      return true;
+    });
+
+    const candidates = validSeasonFiles.length > 0 ? validSeasonFiles : videoFiles;
+
+    // NIVEL 1: Notación estándar SxxExx o 1x01 o SxEx
+    for (const f of candidates) {
+      const name = (f.name || f.short_name || '').toLowerCase();
+      const seMatch = name.match(/\bs?0*(\d{1,2})[.\s_-]*[ex]0*(\d{1,3})\b/i);
+      if (seMatch) {
+        const matchSeason = parseInt(seMatch[1], 10);
+        const matchEp = parseInt(seMatch[2], 10);
+        if (matchSeason === s && matchEp === e) {
+          return f;
+        }
+      }
+    }
+
+    // NIVEL 2: Prefijos y palabras clave de episodio (Anime / Animación / Pokémon / Telenovelas)
+    // Ej: "Pokemon - 01", "Pokemon Ep 01", "Pokemon Cap 01", "Pokemon - 001", "Pokemon [01]"
+    const epKeywordPatterns = [
+      new RegExp(`(?:ep|episode|episodio|cap|capitulo|capítulo)[.\\s_-]*0*${e}\\b`, 'i'),
+      new RegExp(`[\\[\\(\\s_-]0*${e}[\\]\\)\\s_.-]`, 'i'),
+      new RegExp(`^[\\s_-]*0*${e}[.\\s_-]`, 'i'),
+      new RegExp(`[/\\\\][\\s_-]*0*${e}[.\\s_-]`, 'i'),
+      new RegExp(`[-_\\s]0*${e}\\.[a-z0-9]+$`, 'i'),
+      new RegExp(`\\b(?:${pad2}|${pad3})\\b`, 'i')
+    ];
+
+    for (const pattern of epKeywordPatterns) {
+      const matched = candidates.find(f => {
+        const name = (f.name || f.short_name || '').toLowerCase();
+        // Limpiar resolución (1080p, 720p), año y codecs para evitar falsos positivos
+        const clean = name.replace(/1080p?|720p?|480p?|x264|x265|h264|h265|19\d{2}|20\d{2}/gi, ' ');
+        return pattern.test(clean);
+      });
+      if (matched) return matched;
+    }
+
+    // NIVEL 3: Orden natural por índice de episodio si los archivos están numerados correlativamente
+    const sorted = [...candidates].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    if (e >= 1 && e <= sorted.length) {
+      return sorted[e - 1];
+    }
+
+    return candidates[0];
+  }
+
+  /**
    * Resuelve un magnet a stream directo en el CDN de TorBox.
    * Cero consumo de RAM/búfer en Render: solo orquesta metadatos y entrega la URL CDN.
+   * En torrents batch de múltiples archivos (como series y anime), filtra y obtiene el file_id exacto.
    * @param {string} magnet - Magnet link o hash
-   * @param {Object} [options] - Opciones (season, episode)
+   * @param {Object} [options] - Opciones (season, episode, fileId, file_id)
    * @returns {Promise<Object>}
    */
   async resolveMagnetToStream(magnet, options = {}) {
@@ -186,14 +260,18 @@ class TorBoxService {
     const client = this._getAxiosClient();
     let info = null;
 
-    // Consultar detalles con bypass_cache=true para estado fidedigno
-    for (let i = 0; i < 3; i++) {
-      const res = await client.get(`/torrents/mylist?id=${torrentId}&bypass_cache=true`);
-      info = res.data?.data;
-      if (info && (info.download_state === 'completed' || info.download_state === 'cached' || info.progress === 1)) {
-        break;
+    // Consultar detalles con bypass_cache=true para estado fidedigno (hasta 5 intentos con tolerancia)
+    for (let i = 0; i < 5; i++) {
+      try {
+        const res = await client.get(`/torrents/mylist?id=${torrentId}&bypass_cache=true`);
+        info = res.data?.data;
+        if (info && (info.download_state === 'completed' || info.download_state === 'cached' || info.progress === 1)) {
+          break;
+        }
+      } catch (pollErr) {
+        console.warn(`[TorBox] Intento ${i + 1} de consulta mylist falló:`, pollErr.message);
       }
-      await new Promise(r => setTimeout(r, 600));
+      await new Promise(r => setTimeout(r, 800));
     }
 
     if (!info) {
@@ -218,7 +296,7 @@ class TorBoxService {
       throw new Error('El torrent no contiene archivos disponibles en TorBox');
     }
 
-    // Filtrar archivos de video descartando CAMs
+    // Filtrar archivos de video descartando grabaciones de cine (CAM)
     const videoFiles = files.filter(f => {
       const name = (f.name || f.short_name || '').toLowerCase();
       const isVideo = /\.(mp4|mkv|avi|mov|ts|m4v|webm)$/i.test(name);
@@ -227,24 +305,24 @@ class TorBoxService {
     });
 
     let chosen = null;
-    if (options && options.episode) {
-      const targetEp = parseInt(options.episode, 10);
-      const targetSeason = parseInt(options.season, 10) || 1;
-      chosen = videoFiles.find(f => {
-        const name = (f.name || f.short_name || '').toLowerCase();
-        const sMatch = name.match(/\bs?0*(\d{1,2})[.\s_-]*[ex]0*(\d{1,3})\b/i);
-        if (sMatch) {
-          return parseInt(sMatch[1], 10) === targetSeason && parseInt(sMatch[2], 10) === targetEp;
-        }
-        const capMatch = name.match(/\bcap(?:itulo)?[.\s_-]*(\d)(\d{2})\b/i);
-        if (capMatch) {
-          return parseInt(capMatch[1], 10) === targetSeason && parseInt(capMatch[2], 10) === targetEp;
-        }
-        return false;
-      });
+    const explicitFileId = options.fileId ?? options.file_id;
+
+    // 1. Si se especificó un file_id exacto en las opciones, usarlo directamente
+    if (explicitFileId != null) {
+      chosen = files.find(f => String(f.id) === String(explicitFileId));
     }
 
-    // Si no es serie o no hubo match de episodio: seleccionar el archivo de video de mayor tamaño
+    // 2. Si es serie / episodio y no vino file_id explícito: buscar el archivo exacto del episodio
+    if (!chosen && options && options.episode) {
+      const targetEp = parseInt(options.episode, 10);
+      const targetSeason = parseInt(options.season, 10) || 1;
+      chosen = this._matchEpisodeInBatch(videoFiles, targetSeason, targetEp);
+      if (chosen) {
+        console.log(`[TorBox Batch Parser] 🎯 Episodio seleccionado: "${chosen.name || chosen.short_name}" (file_id: ${chosen.id}) para S${targetSeason}E${targetEp}`);
+      }
+    }
+
+    // 3. Si no es serie o no hubo match de episodio: seleccionar el archivo de video de mayor tamaño
     if (!chosen) {
       chosen = videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0))[0] || files[0];
     }
@@ -253,15 +331,16 @@ class TorBoxService {
       throw new Error('No se encontró ningún archivo de video compatible en el torrent');
     }
 
-    // Solicitar URL de streaming directa del CDN de TorBox
-    const streamUrl = await this.requestDownloadLink(torrentId, chosen.id);
+    // 4. Solicitar URL de streaming directa del CDN de TorBox para el file_id exacto
+    const targetFileId = chosen.id;
+    const streamUrl = await this.requestDownloadLink(torrentId, targetFileId);
 
     return {
       success: true,
       ready: true,
       provider: 'TorBox',
       torrentId,
-      fileId: chosen.id,
+      fileId: targetFileId,
       streamUrl,
       filename: chosen.name || chosen.short_name || info.name,
       filesize: chosen.size,

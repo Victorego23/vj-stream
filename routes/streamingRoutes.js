@@ -620,9 +620,12 @@ router.post('/resolve-stream', async (req, res, next) => {
  * @query   season {number} - Temporada opcional si es serie
  * @query   episode {number} - Episodio opcional si es serie
  */
-router.get('/stream', async (req, res, next) => {
+router.get(['/stream', '/download'], async (req, res, next) => {
   try {
-    const { magnet, hash, redirect = 'true', format, season, episode } = req.query;
+    if (typeof req.setTimeout === 'function') {
+      req.setTimeout(30000); // Evitar cortes de socket prematuros durante resolución
+    }
+    const { magnet, hash, redirect = 'true', format, season, episode, fileId, file_id } = req.query;
     const targetMagnet = magnet || hash;
 
     if (!targetMagnet || typeof targetMagnet !== 'string') {
@@ -641,7 +644,8 @@ router.get('/stream', async (req, res, next) => {
 
     const streamData = await torboxService.resolveMagnetToStream(targetMagnet, {
       season: season ? parseInt(season, 10) : undefined,
-      episode: episode ? parseInt(episode, 10) : undefined
+      episode: episode ? parseInt(episode, 10) : undefined,
+      fileId: fileId || file_id
     });
 
     if (!streamData.ready || !streamData.streamUrl) {
@@ -699,7 +703,25 @@ router.get('/stream', async (req, res, next) => {
  */
 router.post('/auto-resolve', async (req, res, next) => {
   try {
-    const { title, originalTitle, year, mediaType = 'movie', id, season = 1, episode = 1, bypassCache = false, excludeUrls = [], imdbId } = req.body;
+    if (typeof req.setTimeout === 'function') {
+      req.setTimeout(35000); // 35 segundos para permitir resolución profunda sin cortes de socket
+    }
+    const {
+      title,
+      originalTitle,
+      year,
+      mediaType = 'movie',
+      id,
+      season = 1,
+      episode = 1,
+      bypassCache = false,
+      excludeUrls = [],
+      imdbId,
+      preferH264 = false,
+      excludeHevc = false,
+      fileId,
+      file_id
+    } = req.body;
 
     if (!title) {
       return res.status(400).json({
@@ -718,7 +740,10 @@ router.post('/auto-resolve', async (req, res, next) => {
       season: parseInt(season, 10) || 1,
       episode: parseInt(episode, 10) || 1,
       bypassCache: Boolean(bypassCache),
-      excludeUrls: Array.isArray(excludeUrls) ? excludeUrls : []
+      excludeUrls: Array.isArray(excludeUrls) ? excludeUrls : [],
+      preferH264: Boolean(preferH264 || excludeHevc),
+      excludeHevc: Boolean(excludeHevc),
+      fileId: fileId || file_id
     });
 
     return res.json({

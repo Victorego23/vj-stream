@@ -111,6 +111,9 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
   // Lista de URLs fallidas durante esta sesión para evitar reincidir en ellas
   final List<String> _failedUrls = [];
 
+  // Fallback de software decoding para televisores que fallan al inicializar HEVC Main 10
+  bool _preferSoftwareSafeCodec = false;
+
   bool _showControls = true;
   Timer? _hideControlsTimer;
   Timer? _progressSaveTimer;
@@ -330,6 +333,25 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         });
       }
     } catch (e) {
+      final errorStr = e.toString().toLowerCase();
+      final isCodecFailure = errorStr.contains('mediacodec') ||
+          errorStr.contains('decoderinitializationexception') ||
+          errorStr.contains('decoder') ||
+          errorStr.contains('hevc') ||
+          errorStr.contains('h265') ||
+          errorStr.contains('main 10') ||
+          errorStr.contains('unsupported format') ||
+          errorStr.contains('formatexception');
+
+      // Si el hardware del televisor falla decodificando HEVC/Main 10, activar fallback compatible H.264
+      if (isCodecFailure && !_preferSoftwareSafeCodec) {
+        debugPrint('[VideoPlayerView] ⚠️ Fallo de decodificador detectado ($e). Activando fallback de renderizado H.264 compatible...');
+        _preferSoftwareSafeCodec = true;
+        _showFeedbackIndicator('Ajustando códec compatible...');
+        final handled = await _triggerAutoFallback();
+        if (handled) return;
+      }
+
       // Si es canal de TV en vivo y falló la señal, saltar a la siguiente fuente de respaldo (Failover)
       if (widget.isLive && !_isFallingBack) {
         final handled = await _failoverLiveSource(reason: 'Fallo al inicializar señal .m3u8');
@@ -381,6 +403,21 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
 
     // Detectar fallos de decodificación o caída del stream en vivo
     if (_controller!.value.hasError && !_hasError && !_isFallingBack) {
+      final errorDesc = _controller!.value.errorDescription?.toLowerCase() ?? '';
+      final isCodecFailure = errorDesc.contains('mediacodec') ||
+          errorDesc.contains('decoderinitializationexception') ||
+          errorDesc.contains('decoder') ||
+          errorDesc.contains('hevc') ||
+          errorDesc.contains('h265') ||
+          errorDesc.contains('main 10') ||
+          errorDesc.contains('unsupported format');
+
+      if (isCodecFailure && !_preferSoftwareSafeCodec) {
+        debugPrint('[VideoPlayerView] ⚠️ Error de decodificación en reproducción ($errorDesc). Conmutando a modo compatible H.264...');
+        _preferSoftwareSafeCodec = true;
+        _showFeedbackIndicator('Ajustando a códec compatible...');
+      }
+
       // En canales de TV en vivo, cambiar a la fuente de respaldo antes de alertar
       if (widget.isLive) {
         _failoverLiveSource(reason: 'Caída de señal o error de red');
@@ -893,15 +930,39 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     final currentPos = _controller?.value.position ?? Duration.zero;
 
     // 1. Intentar conmutar inmediatamente a un servidor de respaldo ya precargado
-    final backup = _availableStreams.firstWhere(
-      (s) =>
-          (s['streamUrl'] as String?) != null &&
-          s['streamUrl'] != _currentVideoUrl &&
-          !_failedUrls.contains(s['streamUrl']),
-      orElse: () => <String, dynamic>{},
-    );
+    Map<String, dynamic> backup = <String, dynamic>{};
+    if (_preferSoftwareSafeCodec) {
+      backup = _availableStreams.firstWhere(
+        (s) {
+          final url = s['streamUrl'] as String?;
+          final title = ((s['title'] ?? '') as String).toLowerCase();
+          final quality = ((s['qualityLabel'] ?? '') as String).toLowerCase();
+          final isNotHevc = !title.contains('hevc') &&
+              !title.contains('x265') &&
+              !title.contains('h.265') &&
+              !title.contains('10bit') &&
+              !title.contains('10-bit') &&
+              !quality.contains('hevc') &&
+              !quality.contains('10bit');
+          return url != null &&
+              url != _currentVideoUrl &&
+              !_failedUrls.contains(url) &&
+              isNotHevc;
+        },
+        orElse: () => <String, dynamic>{},
+      );
+    }
+    if (backup.isEmpty) {
+      backup = _availableStreams.firstWhere(
+        (s) =>
+            (s['streamUrl'] as String?) != null &&
+            s['streamUrl'] != _currentVideoUrl &&
+            !_failedUrls.contains(s['streamUrl']),
+        orElse: () => <String, dynamic>{},
+      );
+    }
     if (backup.isNotEmpty) {
-      debugPrint('[VideoPlayerView] 🔄 Usando servidor de respaldo pre-verificado...');
+      debugPrint('[VideoPlayerView] 🔄 Usando servidor de respaldo pre-verificado (preferH264: $_preferSoftwareSafeCodec)...');
       _showFeedbackIndicator('Conectando a servidor alternativo...');
       await _switchStream(backup);
       if (mounted) setState(() => _isFallingBack = false);
@@ -914,13 +975,14 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     }
 
     try {
-      debugPrint('[VideoPlayerView] 🔄 Solicitando fuente alternativa limpia para "${widget.title}"...');
+      debugPrint('[VideoPlayerView] 🔄 Solicitando fuente alternativa limpia para "${widget.title}" (preferH264: $_preferSoftwareSafeCodec)...');
       final fallbackStream = await _apiService.autoResolveStream(
         widget.mediaItem!,
         season: widget.season ?? 1,
         episode: widget.episode ?? 1,
         bypassCache: true,
         excludeUrls: _failedUrls,
+        preferH264: _preferSoftwareSafeCodec,
       );
 
       final newUrl = fallbackStream?['streamUrl'] as String?;

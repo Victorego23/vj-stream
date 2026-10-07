@@ -14,7 +14,7 @@ const tmdbService = require('./tmdbService');
  */
 class StreamResolverService {
   constructor() {
-    this.timeout = 7000;
+    this.timeout = 20000; // Timeout ampliado a 20 segundos para scraper y debrid
     // Caché en memoria: key -> { timestamp, data } (6 horas para máxima velocidad y 0% de uso de CPU en reproducciones repetidas)
     this.cache = new Map();
     this.CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 horas
@@ -486,6 +486,17 @@ class StreamResolverService {
     else if (isHevc) videoCodecLabel = 'HEVC (H.265)';
     else if (isLegacySD) videoCodecLabel = 'MPEG-4 (SD)';
 
+    // REGLA 0: Fallback automático si el televisor/reproductor reportó fallo en decoder de hardware para HEVC/H.265 Main 10
+    const forceH264 = Boolean(mediaInfo?.preferH264 || mediaInfo?.excludeHevc);
+    if (forceH264) {
+      if (isH264 && is8Bit) {
+        score += 6500; // Garantiza selección de H.264 compatible universal
+      }
+      if (isHevc || isAv1 || is10Bit) {
+        score -= 9000; // Descarta perfiles HEVC/10-bit no compatibles con el hardware del televisor
+      }
+    }
+
     // REGLA 1: Máxima prioridad para H.264 / AVC (8 bits estándar SDR) para aceleración universal y colores 100% correctos
     if (isH264 && is8Bit) {
       score += 1600; // Garantiza que una variante H.264 supere a cualquier variante HEVC o Dolby Vision del mismo contenido
@@ -569,7 +580,7 @@ class StreamResolverService {
 
     try {
       const headRes = await axios.head(url, {
-        timeout: 3800,
+        timeout: 20000, // 20 segundos de margen para CDN y debrid
         maxRedirects: 2,
         validateStatus: status => status >= 200 && status < 400
       });
@@ -601,7 +612,7 @@ class StreamResolverService {
           const rangeRes = await axios.get(url, {
             headers: { 'Range': 'bytes=0-1024' },
             responseType: 'stream',
-            timeout: 3500,
+            timeout: 20000,
             validateStatus: status => status === 200 || status === 206
           });
           const ct = (rangeRes.headers['content-type'] || '').toLowerCase();
@@ -638,7 +649,7 @@ class StreamResolverService {
           const response = await axios.head(currentUrl, {
             maxRedirects: 0,
             validateStatus: status => status >= 200 && status < 400,
-            timeout: 3800
+            timeout: 20000 // Timeout ampliado a 20s para soportar generación de enlaces en TorBox/Real-Debrid
           });
           location = response.headers?.location;
         } catch (e) {
@@ -651,7 +662,7 @@ class StreamResolverService {
                 responseType: 'stream',
                 maxRedirects: 0,
                 validateStatus: status => status >= 200 && status < 400,
-                timeout: 3800
+                timeout: 20000
               });
               location = streamCheck.headers?.location;
               if (streamCheck.data && typeof streamCheck.data.destroy === 'function') {
@@ -727,7 +738,13 @@ class StreamResolverService {
       ];
 
       const responses = await Promise.allSettled(
-        scraperEndpoints.map(u => axios.get(u, { timeout: 3500 }).catch(() => null))
+        scraperEndpoints.map(u => axios.get(u, {
+          timeout: 20000, // 20 segundos de margen para scraper Torrentio / debrid
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+        }).catch(err => {
+          console.warn(`[TOM TV Multi-Scraper] Endpoint debrid respondió con timeout/error: ${err.message}`);
+          return null;
+        }))
       );
 
       const streamMap = new Map();
@@ -796,7 +813,7 @@ class StreamResolverService {
    * la evaluación del resto sin hacer peticiones ni gastar CPU/RAM adicional.
    * @private
    */
-  async _evaluateCandidateStreams(instant, excludeUrls, providerName = 'Real-Debrid', allowOriginal = false) {
+  async _evaluateCandidateStreams(instant, excludeUrls, providerName = 'Real-Debrid', allowOriginal = false, preferH264 = false) {
     const verifyCandidate = async (candidate) => {
       if (!candidate || !candidate.stream || !candidate.stream.url) return null;
       if (excludeUrls.includes(candidate.stream.url)) return null;
@@ -823,8 +840,14 @@ class StreamResolverService {
     const availableStreams = [];
     let primaryStream = null;
 
+    // Si se solicitó modo compatible H.264 (por fallo de hardware en HEVC Main 10 del TV), ordenar primero H.264
+    const sortList = (list) => {
+      if (!preferH264 || !Array.isArray(list)) return list || [];
+      return [...list].sort((a, b) => (b.isH264 ? 1 : 0) - (a.isH264 ? 1 : 0));
+    };
+
     // 1. Probar y resolver Latino (secuencial con CORTE RÁPIDO / Early-Exit al primer acierto)
-    for (const cand of (instant.latino || [])) {
+    for (const cand of sortList(instant.latino)) {
       const verified = await verifyCandidate(cand);
       if (verified) {
         primaryStream = verified;
@@ -846,7 +869,7 @@ class StreamResolverService {
     }
 
     // 2. Probar y resolver Castellano (solo si no hubo Latino, con corte rápido)
-    for (const cand of (instant.castellano || [])) {
+    for (const cand of sortList(instant.castellano)) {
       const verified = await verifyCandidate(cand);
       if (verified) {
         primaryStream = verified;
@@ -869,7 +892,7 @@ class StreamResolverService {
 
     // 3. Probar versión en Audio Original ÚNICAMENTE si allowOriginal es true y no hubo doblaje
     if (allowOriginal && (instant.original || []).length > 0) {
-      for (const cand of instant.original.slice(0, 2)) {
+      for (const cand of sortList(instant.original).slice(0, 2)) {
         const verified = await verifyCandidate(cand);
         if (verified) {
           primaryStream = {
@@ -1064,6 +1087,8 @@ class StreamResolverService {
     let fallbackOriginalAvailable = [];
     let fallbackOriginalProvider = null;
 
+    const forceH264 = Boolean(mediaInfo.preferH264 || mediaInfo.excludeHevc);
+
     if (imdbId) {
       const debridProviders = [];
       if (torboxService.isAvailable()) {
@@ -1080,7 +1105,7 @@ class StreamResolverService {
         if (totalSpanish > 0) {
           console.log(`[TOM TV Auto-Resolver] 📋 Evaluando fuentes en Español [${prov.name}]: ${instant.latino.length} Latino, ${instant.castellano.length} Castellano...`);
           // allowOriginal = false: NO aceptar streams en inglés en esta etapa
-          const { primaryStream, availableStreams } = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, false);
+          const { primaryStream, availableStreams } = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, false, forceH264);
 
           if (primaryStream && primaryStream.isSpanishAudio) {
             console.log(`[TOM TV Auto-Resolver] 🎯 Fuente en Español verificada vía [${prov.name}]: [${primaryStream.audioLanguage}] "${primaryStream.filename}"`);
@@ -1102,7 +1127,7 @@ class StreamResolverService {
         // Si no hay ninguna fuente en español encontrada hasta el momento y este proveedor tiene originales,
         // guardar como último recurso únicamente si no existe doblaje
         if (!bestSpanishStream && !fallbackOriginalStream && (instant.original || []).length > 0) {
-          const evalOrig = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, true);
+          const evalOrig = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, true, forceH264);
           if (evalOrig.primaryStream) {
             fallbackOriginalStream = evalOrig.primaryStream;
             fallbackOriginalAvailable = evalOrig.availableStreams;

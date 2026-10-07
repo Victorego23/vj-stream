@@ -68,7 +68,7 @@ class RealDebridService {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
-      timeout: 15000
+      timeout: 20000 // Timeout de 20 segundos para estabilidad de desbridado
     });
   }
 
