@@ -125,6 +125,14 @@
       background: linear-gradient(135deg, #DC2626, #991B1B); color: #fff;
     }
     .btn-danger:hover { background: #EF4444; }
+    .btn-warning {
+      background: linear-gradient(135deg, #D97706, #B45309); color: #fff;
+    }
+    .btn-warning:hover { filter: brightness(1.15); }
+    .btn-outline {
+      background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); color: #fff;
+    }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.08); }
     .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 9px; }
     .btn-icon { padding: 8px 12px; font-size: 14px; }
 
@@ -784,34 +792,72 @@
               </div>
             </div>
           </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="btn btn-outline" id="btn-sync-channels" onclick="triggerChannelSync()" style="font-size: 0.82rem; padding: 8px 16px; border-color: rgba(56, 189, 248, 0.4); color: #38bdf8;">
+              🔄 Sincronizar IPTV Org
+            </button>
             <button class="btn btn-outline" id="btn-audit-channels" onclick="triggerChannelAudit()" style="font-size: 0.82rem; padding: 8px 16px; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">
               ⚡ Auditar Señales Ahora
             </button>
           </div>
         </div>
 
+        <!-- Métricas de Canales -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">📡 Total Canales</div>
+            <div class="stat-value" id="stat-total-channels">0</div>
+            <div class="stat-sub">Catálogo completo</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">🟢 Canales Activos</div>
+            <div class="stat-value" style="color: var(--success);" id="stat-active-channels">0</div>
+            <div class="stat-sub">En vivo para clientes</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">🔴 Canales Desactivados</div>
+            <div class="stat-value" style="color: var(--danger);" id="stat-inactive-channels">0</div>
+            <div class="stat-sub">Ocultos / Mantenimiento</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">🏷️ Categorías</div>
+            <div class="stat-value" style="color: #38bdf8;" id="stat-categories-channels">0</div>
+            <div class="stat-sub">Géneros configurados</div>
+          </div>
+        </div>
+
         <div class="controls-bar">
           <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input type="text" id="channel-search-input" class="search-input" placeholder="Buscar canal por nombre o categoría..." oninput="filterChannels()">
+            <input type="text" id="channel-search-input" class="search-input" placeholder="Buscar canal por nombre, categoría o URL..." oninput="filterChannels()">
           </div>
-          <button class="btn btn-primary" onclick="openNewChannelModal()">➕ Agregar Canal</button>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <select id="channel-filter-status" class="search-input" style="width: auto; padding: 10px 14px; font-weight: 700; cursor: pointer;" onchange="filterChannels()">
+              <option value="all">📺 Todos los Estados</option>
+              <option value="active">🟢 Solo Activos</option>
+              <option value="inactive">🔴 Solo Desactivados</option>
+            </select>
+            <select id="channel-filter-cat" class="search-input" style="width: auto; padding: 10px 14px; font-weight: 700; cursor: pointer;" onchange="filterChannels()">
+              <option value="all">🏷️ Todas las Categorías</option>
+            </select>
+            <button class="btn btn-primary" onclick="openNewChannelModal()">➕ Agregar Canal</button>
+          </div>
         </div>
 
         <div class="table-container">
           <table>
             <thead>
               <tr>
-                <th>Canal</th>
+                <th style="min-width: 220px;">Canal</th>
                 <th>Categoría</th>
+                <th>Calidad</th>
                 <th>Estado</th>
-                <th>Enlace de Señal</th>
-                <th style="text-align: right;">Acciones</th>
+                <th style="max-width: 260px;">Enlace de Señal</th>
+                <th style="text-align: right; min-width: 220px;">Acciones</th>
               </tr>
             </thead>
             <tbody id="channels-table-body">
-              <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">Cargando canales...</td></tr>
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Cargando canales...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1271,6 +1317,55 @@
           <small style="color: var(--text-muted); font-size: 11px;">Puedes fijar la fecha exacta en la que vence el acceso.</small>
         </div>
         <button type="submit" class="btn btn-primary" id="btn-submit-edit-client" style="width: 100%; padding: 12px; margin-top: 8px;">💾 Guardar Cambios de Cliente</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: AGREGAR O EDITAR CANAL DE TV EN VIVO -->
+  <div class="modal" id="modal-channel">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 style="font-weight: 800;" id="modal-channel-title">➕ Agregar Canal en Vivo</h3>
+        <button class="close-btn" onclick="closeModal('modal-channel')">&times;</button>
+      </div>
+      <form id="form-channel" onsubmit="submitChannelForm(event)">
+        <input type="hidden" id="channel-form-id">
+        <div class="form-group">
+          <label>Nombre del Canal:</label>
+          <input type="text" id="channel-form-name" class="form-control" placeholder="Ej: Latina TV HD, ESPN, TNT Novelas" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Categoría:</label>
+            <input type="text" id="channel-form-category" class="form-control" placeholder="Ej: Cine & Series, Deportes" list="channel-categories-datalist" required>
+            <datalist id="channel-categories-datalist"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Calidad:</label>
+            <select id="channel-form-quality" class="form-control">
+              <option value="1080p FHD">1080p FHD</option>
+              <option value="720p HD">720p HD</option>
+              <option value="4K UHD">4K UHD</option>
+              <option value="SD">SD</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>URL de Transmisión (HLS / M3U8):</label>
+          <input type="url" id="channel-form-stream" class="form-control" placeholder="https://servidor.com/live/stream.m3u8" required>
+        </div>
+        <div class="form-group">
+          <label>URL del Logo (Opcional):</label>
+          <input type="url" id="channel-form-logo" class="form-control" placeholder="https://.../logo.png">
+        </div>
+        <div class="form-group">
+          <label>Estado Inicial del Canal:</label>
+          <select id="channel-form-status" class="form-control">
+            <option value="active">🟢 Activo (Visible en TV, Web y Móvil)</option>
+            <option value="inactive">🔴 Desactivado (Oculto / En Mantenimiento)</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-submit-channel" style="width: 100%; padding: 12px; margin-top: 8px;">💾 Guardar Canal</button>
       </form>
     </div>
   </div>
@@ -2527,10 +2622,51 @@
         if (data.success) {
           channelsData = data.channels || [];
           document.getElementById('badge-channels-count').textContent = channelsData.length;
+          updateChannelCategoriesSelect(data.categories || []);
+          updateChannelStats();
           renderChannels();
           fetchChannelHealth();
         }
       } catch (_) {}
+    }
+
+    function updateChannelStats() {
+      const total = channelsData.length;
+      const active = channelsData.filter(c => c.isActive !== false).length;
+      const inactive = total - active;
+      const catSet = new Set(channelsData.map(c => c.category || 'General'));
+
+      const elTotal = document.getElementById('stat-total-channels');
+      const elActive = document.getElementById('stat-active-channels');
+      const elInactive = document.getElementById('stat-inactive-channels');
+      const elCats = document.getElementById('stat-categories-channels');
+
+      if (elTotal) elTotal.textContent = total;
+      if (elActive) elActive.textContent = active;
+      if (elInactive) elInactive.textContent = inactive;
+      if (elCats) elCats.textContent = catSet.size;
+    }
+
+    function updateChannelCategoriesSelect(categories) {
+      const select = document.getElementById('channel-filter-cat');
+      const datalist = document.getElementById('channel-categories-datalist');
+      if (!select) return;
+
+      const currentVal = select.value || 'all';
+      const cats = (categories && categories.length > 0)
+        ? categories
+        : Array.from(new Set(channelsData.map(c => c.category || 'General'))).sort();
+
+      select.innerHTML = '<option value="all">🏷️ Todas las Categorías</option>' +
+        cats.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join('');
+
+      if (Array.from(select.options).some(o => o.value === currentVal)) {
+        select.value = currentVal;
+      }
+
+      if (datalist) {
+        datalist.innerHTML = cats.map(cat => `<option value="${escapeHtml(cat)}">`).join('');
+      }
     }
 
     async function fetchChannelHealth() {
@@ -2586,80 +2722,269 @@
       }
     }
 
+    async function triggerChannelSync() {
+      const btn = document.getElementById('btn-sync-channels');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Sincronizando...';
+      }
+      showToast('🔄 Conectando a IPTV Org y actualizando señales...', 'info');
+
+      try {
+        const res = await fetch('/api/admin/channels/sync-iptv', {
+          method: 'POST',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`✅ Sincronización finalizada: ${data.added || 0} canales agregados, ${data.updated || 0} actualizados.`, 'success');
+          await fetchChannels();
+        } else {
+          showToast('Error en la sincronización: ' + (data.error || 'Desconocido'), 'error');
+        }
+      } catch (_) {
+        showToast('Error de conexión', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '🔄 Sincronizar IPTV Org';
+        }
+      }
+    }
+
     function filterChannels() {
       renderChannels();
     }
 
     function renderChannels() {
-      const q = document.getElementById('channel-search-input').value.trim().toLowerCase();
+      const q = (document.getElementById('channel-search-input')?.value || '').trim().toLowerCase();
+      const statusFilter = document.getElementById('channel-filter-status')?.value || 'all';
+      const catFilter = document.getElementById('channel-filter-cat')?.value || 'all';
+
       const list = channelsData.filter(c => {
+        const isActive = c.isActive !== false;
+        if (statusFilter === 'active' && !isActive) return false;
+        if (statusFilter === 'inactive' && isActive) return false;
+
+        if (catFilter !== 'all' && (c.category || '').toLowerCase() !== catFilter.toLowerCase()) {
+          return false;
+        }
+
         if (!q) return true;
-        return (c.name || '').toLowerCase().includes(q) || (c.category || '').toLowerCase().includes(q);
+        const name = (c.name || '').toLowerCase();
+        const cat = (c.category || '').toLowerCase();
+        const stream = (c.streamUrl || '').toLowerCase();
+        return name.includes(q) || cat.includes(q) || stream.includes(q);
       });
 
       const tbody = document.getElementById('channels-table-body');
       const mobCards = document.getElementById('channels-mobile-cards');
 
       if (list.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">No se encontraron canales.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">No se encontraron canales con los filtros seleccionados.</td></tr>';
         if (mobCards) {
           mobCards.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 35px 20px; background: rgba(15, 18, 28, 0.7); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">No se encontraron canales.</div>';
         }
         return;
       }
 
-      tbody.innerHTML = list.map(c => `
-        <tr>
-          <td>
-            <div style="font-weight: 700; color: #fff;">${escapeHtml(c.name)}</div>
-          </td>
-          <td><span class="badge" style="background: rgba(255,255,255,0.08); color: #fff;">${escapeHtml(c.category || 'General')}</span></td>
-          <td><span class="badge badge-active">Activo</span></td>
-          <td style="font-family: monospace; font-size: 11px; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(c.streamUrl || '')}</td>
-          <td style="text-align: right;">
-            <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')">📋</button>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = list.map(c => {
+        const isActive = c.isActive !== false;
+        const statusBadge = isActive
+          ? '<span class="badge badge-active">🟢 Activo</span>'
+          : '<span class="badge badge-expired" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">🔴 Desactivado</span>';
+
+        const toggleBtn = isActive
+          ? `<button class="btn btn-warning btn-sm" onclick="toggleChannelStatus('${c.id}', '${escapeJs(c.name)}')" title="Desactivar señal de TV (ocultar para clientes)">⏸️ Desactivar</button>`
+          : `<button class="btn btn-success btn-sm" onclick="toggleChannelStatus('${c.id}', '${escapeJs(c.name)}')" title="Activar señal de TV (mostrar a clientes)">▶️ Activar</button>`;
+
+        const logoHtml = c.logoUrl
+          ? `<img src="${escapeHtml(c.logoUrl)}" alt="" style="width: 28px; height: 28px; object-fit: contain; border-radius: 6px; background: rgba(255,255,255,0.06); padding: 2px; flex-shrink: 0;" onerror="this.style.display='none'">`
+          : `<span style="font-size: 20px; line-height: 1;">📺</span>`;
+
+        return `
+          <tr style="${!isActive ? 'opacity: 0.68;' : ''}">
+            <td>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                ${logoHtml}
+                <div>
+                  <div style="font-weight: 700; color: #fff;">${escapeHtml(c.name)}</div>
+                  <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">ID: ${escapeHtml(c.id)}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge" style="background: rgba(255,255,255,0.08); color: #fff;">🏷️ ${escapeHtml(c.category || 'General')}</span></td>
+            <td><span class="badge" style="background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 10px;">${escapeHtml(c.quality || '1080p FHD')}</span></td>
+            <td>${statusBadge}</td>
+            <td style="font-family: monospace; font-size: 11px; color: var(--text-muted); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(c.streamUrl || '')}">
+              ${escapeHtml(c.streamUrl || '')}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
+                ${toggleBtn}
+                <button class="btn btn-secondary btn-sm" onclick="openEditChannelModal('${c.id}')" title="Editar datos del canal">✏️</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteChannelConfirm('${c.id}', '${escapeJs(c.name)}')" title="Eliminar canal definitivamente">🗑️</button>
+                <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')" title="Copiar enlace de streaming">📋</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
       if (mobCards) {
-        mobCards.innerHTML = list.map(c => `
-          <div class="client-mobile-card">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="font-size: 16px; font-weight: 800; color: #fff;">${escapeHtml(c.name)}</div>
-              <span class="badge badge-active">Activo</span>
+        mobCards.innerHTML = list.map(c => {
+          const isActive = c.isActive !== false;
+          const statusBadge = isActive
+            ? '<span class="badge badge-active">🟢 Activo</span>'
+            : '<span class="badge badge-expired" style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35);">🔴 Desactivado</span>';
+
+          const toggleBtn = isActive
+            ? `<button class="btn btn-warning btn-mob-action" onclick="toggleChannelStatus('${c.id}', '${escapeJs(c.name)}')">⏸️ Desactivar</button>`
+            : `<button class="btn btn-success btn-mob-action" onclick="toggleChannelStatus('${c.id}', '${escapeJs(c.name)}')">▶️ Activar</button>`;
+
+          return `
+            <div class="client-mobile-card" style="${!isActive ? 'opacity: 0.75;' : ''}">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 16px; font-weight: 800; color: #fff;">${escapeHtml(c.name)}</div>
+                ${statusBadge}
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--text-muted); flex-wrap: wrap;">
+                <span class="client-mob-chip">🏷️ ${escapeHtml(c.category || 'General')}</span>
+                <span class="client-mob-chip">📺 ${escapeHtml(c.quality || '1080p FHD')}</span>
+              </div>
+              <div style="font-family: monospace; font-size: 11px; color: var(--text-muted); background: #080910; padding: 8px 10px; border-radius: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${escapeHtml(c.streamUrl || '')}
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                ${toggleBtn}
+                <button class="btn btn-secondary btn-mob-action" onclick="openEditChannelModal('${c.id}')">✏️ Editar</button>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+                <button class="btn btn-danger btn-mob-action" onclick="deleteChannelConfirm('${c.id}', '${escapeJs(c.name)}')">🗑️ Eliminar</button>
+                <button class="btn btn-secondary btn-mob-action" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')">📋 Copiar Link</button>
+              </div>
             </div>
-            <div style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--text-muted);">
-              <span class="client-mob-chip">🏷️ ${escapeHtml(c.category || 'General')}</span>
-            </div>
-            <div style="font-family: monospace; font-size: 11px; color: var(--text-muted); background: #080910; padding: 8px 10px; border-radius: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-              ${escapeHtml(c.streamUrl || '')}
-            </div>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn btn-secondary btn-mob-action" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')">📋 Copiar Señal</button>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
+      }
+    }
+
+    async function toggleChannelStatus(id, name) {
+      try {
+        const res = await fetch(`/api/admin/channels/${id}/toggle`, {
+          method: 'POST',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success && data.channel) {
+          const ch = channelsData.find(c => c.id === id);
+          if (ch) ch.isActive = data.channel.isActive;
+          updateChannelStats();
+          renderChannels();
+          showToast(data.channel.isActive ? `Canal "${name}" activado correctamente.` : `Canal "${name}" desactivado temporalmente.`, 'success');
+        } else {
+          showToast('Error al alternar estado: ' + (data.error || 'Desconocido'), 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    }
+
+    async function deleteChannelConfirm(id, name) {
+      if (!confirm(`¿Estás seguro de eliminar permanentemente el canal "${name}"?\nEsta acción removerá la señal de la lista de TV en vivo.`)) {
+        return;
+      }
+      try {
+        const res = await fetch(`/api/admin/channels/${id}`, {
+          method: 'DELETE',
+          headers: { 'x-admin-password': adminToken }
+        });
+        const data = await res.json();
+        if (data.success) {
+          channelsData = channelsData.filter(c => c.id !== id);
+          document.getElementById('badge-channels-count').textContent = channelsData.length;
+          updateChannelStats();
+          renderChannels();
+          showToast(`Canal "${name}" eliminado correctamente.`, 'success');
+        } else {
+          showToast('Error al eliminar canal: ' + (data.error || 'Desconocido'), 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
       }
     }
 
     function openNewChannelModal() {
-      const name = prompt('Nombre del canal:');
-      if (!name) return;
-      const streamUrl = prompt('Enlace de transmisión (HLS / m3u8):');
-      if (!streamUrl) return;
-      const category = prompt('Categoría (ej: Perú, Deportes, Cine):') || 'General';
+      document.getElementById('modal-channel-title').textContent = '➕ Agregar Canal en Vivo';
+      document.getElementById('channel-form-id').value = '';
+      document.getElementById('channel-form-name').value = '';
+      document.getElementById('channel-form-category').value = '';
+      document.getElementById('channel-form-quality').value = '1080p FHD';
+      document.getElementById('channel-form-stream').value = '';
+      document.getElementById('channel-form-logo').value = '';
+      document.getElementById('channel-form-status').value = 'active';
+      document.getElementById('modal-channel').style.display = 'flex';
+    }
 
-      fetch('/api/admin/channels', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
-        body: JSON.stringify({ name, streamUrl, category })
-      }).then(r => r.json()).then(data => {
-        if (data.success) {
-          showToast('Canal agregado con éxito.', 'success');
-          fetchChannels();
+    function openEditChannelModal(id) {
+      const ch = channelsData.find(c => c.id === id);
+      if (!ch) return;
+
+      document.getElementById('modal-channel-title').textContent = '✏️ Editar Canal en Vivo';
+      document.getElementById('channel-form-id').value = ch.id;
+      document.getElementById('channel-form-name').value = ch.name || '';
+      document.getElementById('channel-form-category').value = ch.category || 'General';
+      document.getElementById('channel-form-quality').value = ch.quality || '1080p FHD';
+      document.getElementById('channel-form-stream').value = ch.streamUrl || '';
+      document.getElementById('channel-form-logo').value = ch.logoUrl || '';
+      document.getElementById('channel-form-status').value = (ch.isActive !== false) ? 'active' : 'inactive';
+      document.getElementById('modal-channel').style.display = 'flex';
+    }
+
+    async function submitChannelForm(e) {
+      e.preventDefault();
+      const id = document.getElementById('channel-form-id').value.trim();
+      const name = document.getElementById('channel-form-name').value.trim();
+      const category = document.getElementById('channel-form-category').value.trim() || 'General';
+      const quality = document.getElementById('channel-form-quality').value;
+      const streamUrl = document.getElementById('channel-form-stream').value.trim();
+      const logoUrl = document.getElementById('channel-form-logo').value.trim();
+      const isActive = document.getElementById('channel-form-status').value === 'active';
+
+      const btn = document.getElementById('btn-submit-channel');
+      btn.disabled = true;
+      btn.textContent = 'Guardando...';
+
+      try {
+        const payload = { name, category, quality, streamUrl, logoUrl, isActive };
+        let res;
+        if (id) {
+          res = await fetch(`/api/admin/channels/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          res = await fetch('/api/admin/channels', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+            body: JSON.stringify(payload)
+          });
         }
-      });
+        const data = await res.json();
+        if (data.success) {
+          showToast(id ? 'Canal actualizado con éxito.' : 'Canal agregado con éxito.', 'success');
+          closeModal('modal-channel');
+          await fetchChannels();
+        } else {
+          showToast('Error: ' + (data.error || 'No se pudo guardar'), 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Guardar Canal';
+      }
     }
 
     // -------------------------------------------------------------
