@@ -1044,9 +1044,9 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '4.1.0',
-  versionCode: 45,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.1.0/TOM-TV-release.apk',
+  latestVersion: '4.2.0',
+  versionCode: 46,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.0/TOM-TV-release.apk',
   releaseDate: '2026-10-07'
 };
 
@@ -1098,11 +1098,11 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '🎬 Catálogo Ilimitado (+50,000 Películas): Nuevo explorador VOD con acceso masivo al cine mundial.',
-      '🍿 Filtros por Plataforma: Explora películas originales de Netflix, Disney+, Max (HBO), Prime Video, Apple TV+ y Paramount+.',
-      '🦸 Sagas y Universos Cinematográficos: Colecciones completas de Marvel MCU, DC, Harry Potter, Star Wars, Rápidos y Furiosos y Clásicos Disney.',
-      '🎙️ Prioridad Absoluta Español Latino (🇲🇽) y Cinecalidad: Reproducción directa en español garantizada.',
-      '📡 444 Canales de TV en Vivo 100% Operativos con Auto-Failover 24/7 y Modo Smart TV Cinemático.'
+      '⚡ Modo Turbo Ultra-Veloz: Arranque instantáneo de películas en 1 segundo con 0% de latencia.',
+      '🧹 Limpiador Inteligente 24/7: Conexión TorBox y Debrid optimizada sin bloqueos ni torrents estancados.',
+      '🎬 Catálogo Ilimitado (+50,000 Películas) con reproducción directa en Español Latino (🇲🇽) y Castellano.',
+      '🛡️ Servidor Blindado contra caídas: Consumo ultra-bajo de recursos y máxima estabilidad.',
+      '📡 444 Canales de TV en Vivo 100% Operativos con Auto-Failover 24/7.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,
