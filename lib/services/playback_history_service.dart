@@ -82,6 +82,8 @@ class WatchHistoryItem {
 class PlaybackHistoryService {
   static const String _historyKey = 'vj_stream_watch_history';
   static const String _favoritesKey = 'vj_stream_favorites';
+  static const String _deletedHistoryIdsKey = 'vj_stream_deleted_history_ids';
+  static const String _historyClearedAllKey = 'vj_stream_history_cleared_all';
 
   // -------------------------------------------------------------
   // CONTINUAR VIENDO (HISTORIAL DE REPRODUCCIÓN)
@@ -116,14 +118,29 @@ class PlaybackHistoryService {
     try {
       if (durationSeconds <= 0) return;
       final prefs = await SharedPreferences.getInstance();
+
+      // Si el usuario vuelve a reproducir este título, quitarlo del conjunto de eliminados
+      final deletedList = prefs.getStringList(_deletedHistoryIdsKey) ?? <String>[];
+      final idStr = id.toString();
+      final titleNorm = title.trim().toLowerCase();
+      if (deletedList.contains(idStr) || deletedList.contains(titleNorm)) {
+        deletedList.removeWhere((d) => d == idStr || d == titleNorm);
+        await prefs.setStringList(_deletedHistoryIdsKey, deletedList);
+      }
+      await prefs.remove(_historyClearedAllKey);
+
       final currentList = await getWatchHistory();
 
       // Si vio más del 95% o faltan menos de 90s, considerarlo terminado y quitarlo
       if (positionSeconds >= durationSeconds - 90 || (positionSeconds / durationSeconds) >= 0.95) {
-        currentList.removeWhere((item) => item.id.toString() == id.toString());
+        currentList.removeWhere((item) =>
+            item.id.toString() == idStr ||
+            (title.isNotEmpty && item.title.trim().toLowerCase() == titleNorm));
       } else if (positionSeconds > 15) {
         // Guardar si vio más de 15 segundos
-        currentList.removeWhere((item) => item.id.toString() == id.toString());
+        currentList.removeWhere((item) =>
+            item.id.toString() == idStr ||
+            (title.isNotEmpty && item.title.trim().toLowerCase() == titleNorm));
         currentList.insert(
           0,
           WatchHistoryItem(
@@ -169,12 +186,34 @@ class PlaybackHistoryService {
     } catch (_) {}
   }
 
-  static Future<void> removeFromHistory(dynamic id) async {
+  static Future<void> removeFromHistory(dynamic id, {String? title}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      final idStr = id.toString();
+      final titleNorm = (title ?? '').trim().toLowerCase();
+
+      // 1. Guardar en registro de eliminados (tombstone) para evitar resurrección durante sync
+      final deletedList = prefs.getStringList(_deletedHistoryIdsKey) ?? <String>[];
+      if (!deletedList.contains(idStr)) {
+        deletedList.add(idStr);
+      }
+      if (titleNorm.isNotEmpty && !deletedList.contains(titleNorm)) {
+        deletedList.add(titleNorm);
+      }
+      await prefs.setStringList(_deletedHistoryIdsKey, deletedList);
+
+      // 2. Eliminar inmediatamente de la caché local persistente
       final currentList = await getWatchHistory();
-      currentList.removeWhere((item) => item.id.toString() == id.toString());
+      currentList.removeWhere((item) =>
+          item.id.toString() == idStr ||
+          (titleNorm.isNotEmpty && item.title.trim().toLowerCase() == titleNorm));
       await prefs.setString(_historyKey, json.encode(currentList.map((e) => e.toJson()).toList()));
+
+      // 3. Sincronizar eliminación con la nube en segundo plano
+      final code = await AuthService.getSavedClientCode();
+      if (code != null && code.isNotEmpty) {
+        ApiService().deletePlaybackProgress(code, id, title: title);
+      }
     } catch (_) {}
   }
 
@@ -182,6 +221,14 @@ class PlaybackHistoryService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_historyKey);
+      await prefs.remove(_deletedHistoryIdsKey);
+      await prefs.setBool(_historyClearedAllKey, true);
+
+      // Sincronizar limpieza masiva con la nube
+      final code = await AuthService.getSavedClientCode();
+      if (code != null && code.isNotEmpty) {
+        ApiService().clearPlaybackProgress(code);
+      }
     } catch (_) {}
   }
 
@@ -276,24 +323,43 @@ class PlaybackHistoryService {
 
       // Sincronizar Historial
       if (cloudData['history'] is List) {
-        final cloudHistory = (cloudData['history'] as List)
-            .map((e) => WatchHistoryItem.fromJson(Map<String, dynamic>.from(e)))
-            .toList();
+        // Si el usuario ejecutó un borrado masivo y aún no tiene nuevos items locales, no restaurar historial de nube
+        final wasClearedAll = prefs.getBool(_historyClearedAllKey) ?? false;
         final localHistory = await getWatchHistory();
 
-        final historyMap = <String, WatchHistoryItem>{};
-        for (final h in localHistory) {
-          historyMap[h.id.toString()] = h;
-        }
-        for (final h in cloudHistory) {
-          final existing = historyMap[h.id.toString()];
-          if (existing == null || h.lastWatched.isAfter(existing.lastWatched)) {
+        if (wasClearedAll && localHistory.isEmpty) {
+          // Mantener limpio localmente
+        } else {
+          final cloudHistory = (cloudData['history'] as List)
+              .map((e) => WatchHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+              .toList();
+
+          final deletedList = prefs.getStringList(_deletedHistoryIdsKey) ?? <String>[];
+
+          final historyMap = <String, WatchHistoryItem>{};
+          for (final h in localHistory) {
             historyMap[h.id.toString()] = h;
           }
+
+          for (final h in cloudHistory) {
+            final hId = h.id.toString();
+            final hTitle = h.title.trim().toLowerCase();
+
+            // Nunca resucitar un elemento que el usuario eliminó explícitamente
+            if (deletedList.contains(hId) || (hTitle.isNotEmpty && deletedList.contains(hTitle))) {
+              continue;
+            }
+
+            final existing = historyMap[hId];
+            if (existing == null || h.lastWatched.isAfter(existing.lastWatched)) {
+              historyMap[hId] = h;
+            }
+          }
+
+          final merged = historyMap.values.toList()
+            ..sort((a, b) => b.lastWatched.compareTo(a.lastWatched));
+          await prefs.setString(_historyKey, json.encode(merged.take(20).map((e) => e.toJson()).toList()));
         }
-        final merged = historyMap.values.toList()
-          ..sort((a, b) => b.lastWatched.compareTo(a.lastWatched));
-        await prefs.setString(_historyKey, json.encode(merged.take(20).map((e) => e.toJson()).toList()));
       }
 
       // Sincronizar Favoritos

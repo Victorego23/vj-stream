@@ -76,8 +76,8 @@ jobs:
           body: |
             ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
+            - 📋 **Gestión de "Continuar Viendo" & Sincronización Reactiva**: Mutación reactiva instantánea en pantalla al confirmar "Quitar" (eliminación inmediata del carrusel sin latencia ni reinicio), persistencia local protegida con tombstones contra resurrección por caché, y nuevos endpoints de eliminación y limpieza masiva en la nube.
             - 🎞️ **Corrección de Decodificación de Video**: Detección y filtrado de flujos Dolby Vision Profile 5 incompatibles con hardware móvil/TV para eliminar distorsión de color púrpura/verde y artefactos visuales (ej. serie "El Chapo"). Priorización de H.264/SDR universal.
-            - 📋 **Gestión de "Continuar Viendo"**: Nueva función de control para eliminar títulos individualmente (botón de edición y gesto deslizar/swipe) o limpieza masiva de historial con confirmación OLED.
             - 🎯 **Interfaz Demo Limpia**: Remoción de banners publicitarios y promocionales de la pantalla de inicio para una experiencia sin distracciones.
             - 👤 **Identificación Real de Cuenta en Perfil**: Reemplazo de 'Visitante' y código aleatorio por el nombre de usuario y código de cliente real sincronizado con la base de datos de activación.
             - 🎙️ **Prioridad Absoluta Español Latino (🇲🇽) y Cinecalidad**: Reproducción automática garantizada en audio Latino / Mexicano en Full HD por defecto.

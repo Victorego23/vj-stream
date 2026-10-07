@@ -2329,8 +2329,14 @@ class _HomeViewState extends State<HomeView> {
                     return await _confirmDeleteSingleContinueWatching(context, item);
                   },
                   onDismissed: (_) async {
-                    await PlaybackHistoryService.removeFromHistory(item.id);
-                    _loadHistoryAndFavorites();
+                    if (mounted) {
+                      setState(() {
+                        _continueWatching.removeWhere((i) =>
+                            i.id.toString() == item.id.toString() ||
+                            (item.title.isNotEmpty && i.title.trim().toLowerCase() == item.title.trim().toLowerCase()));
+                      });
+                    }
+                    await PlaybackHistoryService.removeFromHistory(item.id, title: item.title);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -2357,8 +2363,18 @@ class _HomeViewState extends State<HomeView> {
                     onRemove: () async {
                       final confirm = await _confirmDeleteSingleContinueWatching(context, item);
                       if (confirm == true) {
-                        await PlaybackHistoryService.removeFromHistory(item.id);
-                        _loadHistoryAndFavorites();
+                        // 1. Mutación reactiva inmediata en la memoria del widget
+                        if (mounted) {
+                          setState(() {
+                            _continueWatching.removeWhere((i) =>
+                                i.id.toString() == item.id.toString() ||
+                                (item.title.isNotEmpty && i.title.trim().toLowerCase() == item.title.trim().toLowerCase()));
+                          });
+                        }
+                        // 2. Persistencia en base de datos local y sincronización en la nube
+                        await PlaybackHistoryService.removeFromHistory(item.id, title: item.title);
+
+                        // 3. Notificación visual al usuario
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -2453,12 +2469,14 @@ class _HomeViewState extends State<HomeView> {
     );
 
     if (confirm == true) {
-      await PlaybackHistoryService.clearHistory();
       if (mounted) {
         setState(() {
+          _continueWatching.clear();
           _isEditingContinueWatching = false;
         });
-        _loadHistoryAndFavorites();
+      }
+      await PlaybackHistoryService.clearHistory();
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Se eliminaron todos los títulos de Continuar Viendo.'),

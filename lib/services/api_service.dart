@@ -935,6 +935,57 @@ class ApiService {
     }
   }
 
+  /// Elimina un elemento del progreso de reproducción en la nube
+  Future<bool> deletePlaybackProgress(String clientCode, dynamic id, {String? title}) async {
+    try {
+      final url = '$baseUrl/user-data/delete-progress';
+      final uri = Uri.parse(url);
+      final bodyMap = <String, dynamic>{
+        'code': clientCode,
+        'id': id,
+      };
+      if (title != null && title.isNotEmpty) {
+        bodyMap['title'] = title;
+      }
+      final response = await http
+          .post(
+            uri,
+            headers: _getHeaders(uri.toString(), extra: {
+              'Content-Type': 'application/json',
+              'x-client-code': clientCode,
+            }),
+            body: json.encode(bodyMap),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Borra todo el historial de reproducción en la nube
+  Future<bool> clearPlaybackProgress(String clientCode) async {
+    try {
+      final url = '$baseUrl/user-data/clear-progress';
+      final uri = Uri.parse(url);
+      final response = await http
+          .post(
+            uri,
+            headers: _getHeaders(uri.toString(), extra: {
+              'Content-Type': 'application/json',
+              'x-client-code': clientCode,
+            }),
+            body: json.encode({'code': clientCode}),
+          )
+          .timeout(const Duration(seconds: 8));
+
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Sincroniza el agregado o retiro de un favorito con la nube
   Future<bool> syncFavorite(String clientCode, Map<String, dynamic> item) async {
     try {

@@ -910,6 +910,51 @@ router.post('/user-data/progress', (req, res) => {
 });
 
 /**
+ * @route   POST /api/streaming/user-data/delete-progress
+ * @desc    Elimina un elemento específico del historial de reproducción en la nube
+ * @body    code {string}
+ * @body    id {string|number}
+ * @body    title {string}
+ */
+router.post('/user-data/delete-progress', (req, res) => {
+  try {
+    const code = req.body.code || req.headers['x-client-code'];
+    const { id, title } = req.body;
+    if (!code || (!id && !title)) {
+      return res.status(400).json({ success: false, error: 'Código de cliente y id o título son requeridos' });
+    }
+    const history = accountService.removePlaybackProgress(code, id, title);
+    return res.json({
+      success: true,
+      history
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/streaming/user-data/clear-progress
+ * @desc    Elimina todo el historial de reproducción en la nube
+ * @body    code {string}
+ */
+router.post('/user-data/clear-progress', (req, res) => {
+  try {
+    const code = req.body.code || req.headers['x-client-code'];
+    if (!code) {
+      return res.status(400).json({ success: false, error: 'Código de cliente es requerido' });
+    }
+    accountService.clearPlaybackHistory(code);
+    return res.json({
+      success: true,
+      history: []
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
  * @route   POST /api/streaming/user-data/favorite
  * @desc    Agrega o quita un favorito en la nube
  * @body    code {string}
@@ -1139,9 +1184,9 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '4.2.3',
-  versionCode: 49,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.3/TOM-TV-release.apk',
+  latestVersion: '4.2.4',
+  versionCode: 50,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.4/TOM-TV-release.apk',
   releaseDate: '2026-10-07'
 };
 

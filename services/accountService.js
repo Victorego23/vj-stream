@@ -291,6 +291,50 @@ class AccountService {
     return client.playbackHistory;
   }
 
+  removePlaybackProgress(codeOrId, itemId, itemTitle) {
+    if (!itemId && !itemTitle) return [];
+    const db = this._readDb();
+    const clean = String(codeOrId).trim().toUpperCase();
+    const client = (db.clients || []).find(c => 
+      (c.code && c.code.toUpperCase() === clean) || 
+      (c.id && c.id.toUpperCase() === clean) ||
+      (c.username && c.username.toUpperCase() === clean)
+    );
+    if (!client) return [];
+
+    if (!Array.isArray(client.playbackHistory)) {
+      client.playbackHistory = [];
+      return [];
+    }
+
+    const targetIdStr = itemId != null ? String(itemId).trim() : null;
+    const targetTitleStr = itemTitle != null ? String(itemTitle).trim().toLowerCase() : null;
+
+    client.playbackHistory = client.playbackHistory.filter(h => {
+      const matchId = targetIdStr && String(h.id).trim() === targetIdStr;
+      const matchTitle = targetTitleStr && h.title && String(h.title).trim().toLowerCase() === targetTitleStr;
+      return !(matchId || matchTitle);
+    });
+
+    this._writeDb(db);
+    return client.playbackHistory;
+  }
+
+  clearPlaybackHistory(codeOrId) {
+    const db = this._readDb();
+    const clean = String(codeOrId).trim().toUpperCase();
+    const client = (db.clients || []).find(c => 
+      (c.code && c.code.toUpperCase() === clean) || 
+      (c.id && c.id.toUpperCase() === clean) ||
+      (c.username && c.username.toUpperCase() === clean)
+    );
+    if (!client) return [];
+
+    client.playbackHistory = [];
+    this._writeDb(db);
+    return [];
+  }
+
   toggleFavorite(codeOrId, item) {
     if (!item || !item.id) return [];
     const db = this._readDb();

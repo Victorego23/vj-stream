@@ -95,7 +95,7 @@ app.get('/api/version', (req, res) => {
 });
 
 // URLs directas de release del APK para descarga inmediata sin saltos en Smart TV y navegadores
-let currentApkDownloadUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.3/TOM-TV-release.apk';
+let currentApkDownloadUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.4/TOM-TV-release.apk';
 
 const updateLatestApkUrl = () => {
   try {
