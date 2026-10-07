@@ -77,6 +77,7 @@ jobs:
             ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
             - 👤 **Integración Completa de "Mi Cuenta" en Smart TV**: Pestaña dedicada de Perfil en la barra lateral del televisor para gestionar cuenta, activación, credenciales, control parental y actualizaciones exactamente igual que en el celular con soporte 100% control remoto D-Pad.
+            - 🧭 **Sidebar de Smart TV Optimizado**: Eliminado botón redundante de "Ajustes"; ahora toda la configuración se centraliza de forma intuitiva y directa en "Mi Cuenta".
             - ⚡ **Resolución Precisa TorBox Multi-Archivo (Batch)**: Identificación y extracción exacta del `file_id` por temporada y episodio en torrents batch (como series y anime, ej. Pokémon) con soporte para nomenclatura de anime y paquetes multi-temporada.
             - ⏱️ **Timeouts Ampliados a 20s y Resiliencia**: Incremento del margen de espera en scrapers y APIs de Debrid/TorBox a 20 segundos para evitar cancelaciones prematuras en conexiones residenciales y Smart TV.
             - 📺 **Fallback Inteligente HEVC Main 10 / Android TV**: Detección automática de fallos de inicialización en decodificador por hardware y conmutación transparente a flujos seguros H.264 (AVC) 8-bit SDR.

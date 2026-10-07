@@ -1,7 +1,7 @@
 name: tom_tv
 description: "TOM TV - Plataforma de Streaming de Alta Calidad con Real-Debrid y TMDB"
 publish_to: 'none'
-version: 4.2.6+52
+version: 4.2.7+53
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

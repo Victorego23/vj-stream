@@ -23,7 +23,7 @@ class TvNavigationSidebar extends StatefulWidget {
   final String activeTabId;
   final ValueChanged<String> onSelectTab;
   final VoidCallback onSearch;
-  final VoidCallback onSettings;
+  final VoidCallback? onSettings;
   final VoidCallback onRefresh;
 
   const TvNavigationSidebar({
@@ -31,7 +31,7 @@ class TvNavigationSidebar extends StatefulWidget {
     required this.activeTabId,
     required this.onSelectTab,
     required this.onSearch,
-    required this.onSettings,
+    this.onSettings,
     required this.onRefresh,
   });
 
@@ -108,12 +108,6 @@ class TvNavigationSidebarState extends State<TvNavigationSidebar> {
           label: 'Recargar',
           icon: Icons.refresh_rounded,
           onAction: widget.onRefresh,
-        ),
-        TvSidebarItemData(
-          id: 'settings',
-          label: 'Ajustes',
-          icon: Icons.settings_rounded,
-          onAction: widget.onSettings,
         ),
       ];
 
