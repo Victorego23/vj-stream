@@ -281,7 +281,7 @@ router.get('/vod/explorer', async (req, res, next) => {
       if (maxYear) params['primary_release_date.lte'] = `${maxYear}-12-31`;
 
       const dRes = await tmdbService.discoverMovie(params);
-      tmdbResults = dRes?.results || [];
+      tmdbResults = Array.isArray(dRes) ? dRes : (dRes?.results || []);
     }
 
     return res.json({
