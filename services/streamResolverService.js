@@ -34,6 +34,26 @@ class StreamResolverService {
   }
 
   /**
+   * Limpia entradas de la memoria caché.
+   * @param {string|null} pattern - Palabra clave o identificador a desalojar
+   */
+  clearCache(pattern = null) {
+    if (!pattern) {
+      const size = this.cache.size;
+      this.cache.clear();
+      return size;
+    }
+    let cleared = 0;
+    for (const key of this.cache.keys()) {
+      if (key.toLowerCase().includes(pattern.toLowerCase())) {
+        this.cache.delete(key);
+        cleared++;
+      }
+    }
+    return cleared;
+  }
+
+  /**
    * Genera una clave única para la caché en memoria.
    * @private
    */
@@ -436,6 +456,20 @@ class StreamResolverService {
       score += 400;
     } else if (titleMatch.ratio >= 0.5) {
       score += 200;
+    }
+
+    // CONTROL DE VERSIONES EXTENDIDAS / UNCUT / HÍBRIDAS CON AUDIO PARCIAL EN INGLÉS:
+    // En series como "The Walking Dead", las versiones 'Extended Cut', 'Unrated', 'Uncut', 'Director's Cut' o BluRay
+    // con metraje extendido carecen de doblaje en las escenas añadidas (nunca grabadas en estudio),
+    // haciendo que el audio salte a inglés en ciertas escenas.
+    const isExtendedOrHybrid = /\b(extended|uncut|unrated|directors?[\s._-]*cut|open[\s._-]*matte|hybrid|remux)\b/i.test(fullText);
+    const isCleanStreamingWeb = /\b(web-dl|webrip|web|star\+|netflix|amc|hbo|disney|cinecalidad|hdtv)\b/i.test(fullText);
+
+    if (isExtendedOrHybrid) {
+      score -= 4200; // Despriorizar fuertemente versiones con escenas no dobladas
+    }
+    if (isCleanStreamingWeb && isSpanishAudio) {
+      score += 1500; // Máxima preferencia a versiones de plataforma/TV con doblaje 100% continuo y completo
     }
 
     // Bonificación si coincide el año en el nombre del archivo

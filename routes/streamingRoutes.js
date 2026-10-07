@@ -758,6 +758,20 @@ router.post('/auto-resolve', async (req, res, next) => {
 });
 
 /**
+ * @route   POST /api/streaming/clear-cache
+ * @desc    Limpia la memoria caché del resolver para forzar nueva búsqueda de fuentes óptimas
+ */
+router.post('/clear-cache', (req, res) => {
+  const { pattern } = req.body || {};
+  const cleared = streamResolverService.clearCache(pattern);
+  return res.json({
+    success: true,
+    message: pattern ? `Caché limpiada para patrón: "${pattern}"` : 'Caché completa de streams limpiada con éxito.',
+    cleared
+  });
+});
+
+/**
  * @route   GET /api/streaming/upcoming
  * @route   GET /api/streaming/trailers
  * @desc    Obtiene los próximos estrenos de cine y títulos disponibles solo en tráiler (inglés)
