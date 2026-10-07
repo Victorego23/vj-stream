@@ -73,6 +73,7 @@ jobs:
           body: |
             ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
+            - 🎙️ **Prioridad Absoluta Español Latino (🇲🇽) y Cinecalidad**: Reproducción automática garantizada en audio Latino / Mexicano en Full HD por defecto.
             - 📡 **444 Canales de TV en Vivo 100% Operativos**: Auditoría exhaustiva y eliminación permanente de enlaces caídos (Cero Bajas).
             - 🛡️ **Auto-Failover Inteligente 24/7**: Conmutación automática a fuentes de respaldo si una señal primaria falla.
             - 📺 **Modo Smart TV Cinemático (10-Foot UI)**: Interfaz fluida estilo Apple TV/Netflix, halo neón de enfoque, reloj en vivo y detección en TV Box.
