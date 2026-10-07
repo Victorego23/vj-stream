@@ -198,7 +198,19 @@ class TorBoxService {
 
     const candidates = validSeasonFiles.length > 0 ? validSeasonFiles : videoFiles;
 
+    // Calificación de preferencia de idioma para garantizar audio en Español
+    const scoreLang = (fileName) => {
+      const lower = (fileName || '').toLowerCase();
+      if (/latino|latam|mexic|\b(lat)\b/i.test(lower)) return 100;
+      if (/castellano|\b(cast)\b/i.test(lower)) return 80;
+      if (/español|spanish|\b(esp|spa)\b|dual|multi/i.test(lower)) return 60;
+      if (/cinecalidad|mejortorrent/i.test(lower)) return 90;
+      if (/eng|english|sub|jap|jpn/i.test(lower)) return 10;
+      return 30;
+    };
+
     // NIVEL 1: Notación estándar SxxExx o 1x01 o SxEx
+    const level1Matches = [];
     for (const f of candidates) {
       const name = (f.name || f.short_name || '').toLowerCase();
       const seMatch = name.match(/\bs?0*(\d{1,2})[.\s_-]*[ex]0*(\d{1,3})\b/i);
@@ -206,9 +218,17 @@ class TorBoxService {
         const matchSeason = parseInt(seMatch[1], 10);
         const matchEp = parseInt(seMatch[2], 10);
         if (matchSeason === s && matchEp === e) {
-          return f;
+          level1Matches.push(f);
         }
       }
+    }
+    if (level1Matches.length > 0) {
+      // Priorizar el archivo con doblaje o pista en Español
+      return level1Matches.sort((a, b) => {
+        const scoreB = scoreLang(b.name || b.short_name);
+        const scoreA = scoreLang(a.name || a.short_name);
+        return scoreB - scoreA;
+      })[0];
     }
 
     // NIVEL 2: Prefijos y palabras clave de episodio (Anime / Animación / Pokémon / Telenovelas)
@@ -222,14 +242,25 @@ class TorBoxService {
       new RegExp(`\\b(?:${pad2}|${pad3})\\b`, 'i')
     ];
 
+    const level2Matches = [];
     for (const pattern of epKeywordPatterns) {
-      const matched = candidates.find(f => {
+      for (const f of candidates) {
         const name = (f.name || f.short_name || '').toLowerCase();
         // Limpiar resolución (1080p, 720p), año y codecs para evitar falsos positivos
         const clean = name.replace(/1080p?|720p?|480p?|x264|x265|h264|h265|19\d{2}|20\d{2}/gi, ' ');
-        return pattern.test(clean);
-      });
-      if (matched) return matched;
+        if (pattern.test(clean) && !level2Matches.includes(f)) {
+          level2Matches.push(f);
+        }
+      }
+      if (level2Matches.length > 0) break;
+    }
+
+    if (level2Matches.length > 0) {
+      return level2Matches.sort((a, b) => {
+        const scoreB = scoreLang(b.name || b.short_name);
+        const scoreA = scoreLang(a.name || a.short_name);
+        return scoreB - scoreA;
+      })[0];
     }
 
     // NIVEL 3: Orden natural por índice de episodio si los archivos están numerados correlativamente
@@ -238,7 +269,7 @@ class TorBoxService {
       return sorted[e - 1];
     }
 
-    return candidates[0];
+    return [...candidates].sort((a, b) => scoreLang(b.name || b.short_name) - scoreLang(a.name || a.short_name))[0];
   }
 
   /**
