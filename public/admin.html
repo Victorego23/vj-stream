@@ -2820,11 +2820,11 @@
               ${escapeHtml(c.streamUrl || '')}
             </td>
             <td style="text-align: right;">
-              <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end;">
+              <div style="display: inline-flex; gap: 6px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
                 ${toggleBtn}
-                <button class="btn btn-secondary btn-sm" onclick="openEditChannelModal('${c.id}')" title="Editar datos del canal">✏️</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteChannelConfirm('${c.id}', '${escapeJs(c.name)}')" title="Eliminar canal definitivamente">🗑️</button>
-                <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')" title="Copiar enlace de streaming">📋</button>
+                <button class="btn btn-secondary btn-sm" onclick="openEditChannelModal('${c.id}')" title="Editar datos del canal">✏️ Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteChannelConfirm('${c.id}', '${escapeJs(c.name)}')" title="Eliminar canal definitivamente" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); color: #f87171; font-weight: 700;">🗑️ Eliminar</button>
+                <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.streamUrl)}', 'Link copiado')" title="Copiar enlace de streaming">📋 Copiar Link</button>
               </div>
             </td>
           </tr>
