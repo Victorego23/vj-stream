@@ -76,11 +76,11 @@ jobs:
           body: |
             ## 🚀 TOM TV v${{ steps.get_version.outputs.version_name }} Oficial (Build ${{ steps.get_version.outputs.version_code }})
             
+            - ⚡ **Resolución Precisa TorBox Multi-Archivo (Batch)**: Identificación y extracción exacta del `file_id` por temporada y episodio en torrents batch (como series y anime, ej. Pokémon) con soporte para nomenclatura de anime y paquetes multi-temporada.
+            - ⏱️ **Timeouts Ampliados a 20s y Resiliencia**: Incremento del margen de espera en scrapers y APIs de Debrid/TorBox a 20 segundos para evitar cancelaciones prematuras en conexiones residenciales y Smart TV.
+            - 📺 **Fallback Inteligente HEVC Main 10 / Android TV**: Detección automática de fallos de inicialización en decodificador por hardware y conmutación transparente a flujos seguros H.264 (AVC) 8-bit SDR.
+            - 🎙️ **Doblaje Continuo 100% en Español**: Penalización estricta de versiones extendidas/híbridas con baches en inglés (ej. The Walking Dead) y prioridad absoluta a versiones WEB-DL/Retail oficiales con doblaje íntegro.
             - 📋 **Gestión de "Continuar Viendo" & Sincronización Reactiva**: Mutación reactiva instantánea en pantalla al confirmar "Quitar" (eliminación inmediata del carrusel sin latencia ni reinicio), persistencia local protegida con tombstones contra resurrección por caché, y nuevos endpoints de eliminación y limpieza masiva en la nube.
-            - 🎞️ **Corrección de Decodificación de Video**: Detección y filtrado de flujos Dolby Vision Profile 5 incompatibles con hardware móvil/TV para eliminar distorsión de color púrpura/verde y artefactos visuales (ej. serie "El Chapo"). Priorización de H.264/SDR universal.
-            - 🎯 **Interfaz Demo Limpia**: Remoción de banners publicitarios y promocionales de la pantalla de inicio para una experiencia sin distracciones.
-            - 👤 **Identificación Real de Cuenta en Perfil**: Reemplazo de 'Visitante' y código aleatorio por el nombre de usuario y código de cliente real sincronizado con la base de datos de activación.
-            - 🎙️ **Prioridad Absoluta Español Latino (🇲🇽) y Cinecalidad**: Reproducción automática garantizada en audio Latino / Mexicano en Full HD por defecto.
             - 📡 **444 Canales de TV en Vivo 100% Operativos**: Auditoría exhaustiva y auto-failover inteligente con cero enlaces caídos.
             - 📺 **Modo Smart TV Cinemático (10-Foot UI)**: Interfaz fluida estilo Apple TV/Netflix, halo neón de enfoque, reloj en vivo y controles remotos D-Pad.
           files: |
