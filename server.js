@@ -257,6 +257,10 @@ const server = app.listen(PORT, () => {
   // Iniciar monitor autónomo de canales de TV en vivo 24/7 (Auditoría continua cada 6h)
   channelService.startBackgroundMonitor(6);
 
+  // Iniciar limpiador autónomo de TorBox (elimina torrents estancados cada 15 min)
+  const torboxService = require('./services/torboxService');
+  torboxService.startBackgroundCleaner(15);
+
   // Iniciar base de datos masiva de películas e ingesta programada (50,000+ títulos)
   const movieDatabaseService = require('./services/movieDatabaseService');
   const movieIngestionService = require('./services/movieIngestionService');

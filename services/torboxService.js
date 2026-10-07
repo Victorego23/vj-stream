@@ -173,7 +173,14 @@ class TorBoxService {
       await new Promise(r => setTimeout(r, 800));
     }
 
-    if (!info || !info.files || info.files.length === 0) {
+    if (!info || (info.download_state !== 'completed' && info.progress !== 1)) {
+      // Si el torrent no está listo de inmediato o quedó estancado, eliminarlo al instante para no ensuciar la cuenta
+      this.deleteTorrent(torrentId).catch(() => {});
+      throw new Error('El torrent no está en caché completado en TorBox');
+    }
+
+    if (!info.files || info.files.length === 0) {
+      this.deleteTorrent(torrentId).catch(() => {});
       throw new Error('El torrent no tiene archivos disponibles en TorBox');
     }
 
@@ -208,6 +215,11 @@ class TorBoxService {
       chosen = videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0))[0] || info.files[0];
     }
 
+    if (!chosen) {
+      this.deleteTorrent(torrentId).catch(() => {});
+      throw new Error('No se encontró ningún archivo de video compatible');
+    }
+
     const streamUrl = await this.requestDownloadLink(torrentId, chosen.id);
 
     return {
@@ -218,6 +230,83 @@ class TorBoxService {
       filesize: chosen.size
     };
   }
+
+  /**
+   * Elimina un torrent de TorBox por su ID.
+   * @param {number|string} torrentId
+   * @returns {Promise<boolean>}
+   */
+  async deleteTorrent(torrentId) {
+    if (!this.isAvailable()) return false;
+    try {
+      const client = this._getAxiosClient();
+      const res = await client.post('/torrents/controltorrent', {
+        torrent_id: torrentId,
+        operation: 'delete'
+      });
+      return Boolean(res.data?.success);
+    } catch (err) {
+      console.warn(`[TorBox] Error al eliminar torrent ${torrentId}:`, err.message);
+      return false;
+    }
+  }
+
+  /**
+   * Limpia y elimina automáticamente todos los torrents estancados, sin semillas o fallidos.
+   * Mantiene la cuenta de TorBox siempre limpia con solo descargas listas.
+   * @returns {Promise<number>} Número de torrents eliminados
+   */
+  async cleanStalledTorrents() {
+    if (!this.isAvailable()) return 0;
+    try {
+      const client = this._getAxiosClient();
+      const res = await client.get('/torrents/mylist?bypass_cache=true');
+      const list = res.data?.data || [];
+      let deletedCount = 0;
+
+      for (const t of list) {
+        const state = (t.download_state || '').toLowerCase();
+        // Detectar si está estancado sin semillas, fallido o en 0%
+        const isStalled = state.includes('stalled') ||
+                          state.includes('failed') ||
+                          (state === 'downloading' && (t.seeds === 0 || !t.seeds) && (t.progress === 0 || t.progress < 0.2));
+
+        if (isStalled) {
+          console.log(`[TorBox Auto-Clean] 🧹 Eliminando torrent estancado sin semillas: "${t.name}" (ID: ${t.id})`);
+          const ok = await this.deleteTorrent(t.id);
+          if (ok) deletedCount++;
+          await new Promise(r => setTimeout(r, 250));
+        }
+      }
+
+      if (deletedCount > 0) {
+        console.log(`[TorBox Auto-Clean] ✨ Limpieza completada: ${deletedCount} torrents estancados eliminados de TorBox.`);
+      }
+      return deletedCount;
+    } catch (err) {
+      console.warn('[TorBox Auto-Clean] Error en ciclo de limpieza:', err.message);
+      return 0;
+    }
+  }
+
+  /**
+   * Inicia el limpiador en segundo plano cada N minutos.
+   */
+  startBackgroundCleaner(intervalMinutes = 15) {
+    if (!this.isAvailable()) return;
+    console.log(`[TorBox Auto-Clean] 🚀 Limpiador autónomo activado (frecuencia: cada ${intervalMinutes} min).`);
+
+    // Limpieza inicial a los 10 segundos
+    setTimeout(() => {
+      this.cleanStalledTorrents().catch(() => {});
+    }, 10000);
+
+    // Ciclo periódico
+    setInterval(() => {
+      this.cleanStalledTorrents().catch(() => {});
+    }, intervalMinutes * 60 * 1000);
+  }
 }
 
 module.exports = new TorBoxService();
+
