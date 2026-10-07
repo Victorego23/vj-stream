@@ -16,6 +16,7 @@ import '../widgets/tv_navigation_sidebar.dart';
 import '../widgets/stream_resolving_dialog.dart';
 import 'detail_view.dart';
 import 'search_view.dart';
+import 'movies_explorer_view.dart';
 import 'video_player_view.dart';
 import 'live_tv_view.dart';
 import 'sports_view.dart';
@@ -609,6 +610,127 @@ class _HomeViewState extends State<HomeView> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const SearchView(),
+      ),
+    );
+  }
+
+  void _openMoviesExplorer({String? platform, int? genreId, String? collection}) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MoviesExplorerView(
+          initialPlatform: platform,
+          initialGenreId: genreId,
+          initialCollection: collection,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoviesExplorerBanner(bool isTv) {
+    return Container(
+      margin: EdgeInsets.symmetric(
+        horizontal: isTv ? 48 : 16,
+        vertical: 8,
+      ),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1C0A0D), Color(0xFF0F1322)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE50914).withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFE50914).withValues(alpha: 0.15),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _openMoviesExplorer(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE50914).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE50914).withValues(alpha: 0.4)),
+                  ),
+                  child: const Icon(Icons.movie_filter_rounded, color: Color(0xFFE50914), size: 28),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Catálogo Ilimitado de Películas',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE50914),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '+50,000',
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      const Text(
+                        'Explora por Netflix, Disney+, Max, Sagas Marvel/DC, Décadas 70s-2026 y Estrenos',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE50914),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Explorar',
+                        style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 12),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1287,6 +1409,12 @@ class _HomeViewState extends State<HomeView> {
               child: _buildYearSelectorBar(true),
             ),
 
+          // Banner de Acceso Directo al Catálogo Masivo de Películas (+50,000 Títulos)
+          if (_activeTab == 'Todos' || _activeTab == 'Películas')
+            SliverToBoxAdapter(
+              child: _buildMoviesExplorerBanner(true),
+            ),
+
           if (_activeTab == 'Películas' && _selectedMovieYear != null)
             SliverToBoxAdapter(
               child: _buildYearMoviesGrid(true),
@@ -1511,6 +1639,12 @@ class _HomeViewState extends State<HomeView> {
           if (_activeTab == 'Películas')
             SliverToBoxAdapter(
               child: _buildYearSelectorBar(false),
+            ),
+
+          // Banner de Acceso Directo al Catálogo Masivo de Películas (+50,000 Títulos)
+          if (_activeTab == 'Todos' || _activeTab == 'Películas')
+            SliverToBoxAdapter(
+              child: _buildMoviesExplorerBanner(false),
             ),
 
           // Vista cuando la pestaña activa es "Fútbol & Deportes"

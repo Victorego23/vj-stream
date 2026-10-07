@@ -588,6 +588,101 @@ class ApiService {
     }
   }
 
+  /// Explorador masivo de películas con soporte para filtros por Género, Año, Década, Plataforma, Saga y Búsqueda
+  Future<Map<String, dynamic>> fetchVodMovies({
+    int page = 1,
+    int limit = 30,
+    int? genreId,
+    int? year,
+    int? minYear,
+    int? maxYear,
+    String? platform,
+    String? collectionName,
+    String? sortBy,
+    String? search,
+  }) async {
+    try {
+      final queryParams = <String, String>{
+        'page': page.toString(),
+        'limit': limit.toString(),
+      };
+      if (genreId != null) queryParams['genreId'] = genreId.toString();
+      if (year != null) queryParams['year'] = year.toString();
+      if (minYear != null) queryParams['minYear'] = minYear.toString();
+      if (maxYear != null) queryParams['maxYear'] = maxYear.toString();
+      if (platform != null && platform.isNotEmpty && platform != 'todas') queryParams['platform'] = platform;
+      if (collectionName != null && collectionName.isNotEmpty) queryParams['collectionName'] = collectionName;
+      if (sortBy != null && sortBy.isNotEmpty) queryParams['sortBy'] = sortBy;
+      if (search != null && search.trim().isNotEmpty) queryParams['search'] = search.trim();
+
+      final uri = Uri.parse('$baseUrl/vod/explorer').replace(queryParameters: queryParams);
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['results'] is List) {
+          final List<dynamic> raw = data['results'];
+          final items = raw
+              .map((item) => MediaItem.fromJson(item as Map<String, dynamic>))
+              .where((m) => m.bestPosterUrl.isNotEmpty)
+              .toList();
+
+          return {
+            'page': data['page'] ?? page,
+            'totalPages': data['totalPages'] ?? 1,
+            'totalResults': data['totalResults'] ?? items.length,
+            'results': items,
+          };
+        }
+      }
+      return {'page': page, 'totalPages': 1, 'totalResults': 0, 'results': <MediaItem>[]};
+    } catch (_) {
+      return {'page': page, 'totalPages': 1, 'totalResults': 0, 'results': <MediaItem>[]};
+    }
+  }
+
+  /// Obtiene las sagas y franquicias cinematográficas más populares del cine
+  Future<List<Map<String, dynamic>>> fetchVodCollections() async {
+    try {
+      final uri = Uri.parse('$baseUrl/vod/collections');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['collections'] is List) {
+          return List<Map<String, dynamic>>.from(data['collections']);
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Obtiene la lista de plataformas de streaming para filtrado
+  Future<List<Map<String, dynamic>>> fetchVodPlatforms() async {
+    try {
+      final uri = Uri.parse('$baseUrl/vod/platforms');
+      final response = await http
+          .get(uri, headers: _getHeaders(uri.toString()))
+          .timeout(const Duration(seconds: 8));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(utf8.decode(response.bodyBytes));
+        if (data['success'] == true && data['platforms'] is List) {
+          return List<Map<String, dynamic>>.from(data['platforms']);
+        }
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
   /// Comprueba en el backend si una película que estaba en modo tráiler ya tiene audio en español
   Future<Map<String, dynamic>?> checkSpanishAvailability(MediaItem item) async {
     try {
