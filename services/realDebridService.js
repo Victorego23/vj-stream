@@ -201,11 +201,11 @@ class RealDebridService {
     let isSpanish = false;
     let score = 10;
 
-    if (/\b(latino|lat|audio\s*latino)\b/i.test(name)) {
+    if (/cinecalidad|\b(latino|lat|audio\s*latino|doblaje\s*latino|dual\s*lat|latam|latinoamerica|mexico|mexicano)\b/i.test(name)) {
       language = 'Español Latino';
       isSpanish = true;
       score = 100;
-    } else if (/\b(castellano|cast|spanish|esp|spa)\b/i.test(name)) {
+    } else if (/\b(castellano|cast|spanish|esp|spa|mejortorrent|wolfmax4k)\b/i.test(name)) {
       language = 'Castellano';
       isSpanish = true;
       score = 90;
