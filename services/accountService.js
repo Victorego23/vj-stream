@@ -64,7 +64,7 @@ class AccountService {
         console.log('🍃 [MongoDB Atlas] Documento inicial creado en la nube.');
       }
     } catch (err) {
-      console.warn('⚠️ [MongoDB Atlas] Conexión en la nube en espera (usando disco local seguro):', err.message);
+      console.warn('⚠️ [MongoDB Atlas] Conexión en la nube en espera (usando disco local seguro):', err?.message || err);
       this._isMongoConnected = false;
     }
   }
