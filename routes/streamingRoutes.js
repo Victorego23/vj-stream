@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const realDebridService = require('../services/realDebridService');
+const torboxService = require('../services/torboxService');
 const tmdbService = require('../services/tmdbService');
 const streamResolverService = require('../services/streamResolverService');
 const channelService = require('../services/channelService');
@@ -602,6 +603,88 @@ router.post('/resolve-stream', async (req, res, next) => {
     return res.json(result);
   } catch (error) {
     next(error);
+  }
+});
+
+/**
+ * @route   GET /api/streaming/stream
+ * @route   GET /api/stream
+ * @desc    Streaming orquestado 100% en la infraestructura y CDN de TorBox (Zero-Buffer / Zero-Memory en Render).
+ *          Render NO descarga, almacena ni hace proxy de ningún byte multimedia.
+ *          El backend orquesta la llamada a la API de TorBox y responde con una Redirección HTTP 302
+ *          directa al CDN (o JSON con la URL directa para reproductores avanzados).
+ * @query   magnet {string} - Enlace magnet o hash del torrent (Obligatorio)
+ * @query   hash {string} - Alias alternativo para el hash del torrent
+ * @query   redirect {boolean} - Si responde con Redirección 302 (default true) o JSON
+ * @query   format {string} - 'json' para forzar respuesta en formato JSON
+ * @query   season {number} - Temporada opcional si es serie
+ * @query   episode {number} - Episodio opcional si es serie
+ */
+router.get('/stream', async (req, res, next) => {
+  try {
+    const { magnet, hash, redirect = 'true', format, season, episode } = req.query;
+    const targetMagnet = magnet || hash;
+
+    if (!targetMagnet || typeof targetMagnet !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'El parámetro "magnet" o "hash" es obligatorio.'
+      });
+    }
+
+    if (!torboxService.isAvailable()) {
+      return res.status(503).json({
+        success: false,
+        error: 'El servicio de TorBox no está configurado en el servidor (TORBOX_API_KEY no encontrada).'
+      });
+    }
+
+    const streamData = await torboxService.resolveMagnetToStream(targetMagnet, {
+      season: season ? parseInt(season, 10) : undefined,
+      episode: episode ? parseInt(episode, 10) : undefined
+    });
+
+    if (!streamData.ready || !streamData.streamUrl) {
+      return res.status(202).json({
+        success: false,
+        ready: false,
+        status: streamData.status || 'downloading',
+        progress: streamData.progress || 0,
+        seeds: streamData.seeds || 0,
+        message: streamData.message || 'El torrent se está descargando en los servidores de TorBox. Intenta nuevamente en breve.'
+      });
+    }
+
+    // Cabeceras universales de streaming para HTML5 <video> y Video.js
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Accept, Origin, Content-Type');
+    res.setHeader('Cache-Control', 'private, no-cache, no-transform');
+
+    const shouldRedirect = redirect !== 'false' && format !== 'json' && !req.accepts('json');
+
+    if (shouldRedirect) {
+      // Redirección HTTP 302 directa hacia el CDN de TorBox
+      return res.redirect(302, streamData.streamUrl);
+    }
+
+    // Respuesta JSON estructurada si el cliente o reproductor lo solicita explícitamente
+    return res.json({
+      success: true,
+      ready: true,
+      streamUrl: streamData.streamUrl,
+      filename: streamData.filename,
+      filesize: streamData.filesize,
+      torrentId: streamData.torrentId,
+      fileId: streamData.fileId,
+      mimeType: streamData.mimeType || 'video/mp4'
+    });
+  } catch (error) {
+    console.error('[TorBox Stream Router] Error resolviendo stream:', error.message);
+    return res.status(error.response?.status || 502).json({
+      success: false,
+      error: 'Error al orquestar streaming con TorBox: ' + error.message
+    });
   }
 });
 

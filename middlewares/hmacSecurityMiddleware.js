@@ -14,10 +14,10 @@ function hmacSecurityMiddleware(req, res, next) {
     return next();
   }
 
-  // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, playlist M3U, EPG, Streaming Proxy y sincronización)
+  // Rutas públicas exentas de firma (OTA Version, descarga directa del instalador, playlist M3U, EPG, Streaming Proxy, TorBox Stream y sincronización)
   const path = req.path || '';
-  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels', '/movies/years', '/genres', '/playlist.m3u', '/m3u', '/get.php', '/user-data', '/epg', '/proxy', '/stream-proxy', '/catalog/status'];
-  const isPublic = publicEndpoints.some(p => path.endsWith(p)) || path.includes('/vod/') || path.includes('/user-data/') || path.includes('/proxy');
+  const publicEndpoints = ['/version', '/download-apk', '/health', '/live-channels', '/channels', '/movies/years', '/genres', '/playlist.m3u', '/m3u', '/get.php', '/user-data', '/epg', '/proxy', '/stream-proxy', '/catalog/status', '/stream'];
+  const isPublic = publicEndpoints.some(p => path.endsWith(p)) || path.includes('/vod/') || path.includes('/user-data/') || path.includes('/proxy') || path.includes('/stream');
 
   if (isPublic) {
     return next();

@@ -103,14 +103,27 @@ class TorBoxService {
   }
 
   /**
-   * Añade un enlace magnet a la cuenta de TorBox.
-   * @param {string} magnet
+   * Añade un enlace magnet o hash a la cuenta de TorBox.
+   * @param {string} magnet - Enlace magnet URI o hash del torrent
    * @returns {Promise<Object>}
    */
   async addMagnet(magnet) {
+    if (!magnet || typeof magnet !== 'string') {
+      throw new Error('Magnet o hash de torrent es requerido.');
+    }
+
+    let cleanMagnet = magnet.trim();
+    if (!cleanMagnet.startsWith('magnet:?')) {
+      if (/^[a-fA-F0-9]{40}$/.test(cleanMagnet)) {
+        cleanMagnet = `magnet:?xt=urn:btih:${cleanMagnet}`;
+      } else if (!cleanMagnet.includes('urn:btih:')) {
+        cleanMagnet = `magnet:?xt=urn:btih:${cleanMagnet}`;
+      }
+    }
+
     const client = this._getAxiosClient();
     const payload = new URLSearchParams();
-    payload.append('magnet', magnet);
+    payload.append('magnet', cleanMagnet);
     payload.append('seed', '1');
     payload.append('allow_zip', 'false');
 
@@ -139,7 +152,7 @@ class TorBoxService {
   async requestDownloadLink(torrentId, fileId) {
     const apiKey = this.getApiKey();
     const client = this._getAxiosClient();
-    const res = await client.get(`/torrents/requestdl?token=${encodeURIComponent(apiKey)}&torrent_id=${torrentId}&file_id=${fileId}&zip_link=false`);
+    const res = await client.get(`/torrents/requestdl?token=${encodeURIComponent(apiKey)}&torrent_id=${torrentId}&file_id=${fileId}&zip=false&zip_link=false`);
 
     if (res.data?.success && res.data?.data) {
       return res.data.data;
@@ -149,11 +162,13 @@ class TorBoxService {
   }
 
   /**
-   * Resuelve un magnet a stream directo en TorBox.
-   * @param {string} magnet
+   * Resuelve un magnet a stream directo en el CDN de TorBox.
+   * Cero consumo de RAM/búfer en Render: solo orquesta metadatos y entrega la URL CDN.
+   * @param {string} magnet - Magnet link o hash
+   * @param {Object} [options] - Opciones (season, episode)
    * @returns {Promise<Object>}
    */
-  async resolveMagnetToStream(magnet, mediaInfo = null) {
+  async resolveMagnetToStream(magnet, options = {}) {
     const added = await this.addMagnet(magnet);
     const torrentId = added.torrentId;
 
@@ -161,42 +176,53 @@ class TorBoxService {
       throw new Error('No se recibió torrentId válido de TorBox');
     }
 
-    // Esperar hasta 3 intentos breves si está en proceso de verificación
     const client = this._getAxiosClient();
     let info = null;
+
+    // Consultar detalles con bypass_cache=true para estado fidedigno
     for (let i = 0; i < 3; i++) {
-      const res = await client.get(`/torrents/mylist?id=${torrentId}`);
+      const res = await client.get(`/torrents/mylist?id=${torrentId}&bypass_cache=true`);
       info = res.data?.data;
-      if (info && (info.download_state === 'completed' || info.progress === 1)) {
+      if (info && (info.download_state === 'completed' || info.download_state === 'cached' || info.progress === 1)) {
         break;
       }
-      await new Promise(r => setTimeout(r, 800));
+      await new Promise(r => setTimeout(r, 600));
     }
 
-    if (!info || (info.download_state !== 'completed' && info.progress !== 1)) {
-      // Si el torrent no está listo de inmediato o quedó estancado, eliminarlo al instante para no ensuciar la cuenta
-      this.deleteTorrent(torrentId).catch(() => {});
-      throw new Error('El torrent no está en caché completado en TorBox');
+    if (!info) {
+      throw new Error('No se pudo obtener información del torrent en TorBox');
     }
 
-    if (!info.files || info.files.length === 0) {
-      this.deleteTorrent(torrentId).catch(() => {});
-      throw new Error('El torrent no tiene archivos disponibles en TorBox');
+    const isReady = info.download_state === 'completed' || info.download_state === 'cached' || info.progress === 1;
+    if (!isReady) {
+      return {
+        success: false,
+        ready: false,
+        status: info.download_state || 'downloading',
+        progress: info.progress || 0,
+        seeds: info.seeds || 0,
+        torrentId,
+        message: 'El torrent no está en caché completado y requiere tiempo de descarga en los servidores de TorBox.'
+      };
+    }
+
+    const files = Array.isArray(info.files) ? info.files : [];
+    if (files.length === 0) {
+      throw new Error('El torrent no contiene archivos disponibles en TorBox');
     }
 
     // Filtrar archivos de video descartando CAMs
-    const videoFiles = info.files.filter(f => {
-      const name = f.name || f.short_name || '';
-      const isVideo = /\.(mp4|mkv|avi|mov|ts|m4v)$/i.test(name);
+    const videoFiles = files.filter(f => {
+      const name = (f.name || f.short_name || '').toLowerCase();
+      const isVideo = /\.(mp4|mkv|avi|mov|ts|m4v|webm)$/i.test(name);
       const isCam = CAM_REGEX.test(name);
       return isVideo && !isCam;
     });
 
     let chosen = null;
-    if (mediaInfo && mediaInfo.mediaType === 'tv' && mediaInfo.episode) {
-      const targetEp = parseInt(mediaInfo.episode, 10);
-      const targetSeason = parseInt(mediaInfo.season, 10) || 1;
-      // Buscar archivo que coincida con temporada y episodio (ej: S01E01, 1x01, Cap.101)
+    if (options && options.episode) {
+      const targetEp = parseInt(options.episode, 10);
+      const targetSeason = parseInt(options.season, 10) || 1;
       chosen = videoFiles.find(f => {
         const name = (f.name || f.short_name || '').toLowerCase();
         const sMatch = name.match(/\bs?0*(\d{1,2})[.\s_-]*[ex]0*(\d{1,3})\b/i);
@@ -211,23 +237,28 @@ class TorBoxService {
       });
     }
 
+    // Si no es serie o no hubo match de episodio: seleccionar el archivo de video de mayor tamaño
     if (!chosen) {
-      chosen = videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0))[0] || info.files[0];
+      chosen = videoFiles.sort((a, b) => (b.size || 0) - (a.size || 0))[0] || files[0];
     }
 
     if (!chosen) {
-      this.deleteTorrent(torrentId).catch(() => {});
-      throw new Error('No se encontró ningún archivo de video compatible');
+      throw new Error('No se encontró ningún archivo de video compatible en el torrent');
     }
 
+    // Solicitar URL de streaming directa del CDN de TorBox
     const streamUrl = await this.requestDownloadLink(torrentId, chosen.id);
 
     return {
       success: true,
+      ready: true,
       provider: 'TorBox',
+      torrentId,
+      fileId: chosen.id,
       streamUrl,
-      filename: chosen.name || info.name,
-      filesize: chosen.size
+      filename: chosen.name || chosen.short_name || info.name,
+      filesize: chosen.size,
+      mimeType: chosen.mimetype || 'video/mp4'
     };
   }
 

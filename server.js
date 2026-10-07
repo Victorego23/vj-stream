@@ -168,6 +168,12 @@ app.get('/get.php', (req, res) => {
   res.redirect(`/api/streaming/playlist.m3u${query}`);
 });
 
+// Endpoint universal de streaming directo orquestado con TorBox (Zero-Memory / Zero-Buffer)
+app.get('/stream', (req, res) => {
+  const query = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+  res.redirect(307, `/api/stream${query}`);
+});
+
 // Servir archivos estáticos de la Web App / PWA pública
 app.use(express.static(path.join(__dirname, 'public')));
 
