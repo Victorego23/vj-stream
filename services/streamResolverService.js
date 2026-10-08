@@ -395,11 +395,23 @@ class StreamResolverService {
     let audioLanguage = 'Audio Original';
     let isSpanishAudio = false;
 
+    // Detectar si el archivo es MULTi (varias pistas de audio mezcladas)
+    // En Smart TV / ExoPlayer, un archivo MULTi puede reproducir la pista inglesa por defecto
+    // causando que el usuario escuche inglés aunque el archivo contenga español.
+    const isMultiAudio = /\b(multi|dual)[._\s-]*(audio|lang|language|idioma)?\b/i.test(fullText) ||
+      /\b(dual[._\s-]*audio|multi[._\s-]*audio|dual[._\s-]*lang|multi[._\s-]*lang)\b/i.test(fullText) ||
+      /\.(multi|dual)\./i.test(filename);
+
     if (isCinecalidad || hasLatinoExplicit || isTorrentioLatino) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Latino Estéreo' : 'Español Latino';
       score += 6500;
       if (isCinecalidad) score += 1500; // Cinecalidad es la máxima pureza en Español Latino
+      // Penalizar archivos MULTi (pueden reproducirse en inglés en Smart TV)
+      // Solo si no es Cinecalidad (que garantiza español), aplicar penalización parcial
+      if (isMultiAudio && !isCinecalidad) {
+        score -= 800; // Preferir archivos en español puro sobre MULTi cuando ambos existen
+      }
       if (/eng[-_.]*lat|eng[-_.]*spa/i.test(firstLine)) {
         score -= 100;
       }
@@ -407,10 +419,12 @@ class StreamResolverService {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Castellano Estéreo' : 'Castellano';
       score += 4800;
+      if (isMultiAudio) score -= 600;
     } else if (isDualOrMultiSpanish || (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub'))) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Estéreo' : 'Español';
       score += 3800;
+      if (isMultiAudio) score -= 500;
     } else {
       // Stream en idioma original / inglés (conservado únicamente como último recurso si no existe doblaje)
       isSpanishAudio = false;

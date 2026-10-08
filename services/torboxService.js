@@ -199,12 +199,18 @@ class TorBoxService {
     const candidates = validSeasonFiles.length > 0 ? validSeasonFiles : videoFiles;
 
     // Calificación de preferencia de idioma para garantizar audio en Español
+    // Los archivos MULTi (dual audio) se penalizan porque en Smart TV / ExoPlayer
+    // pueden reproducir la pista en inglés por defecto aunque contengan español.
     const scoreLang = (fileName) => {
       const lower = (fileName || '').toLowerCase();
-      if (/latino|latam|mexic|\b(lat)\b/i.test(lower)) return 100;
-      if (/castellano|\b(cast)\b/i.test(lower)) return 80;
-      if (/español|spanish|\b(esp|spa)\b|dual|multi/i.test(lower)) return 60;
-      if (/cinecalidad|mejortorrent/i.test(lower)) return 90;
+      const isMulti = /\b(multi|dual)[._\s]*(audio|lang)?\b/i.test(lower) || /\.(multi|dual)\./i.test(lower);
+      if (/cinecalidad|mejortorrent/i.test(lower)) return 150; // Máxima confianza: 100% español
+      if (/latino|latam|mexic|\b(lat)\b/i.test(lower) && !isMulti) return 120; // Español puro latino
+      if (/castellano|\b(cast)\b/i.test(lower) && !isMulti) return 100; // Español puro castellano
+      if (/español|spanish|\b(esp|spa)\b/i.test(lower) && !isMulti) return 90; // Español puro genérico
+      if (/latino|latam|mexic|\b(lat)\b/i.test(lower) && isMulti) return 70; // Latino pero MULTi (riesgo de inglés)
+      if (/castellano|\b(cast)\b/i.test(lower) && isMulti) return 60; // Castellano pero MULTi
+      if (/español|spanish|\b(esp|spa)\b|dual|multi/i.test(lower)) return 50; // MULTi sin marca de español claro
       if (/eng|english|sub|jap|jpn/i.test(lower)) return 10;
       return 30;
     };
