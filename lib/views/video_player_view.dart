@@ -221,6 +221,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
       _currentStreamId = 'latino';
     }
 
+    if (!widget.isLive) {
+      _loadAndApplyAudioPreference();
+    }
+
     if (widget.subtitles != null && widget.subtitles!.isNotEmpty) {
       _subtitles = List<Map<String, dynamic>>.from(widget.subtitles!);
       // Si el audio predeterminado no es español, activar subtítulos automáticamente
@@ -1015,11 +1019,39 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     return false;
   }
 
+  Future<void> _loadAndApplyAudioPreference() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefId = prefs.getString('tomtv_preferred_audio_lang');
+      if (prefId != null && _availableStreams.isNotEmpty && !widget.isLive) {
+        final match = _availableStreams.firstWhere(
+          (s) => s['id'] == prefId,
+          orElse: () => <String, dynamic>{},
+        );
+        if (match.isNotEmpty && match['streamUrl'] != _currentVideoUrl && mounted) {
+          _switchStream(match);
+        }
+      }
+    } catch (e) {
+      debugPrint('[VideoPlayerView] Error al cargar preferencia de audio: $e');
+    }
+  }
+
   Future<void> _switchStream(Map<String, dynamic> stream) async {
     final newUrl = stream['streamUrl'] as String?;
     if (newUrl == null || newUrl.isEmpty || newUrl == _currentVideoUrl) return;
 
     final currentPos = _controller?.value.position ?? Duration.zero;
+
+    // Persistir preferencia de idioma para las siguientes reproducciones
+    final streamId = stream['id'] as String?;
+    if (streamId != null) {
+      SharedPreferences.getInstance().then((prefs) {
+        prefs.setString('tomtv_preferred_audio_lang', streamId);
+      }).catchError((e) {
+        debugPrint('[VideoPlayerView] No se pudo guardar preferencia de audio: $e');
+      });
+    }
 
     setState(() {
       _currentVideoUrl = newUrl;
@@ -1185,6 +1217,34 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         ),
       );
     }
+  }
+
+  void _showTvAudioSelectorModal() {
+    _hideControlsTimer?.cancel();
+
+    final audioStreams = _availableStreams.where((s) => s['isBackup'] != true).toList();
+    if (audioStreams.isEmpty) {
+      _showFeedbackIndicator('Pista de audio única activa');
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black87,
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return _TvAudioSelectorSheet(
+          audioStreams: audioStreams,
+          currentStreamId: _currentStreamId,
+          currentVideoUrl: _currentVideoUrl,
+          onSelect: (stream) {
+            Navigator.pop(sheetContext);
+            _switchStream(stream);
+          },
+        );
+      },
+    );
   }
 
   void _showSettingsModal() {
@@ -2029,8 +2089,16 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
             return KeyEventResult.handled;
           }
 
-          if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
-              event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+            if (!widget.isLive) {
+              _showTvAudioSelectorModal();
+            } else {
+              _toggleControls();
+            }
+            return KeyEventResult.handled;
+          }
+
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
             _toggleControls();
             return KeyEventResult.handled;
           }
@@ -3113,10 +3181,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                       },
                     ),
                   ],
+                  if (!widget.isLive) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: const Icon(Icons.audiotrack_rounded, color: Color(0xFF00E5FF), size: 22),
+                      tooltip: 'Pistas de Audio (D-Pad ▲)',
+                      onPressed: _showTvAudioSelectorModal,
+                    ),
+                  ],
                   const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.settings_rounded, color: Colors.white70, size: 22),
-                    tooltip: 'Ajustes de Audio y Pantalla',
+                    tooltip: 'Ajustes y Servidores',
                     onPressed: _showSettingsModal,
                   ),
                 ],
@@ -3410,6 +3486,253 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Selector Modal de Pistas de Audio y Servidor optimizado para Smart TV (D-Pad de alto contraste)
+class _TvAudioSelectorSheet extends StatefulWidget {
+  final List<Map<String, dynamic>> audioStreams;
+  final String? currentStreamId;
+  final String currentVideoUrl;
+  final ValueChanged<Map<String, dynamic>> onSelect;
+
+  const _TvAudioSelectorSheet({
+    Key? key,
+    required this.audioStreams,
+    required this.currentStreamId,
+    required this.currentVideoUrl,
+    required this.onSelect,
+  }) : super(key: key);
+
+  @override
+  State<_TvAudioSelectorSheet> createState() => _TvAudioSelectorSheetState();
+}
+
+class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
+  late final List<FocusNode> _focusNodes;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNodes = List.generate(widget.audioStreams.length, (_) => FocusNode());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      int selectedIdx = widget.audioStreams.indexWhere(
+        (s) => (s['id'] == widget.currentStreamId) || (s['streamUrl'] == widget.currentVideoUrl),
+      );
+      if (selectedIdx < 0) selectedIdx = 0;
+      if (selectedIdx < _focusNodes.length) {
+        _focusNodes[selectedIdx].requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    for (final node in _focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xF20B0D14),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: const Color(0x3300E5FF), width: 1.2),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00E5FF).withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.audiotrack_rounded, color: Color(0xFF00E5FF), size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Pistas de Audio y Servidor',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Navegue con ▲ / ▼ y confirme con OK en su control remoto',
+                            style: TextStyle(color: Colors.white54, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded, color: Colors.white70),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                ...widget.audioStreams.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final st = entry.value;
+                  final isCurrent = (st['id'] == widget.currentStreamId) ||
+                      (st['streamUrl'] == widget.currentVideoUrl);
+
+                  return Focus(
+                    focusNode: _focusNodes[index],
+                    onKey: (node, event) {
+                      if (event is RawKeyDownEvent) {
+                        if (event.logicalKey == LogicalKeyboardKey.select ||
+                            event.logicalKey == LogicalKeyboardKey.enter) {
+                          widget.onSelect(st);
+                          return KeyEventResult.handled;
+                        } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                          if (index + 1 < _focusNodes.length) {
+                            _focusNodes[index + 1].requestFocus();
+                            return KeyEventResult.handled;
+                          }
+                        } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                          if (index - 1 >= 0) {
+                            _focusNodes[index - 1].requestFocus();
+                            return KeyEventResult.handled;
+                          }
+                        }
+                      }
+                      return KeyEventResult.ignored;
+                    },
+                    builder: (context, hasFocus) {
+                      return GestureDetector(
+                        onTap: () => widget.onSelect(st),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: hasFocus
+                                ? const Color(0xFF1B243B)
+                                : (isCurrent ? const Color(0xFF161B29) : const Color(0xFF10131E)),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: hasFocus
+                                  ? const Color(0xFF00E5FF)
+                                  : (isCurrent ? Colors.white24 : Colors.transparent),
+                              width: hasFocus ? 2.5 : 1.0,
+                            ),
+                            boxShadow: hasFocus
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF00E5FF).withOpacity(0.35),
+                                      blurRadius: 16,
+                                      spreadRadius: 2,
+                                    ),
+                                  ]
+                                : [],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                (st['id'] == 'latino')
+                                    ? Icons.public_rounded
+                                    : (st['id'] == 'original' || (st['id'] ?? '').toString().contains('orig'))
+                                        ? Icons.subtitles_rounded
+                                        : Icons.flag_rounded,
+                                color: hasFocus ? const Color(0xFF00E5FF) : Colors.white70,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      st['label'] ?? st['language'] ?? 'Pista de Audio',
+                                      style: TextStyle(
+                                        color: hasFocus ? Colors.white : Colors.white.withOpacity(0.9),
+                                        fontWeight: hasFocus ? FontWeight.bold : FontWeight.w600,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      st['audioChannels'] == 'Estéreo 2.0'
+                                          ? 'Estéreo 2.0 · Diálogos nítidos y sin interferencia'
+                                          : (st['qualityLabel'] ?? 'Calidad HD'),
+                                      style: TextStyle(
+                                        color: hasFocus ? Colors.white70 : Colors.white38,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isCurrent)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00E676).withOpacity(0.18),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF00E676), width: 1.2),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.check_circle_rounded, color: Color(0xFF00E676), size: 14),
+                                      SizedBox(width: 5),
+                                      Text(
+                                        'ACTIVO',
+                                        style: TextStyle(
+                                          color: Color(0xFF00E676),
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
         ),
       ),
     );

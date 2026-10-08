@@ -385,7 +385,13 @@ class StreamResolverService {
     // 6. FILTRO DE FALSOS POSITIVOS DE SUBTÍTULOS (Tigole, QxR, PSA, YTS con 5+ banderas que solo son subtítulos)
     const isSubtitleSpam = (langLine.split('/').length > 4);
 
+    // 7. FILTRO ANTI-VOICEOVER / ANTI-TTS / ANTI-AUDIODESCRIPCIÓN (Descartar pistas sintéticas y narraciones superpuestas)
+    const isVoiceOverOrTts = /\b(voiceover|voice-over|voice\s*over|\bvo\b|\btts\b|audiodescrip|audio-descrip|audiodescripcion|audiodescripción|audiolectura|lector\s*tts|\bmvo\b|\bdvo\b|\bavo\b|\blvo\b|comentarios?|commentary)\b/i.test(fullText);
+
     let score = 0;
+    if (isVoiceOverOrTts) {
+      score -= 8500; // Penalización severa para impedir que pistas de audiodescripción o narración TTS se impongan
+    }
     let audioLanguage = 'Audio Original';
     let isSpanishAudio = false;
 
@@ -880,15 +886,19 @@ class StreamResolverService {
       return [...list].sort((a, b) => (b.isH264 ? 1 : 0) - (a.isH264 ? 1 : 0));
     };
 
-    // 1. Probar y resolver Latino (secuencial con CORTE RÁPIDO / Early-Exit al primer acierto)
-    for (const cand of sortList(instant.latino)) {
+    let latinoCandidate = null;
+    let castellanoCandidate = null;
+    let originalCandidate = null;
+
+    // 1. Probar y resolver Opción 1: Español Latino (Predeterminado)
+    for (const cand of sortList(instant.latino || []).slice(0, 3)) {
       const verified = await verifyCandidate(cand);
       if (verified) {
-        primaryStream = verified;
+        latinoCandidate = verified;
         availableStreams.push({
           id: 'latino',
-          label: `Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
-          language: 'Español Latino Estéreo',
+          label: `Servidor 1: Español Latino (${verified.audioChannels || 'Estéreo 2.0'} 🇲🇽)`,
+          language: 'Español Latino',
           audioChannels: verified.audioChannels || 'Estéreo 2.0',
           streamUrl: verified.streamUrl,
           qualityLabel: verified.qualityLabel,
@@ -897,20 +907,24 @@ class StreamResolverService {
           provider: providerName,
           isBackup: false
         });
-        // CORTE RÁPIDO: Tenemos Latino verificado, detener evaluación de inmediato
-        return { primaryStream, availableStreams };
+        break;
       }
     }
 
-    // 2. Probar y resolver Castellano (solo si no hubo Latino, con corte rápido)
-    for (const cand of sortList(instant.castellano)) {
+    // 2. Probar y resolver Opción 2: Idioma Original (Subtitulado al Español)
+    for (const cand of sortList(instant.original || []).slice(0, 2)) {
       const verified = await verifyCandidate(cand);
       if (verified) {
-        primaryStream = verified;
+        originalCandidate = {
+          ...verified,
+          audioLanguage: 'Original (Subtitulado al Español)',
+          isSpanishAudio: false,
+          isSubtitled: true
+        };
         availableStreams.push({
-          id: 'castellano',
-          label: `Castellano (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
-          language: 'Castellano Estéreo',
+          id: 'original',
+          label: `Servidor 2: Idioma Original (${verified.qualityLabel || 'HD'} Subtitulada)`,
+          language: 'Idioma Original',
           audioChannels: verified.audioChannels || 'Estéreo 2.0',
           streamUrl: verified.streamUrl,
           qualityLabel: verified.qualityLabel,
@@ -919,39 +933,33 @@ class StreamResolverService {
           provider: providerName,
           isBackup: false
         });
-        // CORTE RÁPIDO: Castellano verificado, detener evaluación
-        return { primaryStream, availableStreams };
+        break;
       }
     }
 
-    // 3. Probar versión en Audio Original ÚNICAMENTE si allowOriginal es true y no hubo doblaje
-    if (allowOriginal && (instant.original || []).length > 0) {
-      for (const cand of sortList(instant.original).slice(0, 2)) {
-        const verified = await verifyCandidate(cand);
-        if (verified) {
-          primaryStream = {
-            ...verified,
-            audioLanguage: 'Original (Subtitulado al Español)',
-            isSpanishAudio: false,
-            isSubtitled: true
-          };
-          availableStreams.push({
-            id: 'original_sub',
-            label: `Audio Original (${verified.qualityLabel || 'HD'} Subtítulos 🇲🇽)`,
-            language: 'Original Subtitulado',
-            audioChannels: verified.audioChannels || 'Estéreo 2.0',
-            streamUrl: verified.streamUrl,
-            qualityLabel: verified.qualityLabel,
-            videoCodec: verified.videoCodec,
-            filename: verified.filename,
-            provider: providerName,
-            isBackup: false
-          });
-          // CORTE RÁPIDO
-          return { primaryStream, availableStreams };
-        }
+    // 3. Probar y resolver Opción 3: Español España (Castellano)
+    for (const cand of sortList(instant.castellano || []).slice(0, 3)) {
+      const verified = await verifyCandidate(cand);
+      if (verified) {
+        castellanoCandidate = verified;
+        availableStreams.push({
+          id: 'castellano',
+          label: `Servidor 3: Español España (${verified.audioChannels || 'Estéreo 2.0'} 🇪🇸)`,
+          language: 'Español España',
+          audioChannels: verified.audioChannels || 'Estéreo 2.0',
+          streamUrl: verified.streamUrl,
+          qualityLabel: verified.qualityLabel,
+          videoCodec: verified.videoCodec,
+          filename: verified.filename,
+          provider: providerName,
+          isBackup: false
+        });
+        break;
       }
     }
+
+    // Prioridad por defecto: Latino > Original (con subs) > Castellano
+    primaryStream = latinoCandidate || originalCandidate || castellanoCandidate;
 
     return { primaryStream, availableStreams };
   }
@@ -1138,8 +1146,8 @@ class StreamResolverService {
 
         if (totalSpanish > 0) {
           console.log(`[TOM TV Auto-Resolver] 📋 Evaluando fuentes en Español [${prov.name}]: ${instant.latino.length} Latino, ${instant.castellano.length} Castellano...`);
-          // allowOriginal = false: NO aceptar streams en inglés en esta etapa
-          const { primaryStream, availableStreams } = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, false, forceH264);
+          // Evaluar las 3 opciones (Latino, Original subtitulado y Castellano) para entregar la tríada completa al cliente
+          const { primaryStream, availableStreams } = await this._evaluateCandidateStreams(instant, excludeUrls, prov.name, true, forceH264);
 
           if (primaryStream && primaryStream.isSpanishAudio) {
             console.log(`[TOM TV Auto-Resolver] 🎯 Fuente en Español verificada vía [${prov.name}]: [${primaryStream.audioLanguage}] "${primaryStream.filename}"`);

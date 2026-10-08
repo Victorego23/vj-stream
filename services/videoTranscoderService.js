@@ -126,6 +126,105 @@ class VideoTranscoderService {
       recommendedPixFmt: this.DEFAULT_PIX_FMT
     };
   }
+
+  /**
+   * Genera los filtros y parámetros obligatorios de FFmpeg para aislar y limpiar
+   * pistas de audio VOD, descartando narraciones (TTS/AD), comentarios del director
+   * y normalizando la sonoridad a estándar de streaming EBU R128 (-16 LUFS).
+   * @param {Object} [options]
+   * @returns {string[]} Argumentos de FFmpeg
+   */
+  getAudioCleaningFilterArgs(options = {}) {
+    const {
+      audioBitrate = '192k',
+      sampleRate = 48000,
+      channels = 2,
+      targetLufs = -16,
+      truePeak = -1.5,
+      codec = 'aac'
+    } = options;
+
+    return [
+      '-filter:a', `loudnorm=I=${targetLufs}:TP=${truePeak}:LRA=11`,
+      '-c:a', codec,
+      '-b:a', audioBitrate,
+      '-ar', String(sampleRate),
+      '-ac', String(channels)
+    ];
+  }
+
+  /**
+   * Valida si una pista de audio contiene marcadores de narración sintética (TTS),
+   * Audio Description (AD) o comentarios secundarios que puedan solaparse con la pista principal.
+   * @param {Object} audioStreamInfo - Metadatos de la pista de ffprobe
+   * @returns {{isClean: boolean, reasons: string[]}}
+   */
+  validateAudioStream(audioStreamInfo = {}) {
+    const reasons = [];
+    const disposition = audioStreamInfo.disposition || {};
+    const tags = audioStreamInfo.tags || {};
+    const title = (tags.title || tags.handler_name || '').toLowerCase();
+
+    if (disposition.visual_impaired === 1 || disposition.descriptions === 1) {
+      reasons.push('Pista marcada como Audio Description (AD / Visual Impaired)');
+    }
+    if (disposition.comment === 1) {
+      reasons.push('Pista marcada como comentario del director');
+    }
+    if (disposition.hearing_impaired === 1) {
+      reasons.push('Pista marcada para discapacidad auditiva con posibles descriptores de audio');
+    }
+
+    const ttsPattern = /\b(tts|lector|audiolectura|sintetico|voiceover|voice-over|voice\s*over|\bvo\b|\bmvo\b|\bdvo\b|\bavo\b|narraci[oó]n)\b/i;
+    if (ttsPattern.test(title)) {
+      reasons.push(`Pista con marcador de doblaje no oficial/sintético en título: "${title}"`);
+    }
+
+    return {
+      isClean: reasons.length === 0,
+      reasons
+    };
+  }
+
+  /**
+   * Genera un manifiesto Master HLS (.m3u8) desacoplado para multi-audio.
+   * Asegura que cada idioma esté estrictamente aislado bajo directivas #EXT-X-MEDIA:TYPE=AUDIO
+   * para que el reproductor jamás reciba dos pistas superpuestas en el mismo contenedor de transporte.
+   * @param {Object} config
+   * @param {Array<{resolution: string, bandwidth: number, uri: string}>} config.videoVariants
+   * @param {Array<{id: string, name: string, language: string, uri: string, isDefault: boolean}>} config.audioTracks
+   * @returns {string} Contenido completo del manifiesto .m3u8
+   */
+  generateHlsMasterPlaylist(config) {
+    const { videoVariants = [], audioTracks = [] } = config;
+    const lines = [
+      '#EXTM3U',
+      '#EXT-X-VERSION:6',
+      '#EXT-X-INDEPENDENT-SEGMENTS',
+      ''
+    ];
+
+    lines.push('# === PISTAS DE AUDIO AISLADAS (INDEPENDIENTES) ===');
+    for (const audio of audioTracks) {
+      const isDef = audio.isDefault ? 'YES' : 'NO';
+      const autoSel = audio.isDefault ? 'YES' : 'NO';
+      lines.push(
+        `#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-group",NAME="${audio.name}",` +
+        `DEFAULT=${isDef},AUTOSELECT=${autoSel},LANGUAGE="${audio.language}",URI="${audio.uri}"`
+      );
+    }
+
+    lines.push('');
+    lines.push('# === VARIANTES DE VIDEO (SIN AUDIO MUXED) ===');
+    for (const v of videoVariants) {
+      lines.push(
+        `#EXT-X-STREAM-INF:BANDWIDTH=${v.bandwidth},RESOLUTION=${v.resolution},AUDIO="audio-group"`
+      );
+      lines.push(v.uri);
+    }
+
+    return lines.join('\n');
+  }
 }
 
 module.exports = new VideoTranscoderService();
