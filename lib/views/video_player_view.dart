@@ -3513,6 +3513,7 @@ class _TvAudioSelectorSheet extends StatefulWidget {
 
 class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
   late final List<FocusNode> _focusNodes;
+  int _focusedIndex = 0;
 
   @override
   void initState() {
@@ -3524,6 +3525,7 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
         (s) => (s['id'] == widget.currentStreamId) || (s['streamUrl'] == widget.currentVideoUrl),
       );
       if (selectedIdx < 0) selectedIdx = 0;
+      _focusedIndex = selectedIdx;
       if (selectedIdx < _focusNodes.length) {
         _focusNodes[selectedIdx].requestFocus();
       }
@@ -3611,8 +3613,15 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
                   final isCurrent = (st['id'] == widget.currentStreamId) ||
                       (st['streamUrl'] == widget.currentVideoUrl);
 
+                  final hasFocus = (_focusedIndex == index);
+
                   return Focus(
                     focusNode: _focusNodes[index],
+                    onFocusChange: (focused) {
+                      if (focused && mounted) {
+                        setState(() => _focusedIndex = index);
+                      }
+                    },
                     onKeyEvent: (node, event) {
                       if (event is KeyDownEvent) {
                         if (event.logicalKey == LogicalKeyboardKey.select ||
@@ -3633,101 +3642,102 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
                       }
                       return KeyEventResult.ignored;
                     },
-                    builder: (context, hasFocus) {
-                      return GestureDetector(
-                        onTap: () => widget.onSelect(st),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          margin: const EdgeInsets.only(bottom: 12),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                          decoration: BoxDecoration(
+                    child: GestureDetector(
+                      onTap: () {
+                        _focusNodes[index].requestFocus();
+                        widget.onSelect(st);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 160),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: hasFocus
+                              ? const Color(0xFF1B243B)
+                              : (isCurrent ? const Color(0xFF161B29) : const Color(0xFF10131E)),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
                             color: hasFocus
-                                ? const Color(0xFF1B243B)
-                                : (isCurrent ? const Color(0xFF161B29) : const Color(0xFF10131E)),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: hasFocus
-                                  ? const Color(0xFF00E5FF)
-                                  : (isCurrent ? Colors.white24 : Colors.transparent),
-                              width: hasFocus ? 2.5 : 1.0,
-                            ),
-                            boxShadow: hasFocus
-                                ? [
-                                    BoxShadow(
-                                      color: const Color(0xFF00E5FF).withValues(alpha: 0.35),
-                                      blurRadius: 16,
-                                      spreadRadius: 2,
-                                    ),
-                                  ]
-                                : [],
+                                ? const Color(0xFF00E5FF)
+                                : (isCurrent ? Colors.white24 : Colors.transparent),
+                            width: hasFocus ? 2.5 : 1.0,
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                (st['id'] == 'latino')
-                                    ? Icons.public_rounded
-                                    : (st['id'] == 'original' || (st['id'] ?? '').toString().contains('orig'))
-                                        ? Icons.subtitles_rounded
-                                        : Icons.flag_rounded,
-                                color: hasFocus ? const Color(0xFF00E5FF) : Colors.white70,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      st['label'] ?? st['language'] ?? 'Pista de Audio',
-                                      style: TextStyle(
-                                        color: hasFocus ? Colors.white : Colors.white.withValues(alpha: 0.9),
-                                        fontWeight: hasFocus ? FontWeight.bold : FontWeight.w600,
-                                        fontSize: 15,
-                                      ),
+                          boxShadow: hasFocus
+                              ? [
+                                  BoxShadow(
+                                    color: const Color(0xFF00E5FF).withValues(alpha: 0.35),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              (st['id'] == 'latino')
+                                  ? Icons.public_rounded
+                                  : (st['id'] == 'original' || (st['id'] ?? '').toString().contains('orig'))
+                                      ? Icons.subtitles_rounded
+                                      : Icons.flag_rounded,
+                              color: hasFocus ? const Color(0xFF00E5FF) : Colors.white70,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    st['label'] ?? st['language'] ?? 'Pista de Audio',
+                                    style: TextStyle(
+                                      color: hasFocus ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                                      fontWeight: hasFocus ? FontWeight.bold : FontWeight.w600,
+                                      fontSize: 15,
                                     ),
-                                    const SizedBox(height: 3),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    st['audioChannels'] == 'Estéreo 2.0'
+                                        ? 'Estéreo 2.0 · Diálogos nítidos y sin interferencia'
+                                        : (st['qualityLabel'] ?? 'Calidad HD'),
+                                    style: TextStyle(
+                                      color: hasFocus ? Colors.white70 : Colors.white38,
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (isCurrent)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF00E676).withValues(alpha: 0.18),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF00E676), width: 1.2),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.check_circle_rounded, color: Color(0xFF00E676), size: 14),
+                                    SizedBox(width: 5),
                                     Text(
-                                      st['audioChannels'] == 'Estéreo 2.0'
-                                          ? 'Estéreo 2.0 · Diálogos nítidos y sin interferencia'
-                                          : (st['qualityLabel'] ?? 'Calidad HD'),
+                                      'ACTIVO',
                                       style: TextStyle(
-                                        color: hasFocus ? Colors.white70 : Colors.white38,
+                                        color: Color(0xFF00E676),
                                         fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              if (isCurrent)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF00E676).withValues(alpha: 0.18),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFF00E676), width: 1.2),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.check_circle_rounded, color: Color(0xFF00E676), size: 14),
-                                      SizedBox(width: 5),
-                                      Text(
-                                        'ACTIVO',
-                                        style: TextStyle(
-                                          color: Color(0xFF00E676),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 0.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
+                          ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   );
                 }).toList(),
               ],

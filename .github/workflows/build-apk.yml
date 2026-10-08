@@ -43,17 +43,7 @@ jobs:
         run: dart run flutter_launcher_icons
 
       - name: Compilar APK Release Oficial
-        run: |
-          flutter build apk --release > build.log 2>&1 || {
-            tail -n 120 build.log > build_failure.txt
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git checkout -B build-debug
-            git add build_failure.txt
-            git commit -m "ci: error log"
-            git push -f origin build-debug || true
-            exit 1
-          }
+        run: flutter build apk --release
 
       - name: Actualizar Archivo APK Raíz
         run: |
