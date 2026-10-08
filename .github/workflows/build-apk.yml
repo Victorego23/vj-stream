@@ -44,13 +44,16 @@ jobs:
 
       - name: Compilar APK Release Oficial
         run: |
-          if ! flutter build apk --release; then
-            echo "### ❌ Error durante compilación de Flutter:" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            flutter analyze >> $GITHUB_STEP_SUMMARY 2>&1 || true
-            echo '```' >> $GITHUB_STEP_SUMMARY
+          flutter build apk --release > build.log 2>&1 || {
+            tail -n 120 build.log > build_failure.txt
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout -B build-debug
+            git add build_failure.txt
+            git commit -m "ci: error log"
+            git push -f origin build-debug || true
             exit 1
-          fi
+          }
 
       - name: Actualizar Archivo APK Raíz
         run: |
