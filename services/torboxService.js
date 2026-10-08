@@ -207,14 +207,14 @@ class TorBoxService {
       const isMulti = /\b(multi|dual)[._\s]*(audio|lang)?\b/i.test(lower) || /\.(multi|dual)\./i.test(lower);
       
       // Idioma
-      if (/cinecalidad|mejortorrent/i.test(lower)) score += 120;
-      else if (/latino|latam|mexic|\b(lat)\b/i.test(lower)) score += 90;
-      else if (/castellano|\b(cast)\b/i.test(lower)) score += 70;
-      else if (/español|spanish|\b(esp|spa)\b/i.test(lower)) score += 60;
-      else if (/eng|english|sub|jap|jpn/i.test(lower)) score -= 20;
+      if (/cinecalidad|mejortorrent/i.test(lower)) score += 500;
+      else if (/latino|latam|mexic|\b(lat)\b/i.test(lower)) score += 350;
+      else if (/castellano|\b(cast)\b/i.test(lower)) score += 250;
+      else if (/español|spanish|\b(esp|spa)\b/i.test(lower)) score += 200;
+      else if (/eng|english|sub|jap|jpn/i.test(lower)) score -= 150;
 
-      // Penalización destructiva MULTi (para evitar cruce de voces en Smart TV)
-      if (isMulti) score -= 10000;
+      // Preferencia suave por audio puro en español si existe, pero el dual en español siempre vence al inglés
+      if (isMulti) score -= 30;
 
       // Súper bonificación MP4 para evitar carga infinita en TVs
       if (/\.mp4/i.test(lower)) score += 200;

@@ -405,30 +405,30 @@ class StreamResolverService {
     if (isCinecalidad || hasLatinoExplicit || isTorrentioLatino) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Latino Estéreo' : 'Español Latino';
-      score += 6500;
+      score += 7000;
       if (isCinecalidad) score += 1500; // Cinecalidad es la máxima pureza en Español Latino
-      // Penalización destructiva para archivos MULTi: evitan la superposición de voces en Smart TV
+      // Preferencia suave: si existe versión pura se prioriza, pero el audio dual sigue manteniendo 6500+ puntos (años luz por delante del inglés)
       if (isMultiAudio) {
-        score -= 10000; // El inglés puro ganará sobre el MULTi cruzado
+        score -= 500;
       }
       if (/eng[-_.]*lat|eng[-_.]*spa/i.test(firstLine)) {
-        score -= 10000;
+        score -= 300;
       }
     } else if (isMejorTorrent || isWolfmax4k || hasCastellanoExplicit || isTorrentioCastellano) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Castellano Estéreo' : 'Castellano';
-      score += 4800;
-      if (isMultiAudio) score -= 10000;
+      score += 5500;
+      if (isMultiAudio) score -= 500;
     } else if (isDualOrMultiSpanish || (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub'))) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Estéreo' : 'Español';
-      score += 3800;
-      if (isMultiAudio) score -= 10000;
+      score += 4500;
+      if (isMultiAudio) score -= 300;
     } else {
       // Stream en idioma original / inglés (conservado únicamente como último recurso si no existe doblaje)
       isSpanishAudio = false;
       audioLanguage = isStereo ? 'Audio Original Estéreo' : 'Audio Original';
-      score += 100;
+      score += 50;
     }
 
     // Ventaja para pistas Estéreo 2.0: Diálogos nítidos y sin problemas de voces bajas en Smart TV sin soundbar
@@ -983,8 +983,8 @@ class StreamResolverService {
       }
     }
 
-    // Prioridad por defecto: Latino > Original (con subs) > Castellano
-    primaryStream = latinoCandidate || originalCandidate || castellanoCandidate;
+    // Prioridad estricta en Español: Latino (#1) > Castellano (#2) > Original subtitulado (#3)
+    primaryStream = latinoCandidate || castellanoCandidate || originalCandidate;
 
     return { primaryStream, availableStreams };
   }
