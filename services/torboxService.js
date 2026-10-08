@@ -213,8 +213,8 @@ class TorBoxService {
       else if (/español|spanish|\b(esp|spa)\b/i.test(lower)) score += 60;
       else if (/eng|english|sub|jap|jpn/i.test(lower)) score -= 20;
 
-      // Penalización MULTi
-      if (isMulti) score -= 50;
+      // Penalización destructiva MULTi (para evitar cruce de voces en Smart TV)
+      if (isMulti) score -= 10000;
 
       // Súper bonificación MP4 para evitar carga infinita en TVs
       if (/\.mp4/i.test(lower)) score += 200;

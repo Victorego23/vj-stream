@@ -407,24 +407,23 @@ class StreamResolverService {
       audioLanguage = isStereo ? 'Español Latino Estéreo' : 'Español Latino';
       score += 6500;
       if (isCinecalidad) score += 1500; // Cinecalidad es la máxima pureza en Español Latino
-      // Penalizar archivos MULTi (pueden reproducirse en inglés en Smart TV)
-      // Solo si no es Cinecalidad (que garantiza español), aplicar penalización parcial
-      if (isMultiAudio && !isCinecalidad) {
-        score -= 800; // Preferir archivos en español puro sobre MULTi cuando ambos existen
+      // Penalización destructiva para archivos MULTi: evitan la superposición de voces en Smart TV
+      if (isMultiAudio) {
+        score -= 10000; // El inglés puro ganará sobre el MULTi cruzado
       }
       if (/eng[-_.]*lat|eng[-_.]*spa/i.test(firstLine)) {
-        score -= 100;
+        score -= 10000;
       }
     } else if (isMejorTorrent || isWolfmax4k || hasCastellanoExplicit || isTorrentioCastellano) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Castellano Estéreo' : 'Castellano';
       score += 4800;
-      if (isMultiAudio) score -= 600;
+      if (isMultiAudio) score -= 10000;
     } else if (isDualOrMultiSpanish || (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub'))) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Estéreo' : 'Español';
       score += 3800;
-      if (isMultiAudio) score -= 500;
+      if (isMultiAudio) score -= 10000;
     } else {
       // Stream en idioma original / inglés (conservado únicamente como último recurso si no existe doblaje)
       isSpanishAudio = false;
