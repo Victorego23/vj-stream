@@ -375,7 +375,7 @@ class StreamResolverService {
     const isTorrentioCastellano = langLine.includes('🇪🇸') || /castellano/i.test(langLine);
 
     const isDualOrMultiSpanish = (/dual|multi/i.test(firstLine) || /dual|multi/i.test(filename) || langLine.includes('dual') || langLine.includes('multi')) &&
-      (langLine.includes('🇲🇽') || langLine.includes('🇪🇸') || /lat|spa|esp|cast|spanish|español/i.test(fullText));
+      (langLine.includes('🇲🇽') || langLine.includes('🇪🇸') || /\b(lat|spa|esp|cast|castellano|spanish|español|latino)\b/i.test(fullText));
 
     // 5. DETECCIÓN DE CANALES DE AUDIO (Estéreo 2.0 vs 5.1 Surround)
     const isStereo = /aac(?!\s*5\.1)|2\.0|stereo|est[eé]reo|2ch|mp3|dd2\.0|ddp2\.0|\b(2\.0)\b/i.test(fullText);
@@ -388,10 +388,10 @@ class StreamResolverService {
     // 7. FILTRO ANTI-VOICEOVER / ANTI-TTS / ANTI-AUDIODESCRIPCIÓN (Descartar pistas sintéticas y narraciones superpuestas)
     const isVoiceOverOrTts = /\b(voiceover|voice-over|voice\s*over|\bvo\b|\btts\b|audiodescrip|audio-descrip|audiodescripcion|audiodescripción|audiolectura|lector\s*tts|\bmvo\b|\bdvo\b|\bavo\b|\blvo\b|comentarios?|commentary)\b/i.test(fullText);
 
-    // 8. FILTRO ANTI-FRANCÉS (Descartar releases como .Multi.Vf2., .VFF., .VFQ., truefrench que tienen audio francés y no español)
-    const isFrenchOrOtherForeign = /\b(vf2?|vff|vfq|vfi|truefrench|french|vostfr)\b/i.test(firstLine) ||
-      /\b(vf2?|vff|vfq|vfi|truefrench|french|vostfr)\b/i.test(filename) ||
-      /\.(vf2?|vff|vfq|vfi)\./i.test(filename);
+    // 8. FILTRO ANTI-IDIOMAS EXTRANJEROS (Descartar releases franceses VF/VF2, italianos ITA, alemanes GER, rusos RUS, polacos, etc.)
+    const isFrenchOrOtherForeign = /\b(vf2?|vff|vfq|vfi|truefrench|french|vostfr|ita|italian|subita|vostita|ger|german|deutsch|rus|russian|rutracker|rutor|pl|lektor|hindi|tamil|telugu)\b/i.test(firstLine) ||
+      /\b(vf2?|vff|vfq|vfi|truefrench|french|vostfr|ita|italian|subita|vostita|ger|german|deutsch|rus|russian|rutracker|rutor|pl|lektor|hindi|tamil|telugu)\b/i.test(filename) ||
+      /\.(vf2?|vff|vfq|vfi|ita|ger|rus)\./i.test(filename);
 
     let score = 0;
     if (isVoiceOverOrTts) {
