@@ -43,7 +43,14 @@ jobs:
         run: dart run flutter_launcher_icons
 
       - name: Compilar APK Release Oficial
-        run: flutter build apk --release
+        run: |
+          if ! flutter build apk --release; then
+            echo "### ❌ Error durante compilación de Flutter:" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            flutter analyze >> $GITHUB_STEP_SUMMARY 2>&1 || true
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
 
       - name: Actualizar Archivo APK Raíz
         run: |
