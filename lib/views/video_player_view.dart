@@ -3572,7 +3572,7 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF00E5FF).withOpacity(0.15),
+                        color: const Color(0xFF00E5FF).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.audiotrack_rounded, color: Color(0xFF00E5FF), size: 24),
@@ -3613,8 +3613,8 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
 
                   return Focus(
                     focusNode: _focusNodes[index],
-                    onKey: (node, event) {
-                      if (event is RawKeyDownEvent) {
+                    onKeyEvent: (node, event) {
+                      if (event is KeyDownEvent) {
                         if (event.logicalKey == LogicalKeyboardKey.select ||
                             event.logicalKey == LogicalKeyboardKey.enter) {
                           widget.onSelect(st);
@@ -3654,7 +3654,7 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
                             boxShadow: hasFocus
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF00E5FF).withOpacity(0.35),
+                                      color: const Color(0xFF00E5FF).withValues(alpha: 0.35),
                                       blurRadius: 16,
                                       spreadRadius: 2,
                                     ),
@@ -3680,7 +3680,7 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
                                     Text(
                                       st['label'] ?? st['language'] ?? 'Pista de Audio',
                                       style: TextStyle(
-                                        color: hasFocus ? Colors.white : Colors.white.withOpacity(0.9),
+                                        color: hasFocus ? Colors.white : Colors.white.withValues(alpha: 0.9),
                                         fontWeight: hasFocus ? FontWeight.bold : FontWeight.w600,
                                         fontSize: 15,
                                       ),
@@ -3702,7 +3702,7 @@ class _TvAudioSelectorSheetState extends State<_TvAudioSelectorSheet> {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF00E676).withOpacity(0.18),
+                                    color: const Color(0xFF00E676).withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: const Color(0xFF00E676), width: 1.2),
                                   ),
