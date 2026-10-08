@@ -2543,20 +2543,32 @@
       // Configurar escucha blindada de audioTracks nativas
       setupAutoSpanishAudioTrack(video);
 
+      // Limpiar handlers anteriores
+      video.onerror = null;
+
+      // Auto-fallback en caso de error (TV en Vivo o película caída)
+      const handleVideoError = () => {
+        if (!currentStreams || currentStreams.length <= 1) return;
+        const currentIndex = currentStreams.findIndex(s => s.streamUrl === url);
+        if (currentIndex !== -1 && currentIndex + 1 < currentStreams.length) {
+          const nextStream = currentStreams[currentIndex + 1];
+          console.log(`[Failover] Enlace falló. Cambiando automáticamente a la Señal ${currentIndex + 2}: ${nextStream.streamUrl}`);
+          document.getElementById('playerTitle').textContent += ' (Cambiando a Respaldo...)';
+          switchAudioStream(nextStream.streamUrl, nextStream.label);
+        } else {
+          console.log('[Failover] Todos los enlaces fallaron.');
+        }
+      };
+
       if (url.includes('.m3u8')) {
         if (Hls.isSupported()) {
           hlsInstance = new Hls({ enableWorker: true });
           hlsInstance.loadSource(url);
           hlsInstance.attachMedia(video);
 
-          // Selección blindada de audio en español para HLS.js
           hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
             const tracks = data.audioTracks || [];
             if (!tracks.length) return;
-            for (let i = 0; i < tracks.length; i++) {
-              const t = tracks[i];
-              console.log(`[HLS Audio] Pista ${i}:\nlang: "${t.lang || t.language || ''}"\nname: "${t.name || t.label || ''}"`);
-            }
             const SPANISH_CODES = ['es', 'spa', 'spanish', 'es-419', 'lat', 'latino'];
             const spIdx = tracks.findIndex(t => {
               const lang = (t.lang || '').toLowerCase();
@@ -2564,7 +2576,6 @@
               return SPANISH_CODES.some(c => lang === c || lang.startsWith(c + '-') || name.includes('español') || name.includes('latino') || name.includes('spanish'));
             });
             if (spIdx !== -1 && hlsInstance.audioTrack !== spIdx) {
-              console.log(`[HLS Audio] Pista en español priorizada automáticamente (ID: ${spIdx})`);
               hlsInstance.audioTrack = spIdx;
             }
           });
@@ -2572,13 +2583,33 @@
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             video.play().catch(() => {});
           });
+
+          // Manejar errores de red para cambiar de canal automáticamente
+          hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+              switch (data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  console.log("Error de red fatal HLS, intentando recuperar o cambiar enlace...");
+                  handleVideoError();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  hlsInstance.recoverMediaError();
+                  break;
+                default:
+                  handleVideoError();
+                  break;
+              }
+            }
+          });
+
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // Safari nativo en iPhone / iPad / Mac
           video.src = url;
+          video.onerror = handleVideoError;
           video.play().catch(() => {});
         }
       } else {
         video.src = url;
+        video.onerror = handleVideoError;
         video.play().catch(() => {});
       }
     }
