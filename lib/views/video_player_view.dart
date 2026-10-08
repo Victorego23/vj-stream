@@ -261,6 +261,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     }
   }
 
+  void _savePreferredLiveSource(String channelId, int index) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('tomtv_pref_live_src_$channelId', index);
+    } catch (_) {}
+  }
+
   Future<void> _initializePlayer({bool isUserRetry = false, Duration? resumeAt}) async {
     if (isUserRetry) {
       _retryCount = 0;
@@ -269,6 +276,18 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         _isInitialized = false;
         _errorMessage = null;
       });
+    }
+
+    // Restaurar fuente preferida previamente validada para este canal si no ha fallado
+    if (widget.isLive && _currentLiveChannel != null && _retryCount == 0 && !_isFallingBack) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final saved = prefs.getInt('tomtv_pref_live_src_${_currentLiveChannel!.id}');
+        if (saved != null && saved >= 0 && saved < _liveSources.length && !_failedUrls.contains(_liveSources[saved])) {
+          _currentLiveSourceIndex = saved;
+          _currentVideoUrl = _liveSources[saved];
+        }
+      } catch (_) {}
     }
 
     try {
@@ -307,7 +326,13 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
 
       _controller = controller;
 
-      await controller.initialize();
+      if (widget.isLive) {
+        // En TV en vivo, límite estricto de 2.8s para inicialización:
+        // si una señal está colgada o caída, failover instantáneo y silencioso
+        await controller.initialize().timeout(const Duration(milliseconds: 2800));
+      } else {
+        await controller.initialize();
+      }
       controller.addListener(_videoListener);
 
       // Reanudar en la posición solicitada o en la guardada
@@ -318,6 +343,10 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
       }
 
       await controller.play();
+
+      if (widget.isLive && _currentLiveChannel != null) {
+        _savePreferredLiveSource(_currentLiveChannel!.id, _currentLiveSourceIndex);
+      }
 
       if (mounted) {
         setState(() {
@@ -540,7 +569,7 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
         _errorMessage = null;
         _isBuffering = true;
       });
-      _showFeedbackIndicator('Cambiando a señal ${nextIndex + 1}/${_liveSources.length}...');
+      // SILENCIOSO: Conmutación limpia sin mensajes invasivos en pantalla ("Cambiando a señal...")
     }
 
     // Permitir que si esta fuente falla, el catch de _initializePlayer pueda seguir con la siguiente
@@ -749,11 +778,16 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     }
   }
 
-  Future<void> _switchToLiveSource(int index) async {
+  Future<void> _switchToLiveSource(int index, {bool isManual = true}) async {
     if (index < 0 || index >= _liveSources.length) return;
     _currentLiveSourceIndex = index;
     _currentVideoUrl = _liveSources[index];
-    _showFeedbackIndicator('Cambiando a Señal ${index + 1}/${_liveSources.length}...');
+    if (isManual) {
+      _showFeedbackIndicator('Señal ${index + 1}/${_liveSources.length}');
+    }
+    if (_currentLiveChannel != null) {
+      _savePreferredLiveSource(_currentLiveChannel!.id, index);
+    }
     setState(() {
       _isInitialized = false;
       _hasError = false;

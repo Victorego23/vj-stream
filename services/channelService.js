@@ -9,12 +9,26 @@ class ChannelService {
     this._isAuditing = false;
     this._lastAudit = new Date().toISOString();
     this._monitorTimer = null;
+    this._fileMtime = 0;
     this._load();
+  }
+
+  _checkFresh() {
+    try {
+      if (fs.existsSync(CHANNELS_FILE)) {
+        const mtime = fs.statSync(CHANNELS_FILE).mtimeMs;
+        if (mtime > this._fileMtime) {
+          this._load();
+        }
+      }
+    } catch (_) {}
   }
 
   _load() {
     try {
       if (fs.existsSync(CHANNELS_FILE)) {
+        const stat = fs.statSync(CHANNELS_FILE);
+        this._fileMtime = stat.mtimeMs;
         const raw = fs.readFileSync(CHANNELS_FILE, 'utf-8');
         const parsed = JSON.parse(raw);
         // Normalizar estructura de fuentes para Failover
@@ -166,6 +180,7 @@ class ChannelService {
    * Opcionalmente filtrados por categoría e integrados con EPG en vivo
    */
   getChannels(category = null, withEpg = true) {
+    this._checkFresh();
     let list = this._channels.filter(c => c.isActive !== false);
     if (category && category !== 'Todos') {
       list = list.filter(c => c.category && c.category.toLowerCase() === category.toLowerCase());
@@ -184,6 +199,7 @@ class ChannelService {
    * Obtiene todos los canales (incluidos inactivos) para el panel de administración
    */
   getAllForAdmin() {
+    this._checkFresh();
     return [...this._channels].sort((a, b) => (a.order || 999) - (b.order || 999));
   }
 

@@ -1,5 +1,5 @@
 // Service Worker para VJ STREAM / TOM TV PWA (iPhone / Android)
-const CACHE_NAME = 'tomtv-v4.2.8';
+const CACHE_NAME = 'tomtv-v4.2.9';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

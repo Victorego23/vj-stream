@@ -1223,9 +1223,9 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '4.2.8',
-  versionCode: 54,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.8/TOM-TV-release.apk',
+  latestVersion: '4.2.9',
+  versionCode: 55,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.9/TOM-TV-release.apk',
   releaseDate: '2026-10-08'
 };
 
@@ -1278,11 +1278,11 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '🎧 Selector Tri-Audio OSD para Smart TV: Acceso rápido con tecla Arriba (▲) para elegir Español Latino, Idioma Original o Castellano sin pausar.',
-      '🚫 Cero cruces de idiomas y eliminación de pistas con narración (TTS) o Audio Description superpuestas.',
-      '💾 Persistencia inteligente: El reproductor recuerda tu preferencia de idioma en todas las películas.',
-      '📺 Navegación optimizada con D-Pad en alto contraste Cyan Neón para Android TV y Fire TV.',
-      '⚡ Modo Turbo Ultra-Veloz: Arranque instantáneo de películas en 1 segundo con 0% de latencia.'
+      '⚡ TV en Vivo Ultra-Precisa: Inicio instantáneo sin cuelgues ni pantallas molestas de cambio de señal.',
+      '🎯 Señales 100% Verificadas: Prioridad al enlace más veloz y activo en todos los canales de TV.',
+      '💾 Memoria de Señal Inteligente: La app recuerda automáticamente la mejor señal para cada canal.',
+      '🔇 Failover Silencioso: Conmutación transparente en segundo plano si una señal tiene problemas.',
+      '🎧 Selector Tri-Audio OSD para Smart TV: Acceso rápido con tecla Arriba (▲) para elegir Latino, Original o Castellano.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,

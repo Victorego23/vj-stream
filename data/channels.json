@@ -32,48 +32,45 @@
     "name": "América TV HD",
     "category": "Entretenimiento",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Am%C3%A9rica_Televisi%C3%B3n.svg/500px-Am%C3%A9rica_Televisi%C3%B3n.svg.png",
-    "streamUrl": "http://190.93.224.42/AMERICA-TV/index.m3u8",
+    "streamUrl": "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8",
     "sources": [
-      "http://190.93.224.42/AMERICA-TV/index.m3u8",
-      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/america.stream/playlist.m3u8",
-      "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8",
-      "http://45.171.108.253:8888/AMERICA/index.m3u8",
-      "http://187.102.210.46/AMERICA/index.m3u8"
+      "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 3
+    "order": 3,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_atv_pe",
     "name": "ATV HD",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/eUzYZfg.png",
-    "streamUrl": "http://190.93.224.42/ATV/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/atv.stream/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/ATV/index.m3u8",
-      "https://d19e55ehz2il4i.cloudfront.net/ts:abr.m3u8",
-      "https://d2b5h5wyivfnfl.cloudfront.net/live/25046411-8673-4dec-8ae8-5b41984f34e1/ts:abr.m3u8",
-      "http://187.102.210.46/ATV/index.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/atv.stream/playlist.m3u8",
+      "http://45.171.108.253:8888/ATV/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 4
+    "order": 4,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_latina_pe",
     "name": "Latina HD",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/MOsWriY.png",
-    "streamUrl": "http://190.93.224.42/LATINA/index.m3u8",
+    "streamUrl": "http://45.171.108.253:8888/LATINA/index.m3u8",
     "sources": [
-      "http://190.93.224.42/LATINA/index.m3u8",
       "http://45.171.108.253:8888/LATINA/index.m3u8",
+      "https://cablered.iptvperu.tv:1936/cablered/latina_new/playlist.m3u8",
       "https://dai.google.com/linear/hls/event/oYQGDqEGTmGdHE_fz9oLlg/master.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 5
+    "order": 5,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_panamericanatv_pe",
@@ -95,15 +92,15 @@
     "name": "TV Perú HD",
     "category": "Cultura",
     "logoUrl": "https://i.imgur.com/6io0IrX.png",
-    "streamUrl": "http://190.93.224.42/TV-PERU/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/tvperu_new/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/TV-PERU/index.m3u8",
-      "https://live-evg8.tv360.bitel.com.pe/bitel/tvperuSRT/playlist.m3u8",
-      "http://187.102.210.46/TVPERU/index.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/tvperu_new/playlist.m3u8",
+      "http://187.102.208.209:8000/play/a0ay/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 7
+    "order": 7,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_willaxtv_pe",
@@ -125,13 +122,14 @@
     "name": "Liga 1 MAX HD",
     "category": "Deportes",
     "logoUrl": "https://i.imgur.com/2fziU2B.png",
-    "streamUrl": "http://190.93.224.42/LIGA-1-MAX/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/liga1max.stream/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/LIGA-1-MAX/index.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/liga1max.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 9
+    "order": 9,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_canaln_pe",
@@ -166,44 +164,43 @@
     "name": "Exitosa Noticias HD",
     "category": "Noticias",
     "logoUrl": "https://i.imgur.com/pu0BSB7.png",
-    "streamUrl": "http://190.93.224.42/EXITOSA/index.m3u8",
+    "streamUrl": "https://luna-4-video.mediaserver.digital/exitosatv_233b-4b49-a726-5a451262/index.m3u8",
     "sources": [
-      "http://190.93.224.42/EXITOSA/index.m3u8",
-      "https://live-evg8.tv360.bitel.com.pe/bitel/exitosatvSRT/playlist.m3u8"
+      "https://luna-4-video.mediaserver.digital/exitosatv_233b-4b49-a726-5a451262/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 12
+    "order": 12,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_atvplus_pe",
     "name": "ATV+ Noticias HD",
     "category": "Noticias",
     "logoUrl": "https://i.imgur.com/fY9256H.png",
-    "streamUrl": "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvplus.stream/playlist.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/atvplus.stream/playlist.m3u8",
     "sources": [
-      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvplus.stream/playlist.m3u8",
-      "http://190.93.224.42/ATV-PLUS/index.m3u8",
-      "http://45.171.108.253:8888/ATV/index.m3u8",
-      "https://d26l0c7cli5gzs.cloudfront.net/ts:abr.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/atvplus.stream/playlist.m3u8",
+      "http://45.171.108.253:8888/ATV/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 13
+    "order": 13,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_tvperunoticias_pe",
     "name": "TV Perú Noticias HD",
     "category": "Noticias",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/TV_Per%C3%BA_Noticias_-_2019_logo.png/960px-TV_Per%C3%BA_Noticias_-_2019_logo.png",
-    "streamUrl": "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/tvperu_new/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/TV-PERU-NOTICIAS/index.m3u8",
-      "https://live-evg8.tv360.bitel.com.pe/bitel/tvperunoticiasSRT/playlist.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/tvperu_new/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 14
+    "order": 14,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_latinanoticias247_pe",
@@ -236,13 +233,14 @@
     "name": "Global TV HD",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/yuEou9C.png",
-    "streamUrl": "http://190.93.224.42/GLOBAL/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/global.stream/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/GLOBAL/index.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/global.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 17
+    "order": 17,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_36tvhuacho_pe",
@@ -262,15 +260,14 @@
     "name": "ATV Sur",
     "category": "Entretenimiento",
     "logoUrl": "https://i.imgur.com/LnyVa5H.png",
-    "streamUrl": "http://190.93.224.42/ATV-SUR/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/atv.stream/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/ATV-SUR/index.m3u8",
-      "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/atvsur.stream/playlist.m3u8",
-      "https://dnhmqt6n0lkaq.cloudfront.net/ts:abr.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/atv.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 19
+    "order": 19,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_amazoniatv_pe",
@@ -707,13 +704,14 @@
     "name": "La Tele",
     "category": "Entretenimiento",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/LaTele_Per%C3%BA_2018_Logo.png/960px-LaTele_Per%C3%BA_2018_Logo.png",
-    "streamUrl": "http://190.93.224.42/LA-TELE/index.m3u8",
+    "streamUrl": "https://cablered.iptvperu.tv:1936/cablered/la_tele.stream/playlist.m3u8",
     "sources": [
-      "http://190.93.224.42/LA-TELE/index.m3u8"
+      "https://cablered.iptvperu.tv:1936/cablered/la_tele.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 53
+    "order": 53,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_lidertv_pe",
@@ -1578,14 +1576,14 @@
     "name": "FIFA+ Hispanic America",
     "category": "Deportes",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/FIFA%2B_(2025).svg/960px-FIFA%2B_(2025).svg.png",
-    "streamUrl": "https://d63fabad.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWVzX0ZJRkFQbHVzU3BhbmlzaF9ITFM/playlist.m3u8",
+    "streamUrl": "https://6c849fb3.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/TEctbXhfRklGQVBsdXNTcGFuaXNoLTFfSExT/playlist.m3u8",
     "sources": [
-      "https://d63fabad.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWVzX0ZJRkFQbHVzU3BhbmlzaF9ITFM/playlist.m3u8",
       "https://6c849fb3.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/TEctbXhfRklGQVBsdXNTcGFuaXNoLTFfSExT/playlist.m3u8"
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 120
+    "order": 120,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_foxdeportes_us",
@@ -2260,14 +2258,14 @@
     "name": "TVE Star",
     "category": "Cine & Series",
     "logoUrl": "https://i.ibb.co/j98NY8Mr/starcolor.png",
-    "streamUrl": "https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/star_main_1080.m3u8",
+    "streamUrl": "https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/star_main_576.m3u8",
     "sources": [
-      "https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/star_main_1080.m3u8",
       "https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/star_main_576.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 172
+    "order": 172,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_tvsretro_gt",
@@ -2339,14 +2337,14 @@
     "name": "BabyFirst",
     "category": "Infantil",
     "logoUrl": "https://i.imgur.com/WxLHBwu.png",
-    "streamUrl": "https://cdn.fast.jwp.services/v1/channel/1_jB6940Ei_TvhvIHDL/manifest.m3u8",
+    "streamUrl": "http://168.228.44.241:9997/play/a07u/index.m3u8",
     "sources": [
-      "https://cdn.fast.jwp.services/v1/channel/1_jB6940Ei_TvhvIHDL/manifest.m3u8",
       "http://168.228.44.241:9997/play/a07u/index.m3u8"
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 178
+    "order": 178,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_bobesponja_de",
@@ -2392,31 +2390,28 @@
     "name": "Disney Channel HD",
     "category": "Infantil",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/2024_Disney_Channel_text_logo.svg/960px-2024_Disney_Channel_text_logo.svg.png",
-    "streamUrl": "http://4.30.180.36:8420/disneychannel/index.m3u8?token=test",
+    "streamUrl": "http://138.121.15.230:9002/DISNEY-CHANNEL/index.m3u8",
     "sources": [
-      "http://4.30.180.36:8420/disneychannel/index.m3u8?token=test",
-      "http://212.5.144.156/disney/index.m3u8"
+      "http://138.121.15.230:9002/DISNEY-CHANNEL/index.m3u8"
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 182
+    "order": 182,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_disneychannellatinamerica_ar",
     "name": "Disney Channel HD",
     "category": "Infantil",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/f/ff/2024_Disney_Channel_text_logo.svg",
-    "streamUrl": "http://45.134.141.161:2200/ARG/Disney_Channel/index.m3u8",
+    "streamUrl": "http://138.121.15.230:9002/DISNEY-CHANNEL/index.m3u8",
     "sources": [
-      "http://45.134.141.161:2200/ARG/Disney_Channel/index.m3u8",
-      "http://138.121.15.230:9002/DISNEY-CHANNEL/index.m3u8",
-      "http://15.204.246.24:8080/DisneyHD/index.m3u8",
-      "http://45.166.93.156:9999/play/a0f3/index.m3u8",
-      "http://181.78.8.199:8000/play/a0dn/index.m3u8"
+      "http://138.121.15.230:9002/DISNEY-CHANNEL/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
-    "order": 183
+    "order": 183,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_disneyjrlatinamerica_ar",
@@ -3627,14 +3622,14 @@
     "name": "RNN",
     "category": "Noticias",
     "logoUrl": "https://i.imgur.com/12Z9qPw.png",
-    "streamUrl": "https://2-fss-2.streamhoster.com/pl_138/206532-6829902-1/playlist.m3u8",
+    "streamUrl": "https://2-fss-2.streamhoster.com/pl_138/206532-6829912-1/playlist.m3u8",
     "sources": [
-      "https://2-fss-2.streamhoster.com/pl_138/206532-6829902-1/playlist.m3u8",
       "https://2-fss-2.streamhoster.com/pl_138/206532-6829912-1/playlist.m3u8"
     ],
     "quality": "720p HD",
     "isActive": true,
-    "order": 276
+    "order": 276,
+    "lastChecked": "2026-10-08T09:50:33.995Z"
   },
   {
     "id": "ch_rtu_ec",
