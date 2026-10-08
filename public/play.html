@@ -2464,6 +2464,64 @@
       startPlayback(sources[0]);
     }
 
+    /**
+     * Configura la lógica blindada de selección de audio en el reproductor de video.
+     * Se ejecuta inmediatamente tras cargar los metadatos del video.
+     * Prioriza el audio en español ('es', 'spa', 'spanish') sin intervención del usuario.
+     */
+    function setupAutoSpanishAudioTrack(videoElement) {
+      if (!videoElement) return;
+
+      const SPANISH_CODES = ['es', 'spa', 'spanish', 'es-419', 'es-la', 'es-es'];
+
+      const selectSpanishTrack = () => {
+        // 1. Acceder a la lista de pistas de audio disponibles (audioTracks)
+        const tracks = videoElement.audioTracks;
+        if (!tracks || tracks.length === 0) return;
+
+        let spanishIndex = -1;
+
+        // 2 y 3. Iterar y evaluar la propiedad language buscando 'es', 'spa' o 'spanish'
+        for (let i = 0; i < tracks.length; i++) {
+          const track = tracks[i];
+          const lang = (track.language || '').trim().toLowerCase();
+          const label = (track.label || '').trim().toLowerCase();
+
+          const isSpanish = SPANISH_CODES.some(code =>
+            lang === code || lang.startsWith(code + '-') || label.includes('español') || label.includes('spanish')
+          );
+
+          if (isSpanish) {
+            spanishIndex = i;
+            break;
+          }
+        }
+
+        // 4. Establecer enabled = true en la pista en español y desactivar las demás
+        if (spanishIndex !== -1) {
+          for (let i = 0; i < tracks.length; i++) {
+            tracks[i].enabled = (i === spanishIndex);
+          }
+          console.log(`[AudioSelector] Pista en español activada automáticamente [Índice ${spanishIndex}].`);
+        } else {
+          // 5. Si no se encuentra, mantener la pista predeterminada sin cambios
+          console.log('[AudioSelector] No se detectó pista en español. Manteniendo pista predeterminada.');
+        }
+      };
+
+      // Manejo seguro de asincronía: comprobar readyState >= HAVE_METADATA (1)
+      if (videoElement.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        selectSpanishTrack();
+      } else {
+        videoElement.addEventListener('loadedmetadata', selectSpanishTrack, { once: true });
+      }
+
+      // Soporte dinámico para pistas añadidas tras demuxing progresivo
+      if (videoElement.audioTracks && typeof videoElement.audioTracks.addEventListener === 'function') {
+        videoElement.audioTracks.addEventListener('addtrack', selectSpanishTrack, { once: true });
+      }
+    }
+
     // INICIAR REPRODUCTOR NATIVO CON SOPORTE HLS / MP4
     function startPlayback(url) {
       const video = document.getElementById('videoPlayer');
@@ -2473,16 +2531,36 @@
         hlsInstance = null;
       }
 
+      // Configurar escucha blindada de audioTracks nativas
+      setupAutoSpanishAudioTrack(video);
+
       if (url.includes('.m3u8')) {
         if (Hls.isSupported()) {
           hlsInstance = new Hls({ enableWorker: true });
           hlsInstance.loadSource(url);
           hlsInstance.attachMedia(video);
+
+          // Selección blindada de audio en español para HLS.js
+          hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
+            const tracks = data.audioTracks || [];
+            if (!tracks.length) return;
+            const SPANISH_CODES = ['es', 'spa', 'spanish', 'es-419', 'lat', 'latino'];
+            const spIdx = tracks.findIndex(t => {
+              const lang = (t.lang || '').toLowerCase();
+              const name = (t.name || '').toLowerCase();
+              return SPANISH_CODES.some(c => lang === c || lang.startsWith(c + '-') || name.includes('español') || name.includes('latino') || name.includes('spanish'));
+            });
+            if (spIdx !== -1 && hlsInstance.audioTrack !== spIdx) {
+              console.log('[HLS Audio] Pista en español priorizada automáticamente (ID:', spIdx, ')');
+              hlsInstance.audioTrack = spIdx;
+            }
+          });
+
           hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
             video.play().catch(() => {});
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          // Safari nativo en iPhone / iPad
+          // Safari nativo en iPhone / iPad / Mac
           video.src = url;
           video.play().catch(() => {});
         }
