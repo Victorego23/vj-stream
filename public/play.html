@@ -1566,7 +1566,6 @@
   <!-- MODAL DE ACTIVACIÓN DE DISPOSITIVO (SMART TV / ANDROID / WEB) -->
   <div class="activation-modal" id="activationModal">
     <div class="activation-card">
-      <button class="btn-close-act-modal focusable" onclick="closeActivationModal()" title="Cerrar ventana">✕</button>
       <div class="act-brand-badge">⚡ TOM TV ACCESO FÁCIL</div>
       <h2 class="act-title" id="actTitle">Activar tu Televisor o Celular</h2>
       <p class="act-desc" id="actDesc">Para ver canales en vivo y películas en tu Smart TV, activa tu pantalla con tu código o prueba la demo gratis:</p>
@@ -1797,11 +1796,8 @@
 
         displayActivationDetails(data);
         startPolling(data.code);
-        // Abrir automáticamente el modal la primera vez para que vea su código
-        if (!sessionStorage.getItem('vj_auth_modal_shown')) {
-          sessionStorage.setItem('vj_auth_modal_shown', 'true');
-          openActivationModal();
-        }
+        // Bloqueo estricto: Si la pantalla no está activada, mostrar siempre el modal sin permitir cierre
+        openActivationModal();
       } else if (data.status === 'expired' || data.status === 'suspended') {
         isDeviceActive = false;
         accountBtn.className = 'account-btn';
@@ -1890,13 +1886,71 @@
           notice.style.display = 'block';
         }
       }
-      document.getElementById('activationModal').style.display = 'flex';
+      const modal = document.getElementById('activationModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
     }
 
     function closeActivationModal() {
-      document.getElementById('activationModal').style.display = 'none';
+      // Bloqueo de seguridad: No se puede cerrar la ventana si el dispositivo no está activo
+      if (!isDeviceActive) return;
+      const modal = document.getElementById('activationModal');
+      if (modal) modal.style.display = 'none';
+      document.body.style.overflow = '';
       const notice = document.getElementById('actNotice');
       if (notice) notice.style.display = 'none';
+    }
+
+    // BLINDAJE DE SEGURIDAD: Impide borrar, ocultar o saltarse el cuadro de activación si no está activo
+    function enforceSecurityGate() {
+      if (isDeviceActive) return;
+
+      const actModal = document.getElementById('activationModal');
+      // Si eliminaron el modal con DevTools / consola para saltarse la activación, recargar la página inmediatamente
+      if (!actModal) {
+        window.location.reload();
+        return;
+      }
+
+      // Si intentaron forzar display none u ocultarlo por CSS
+      if (actModal.style.display !== 'flex') {
+        actModal.style.display = 'flex';
+      }
+      if (actModal.style.opacity === '0' || actModal.style.visibility === 'hidden') {
+        actModal.style.opacity = '1';
+        actModal.style.visibility = 'visible';
+      }
+
+      // Bloquear scroll de la página de fondo
+      if (document.body.style.overflow !== 'hidden') {
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    // Monitoreo constante
+    setInterval(enforceSecurityGate, 600);
+
+    // Detección reactiva de cambios en el DOM
+    if (typeof window !== 'undefined' && window.MutationObserver) {
+      const initGuard = () => {
+        const m = document.getElementById('activationModal');
+        if (m) {
+          const obs = new MutationObserver(() => {
+            if (!isDeviceActive) {
+              if (m.style.display !== 'flex') m.style.display = 'flex';
+              if (document.body.style.overflow !== 'hidden') document.body.style.overflow = 'hidden';
+            }
+          });
+          obs.observe(m, { attributes: true, attributeFilter: ['style', 'class'] });
+        }
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initGuard);
+      } else {
+        initGuard();
+      }
     }
 
     function handleAccountBtnClick() {
@@ -2976,7 +3030,9 @@
             return;
           }
           if (activationModal && activationModal.style.display === 'flex') {
-            closeActivationModal();
+            if (isDeviceActive) {
+              closeActivationModal();
+            }
             e.preventDefault();
             return;
           }
