@@ -1059,6 +1059,17 @@
               <button class="btn btn-primary btn-sm" onclick="forceCatalogRefresh()">⚡ Sincronizar Ahora</button>
             </div>
           </div>
+
+          <div class="card" style="background: var(--card-bg); border: 1px solid rgba(229, 9, 20, 0.35); border-radius: 14px; padding: 20px;">
+            <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 6px; color: var(--primary-light);">🗑️ Herramientas de Caché de Stream</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px;">Si una película se reproduce en inglés, limpia su caché para forzar nueva búsqueda en español.</p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+              <input type="text" id="cache-title-input" placeholder="Título (ej: Coyote vs. Acme)" style="flex: 1; min-width: 160px; background: #0A0C12; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 12px; color: #fff; font-size: 13px; outline: none;" />
+              <button class="btn btn-primary btn-sm" onclick="clearStreamCache(false)" id="btn-clear-cache" style="white-space: nowrap;">🗑️ Limpiar Caché</button>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="clearStreamCache(true)" id="btn-clear-all-cache" style="width: 100%;">⚠️ Limpiar TODO el caché de streams</button>
+            <div id="cache-clear-result" style="margin-top: 12px; font-size: 13px; padding: 10px; border-radius: 8px; display: none;"></div>
+          </div>
         </div>
       </section>
 
@@ -1610,6 +1621,58 @@
           btn.textContent = '⚡ Actualizar Catálogo Ahora';
           btn.disabled = false;
         }
+      }
+    }
+
+    async function clearStreamCache(clearAll = false) {
+      const resultEl = document.getElementById('cache-clear-result');
+      const titleInput = document.getElementById('cache-title-input');
+      const btnCache = document.getElementById('btn-clear-cache');
+      const btnAll = document.getElementById('btn-clear-all-cache');
+      const pattern = clearAll ? null : (titleInput?.value || '').trim();
+
+      if (!clearAll && !pattern) {
+        resultEl.style.display = 'block';
+        resultEl.style.background = 'rgba(245,158,11,0.15)';
+        resultEl.style.color = '#F59E0B';
+        resultEl.textContent = '⚠️ Escribe el título de la película antes de limpiar.';
+        return;
+      }
+
+      if (btnCache) { btnCache.disabled = true; btnCache.textContent = '⏳ Limpiando...'; }
+      if (btnAll) { btnAll.disabled = true; }
+      resultEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/streaming/clear-cache', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-admin-password': adminToken },
+          body: JSON.stringify(pattern ? { pattern } : {})
+        });
+        const data = await res.json();
+        resultEl.style.display = 'block';
+        if (data.success) {
+          resultEl.style.background = 'rgba(34,197,94,0.15)';
+          resultEl.style.color = '#22C55E';
+          const msg = pattern
+            ? `✅ Caché de "${pattern}" limpiado (${data.cleared || 0} entradas). Vuelve a reproducir la película.`
+            : `✅ Todo el caché limpiado (${data.cleared || 0} entradas). Las próximas reproducciones buscarán en español.`;
+          resultEl.textContent = msg;
+          showToast(msg);
+          if (titleInput) titleInput.value = '';
+        } else {
+          resultEl.style.background = 'rgba(239,68,68,0.15)';
+          resultEl.style.color = '#EF4444';
+          resultEl.textContent = '❌ Error al limpiar el caché: ' + (data.error || 'Error desconocido');
+        }
+      } catch (err) {
+        resultEl.style.display = 'block';
+        resultEl.style.background = 'rgba(239,68,68,0.15)';
+        resultEl.style.color = '#EF4444';
+        resultEl.textContent = '❌ Error de conexión: ' + err.message;
+      } finally {
+        if (btnCache) { btnCache.disabled = false; btnCache.textContent = '🗑️ Limpiar Caché'; }
+        if (btnAll) { btnAll.disabled = false; }
       }
     }
 
