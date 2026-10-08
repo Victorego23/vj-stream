@@ -32,14 +32,15 @@
     "name": "América TV HD",
     "category": "Entretenimiento",
     "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Am%C3%A9rica_Televisi%C3%B3n.svg/500px-Am%C3%A9rica_Televisi%C3%B3n.svg.png",
-    "streamUrl": "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8",
+    "streamUrl": "http://190.108.91.206:9050/play/a0bb/index.m3u8",
     "sources": [
-      "https://live-bd1.tv360.bitel.com.pe/manifest/america/master_clean_source.m3u8"
+      "http://190.108.91.206:9050/play/a0bb/index.m3u8",
+      "http://45.70.201.81:8000/play/a011/index.m3u8"
     ],
     "quality": "1080p HD",
     "isActive": true,
     "order": 3,
-    "lastChecked": "2026-10-08T09:50:33.995Z"
+    "lastChecked": "2026-10-08T14:17:52.174Z"
   },
   {
     "id": "ch_atv_pe",
@@ -683,8 +684,9 @@
       "http://190.93.224.42/JUSTICIA-TV/index.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 51
+    "isActive": false,
+    "order": 51,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_lafabulosatv_pe",
@@ -1269,8 +1271,9 @@
       "https://live-evg11.tv360.bitel.com.pe/bitel/turbomixSRT/playlist.m3u8"
     ],
     "quality": "720p HD",
-    "isActive": true,
-    "order": 96
+    "isActive": false,
+    "order": 96,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_usmptv_pe",
@@ -1412,8 +1415,9 @@
       "http://bantel-cdn1.iptvperu.tv:1935/btnscrtn/vivatv.stream/playlist.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 107
+    "isActive": false,
+    "order": 107,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_west_pe",
@@ -1542,8 +1546,9 @@
       "https://7nyaler.streamhostingcdn.top/stream/18/index.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 117
+    "isActive": false,
+    "order": 117,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_dsports_us",
@@ -1660,8 +1665,9 @@
       "https://7nyaler.streamhostingcdn.top/stream/36/index.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 126
+    "isActive": false,
+    "order": 126,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_mlbstrikezone_us",
@@ -2556,8 +2562,9 @@
       "https://live20.bozztv.com/akamaissh101/ssh101/somosentrerios/playlist.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 194
+    "isActive": false,
+    "order": 194,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_starzkidsfamily_us",
@@ -3523,8 +3530,9 @@
       "https://srspsn.live/live/livestream.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 268
+    "isActive": false,
+    "order": 268,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_psncanal452_mx",
@@ -3536,8 +3544,9 @@
       "https://srspsn2.live/live/livestream.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 269
+    "isActive": false,
+    "order": 269,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_puranoticiatv_cl",
@@ -3575,8 +3584,9 @@
       "https://www.streaming507.net:19360/anconvideo/anconvideo.m3u8"
     ],
     "quality": "720p HD",
-    "isActive": true,
-    "order": 272
+    "isActive": false,
+    "order": 272,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_rcvtv_hn",
@@ -4045,8 +4055,9 @@
       "https://s2.tvdatta.com:3307/hybrid/play.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 308
+    "isActive": false,
+    "order": 308,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_fuegotv_do",
@@ -4097,8 +4108,9 @@
       "https://s2.tvdatta.com:3753/hybrid/play.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 312
+    "isActive": false,
+    "order": 312,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_kandelatv_ve",
@@ -4110,8 +4122,9 @@
       "https://streamtv.intervenhosting.net:3718/live/kandelamedioslive.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 313
+    "isActive": false,
+    "order": 313,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_la100_ar",
@@ -4318,8 +4331,9 @@
       "https://hdbox.chunklistv.com/live?stream=megabox"
     ],
     "quality": "720p HD",
-    "isActive": true,
-    "order": 329
+    "isActive": false,
+    "order": 329,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_metropolimediostv_ec",
@@ -4487,8 +4501,9 @@
       "https://tuvideoonline.com.ar:3391/live/radioconexionlive.m3u8"
     ],
     "quality": "720p HD",
-    "isActive": true,
-    "order": 342
+    "isActive": false,
+    "order": 342,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_radiocuencaestereo_ec",
@@ -4565,8 +4580,9 @@
       "https://5ff3d9babae13.streamlock.net/chrgkqgkyb/chrgkqgkyb/playlist.m3u8"
     ],
     "quality": "720p HD",
-    "isActive": true,
-    "order": 348
+    "isActive": false,
+    "order": 348,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_radiomonumentaltv_ec",
@@ -4604,8 +4620,9 @@
       "https://tls-cl.cdnz.cl/retroplustvuno/live/playlist.m3u8"
     ],
     "quality": "720p HD",
-    "isActive": true,
-    "order": 351
+    "isActive": false,
+    "order": 351,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_retromusicatelevision_cl",
@@ -4721,8 +4738,9 @@
       "https://5ff3d9babae13.streamlock.net/8000/8000/playlist.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 360
+    "isActive": false,
+    "order": 360,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_spektratv_es",
@@ -4760,8 +4778,9 @@
       "https://vcp8.myplaytv.com:1936/superq/superq/playlist.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 363
+    "isActive": false,
+    "order": 363,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_supermusicatv_co",
@@ -4903,8 +4922,9 @@
       "https://www.streaming507.net:19360/videotropiq/videotropiq.m3u8"
     ],
     "quality": "1080p HD",
-    "isActive": true,
-    "order": 374
+    "isActive": false,
+    "order": 374,
+    "lastChecked": "2026-10-08T14:17:52.182Z"
   },
   {
     "id": "ch_tvexitos_do",

@@ -2435,6 +2435,8 @@
       }
     }
 
+    let playbackWatchdog = null;
+
     // REPRODUCIR CANAL DE TV EN VIVO
     async function playLiveChannel(ch) {
       if (authCheckingPromise) {
@@ -2452,7 +2454,10 @@
       modal.style.display = 'flex';
       resetPlayerIdleTimer();
 
-      const sources = ch.sources || [ch.url];
+      const sources = (Array.isArray(ch.sources) && ch.sources.length > 0)
+        ? ch.sources
+        : (ch.streamUrl ? [ch.streamUrl] : (ch.url ? [ch.url] : []));
+
       currentStreams = sources.map((url, i) => ({
         id: `src_${i}`,
         label: `Señal ${i + 1} (${i === 0 ? 'Principal' : 'Respaldo'})`,
@@ -2535,6 +2540,11 @@
     function startPlayback(url) {
       const video = document.getElementById('videoPlayer');
 
+      if (playbackWatchdog) {
+        clearTimeout(playbackWatchdog);
+        playbackWatchdog = null;
+      }
+
       if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
@@ -2546,23 +2556,65 @@
       // Limpiar handlers anteriores
       video.onerror = null;
 
-      // Auto-fallback en caso de error (TV en Vivo o película caída)
+      // Auto-fallback en caso de error o demora excesiva (TV en Vivo o película caída)
       const handleVideoError = () => {
-        if (!currentStreams || currentStreams.length <= 1) return;
+        if (playbackWatchdog) {
+          clearTimeout(playbackWatchdog);
+          playbackWatchdog = null;
+        }
+        if (!currentStreams || currentStreams.length <= 1) {
+          console.log('[Failover] No hay señales adicionales disponibles.');
+          return;
+        }
         const currentIndex = currentStreams.findIndex(s => s.streamUrl === url);
         if (currentIndex !== -1 && currentIndex + 1 < currentStreams.length) {
           const nextStream = currentStreams[currentIndex + 1];
-          console.log(`[Failover] Enlace falló. Cambiando automáticamente a la Señal ${currentIndex + 2}: ${nextStream.streamUrl}`);
-          document.getElementById('playerTitle').textContent += ' (Cambiando a Respaldo...)';
-          switchAudioStream(nextStream.streamUrl, nextStream.label);
+          console.log(`[Failover] Señal ${currentIndex + 1} no responde rápido. Cambiando inmediatamente a la Señal ${currentIndex + 2}: ${nextStream.streamUrl}`);
+          const pTitle = document.getElementById('playerTitle');
+          if (pTitle) {
+            pTitle.textContent = (currentPlayingLiveChannel ? `EN VIVO: ${currentPlayingLiveChannel.name}` : 'EN VIVO') + ` (Señal ${currentIndex + 2})`;
+          }
+          const audioLbl = document.getElementById('currentAudioLabel');
+          if (audioLbl) audioLbl.textContent = nextStream.label ? nextStream.label.split('(')[0] : 'Audio';
+          startPlayback(nextStream.streamUrl);
         } else {
-          console.log('[Failover] Todos los enlaces fallaron.');
+          console.log('[Failover] Todas las señales de este canal fueron agotadas.');
         }
       };
 
+      // Watchdog de conexión ultrarrápida: si en 3.8s la señal no arranca, pasar inmediatamente al respaldo
+      playbackWatchdog = setTimeout(() => {
+        if (!video.paused && video.currentTime > 0) return;
+        console.warn(`[Watchdog] Enlace demoró más de 3.8s sin reproducir: ${url}`);
+        handleVideoError();
+      }, 3800);
+
+      const onStreamStarted = () => {
+        if (playbackWatchdog) {
+          clearTimeout(playbackWatchdog);
+          playbackWatchdog = null;
+        }
+      };
+
+      video.addEventListener('playing', onStreamStarted, { once: true });
+      video.addEventListener('timeupdate', () => {
+        if (video.currentTime > 0) onStreamStarted();
+      }, { once: true });
+
       if (url.includes('.m3u8')) {
         if (Hls.isSupported()) {
-          hlsInstance = new Hls({ enableWorker: true });
+          hlsInstance = new Hls({
+            enableWorker: true,
+            manifestLoadingTimeOut: 3500,
+            manifestLoadingMaxRetry: 1,
+            manifestLoadingRetryDelay: 500,
+            levelLoadingTimeOut: 3500,
+            levelLoadingMaxRetry: 1,
+            fragLoadingTimeOut: 4000,
+            fragLoadingMaxRetry: 1,
+            lowLatencyMode: true,
+            backBufferLength: 30
+          });
           hlsInstance.loadSource(url);
           hlsInstance.attachMedia(video);
 
@@ -2584,12 +2636,12 @@
             video.play().catch(() => {});
           });
 
-          // Manejar errores de red para cambiar de canal automáticamente
+          // Manejar errores de red para cambiar de canal inmediatamente
           hlsInstance.on(Hls.Events.ERROR, (event, data) => {
             if (data.fatal) {
               switch (data.type) {
                 case Hls.ErrorTypes.NETWORK_ERROR:
-                  console.log("Error de red fatal HLS, intentando recuperar o cambiar enlace...");
+                  console.log("Error de red fatal HLS, activando failover inmediato...");
                   handleVideoError();
                   break;
                 case Hls.ErrorTypes.MEDIA_ERROR:
@@ -2648,12 +2700,18 @@
     }
 
     function switchAudioStream(url, lbl) {
-      toggleAudioDropdown();
-      document.getElementById('currentAudioLabel').textContent = lbl ? lbl.split('(')[0] : 'Audio';
+      const dd = document.getElementById('audioDropdown');
+      if (dd) dd.style.display = 'none';
+      const audioLbl = document.getElementById('currentAudioLabel');
+      if (audioLbl) audioLbl.textContent = lbl ? lbl.split('(')[0] : 'Audio';
       startPlayback(url);
     }
 
     function closePlayer() {
+      if (playbackWatchdog) {
+        clearTimeout(playbackWatchdog);
+        playbackWatchdog = null;
+      }
       const modal = document.getElementById('playerModal');
       const video = document.getElementById('videoPlayer');
       video.pause();
