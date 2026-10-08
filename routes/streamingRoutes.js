@@ -1278,11 +1278,11 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '⚡ Modo Turbo Ultra-Veloz: Arranque instantáneo de películas en 1 segundo con 0% de latencia.',
-      '🧹 Limpiador Inteligente 24/7: Conexión TorBox y Debrid optimizada sin bloqueos ni torrents estancados.',
-      '🎬 Catálogo Ilimitado (+50,000 Películas) con reproducción directa en Español Latino (🇲🇽) y Castellano.',
-      '🛡️ Servidor Blindado contra caídas: Consumo ultra-bajo de recursos y máxima estabilidad.',
-      '📡 444 Canales de TV en Vivo 100% Operativos con Auto-Failover 24/7.'
+      '🎧 Selector Tri-Audio OSD para Smart TV: Acceso rápido con tecla Arriba (▲) para elegir Español Latino, Idioma Original o Castellano sin pausar.',
+      '🚫 Cero cruces de idiomas y eliminación de pistas con narración (TTS) o Audio Description superpuestas.',
+      '💾 Persistencia inteligente: El reproductor recuerda tu preferencia de idioma en todas las películas.',
+      '📺 Navegación optimizada con D-Pad en alto contraste Cyan Neón para Android TV y Fire TV.',
+      '⚡ Modo Turbo Ultra-Veloz: Arranque instantáneo de películas en 1 segundo con 0% de latencia.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,
