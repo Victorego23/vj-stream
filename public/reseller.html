@@ -706,7 +706,7 @@
         <div class="form-group">
           <label>Plan / Tiempo de Suscripción:</label>
           <select id="client-plan-days" class="form-control" onchange="updateCreditCalc()">
-            <option value="2h">⚡ Demo Gratuito (2 Horas) - Costo: 0 Créditos</option>
+            <option value="1h">⚡ Demo Gratuito (1 Hora) - Costo: 0 Créditos</option>
             <option value="30" selected>1 Mes (30 días) - Costo: 1 Crédito</option>
             <option value="90">3 Meses (90 días) - Costo: 3 Créditos</option>
             <option value="180">6 Meses (180 días) - Costo: 6 Créditos</option>
@@ -1123,8 +1123,8 @@
       function updateCreditCalc() {
         const rawVal = document.getElementById('client-plan-days').value;
         let cost = 1;
-        if (rawVal === '2h') {
-          cost = 0; // Demo de 2 horas es gratuito para el revendedor
+        if (rawVal === '1h' || rawVal === '2h') {
+          cost = 0; // Demo de 1 hora es gratuito para el revendedor
         } else {
           const days = parseInt(rawVal, 10);
           if (days <= 31) cost = 1;
@@ -1158,7 +1158,7 @@
         const name = document.getElementById('client-name').value.trim();
         const customCode = document.getElementById('client-custom-code') ? document.getElementById('client-custom-code').value.trim() : '';
         const rawPlan = document.getElementById('client-plan-days').value;
-        const planDays = rawPlan === '2h' ? '2h' : parseInt(rawPlan, 10);
+        const planDays = (rawPlan === '1h' || rawPlan === '2h') ? '1h' : parseInt(rawPlan, 10);
         const maxDevices = parseInt(document.getElementById('client-max-devices').value, 10);
         const btn = document.getElementById('btn-submit-client');
 

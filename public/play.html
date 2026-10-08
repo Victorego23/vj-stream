@@ -1579,14 +1579,14 @@
         <button class="btn-copy-code focusable" id="btnCopyCode" onclick="copyActivationCode()">📋 Copiar Código</button>
       </div>
 
-      <!-- BOTÓN PROBAR DEMO GRATIS 2 HORAS AL INSTANTE -->
+      <!-- BOTÓN PROBAR DEMO GRATIS 1 HORA AL INSTANTE -->
       <button class="btn-demo-instant focusable" id="btnRequestDemo" onclick="requestTrialDemo()" style="
         display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
         padding: 14px; background: linear-gradient(135deg, #FFB800, #F59E0B); color: #000;
         font-weight: 900; font-size: 15px; border-radius: 14px; border: none; cursor: pointer;
         box-shadow: 0 4px 20px rgba(245, 158, 11, 0.5); margin-bottom: 12px; transition: all 0.2s;
       ">
-        ⚡ VER AHORA - Probar 2 Horas Gratis
+        ⚡ VER AHORA - Probar 1 Hora Gratis
       </button>
 
       <a id="actWhatsappBtn" href="#" target="_blank" class="btn-whatsapp-act focusable">
@@ -1779,7 +1779,7 @@
           accountBtn.style.background = 'rgba(245, 158, 11, 0.2)';
           accountBtn.style.borderColor = 'rgba(245, 158, 11, 0.5)';
           accountBtn.style.color = '#F59E0B';
-          accountBtn.innerHTML = `⚡ Demo (2h)`;
+          accountBtn.innerHTML = `⚡ Demo (1h)`;
         } else {
           accountBtn.style.background = '';
           accountBtn.style.borderColor = '';
@@ -1812,7 +1812,7 @@
 
     async function requestTrialDemo() {
       const btn = document.getElementById('btnRequestDemo');
-      btn.textContent = '⚡ Activando Demo 2 Horas...';
+      btn.textContent = '⚡ Activando Demo 1 Hora...';
       btn.disabled = true;
 
       try {
@@ -1827,15 +1827,15 @@
         const data = await res.json();
         if (data.success && data.status === 'active') {
           handleAuthResponse(data);
-          console.log('🎉 ¡Tu Demo de 2 Horas ha comenzado! Ya puedes ver películas, series y canales de TV en vivo sin publicidad.');
+          console.log('🎉 ¡Tu Demo de 1 Hora ha comenzado! Ya puedes ver películas, series y canales de TV en vivo sin publicidad.');
         } else {
-          console.log(data.message || 'Este dispositivo ya utilizó su demo gratuito de 2 horas. Contacta a un asesor por WhatsApp para activar tu plan.');
-          btn.textContent = '⚡ Probar Demo Gratis (2 Horas al Instante)';
+          console.log(data.message || 'Este dispositivo ya utilizó su demo gratuito de 1 hora. Contacta a un asesor por WhatsApp para activar tu plan.');
+          btn.textContent = '⚡ Probar Demo Gratis (1 Hora al Instante)';
           btn.disabled = false;
         }
       } catch (err) {
         console.log('Error de conexión al activar el demo. Por favor contáctanos por WhatsApp.');
-        btn.textContent = '⚡ Probar Demo Gratis (2 Horas al Instante)';
+        btn.textContent = '⚡ Probar Demo Gratis (1 Hora al Instante)';
         btn.disabled = false;
       }
     }
@@ -1853,9 +1853,9 @@
     function displayExpiredDetails(data) {
       const isDemo = data.client?.isDemo || data.reason === 'demo_expired';
       document.getElementById('actCodeDisplay').textContent = data.client?.code || 'VENCIDO';
-      document.getElementById('actTitle').textContent = isDemo ? '⏰ Demo de 2 Horas Finalizado' : '⚠️ Membresía Vencida';
+      document.getElementById('actTitle').textContent = isDemo ? '⏰ Demo de 1 Hora Finalizado' : '⚠️ Membresía Vencida';
       document.getElementById('actDesc').textContent = isDemo 
-        ? 'Tu prueba gratuita de 2 horas ha terminado. Esperamos que hayas disfrutado de TOM TV. Solicita tu plan mensual por WhatsApp para continuar.'
+        ? 'Tu prueba gratuita de 1 hora ha terminado. Esperamos que hayas disfrutado de TOM TV. Solicita tu plan mensual por WhatsApp para continuar.'
         : (data.message || 'Tu suscripción ha finalizado. Contacta a tu proveedor para renovar tu acceso.');
       openActivationModal();
     }

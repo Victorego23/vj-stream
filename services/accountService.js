@@ -762,7 +762,7 @@ class AccountService {
       const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
       const diffMinutes = Math.max(0, Math.ceil(diffMs / (1000 * 60)));
       const diffHours = (diffMinutes / 60).toFixed(1);
-      const isDemo = client.isDemo === true || client.planHours === 2 || client.planDays === '2h';
+      const isDemo = client.isDemo === true || client.planHours === 1 || client.planHours === 2 || client.planDays === '1h' || client.planDays === '2h';
 
       return {
         ...client,
@@ -787,13 +787,13 @@ class AccountService {
     const db = this._readDb();
     const now = new Date();
 
-    const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h' || planHours === 2;
+    const isDemoPlan = isDemo || planDays === '1h' || planDays === '2h' || planDays === 'demo_1h' || planDays === 'demo_2h' || planHours === 1 || planHours === 2;
     let expiresAt;
     let parsedDays = 30;
 
-    if (isTwoHourDemo) {
-      // Demo estricto de 2 horas (2 * 60 * 60 * 1000 = 7,200,000 ms)
-      expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    if (isDemoPlan) {
+      // Demo estricto de 1 hora (1 * 60 * 60 * 1000 = 3,600,000 ms)
+      expiresAt = new Date(now.getTime() + (1 * 60 * 60 * 1000));
       parsedDays = 0;
     } else {
       parsedDays = parseInt(planDays, 10) || 30;
@@ -802,7 +802,7 @@ class AccountService {
 
     let finalCode = customCode;
     if (!finalCode) {
-      const prefix = isTwoHourDemo ? 'VJ-' : 'VJ-';
+      const prefix = isDemoPlan ? 'VJ-' : 'VJ-';
       finalCode = prefix + Math.floor(1000 + Math.random() * 9000);
       while (db.clients.some(c => c.code === finalCode)) {
         finalCode = prefix + Math.floor(1000 + Math.random() * 9000);
@@ -811,14 +811,14 @@ class AccountService {
 
     const newClient = {
       id: crypto.randomUUID(),
-      name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+      name: (name || (isDemoPlan ? 'Cliente Demo (1 Hora)' : 'Cliente')).trim(),
       username: (username || (name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
       code: finalCode,
       status: 'active',
-      isDemo: isTwoHourDemo,
-      planHours: isTwoHourDemo ? 2 : null,
+      isDemo: isDemoPlan,
+      planHours: isDemoPlan ? 1 : null,
       planDays: parsedDays,
-      planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
+      planLabel: isDemoPlan ? 'Demo 1 Hora' : `${parsedDays} días`,
       maxDevices: parseInt(maxDevices, 10) || 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
@@ -1344,16 +1344,16 @@ class AccountService {
     if (!reseller) throw new Error('Revendedor no encontrado.');
     if (reseller.status === 'suspended') throw new Error('Tu cuenta de revendedor está suspendida.');
 
-    const isTwoHourDemo = planDays === '2h' || planDays === 'demo_2h' || planDays === 0 || planDays === '0';
+    const isDemoPlan = planDays === '1h' || planDays === '2h' || planDays === 'demo_1h' || planDays === 'demo_2h' || planDays === 0 || planDays === '0';
     let requiredCredits = 0;
     let parsedDays = 30;
     let expiresAt;
     const now = new Date();
 
-    if (isTwoHourDemo) {
-      requiredCredits = 0; // Demos de 2 horas no consumen créditos
+    if (isDemoPlan) {
+      requiredCredits = 0; // Demos de 1 hora no consumen créditos
       parsedDays = 0;
-      expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+      expiresAt = new Date(now.getTime() + (1 * 60 * 60 * 1000));
     } else {
       parsedDays = parseInt(planDays, 10) || 30;
       requiredCredits = this.calculateCreditsForDays(parsedDays);
@@ -1379,14 +1379,14 @@ class AccountService {
 
     const newClient = {
       id: crypto.randomUUID(),
-      name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+      name: (name || (isDemoPlan ? 'Cliente Demo (1 Hora)' : 'Cliente')).trim(),
       username: (name.toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900)).trim(),
       code: finalCode,
       status: 'active',
-      isDemo: isTwoHourDemo,
-      planHours: isTwoHourDemo ? 2 : null,
+      isDemo: isDemoPlan,
+      planHours: isDemoPlan ? 1 : null,
       planDays: parsedDays,
-      planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
+      planLabel: isDemoPlan ? 'Demo 1 Hora' : `${parsedDays} días`,
       maxDevices: parseInt(maxDevices, 10) || 1,
       resellerId: reseller.id,
       resellerName: reseller.name,
@@ -1881,12 +1881,12 @@ class AccountService {
     const pending = (db.pendingActivations || []).find(p => (p.code || '').toUpperCase() === cleanCode && p.status === 'pending');
 
     const now = new Date();
-    const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h' || planHours === 2;
+    const isDemoPlan = isDemo || planDays === '1h' || planDays === '2h' || planDays === 'demo_1h' || planDays === 'demo_2h' || planHours === 1 || planHours === 2;
     let expiresAt;
     let parsedDays = 30;
 
-    if (isTwoHourDemo) {
-      expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    if (isDemoPlan) {
+      expiresAt = new Date(now.getTime() + (1 * 60 * 60 * 1000));
       parsedDays = 0;
     } else {
       parsedDays = parseInt(planDays, 10) || 30;
@@ -1903,14 +1903,14 @@ class AccountService {
       // El código no está en pending: crearlo de forma segura con el código solicitado
       const newClient = {
         id: crypto.randomUUID(),
-        name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+        name: (name || (isDemoPlan ? 'Cliente Demo (1 Hora)' : 'Cliente')).trim(),
         username: (name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
         code: cleanCode || ('TOM-' + Math.floor(1000 + Math.random() * 9000)),
         status: 'active',
-        isDemo: isTwoHourDemo,
-        planHours: isTwoHourDemo ? 2 : null,
+        isDemo: isDemoPlan,
+        planHours: isDemoPlan ? 1 : null,
         planDays: parsedDays,
-        planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
+        planLabel: isDemoPlan ? 'Demo 1 Hora' : `${parsedDays} días`,
         maxDevices: parseInt(maxDevices, 10) || 1,
         createdAt: now.toISOString(),
         expiresAt: expiresAt.toISOString(),
@@ -1929,14 +1929,14 @@ class AccountService {
     // Crear el nuevo cliente asociado al dispositivo que generó el código
     const newClient = {
       id: crypto.randomUUID(),
-      name: (name || (isTwoHourDemo ? 'Cliente Demo (2 Horas)' : 'Cliente')).trim(),
+      name: (name || (isDemoPlan ? 'Cliente Demo (1 Hora)' : 'Cliente')).trim(),
       username: (name || 'cliente').toLowerCase().replace(/\s+/g, '_') + '_' + Math.floor(100 + Math.random() * 900),
       code: pending.code,
       status: 'active',
-      isDemo: isTwoHourDemo,
-      planHours: isTwoHourDemo ? 2 : null,
+      isDemo: isDemoPlan,
+      planHours: isDemoPlan ? 1 : null,
       planDays: parsedDays,
-      planLabel: isTwoHourDemo ? 'Demo 2 Horas' : `${parsedDays} días`,
+      planLabel: isDemoPlan ? 'Demo 1 Hora' : `${parsedDays} días`,
       maxDevices: parseInt(maxDevices, 10) || 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
@@ -1972,12 +1972,12 @@ class AccountService {
   }
 
   /**
-   * Genera un Demo de 2 horas instantáneo con código VJ-XXXX
+   * Genera un Demo de 1 hora instantáneo con código VJ-XXXX
    */
   createDemoClient({ name = 'Cliente Demo', resellerId = null, resellerName = null } = {}) {
     return this.createClient({
       name,
-      planHours: 2,
+      planHours: 1,
       planDays: 0,
       isDemo: true,
       maxDevices: 1,
@@ -1987,7 +1987,7 @@ class AccountService {
   }
 
   /**
-   * Solicita una prueba gratuita de 2 horas para un dispositivo nuevo (1 sola vez por dispositivo)
+   * Solicita una prueba gratuita de 1 hora para un dispositivo nuevo (1 sola vez por dispositivo)
    */
   requestPublicTrialDemo(deviceId, deviceModel = 'Navegador Web / Smart TV') {
     const cleanDeviceId = (deviceId || '').trim();
@@ -2006,7 +2006,7 @@ class AccountService {
       return {
         success: false,
         reason: 'demo_already_used',
-        message: 'Este dispositivo ya utilizó su demo gratuito de 2 horas. Contáctanos por WhatsApp para activar tu suscripción mensual.'
+        message: 'Este dispositivo ya utilizó su demo gratuito de 1 hora. Contáctanos por WhatsApp para activar tu suscripción mensual.'
       };
     }
 
@@ -2017,7 +2017,7 @@ class AccountService {
       usedAt: now.toISOString()
     });
 
-    const expiresAt = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    const expiresAt = new Date(now.getTime() + (1 * 60 * 60 * 1000));
     let randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
     while (db.clients.some(c => c.code === randomCode)) {
       randomCode = 'VJ-' + Math.floor(1000 + Math.random() * 9000);
@@ -2025,14 +2025,14 @@ class AccountService {
 
     const demoClient = {
       id: crypto.randomUUID(),
-      name: 'Cliente Demo (2 Horas)',
+      name: 'Cliente Demo (1 Hora)',
       username: 'demo_' + Math.floor(1000 + Math.random() * 9000),
       code: randomCode,
       status: 'active',
       isDemo: true,
-      planHours: 2,
+      planHours: 1,
       planDays: 0,
-      planLabel: 'Demo 2 Horas',
+      planLabel: 'Demo 1 Hora',
       maxDevices: 1,
       createdAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
@@ -2062,7 +2062,7 @@ class AccountService {
         isDemo: true
       },
       token,
-      message: '¡Tu prueba gratuita de 2 horas ha comenzado! Disfruta de todo el catálogo.'
+      message: '¡Tu prueba gratuita de 1 hora ha comenzado! Disfruta de todo el catálogo.'
     };
   }
 

@@ -1906,8 +1906,8 @@
                   </div>
 
                   <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                    <button class="btn btn-gold btn-sm" onclick="quickActivate('${item.code}', '2h', '${escapeJs(model)}')" title="Activa 2 horas de prueba gratis al instante">
-                      ⚡ Demo 2 Horas
+                    <button class="btn btn-gold btn-sm" onclick="quickActivate('${item.code}', '1h', '${escapeJs(model)}')" title="Activa 1 hora de prueba gratis al instante">
+                      ⚡ Demo 1 Hora
                     </button>
                     <button class="btn btn-success btn-sm" onclick="quickActivate('${item.code}', '30d', '${escapeJs(model)}')" title="Activa 30 días de suscripción">
                       🟢 1 Mes (30d)
@@ -1934,7 +1934,7 @@
     }
 
     async function quickActivate(code, plan, defaultModel) {
-      const planLabel = plan === '2h' ? 'Demo 2 Horas Gratis' : (plan === '30d' ? '1 Mes (30 días)' : '1 Año (365 días)');
+      const planLabel = (plan === '1h' || plan === '2h') ? 'Demo 1 Hora Gratis' : (plan === '30d' ? '1 Mes (30 días)' : '1 Año (365 días)');
       const clientName = prompt(`Ingresa el nombre del cliente para la pantalla ${code}:`, `Cliente ${defaultModel || code}`);
       if (clientName === null) return;
       const name = clientName.trim() || `Cliente ${code}`;

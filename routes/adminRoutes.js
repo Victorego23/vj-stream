@@ -146,12 +146,12 @@ router.post('/activate-code', (req, res) => {
     return res.status(400).json({ success: false, error: 'Código y nombre de cliente requeridos.' });
   }
 
-  const isTwoHourDemo = planDays === '2h' || planDays === 'demo_2h' || planDays === 0 || planDays === '0';
+  const isDemoPlan = planDays === '1h' || planDays === '2h' || planDays === 'demo_1h' || planDays === 'demo_2h' || planDays === 0 || planDays === '0';
   const result = accountService.activateCode(code.trim().toUpperCase(), {
     name,
-    planDays: isTwoHourDemo ? '2h' : (parseInt(planDays, 10) || 30),
+    planDays: isDemoPlan ? '1h' : (parseInt(planDays, 10) || 30),
     maxDevices: parseInt(maxDevices, 10) || 1,
-    isDemo: isTwoHourDemo
+    isDemo: isDemoPlan
   });
 
   if (!result.success) {
@@ -163,15 +163,15 @@ router.post('/activate-code', (req, res) => {
 
 /**
  * @route   POST /api/admin/create-demo
- * @desc    Genera instantáneamente un Demo Gratuito de 2 Horas
+ * @desc    Genera instantáneamente un Demo Gratuito de 1 Hora
  */
 router.post('/create-demo', (req, res) => {
-  const { name = 'Cliente Demo (2 Horas)' } = req.body;
+  const { name = 'Cliente Demo (1 Hora)' } = req.body;
   const client = accountService.createDemoClient({ name });
   return res.json({
     success: true,
     client,
-    message: 'Demo de 2 Horas generado con éxito.'
+    message: 'Demo de 1 Hora generado con éxito.'
   });
 });
 
@@ -187,12 +187,12 @@ const handleCreateClient = (req, res) => {
     return res.status(400).json({ success: false, error: 'El nombre es obligatorio.' });
   }
 
-  const isTwoHourDemo = isDemo || planDays === '2h' || planDays === 'demo_2h';
+  const isDemoPlan = isDemo || planDays === '1h' || planDays === '2h' || planDays === 'demo_1h' || planDays === 'demo_2h';
   const client = accountService.createClient({
     name,
-    planDays: isTwoHourDemo ? '2h' : (parseInt(planDays, 10) || 30),
+    planDays: isDemoPlan ? '1h' : (parseInt(planDays, 10) || 30),
     maxDevices: parseInt(maxDevices, 10) || 1,
-    isDemo: isTwoHourDemo
+    isDemo: isDemoPlan
   });
 
   return res.json({ success: true, client });
@@ -905,8 +905,8 @@ router.post('/quick-activate', (req, res) => {
 
   let planDays = 30;
   let isDemo = false;
-  if (plan === '2h' || plan === 'demo') {
-    planDays = '2h';
+  if (plan === '1h' || plan === '2h' || plan === 'demo') {
+    planDays = '1h';
     isDemo = true;
   } else if (plan === '90d' || plan === '3m') {
     planDays = 90;
@@ -928,7 +928,7 @@ router.post('/quick-activate', (req, res) => {
   }
 
   const expFormatted = isDemo
-    ? '2 Horas de acceso libre'
+    ? '1 Hora de acceso libre'
     : `${planDays} Días (hasta el ${new Date(result.client.expiresAt).toLocaleDateString('es-ES')})`;
 
   const whatsappMsg = `🎬 *¡BIENVENIDO A TOM TV OFICIAL!*\n\n` +
@@ -946,7 +946,7 @@ router.post('/quick-activate', (req, res) => {
     client: result.client,
     whatsappMsg,
     whatsappUrl: `https://wa.me/?text=${encodeURIComponent(whatsappMsg)}`,
-    message: `Pantalla ${cleanCode} activada con éxito (${isDemo ? 'Demo 2 Horas' : planDays + ' días'}).`
+    message: `Pantalla ${cleanCode} activada con éxito (${isDemo ? 'Demo 1 Hora' : planDays + ' días'}).`
   });
 });
 
