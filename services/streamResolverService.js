@@ -356,9 +356,9 @@ class StreamResolverService {
     const isWolfmax4k = fullText.includes('wolfmax4k');
 
     // 3. DETECCIÓN EN NOMBRE DEL ARCHIVO / TÍTULO DEL TORRENT (Línea 1 y nombre de archivo)
-    const hasLatinoExplicit = /latino|audio[\s._-]*latino|doblaje[\s._-]*latino|dual[\s._-]*lat|lat[\s._-]*cinecalidad|latam|latinoamerica|mexico|mexicano|\b(lat)\b/i.test(firstLine) ||
-      /latino|audio[\s._-]*latino|doblaje[\s._-]*latino|dual[\s._-]*lat|lat[\s._-]*cinecalidad|latam|latinoamerica|mexico|mexicano|\b(lat)\b/i.test(filename) ||
-      /\b(eng[\s._-]*lat|lat[\s._-]*eng|spa[\s._-]*lat|lat[\s._-]*spa)\b/i.test(fullText);
+    const hasLatinoExplicit = /latino|audio[\s._-]*latino|doblaje[\s._-]*latino|dual[\s._-]*lat|lat[\s._-]*cinecalidad|latam|latinoamerica|mexico|mexicano|colombia|venezol|argentin|\b(lat)\b/i.test(firstLine) ||
+      /latino|audio[\s._-]*latino|doblaje[\s._-]*latino|dual[\s._-]*lat|lat[\s._-]*cinecalidad|latam|latinoamerica|mexico|mexicano|colombia|venezol|argentin|\b(lat)\b/i.test(filename) ||
+      /\b(eng[\s._-]*lat|lat[\s._-]*eng|spa[\s._-]*lat|lat[\s._-]*spa|dual[\s._-]*audio|multi[\s._-]*audio)\b/i.test(fullText);
 
     const hasCastellanoExplicit = /castellano|doblaje[\s._-]*castellano|audio[\s._-]*castellano|\b(cast)\b/i.test(firstLine) ||
       /castellano|doblaje[\s._-]*castellano|audio[\s._-]*castellano|\b(cast)\b/i.test(filename) ||
@@ -769,11 +769,15 @@ class StreamResolverService {
 
       // Scraper Optimizado de Alto Rendimiento (Ultra-ligero para evitar picos de CPU en Render):
       const scraperEndpoints = [
-        // 1. Proveedores dedicados de Español Latino (Cinecalidad) y Castellano (MejorTorrent, Wolfmax4k)
-        `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k|sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        // 1. Proveedores dedicados de Español Latino (Cinecalidad, Bitsearch, Comando) y Castellano (MejorTorrent, Wolfmax4k)
+        `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k,bitsearch,comando|sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
         // 2. Filtro nativo de Torrentio con pistas de audio en Español y Latino
         `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|language=spanish,latino|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
-        // 3. Consulta general debrid (para títulos en audio original subtitulados en español)
+        // 3. Búsqueda ampliada con todos los idiomas en español (incluyendo castellano y España)
+        `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|language=spanish,latino,castellano|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        // 4. Proveedores adicionales latinoamericanos y de habla hispana
+        `https://torrentio.strem.fun/providers=cinecalidad,mejortorrent,wolfmax4k,bitsearch,comando,therarbg,yts|sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`,
+        // 5. Consulta general debrid (para títulos en audio original subtitulados en español)
         `https://torrentio.strem.fun/sort=qualitysize|qualityfilter=scr,cam|${providerParam}=${apiKey}/stream/${endpoint}/${target}.json`
       ];
 
@@ -823,16 +827,16 @@ class StreamResolverService {
       }
       streamMap.clear(); // Liberar memoria del Map de inmediato
 
-      // Limitar a máximo top 2 por categoría para no saturar memoria en Render 512 MB
+      // Limitar a máximo top 4 por categoría para maximizar posibilidades de encontrar fuente verificable en español
       const latino = scored
-        .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Latino') || x.audioLanguage.includes('Dual')))
+        .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Latino') || x.audioLanguage.includes('Dual') || x.audioLanguage.includes('Español')))
         .sort((a, b) => b.score - a.score)
-        .slice(0, 2);
+        .slice(0, 4);
 
       const castellano = scored
-        .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Castellano') || x.audioLanguage.includes('Español')))
+        .filter(x => x.isSpanishAudio && (x.audioLanguage.includes('Castellano') || x.audioLanguage.includes('Español España')))
         .sort((a, b) => b.score - a.score)
-        .slice(0, 2);
+        .slice(0, 4);
 
       const original = scored
         .filter(x => !x.isSpanishAudio)
