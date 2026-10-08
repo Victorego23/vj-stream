@@ -2477,7 +2477,16 @@
       const selectSpanishTrack = () => {
         // 1. Acceder a la lista de pistas de audio disponibles (audioTracks)
         const tracks = videoElement.audioTracks;
-        if (!tracks || tracks.length === 0) return;
+        if (!tracks || tracks.length === 0) {
+          alert('[AudioSelector] audioTracks no disponible o vacío en el reproductor.');
+          return;
+        }
+
+        // Iterar sobre la colección de audioTracks para depuración y diagnóstico en celular
+        for (let i = 0; i < tracks.length; i++) {
+          const track = tracks[i];
+          alert(`[AudioSelector] Pista ${i}:\nlanguage: "${track.language}"\nlabel: "${track.label}"\nenabled: ${track.enabled}`);
+        }
 
         let spanishIndex = -1;
 
@@ -2502,10 +2511,10 @@
           for (let i = 0; i < tracks.length; i++) {
             tracks[i].enabled = (i === spanishIndex);
           }
-          console.log(`[AudioSelector] Pista en español activada automáticamente [Índice ${spanishIndex}].`);
+          alert(`[AudioSelector] Pista en español activada automáticamente [Índice ${spanishIndex}].`);
         } else {
           // 5. Si no se encuentra, mantener la pista predeterminada sin cambios
-          console.log('[AudioSelector] No se detectó pista en español. Manteniendo pista predeterminada.');
+          alert('[AudioSelector] No se detectó pista en español. Manteniendo pista predeterminada.');
         }
       };
 
@@ -2544,6 +2553,10 @@
           hlsInstance.on(Hls.Events.AUDIO_TRACKS_UPDATED, (event, data) => {
             const tracks = data.audioTracks || [];
             if (!tracks.length) return;
+            for (let i = 0; i < tracks.length; i++) {
+              const t = tracks[i];
+              alert(`[HLS Audio] Pista ${i}:\nlang: "${t.lang || t.language || ''}"\nname: "${t.name || t.label || ''}"`);
+            }
             const SPANISH_CODES = ['es', 'spa', 'spanish', 'es-419', 'lat', 'latino'];
             const spIdx = tracks.findIndex(t => {
               const lang = (t.lang || '').toLowerCase();
@@ -2551,7 +2564,7 @@
               return SPANISH_CODES.some(c => lang === c || lang.startsWith(c + '-') || name.includes('español') || name.includes('latino') || name.includes('spanish'));
             });
             if (spIdx !== -1 && hlsInstance.audioTrack !== spIdx) {
-              console.log('[HLS Audio] Pista en español priorizada automáticamente (ID:', spIdx, ')');
+              alert(`[HLS Audio] Pista en español priorizada automáticamente (ID: ${spIdx})`);
               hlsInstance.audioTrack = spIdx;
             }
           });
