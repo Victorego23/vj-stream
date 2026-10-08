@@ -1747,7 +1747,7 @@
             try {
               window.history.replaceState({}, document.title, window.location.pathname);
             } catch (_) {}
-            alert(`🎉 ¡Bienvenido ${data.client?.name || ''}! Tu dispositivo ha sido activado con éxito. Ya puedes disfrutar de todo el contenido.`);
+            console.log(`🎉 ¡Bienvenido ${data.client?.name || ''}! Tu dispositivo ha sido activado con éxito. Ya puedes disfrutar de todo el contenido.`);
           }
 
           handleAuthResponse(data);
@@ -1824,14 +1824,14 @@
         const data = await res.json();
         if (data.success && data.status === 'active') {
           handleAuthResponse(data);
-          alert('🎉 ¡Tu Demo de 2 Horas ha comenzado! Ya puedes ver películas, series y canales de TV en vivo sin publicidad.');
+          console.log('🎉 ¡Tu Demo de 2 Horas ha comenzado! Ya puedes ver películas, series y canales de TV en vivo sin publicidad.');
         } else {
-          alert(data.message || 'Este dispositivo ya utilizó su demo gratuito de 2 horas. Contacta a un asesor por WhatsApp para activar tu plan.');
+          console.log(data.message || 'Este dispositivo ya utilizó su demo gratuito de 2 horas. Contacta a un asesor por WhatsApp para activar tu plan.');
           btn.textContent = '⚡ Probar Demo Gratis (2 Horas al Instante)';
           btn.disabled = false;
         }
       } catch (err) {
-        alert('Error de conexión al activar el demo. Por favor contáctanos por WhatsApp.');
+        console.log('Error de conexión al activar el demo. Por favor contáctanos por WhatsApp.');
         btn.textContent = '⚡ Probar Demo Gratis (2 Horas al Instante)';
         btn.disabled = false;
       }
@@ -1866,7 +1866,7 @@
           const data = await res.json();
           if (data.success && data.status === 'active') {
             handleAuthResponse(data);
-            alert('🎉 ¡Tu dispositivo ha sido activado con éxito por el administrador! Ya puedes disfrutar de todo el catálogo.');
+            console.log('🎉 ¡Tu dispositivo ha sido activado con éxito por el administrador! Ya puedes disfrutar de todo el catálogo.');
           }
         } catch (_) {}
       }, 3500);
@@ -1936,7 +1936,7 @@
       const input = document.getElementById('manualCodeInput');
       const code = (input.value || '').trim().toUpperCase();
       if (!code || code.length < 4) {
-        alert('Ingresa un código válido (ejemplo: VJ-3166)');
+        console.log('Ingresa un código válido (ejemplo: VJ-3166)');
         return;
       }
       await initDeviceAuth(code);
@@ -2426,11 +2426,11 @@
           startPlayback(resData.streamUrl);
         } else {
           const errMsg = data.error || data.message || resData.message || 'No fue posible resolver la transmisión en este momento.';
-          alert(errMsg);
+          console.log(errMsg);
           closePlayer();
         }
       } catch (e) {
-        alert('Error de conexión con el servidor de streaming.');
+        console.log('Error de conexión con el servidor de streaming.');
         closePlayer();
       }
     }
@@ -2478,14 +2478,14 @@
         // 1. Acceder a la lista de pistas de audio disponibles (audioTracks)
         const tracks = videoElement.audioTracks;
         if (!tracks || tracks.length === 0) {
-          alert('[AudioSelector] audioTracks no disponible o vacío en el reproductor.');
+          console.log('[AudioSelector] audioTracks no disponible o vacío en el reproductor.');
           return;
         }
 
         // Iterar sobre la colección de audioTracks para depuración y diagnóstico en celular
         for (let i = 0; i < tracks.length; i++) {
           const track = tracks[i];
-          alert(`[AudioSelector] Pista ${i}:\nlanguage: "${track.language}"\nlabel: "${track.label}"\nenabled: ${track.enabled}`);
+          console.log(`[AudioSelector] Pista ${i}:\nlanguage: "${track.language}"\nlabel: "${track.label}"\nenabled: ${track.enabled}`);
         }
 
         let spanishIndex = -1;
@@ -2511,10 +2511,10 @@
           for (let i = 0; i < tracks.length; i++) {
             tracks[i].enabled = (i === spanishIndex);
           }
-          alert(`[AudioSelector] Pista en español activada automáticamente [Índice ${spanishIndex}].`);
+          console.log(`[AudioSelector] Pista en español activada automáticamente [Índice ${spanishIndex}].`);
         } else {
           // 5. Si no se encuentra, mantener la pista predeterminada sin cambios
-          alert('[AudioSelector] No se detectó pista en español. Manteniendo pista predeterminada.');
+          console.log('[AudioSelector] No se detectó pista en español. Manteniendo pista predeterminada.');
         }
       };
 
@@ -2555,7 +2555,7 @@
             if (!tracks.length) return;
             for (let i = 0; i < tracks.length; i++) {
               const t = tracks[i];
-              alert(`[HLS Audio] Pista ${i}:\nlang: "${t.lang || t.language || ''}"\nname: "${t.name || t.label || ''}"`);
+              console.log(`[HLS Audio] Pista ${i}:\nlang: "${t.lang || t.language || ''}"\nname: "${t.name || t.label || ''}"`);
             }
             const SPANISH_CODES = ['es', 'spa', 'spanish', 'es-419', 'lat', 'latino'];
             const spIdx = tracks.findIndex(t => {
@@ -2564,7 +2564,7 @@
               return SPANISH_CODES.some(c => lang === c || lang.startsWith(c + '-') || name.includes('español') || name.includes('latino') || name.includes('spanish'));
             });
             if (spIdx !== -1 && hlsInstance.audioTrack !== spIdx) {
-              alert(`[HLS Audio] Pista en español priorizada automáticamente (ID: ${spIdx})`);
+              console.log(`[HLS Audio] Pista en español priorizada automáticamente (ID: ${spIdx})`);
               hlsInstance.audioTrack = spIdx;
             }
           });
@@ -2681,7 +2681,7 @@
     }
 
     function showIosInstallModal() {
-      alert("📱 PARA INSTALAR EN IPHONE:\n\n1. Toca el botón Compartir (el cuadrado con flecha ⬆️ abajo en Safari).\n2. Elige 'Añadir a pantalla de inicio'.\n3. ¡Listo! TOM TV se abrirá como app a pantalla completa.");
+      console.log("📱 PARA INSTALAR EN IPHONE:\n\n1. Toca el botón Compartir (el cuadrado con flecha ⬆️ abajo en Safari).\n2. Elige 'Añadir a pantalla de inicio'.\n3. ¡Listo! TOM TV se abrirá como app a pantalla completa.");
     }
 
     // REGISTRO DE SERVICE WORKER PARA PWA
