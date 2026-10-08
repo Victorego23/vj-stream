@@ -441,6 +441,14 @@ class StreamResolverService {
     if (/\b(aac|ac3|eac3|ddp|dd\+|dd5\.1|dolby\s*digital)\b/i.test(fullText)) {
       score += 180;
     }
+
+    // Compatibilidad de CONTENEDOR (Smart TVs y WebViews cargan infinitamente con MKV, prefieren MP4)
+    if (/\.mp4/i.test(filename) || /\bmp4\b/i.test(fullText)) {
+      score += 3000; // Súper bonificación a MP4 para Smart TVs
+    } else if (/\.mkv/i.test(filename) || /\bmkv\b/i.test(fullText)) {
+      score -= 1500; // Penalizar fuertemente MKV (suele causar carga infinita en TV)
+    }
+
     // Penalizar pistas TrueHD, Atmos o DTS-HD que causan pantalla congelada o muda en Smart TVs básicas
     if (/\b(truehd|atmos|dts-hd|dts:x|dts-x|pcm|flac)\b/i.test(fullText)) {
       score -= 350;

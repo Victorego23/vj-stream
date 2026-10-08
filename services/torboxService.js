@@ -203,16 +203,24 @@ class TorBoxService {
     // pueden reproducir la pista en inglés por defecto aunque contengan español.
     const scoreLang = (fileName) => {
       const lower = (fileName || '').toLowerCase();
+      let score = 30;
       const isMulti = /\b(multi|dual)[._\s]*(audio|lang)?\b/i.test(lower) || /\.(multi|dual)\./i.test(lower);
-      if (/cinecalidad|mejortorrent/i.test(lower)) return 150; // Máxima confianza: 100% español
-      if (/latino|latam|mexic|\b(lat)\b/i.test(lower) && !isMulti) return 120; // Español puro latino
-      if (/castellano|\b(cast)\b/i.test(lower) && !isMulti) return 100; // Español puro castellano
-      if (/español|spanish|\b(esp|spa)\b/i.test(lower) && !isMulti) return 90; // Español puro genérico
-      if (/latino|latam|mexic|\b(lat)\b/i.test(lower) && isMulti) return 70; // Latino pero MULTi (riesgo de inglés)
-      if (/castellano|\b(cast)\b/i.test(lower) && isMulti) return 60; // Castellano pero MULTi
-      if (/español|spanish|\b(esp|spa)\b|dual|multi/i.test(lower)) return 50; // MULTi sin marca de español claro
-      if (/eng|english|sub|jap|jpn/i.test(lower)) return 10;
-      return 30;
+      
+      // Idioma
+      if (/cinecalidad|mejortorrent/i.test(lower)) score += 120;
+      else if (/latino|latam|mexic|\b(lat)\b/i.test(lower)) score += 90;
+      else if (/castellano|\b(cast)\b/i.test(lower)) score += 70;
+      else if (/español|spanish|\b(esp|spa)\b/i.test(lower)) score += 60;
+      else if (/eng|english|sub|jap|jpn/i.test(lower)) score -= 20;
+
+      // Penalización MULTi
+      if (isMulti) score -= 50;
+
+      // Súper bonificación MP4 para evitar carga infinita en TVs
+      if (/\.mp4/i.test(lower)) score += 200;
+      else if (/\.mkv/i.test(lower)) score -= 100;
+
+      return score;
     };
 
     // NIVEL 1: Notación estándar SxxExx o 1x01 o SxEx
