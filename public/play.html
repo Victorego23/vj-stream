@@ -2582,12 +2582,14 @@
         }
       };
 
-      // Watchdog de conexión ultrarrápida: si en 3.8s la señal no arranca, pasar inmediatamente al respaldo
-      playbackWatchdog = setTimeout(() => {
-        if (!video.paused && video.currentTime > 0) return;
-        console.warn(`[Watchdog] Enlace demoró más de 3.8s sin reproducir: ${url}`);
-        handleVideoError();
-      }, 3800);
+      // Watchdog de conexión ultrarrápida: SOLO para TV en vivo (m3u8), si en 3.8s la señal no arranca, pasar inmediatamente al respaldo
+      if (currentPlayingLiveChannel) {
+        playbackWatchdog = setTimeout(() => {
+          if (!video.paused && video.currentTime > 0) return;
+          console.warn(`[Watchdog] Enlace de TV demoró más de 3.8s sin reproducir: ${url}`);
+          handleVideoError();
+        }, 3800);
+      }
 
       const onStreamStarted = () => {
         if (playbackWatchdog) {

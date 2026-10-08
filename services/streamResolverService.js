@@ -388,21 +388,28 @@ class StreamResolverService {
     // 7. FILTRO ANTI-VOICEOVER / ANTI-TTS / ANTI-AUDIODESCRIPCIÓN (Descartar pistas sintéticas y narraciones superpuestas)
     const isVoiceOverOrTts = /\b(voiceover|voice-over|voice\s*over|\bvo\b|\btts\b|audiodescrip|audio-descrip|audiodescripcion|audiodescripción|audiolectura|lector\s*tts|\bmvo\b|\bdvo\b|\bavo\b|\blvo\b|comentarios?|commentary)\b/i.test(fullText);
 
+    // 8. FILTRO ANTI-FRANCÉS (Descartar releases como .Multi.Vf2., .VFF., .VFQ., truefrench que tienen audio francés y no español)
+    const isFrenchOrOtherForeign = /\b(vf2?|vff|vfq|vfi|truefrench|french|vostfr)\b/i.test(firstLine) ||
+      /\b(vf2?|vff|vfq|vfi|truefrench|french|vostfr)\b/i.test(filename) ||
+      /\.(vf2?|vff|vfq|vfi)\./i.test(filename);
+
     let score = 0;
     if (isVoiceOverOrTts) {
       score -= 8500; // Penalización severa para impedir que pistas de audiodescripción o narración TTS se impongan
     }
+    if (isFrenchOrOtherForeign) {
+      score -= 20000; // Descartar releases en francés para que nunca se confundan con español
+    }
+
     let audioLanguage = 'Audio Original';
     let isSpanishAudio = false;
 
     // Detectar si el archivo es MULTi (varias pistas de audio mezcladas)
-    // En Smart TV / ExoPlayer, un archivo MULTi puede reproducir la pista inglesa por defecto
-    // causando que el usuario escuche inglés aunque el archivo contenga español.
     const isMultiAudio = /\b(multi|dual)[._\s-]*(audio|lang|language|idioma)?\b/i.test(fullText) ||
       /\b(dual[._\s-]*audio|multi[._\s-]*audio|dual[._\s-]*lang|multi[._\s-]*lang)\b/i.test(fullText) ||
       /\.(multi|dual)\./i.test(filename);
 
-    if (isCinecalidad || hasLatinoExplicit || isTorrentioLatino) {
+    if (!isFrenchOrOtherForeign && (isCinecalidad || hasLatinoExplicit || isTorrentioLatino)) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Latino Estéreo' : 'Español Latino';
       score += 7000;
@@ -414,12 +421,12 @@ class StreamResolverService {
       if (/eng[-_.]*lat|eng[-_.]*spa/i.test(firstLine)) {
         score -= 300;
       }
-    } else if (isMejorTorrent || isWolfmax4k || hasCastellanoExplicit || isTorrentioCastellano) {
+    } else if (!isFrenchOrOtherForeign && (isMejorTorrent || isWolfmax4k || hasCastellanoExplicit || isTorrentioCastellano)) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Castellano Estéreo' : 'Castellano';
       score += 5500;
       if (isMultiAudio) score -= 500;
-    } else if (isDualOrMultiSpanish || (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub'))) {
+    } else if (!isFrenchOrOtherForeign && (isDualOrMultiSpanish || (hasSpanishExplicit && !isSubtitleSpam && !firstLine.includes('sub') && !filename.includes('sub')))) {
       isSpanishAudio = true;
       audioLanguage = isStereo ? 'Español Estéreo' : 'Español';
       score += 4500;
