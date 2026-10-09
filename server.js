@@ -95,7 +95,7 @@ app.get('/api/version', (req, res) => {
 });
 
 // URLs directas de release del APK para descarga inmediata sin saltos en Smart TV y navegadores
-let currentApkDownloadUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.9/TOM-TV-release.apk';
+let currentApkDownloadUrl = 'https://github.com/Victorego23/vj-stream/releases/download/v4.3.0/TOM-TV-release.apk';
 
 const updateLatestApkUrl = () => {
   try {
@@ -141,7 +141,9 @@ const serveApkDirect = (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.android.package-archive');
     res.setHeader('Content-Length', stat.size);
     res.setHeader('Content-Disposition', 'attachment; filename="TOM-TV.apk"');
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     return res.sendFile(targetPath);
   }
 
