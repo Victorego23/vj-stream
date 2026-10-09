@@ -27,12 +27,14 @@
     :root {
       --primary: #E50914;
       --primary-hover: #b80710;
-      --bg: #000000;
-      --surface: #101010;
-      --card: #181818;
-      --border: #222222;
+      --bg: #0E0E10;
+      --surface: #141418;
+      --card: #16161A;
+      --card-hover: #222228;
+      --border: rgba(255, 255, 255, 0.08);
       --text: #FFFFFF;
-      --text-muted: #A3A3A3;
+      --text-muted: #A0A0A0;
+      --live-green: #22C55E;
       --radius: 8px;
     }
 
@@ -50,6 +52,153 @@
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       overflow-x: hidden;
       padding-bottom: 80px;
+      transition: background-color 0.3s ease;
+    }
+
+    @media (min-width: 769px) {
+      body {
+        padding-left: 72px;
+      }
+    }
+
+    /* ========================================================
+       1. MENÚ LATERAL COLAPSABLE (10-FOOT UI / SMART TV)
+       ======================================================== */
+    .app-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 72px;
+      z-index: 150;
+      background: #0E0E10;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    @media (max-width: 768px) {
+      .app-sidebar {
+        display: none !important;
+      }
+    }
+
+    .app-sidebar.expanded,
+    .app-sidebar:hover,
+    .app-sidebar:focus-within {
+      width: 240px;
+      box-shadow: 14px 0 45px rgba(0, 0, 0, 0.95);
+    }
+
+    .sidebar-top {
+      padding: 16px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 6px;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .sidebar-brand-name {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 2px;
+      color: #FFFFFF;
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .app-sidebar.expanded .sidebar-brand-name,
+    .app-sidebar:hover .sidebar-brand-name,
+    .app-sidebar:focus-within .sidebar-brand-name {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 18px 10px;
+      flex: 1;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: transparent;
+      border: 2px solid transparent;
+      color: #A0A0A0;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      white-space: nowrap;
+    }
+
+    .sidebar-icon {
+      font-size: 20px;
+      min-width: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .sidebar-label {
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .app-sidebar.expanded .sidebar-label,
+    .app-sidebar:hover .sidebar-label,
+    .app-sidebar:focus-within .sidebar-label {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: #FFFFFF;
+    }
+
+    .sidebar-item.active {
+      color: #FFFFFF;
+      background: rgba(229, 9, 20, 0.15);
+      border-color: rgba(229, 9, 20, 0.4);
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+      margin: 10px 4px;
     }
 
     /* HEADER */
@@ -220,21 +369,9 @@
       box-shadow: 0 0 12px rgba(229, 9, 20, 0.45);
     }
 
-    .media-lang-badge {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      background: rgba(229, 9, 20, 0.92);
-      color: #fff;
-      font-size: 9px;
-      font-weight: 900;
-      padding: 2px 6px;
-      border-radius: 4px;
-      letter-spacing: 0.5px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.8);
-      backdrop-filter: blur(4px);
-    }
-
+    /* ========================================================
+       2. LIMPIEZA DE BADGES EN PÓSTERS Y HERO METADATA DINÁMICA
+       ======================================================== */
     /* HERO BANNER */
     .hero-banner {
       position: relative;
@@ -246,27 +383,30 @@
       align-items: flex-end;
       padding: 24px 20px;
       margin-bottom: 20px;
+      border-radius: 0 0 16px 16px;
+      overflow: hidden;
+      background-color: #121216;
     }
 
     @media (min-width: 768px) {
-      .hero-banner { height: 460px; padding: 40px; }
+      .hero-banner { height: 480px; padding: 40px; }
     }
 
     .hero-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 60%, #000000 100%);
+      background: linear-gradient(180deg, rgba(14,14,16,0.1) 0%, rgba(14,14,16,0.7) 50%, #0E0E10 100%);
     }
 
     .hero-content {
       position: relative;
       z-index: 2;
-      max-width: 600px;
+      max-width: 650px;
     }
 
     .hero-badge {
       display: inline-block;
-      background: rgba(229, 9, 20, 0.9);
+      background: var(--primary);
       color: #fff;
       padding: 3px 8px;
       border-radius: 4px;
@@ -281,14 +421,41 @@
       font-weight: 900;
       margin-bottom: 8px;
       line-height: 1.15;
+      color: #FFFFFF;
     }
 
-    @media (min-width: 768px) { .hero-title { font-size: 38px; } }
+    @media (min-width: 768px) { .hero-title { font-size: 40px; } }
+
+    /* FILA DE METADATA TÉCNICA DINÁMICA EN HERO */
+    .hero-tech-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .hero-tech-badge {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #FFFFFF;
+    }
+
+    .hero-tech-badge.accent {
+      background: rgba(229, 9, 20, 0.25);
+      border-color: rgba(229, 9, 20, 0.6);
+      color: #FFFFFF;
+    }
 
     .hero-synopsis {
       font-size: 13px;
-      color: #d1d1d1;
-      line-height: 1.4;
+      color: var(--text-muted);
+      line-height: 1.5;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -305,43 +472,55 @@
       background: var(--primary);
       color: #fff;
       border: none;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 6px;
-      font-weight: 700;
+      font-weight: 800;
       font-size: 14px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       cursor: pointer;
-      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.4);
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
+      transition: all 0.2s ease-out;
+    }
+
+    .btn-play:hover {
+      background: var(--primary-hover);
+      transform: scale(1.03);
     }
 
     .btn-more {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       color: #fff;
-      border: none;
       padding: 10px 18px;
       border-radius: 6px;
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
       backdrop-filter: blur(8px);
+      transition: all 0.2s ease-out;
     }
 
-    /* FILAS DE PELÍCULAS Y SERIES */
+    .btn-more:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    /* FILAS DE CONTENIDO Y TARJETAS LIMPIAS */
     .section-title {
       font-size: 17px;
       font-weight: 800;
-      padding: 12px 20px 8px;
+      padding: 14px 24px 8px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      color: #FFFFFF;
     }
 
     .media-scroll {
       display: flex;
-      gap: 10px;
-      padding: 0 20px 20px;
+      gap: 12px;
+      padding: 0 24px 20px;
       overflow-x: auto;
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
@@ -349,110 +528,452 @@
 
     .media-scroll::-webkit-scrollbar { display: none; }
 
+    /* TARJETA PÓSTER COMPLETAMENTE LIMPIA (SIN BADGES FIJOS ENCIMA) */
     .media-card {
-      flex: 0 0 130px;
+      flex: 0 0 135px;
       position: relative;
-      border-radius: var(--radius);
+      border-radius: 8px;
       overflow: hidden;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
       background: var(--card);
+      border: 2px solid transparent;
+      box-sizing: border-box;
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
     }
 
-    @media (min-width: 768px) { .media-card { flex: 0 0 160px; } }
+    @media (min-width: 768px) {
+      .media-card { flex: 0 0 160px; }
+    }
 
-    .media-card:active, .media-card:hover {
+    .media-card:hover {
       transform: scale(1.04);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.8);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.8);
       z-index: 5;
+    }
+
+    .media-poster-box {
+      width: 100%;
+      height: 200px;
+      background: #121216;
+      overflow: hidden;
+      border-radius: 6px 6px 0 0;
+    }
+
+    @media (min-width: 768px) {
+      .media-poster-box { height: 240px; }
     }
 
     .media-poster {
       width: 100%;
-      height: 195px;
+      height: 100%;
       object-fit: cover;
       display: block;
+      transition: transform 0.3s ease;
     }
 
-    @media (min-width: 768px) { .media-poster { height: 240px; } }
-
-    .media-rating {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      background: rgba(0, 0, 0, 0.8);
-      color: #FFD700;
-      font-size: 10px;
-      font-weight: 800;
-      padding: 2px 5px;
-      border-radius: 4px;
-      backdrop-filter: blur(4px);
+    .media-card:hover .media-poster {
+      transform: scale(1.03);
     }
 
     .media-info {
-      padding: 6px 8px;
+      padding: 8px 8px 10px;
+      background: var(--card);
     }
 
     .media-title {
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFFFFF;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    /* GRID PARA VISTA DE AÑO O TV */
+    /* GRID PARA VISTA DE AÑO O CATÁLOGO COMPLETO */
     .grid-container {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-      gap: 12px;
-      padding: 10px 20px 30px;
+      grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+      gap: 14px;
+      padding: 10px 24px 30px;
     }
 
     @media (min-width: 768px) {
       .grid-container { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
     }
 
-    /* CANALES DE TV EN VIVO */
-    .channel-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 10px;
-      text-align: center;
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s;
+    /* ========================================================
+       3. REDISEÑO DE GUÍA DE CANALES EN VIVO (EPG - 2 PANELES)
+       ======================================================== */
+    .epg-container {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      padding: 14px 24px 40px;
+      min-height: 560px;
     }
 
-    .channel-card:active, .channel-card:hover {
-      border-color: var(--primary);
-      background: #181818;
-      transform: translateY(-2px);
+    @media (max-width: 960px) {
+      .epg-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 10px 16px 40px;
+      }
     }
 
-    .channel-logo {
-      height: 48px;
-      max-width: 100px;
-      object-fit: contain;
-      margin: 0 auto 10px;
-      display: block;
+    /* COLUMNA IZQUIERDA: LISTA VERTICAL DE CANALES */
+    .epg-list-column {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 680px;
+      overflow-y: auto;
+      padding-right: 6px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.2) transparent;
     }
 
-    .channel-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #fff;
-    }
-
-    .channel-badge {
-      display: inline-block;
-      font-size: 9px;
-      font-weight: 800;
-      color: #22C55E;
-      background: rgba(34, 197, 94, 0.15);
-      padding: 2px 6px;
+    .epg-list-column::-webkit-scrollbar { width: 6px; }
+    .epg-list-column::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,0.2);
       border-radius: 4px;
+    }
+
+    .epg-channel-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 16px;
+      background: var(--card);
+      border: 1.5px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+      text-align: left;
+    }
+
+    .epg-channel-row.active {
+      border-color: var(--primary);
+      background: #1C1C24;
+    }
+
+    .epg-channel-row:hover {
+      background: #202028;
+    }
+
+    .epg-row-num {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-muted);
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .epg-row-logo-box {
+      width: 44px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 6px;
+      flex-shrink: 0;
+      padding: 4px;
+    }
+
+    .epg-row-logo {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .epg-row-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .epg-row-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #FFFFFF;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .epg-row-show {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+
+    .epg-row-live-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    /* COLUMNA DERECHA: PREVIEW Y SINOPSIS */
+    .epg-preview-column {
+      position: sticky;
+      top: 80px;
+      align-self: start;
+    }
+
+    .epg-preview-card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+    }
+
+    .epg-preview-video-box {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .epg-preview-video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .epg-preview-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.85) 100%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 16px;
+      pointer-events: none;
+    }
+
+    .epg-preview-badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(34, 197, 94, 0.5);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 14px;
+      backdrop-filter: blur(8px);
+    }
+
+    .epg-fullscreen-btn {
+      pointer-events: auto;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.45);
+      transition: all 0.2s ease-out;
+    }
+
+    .epg-fullscreen-btn:hover {
+      background: var(--primary-hover);
+      transform: scale(1.03);
+    }
+
+    .epg-preview-details {
+      padding: 20px 24px;
+    }
+
+    .epg-preview-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .epg-meta-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+    }
+
+    .epg-preview-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #FFFFFF;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .epg-preview-synopsis {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .epg-next-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+
+    .epg-next-label {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .epg-next-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    /* ========================================================
+       4. SHIMMER SKELETON LOADERS (SIN PANTALLAS NEGRAS)
+       ======================================================== */
+    @keyframes shimmerPulse {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .skeleton-box {
+      background: linear-gradient(90deg, #16161A 25%, #24242C 50%, #16161A 75%);
+      background-size: 200% 100%;
+      animation: shimmerPulse 1.6s infinite ease-in-out;
+      border-radius: 8px;
+    }
+
+    .skeleton-row {
+      padding: 0 24px 24px;
+    }
+
+    .skeleton-title {
+      width: 220px;
+      height: 22px;
+      margin-bottom: 14px;
+    }
+
+    .skeleton-cards-track {
+      display: flex;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .skeleton-card-item {
+      flex: 0 0 160px;
+      height: 240px;
+    }
+
+    .skeleton-epg-layout {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 24px;
+      padding: 14px 24px 40px;
+    }
+
+    .skeleton-epg-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .skeleton-epg-row {
+      height: 60px;
+    }
+
+    .skeleton-epg-right {
+      height: 480px;
+    }
+
+    /* ========================================================
+       5. CUADRÍCULA CARTESIANA DEPORTES Y EVENTOS EN VIVO
+       ======================================================== */
+    .sports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 16px;
+      padding: 10px 24px 40px;
+      margin: 0;
+    }
+
+    .sports-card {
+      height: 180px;
+      background: var(--card);
+      border: 1.5px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 16px;
+      margin: 0;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      cursor: pointer;
+      text-align: left;
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
+    }
+
+    .sports-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sports-badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #FFFFFF;
+      background: rgba(34, 197, 94, 0.16);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .sports-channel-logo {
+      height: 38px;
+      max-width: 80px;
+      object-fit: contain;
+    }
+
+    .sports-match-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+
+    .sports-match-sub {
+      font-size: 12px;
+      color: var(--text-muted);
       margin-top: 4px;
     }
 
@@ -943,54 +1464,56 @@
     /* ========================================================
        NAVEGACIÓN CON CONTROL REMOTO SMART TV Y MODO ADULTO MAYOR
        ======================================================== */
+    /* ========================================================
+       5. NAVEGACIÓN CON CONTROL REMOTO SMART TV (D-PAD FOCUS)
+       ======================================================== */
     .focusable {
       outline: none;
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
     }
 
     .focusable:focus,
     .focusable.tv-focused {
       outline: none !important;
-      transform: scale(1.08) translateY(-4px) !important;
-      border: 3.5px solid #E50914 !important;
-      box-shadow: 0 0 28px rgba(229, 9, 20, 0.85), 0 14px 32px rgba(0, 0, 0, 0.95) !important;
-      z-index: 120 !important;
+      transform: scale(1.05) !important;
+      border-color: #FFFFFF !important;
+      box-shadow: 0 0 0 2px #FFFFFF, 0 8px 24px rgba(229, 9, 20, 0.45) !important;
+      z-index: 25 !important;
       position: relative;
     }
 
     /* BOTÓN TOGGLE MODO ADULTO MAYOR */
     .senior-toggle-btn {
-      background: linear-gradient(135deg, #FFB800, #E50914);
-      color: #000;
-      font-weight: 900;
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFFFF;
+      font-weight: 800;
       padding: 6px 14px;
       border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       cursor: pointer;
       font-size: 13px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 0 14px rgba(255, 184, 0, 0.45);
       transition: all 0.2s;
     }
     .senior-toggle-btn:hover, .senior-toggle-btn:focus {
+      background: rgba(255, 255, 255, 0.2);
       transform: scale(1.05);
-      box-shadow: 0 0 22px rgba(255, 184, 0, 0.8);
     }
     .senior-toggle-btn.active {
-      background: #22C55E;
+      background: var(--primary);
       color: #fff;
-      box-shadow: 0 0 16px rgba(34, 197, 94, 0.6);
-      border-color: #4ade80;
+      border-color: var(--primary);
+      box-shadow: 0 0 14px rgba(229, 9, 20, 0.5);
     }
 
     /* BANNER HERO EN MODO ADULTO MAYOR / TV SENCILLO */
     .senior-hero-panel {
       display: none;
-      background: radial-gradient(circle at 50% 0%, #201a12 0%, #08080a 100%);
-      border-bottom: 2px solid rgba(255, 184, 0, 0.35);
-      padding: 22px 20px 24px;
+      background: linear-gradient(180deg, #16161C 0%, #0E0E10 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 22px 24px 24px;
       margin-bottom: 12px;
       animation: fadeIn 0.3s ease;
     }
@@ -1006,9 +1529,9 @@
     }
     .senior-badge {
       display: inline-block;
-      background: rgba(229, 9, 20, 0.25);
-      border: 1px solid rgba(229, 9, 20, 0.6);
-      color: #FFA5A8;
+      background: rgba(229, 9, 20, 0.2);
+      border: 1px solid rgba(229, 9, 20, 0.5);
+      color: #FFFFFF;
       font-size: 12px;
       font-weight: 800;
       padding: 4px 14px;
@@ -1021,16 +1544,15 @@
       font-weight: 900;
       color: #fff;
       margin-bottom: 6px;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
     }
     .senior-subtext {
       font-size: clamp(14px, 1.6vw, 17px);
-      color: #e5e5e5;
+      color: var(--text-muted);
       line-height: 1.5;
     }
     .senior-subtext strong {
-      color: #FFD700;
-      background: rgba(255, 215, 0, 0.18);
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.12);
       padding: 1px 7px;
       border-radius: 4px;
     }
@@ -1044,9 +1566,9 @@
     }
 
     .senior-action-card {
-      background: linear-gradient(145deg, #181924 0%, #0d0e14 100%);
-      border: 2px solid rgba(255, 255, 255, 0.14);
-      border-radius: 16px;
+      background: var(--card);
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
       padding: 16px 20px;
       display: flex;
       align-items: center;
@@ -1054,12 +1576,12 @@
       cursor: pointer;
       text-align: left;
       position: relative;
-      transition: all 0.25s ease;
+      transition: all 0.2s ease-out;
       color: #fff;
     }
     .senior-action-card:hover, .senior-action-card:focus {
-      border-color: #FFD700;
-      background: linear-gradient(145deg, #252636 0%, #161722 100%);
+      border-color: #FFFFFF;
+      background: #202028;
     }
     .senior-card-emoji {
       font-size: 38px;
@@ -1076,7 +1598,7 @@
     }
     .senior-card-desc {
       font-size: 13px;
-      color: #B3B3B3;
+      color: var(--text-muted);
       line-height: 1.3;
     }
     .senior-card-badge {
@@ -1090,20 +1612,20 @@
       letter-spacing: 0.5px;
     }
 
-    /* OSD BANNER AL CAMBIAR DE CANAL CON NÚMERO */
+    /* OSD BANNER AL CAMBIAR DE CANAL CON NÚMERO (ALTO CONTRASTE) */
     .tv-osd-banner {
       position: fixed;
       top: 35px;
       left: 50%;
       transform: translateX(-50%) translateY(-100px);
-      background: rgba(10, 10, 14, 0.96);
-      border: 3px solid #FFD700;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.98), 0 0 30px rgba(255, 215, 0, 0.55);
-      border-radius: 18px;
-      padding: 16px 26px;
+      background: rgba(14, 14, 16, 0.96);
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.98), 0 0 25px rgba(229, 9, 20, 0.45);
+      border-radius: 14px;
+      padding: 14px 24px;
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 16px;
       z-index: 9999;
       opacity: 0;
       pointer-events: none;
@@ -1114,42 +1636,42 @@
       opacity: 1;
     }
     .tv-osd-number {
-      background: #FFD700;
-      color: #000;
-      font-size: 34px;
+      background: var(--primary);
+      color: #FFFFFF;
+      font-size: 26px;
       font-weight: 900;
-      width: 58px;
-      height: 58px;
+      width: 48px;
+      height: 48px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+      border-radius: 8px;
+      box-shadow: 0 4px 14px rgba(229, 9, 20, 0.5);
       flex-shrink: 0;
     }
     .tv-osd-name {
-      font-size: 22px;
+      font-size: 18px;
       font-weight: 900;
       color: #fff;
     }
     .tv-osd-sub {
-      font-size: 13px;
-      color: #22C55E;
-      font-weight: 700;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
       margin-top: 2px;
     }
 
-    /* ETIQUETA DE NÚMERO DE CANAL PERÚ (CANAL 2, CANAL 4, ETC) */
+    /* ETIQUETA DE NÚMERO DE CANAL */
     .channel-num-pill {
       position: absolute;
       top: 8px;
       left: 8px;
-      background: #FFD700;
-      color: #000;
+      background: var(--primary);
+      color: #FFFFFF;
       font-weight: 900;
       font-size: 11px;
       padding: 3px 8px;
-      border-radius: 6px;
+      border-radius: 4px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.7);
       z-index: 2;
     }
@@ -1163,32 +1685,6 @@
       font-size: 16px;
       font-weight: 800;
     }
-    body.senior-mode .channel-card {
-      min-height: 145px;
-      padding: 16px;
-      border-width: 2px;
-    }
-    body.senior-mode .channel-logo {
-      max-height: 70px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 6px;
-      border-radius: 10px;
-    }
-    body.senior-mode .channel-name {
-      font-size: 16px;
-      font-weight: 800;
-    }
-    body.senior-mode .media-card {
-      min-width: 170px;
-    }
-    body.senior-mode .media-title {
-      font-size: 14px;
-      font-weight: 800;
-    }
-    body.senior-mode .act-code-value {
-      font-size: 34px !important;
-      letter-spacing: 6px !important;
-    }
 
     /* ========================================================
        MODO SMART TV CINEMATOGRÁFICO Y PANTALLAS GRANDES (10-FOOT UI)
@@ -1196,11 +1692,11 @@
     .brand-sub-badge {
       font-size: 10px;
       font-weight: 900;
-      color: #FFD700;
-      background: rgba(255, 215, 0, 0.15);
-      border: 1px solid rgba(255, 215, 0, 0.4);
+      color: #FFFFFF;
+      background: rgba(229, 9, 20, 0.25);
+      border: 1px solid rgba(229, 9, 20, 0.5);
       padding: 2px 7px;
-      border-radius: 6px;
+      border-radius: 4px;
       letter-spacing: 1px;
       margin-left: 6px;
       display: inline-block;
@@ -1225,8 +1721,8 @@
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #22C55E;
-      box-shadow: 0 0 8px #22C55E;
+      background: var(--live-green);
+      box-shadow: 0 0 8px var(--live-green);
       display: inline-block;
       animation: pulseDot 2s infinite ease-in-out;
     }
@@ -1250,8 +1746,8 @@
       .media-card {
         flex: 0 0 175px;
       }
-      .media-poster {
-        height: 260px;
+      .media-poster-box {
+        height: 255px;
       }
       .grid-container {
         grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
@@ -1260,7 +1756,7 @@
     }
 
     body.tv-mode {
-      background: #060709;
+      background: #0E0E10;
     }
     body.tv-mode .tv-clock-badge {
       display: inline-flex !important;
@@ -1275,8 +1771,8 @@
     body.tv-mode .media-card {
       flex: 0 0 180px;
     }
-    body.tv-mode .media-poster {
-      height: 270px;
+    body.tv-mode .media-poster-box {
+      height: 265px;
     }
     body.tv-mode .grid-container {
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -1395,6 +1891,53 @@
 </head>
 <body>
 
+  <!-- ========================================================
+       1. MENÚ LATERAL COLAPSABLE (SMART TV 10-FOOT UI / NETFLIX STYLE)
+       ======================================================== -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-top">
+      <div class="sidebar-brand focusable" onclick="switchTab('Todos')" tabindex="0" title="TOM TV">
+        <div class="brand-logo">TOM</div>
+        <span class="sidebar-brand-name">TOM TV</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item focusable active" id="sbItemTodos" data-tab="Todos" onclick="switchTab('Todos')" tabindex="0">
+        <span class="sidebar-icon">🏠</span>
+        <span class="sidebar-label">Inicio</span>
+      </button>
+      <button class="sidebar-item focusable" id="sbItemPeliculas" data-tab="Películas" onclick="switchTab('Películas')" tabindex="0">
+        <span class="sidebar-icon">🎬</span>
+        <span class="sidebar-label">Películas</span>
+      </button>
+      <button class="sidebar-item focusable" id="sbItemSeries" data-tab="Series" onclick="switchTab('Series')" tabindex="0">
+        <span class="sidebar-icon">📺</span>
+        <span class="sidebar-label">Series</span>
+      </button>
+      <button class="sidebar-item focusable" id="sbItemTv" data-tab="TV en Vivo" onclick="switchTab('TV en Vivo')" tabindex="0">
+        <span class="sidebar-icon">📡</span>
+        <span class="sidebar-label">TV en Vivo</span>
+      </button>
+      <button class="sidebar-item focusable" id="sbItemDeportes" data-tab="Deportes" onclick="switchTab('Deportes')" tabindex="0">
+        <span class="sidebar-icon">⚽</span>
+        <span class="sidebar-label">Deportes</span>
+      </button>
+      <button class="sidebar-item focusable" id="sbItemLista" data-tab="Mi Lista" onclick="switchTab('Mi Lista')" tabindex="0">
+        <span class="sidebar-icon">⭐</span>
+        <span class="sidebar-label">Mi Lista</span>
+      </button>
+      <div class="sidebar-divider"></div>
+      <button class="sidebar-item focusable" id="sbItemBuscar" onclick="openSearchModal()" tabindex="0">
+        <span class="sidebar-icon">🔍</span>
+        <span class="sidebar-label">Buscar</span>
+      </button>
+      <button class="sidebar-item focusable" id="sbItemCuenta" onclick="handleAccountBtnClick()" tabindex="0">
+        <span class="sidebar-icon">🔒</span>
+        <span class="sidebar-label" id="sbAccountLabel">Activar</span>
+      </button>
+    </nav>
+  </aside>
+
   <!-- HEADER -->
   <header>
     <div class="brand" onclick="switchTab('Todos')" style="cursor: pointer;">
@@ -1410,7 +1953,7 @@
       <button class="senior-toggle-btn focusable" id="seniorToggleBtn" onclick="toggleSeniorMode()" title="Modo TV Fácil para Adultos Mayores con control remoto">
         👓 Modo Fácil TV
       </button>
-      <a href="/mobile-preview" target="_blank" class="focusable" style="color: #FFD700; text-decoration: none; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,215,0,0.12); border: 1px solid rgba(255,215,0,0.35);" title="Abrir simulador de celular en pestaña aparte">
+      <a href="/mobile-preview" target="_blank" class="focusable" style="color: #FFFFFF; text-decoration: none; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16);" title="Abrir simulador de celular en pestaña aparte">
         📱 Celular
       </a>
       <a href="/" class="focusable" style="color: #aaa; text-decoration: none; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);">
@@ -1480,7 +2023,8 @@
     <div class="tab-item focusable active" onclick="switchTab('Todos')" tabindex="0">🌟 Todos</div>
     <div class="tab-item focusable" onclick="switchTab('Películas')" tabindex="0">🎬 Películas (2000-2026)</div>
     <div class="tab-item focusable" onclick="switchTab('Series')" tabindex="0">📺 Series</div>
-    <div class="tab-item focusable" onclick="switchTab('TV en Vivo')" tabindex="0">📡 TV en Vivo Perú</div>
+    <div class="tab-item focusable" onclick="switchTab('TV en Vivo')" tabindex="0">📡 TV en Vivo</div>
+    <div class="tab-item focusable" onclick="switchTab('Deportes')" tabindex="0">⚽ Deportes</div>
     <div class="tab-item focusable" onclick="switchTab('Mi Lista')" tabindex="0">⭐ Mi Lista</div>
   </div>
 
@@ -1501,10 +2045,16 @@
       <div class="hero-content">
         <div class="hero-badge">DESTACADO EN TOM TV</div>
         <h1 class="hero-title" id="heroTitle">Cargando catálogo...</h1>
+        <div class="hero-tech-row" id="heroBadges">
+          <span class="hero-tech-badge accent">4K ULTRA HD</span>
+          <span class="hero-tech-badge">AUDIO LATINO</span>
+          <span class="hero-tech-badge">★ 8.5 IMDB</span>
+          <span class="hero-tech-badge">2025</span>
+        </div>
         <p class="hero-synopsis" id="heroSynopsis">Conectando con el servidor en la nube de TOM TV...</p>
         <div class="hero-buttons">
-          <button class="btn-play" id="heroPlayBtn" onclick="playHeroMedia()">▶ Reproducir Ahora</button>
-          <button class="btn-more" id="heroSaveBtn" onclick="toggleSaveHero()">+ Mi Lista</button>
+          <button class="btn-play focusable" id="heroPlayBtn" onclick="playHeroMedia()">▶ Reproducir Ahora</button>
+          <button class="btn-more focusable" id="heroSaveBtn" onclick="toggleSaveHero()">+ Mi Lista</button>
         </div>
       </div>
     </div>
@@ -2127,12 +2677,75 @@
       }
     }
 
-    // CATEGORÍAS DE TV EN VIVO CON SEÑAL PERUANA Y VIP
+    // ========================================================
+    // 4. CACHÉ EN MEMORIA Y SKELETON SCREENS (CERO PANTALLAS NEGRAS)
+    // ========================================================
+    const appCache = {
+      catalog: null,
+      channels: null,
+      years: {},
+      sports: null
+    };
+
+    let activeEpgChannel = null;
+    let epgPreviewHls = null;
+
+    function renderSkeletonCatalog() {
+      const container = document.getElementById('contentRows');
+      if (!container) return;
+      let html = '';
+      for (let i = 0; i < 3; i++) {
+        html += `
+          <div class="skeleton-row">
+            <div class="skeleton-box skeleton-title"></div>
+            <div class="skeleton-cards-track">
+              <div class="skeleton-box skeleton-card-item"></div>
+              <div class="skeleton-box skeleton-card-item"></div>
+              <div class="skeleton-box skeleton-card-item"></div>
+              <div class="skeleton-box skeleton-card-item"></div>
+              <div class="skeleton-box skeleton-card-item"></div>
+              <div class="skeleton-box skeleton-card-item"></div>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    function renderSkeletonEpg() {
+      const container = document.getElementById('contentRows');
+      if (!container) return;
+      let leftRows = '';
+      for (let i = 0; i < 8; i++) {
+        leftRows += `<div class="skeleton-box skeleton-epg-row"></div>`;
+      }
+      container.innerHTML = `
+        <div class="skeleton-epg-layout">
+          <div class="skeleton-epg-left">${leftRows}</div>
+          <div class="skeleton-box skeleton-epg-right"></div>
+        </div>
+      `;
+    }
+
+    function renderSkeletonGrid(title = 'Cargando contenido...') {
+      const container = document.getElementById('contentRows');
+      if (!container) return;
+      let cards = '';
+      for (let i = 0; i < 12; i++) {
+        cards += `<div class="skeleton-box" style="height: 240px; border-radius: 8px;"></div>`;
+      }
+      container.innerHTML = `
+        <div class="section-title">${title}</div>
+        <div class="grid-container">${cards}</div>
+      `;
+    }
+
+    // CATEGORÍAS DE TV EN VIVO (HORIZONTAL TABS)
     function initTvCategoriesBar() {
       const bar = document.getElementById('tvCategoriesBar');
       if (!bar) return;
       const cats = ['Todos'];
-      liveChannels.forEach(c => {
+      (liveChannels || []).forEach(c => {
         const cat = c.category || 'General';
         if (!cats.includes(cat)) cats.push(cat);
       });
@@ -2157,16 +2770,27 @@
     function filterTvCategory(cat) {
       selectedTvCategory = cat;
       initTvCategoriesBar();
-      renderCurrentTab();
+      if (currentTab === 'TV en Vivo') {
+        renderLiveTvEpg();
+      }
     }
 
-    // CARGAR CATÁLOGO PRINCIPAL
+    // CARGAR CATÁLOGO PRINCIPAL (CON CACHE)
     async function loadCatalog() {
+      if (appCache.catalog) {
+        catalogData = appCache.catalog;
+        renderCurrentTab();
+        return;
+      }
+
+      renderSkeletonCatalog();
+
       try {
         const res = await fetch('/api/streaming/catalog');
         const data = await res.json();
         if (data.success && data.data) {
           catalogData = data.data;
+          appCache.catalog = data.data;
           renderCurrentTab();
         }
       } catch (e) {
@@ -2174,28 +2798,59 @@
       }
     }
 
-    // CARGAR CANALES PERUANOS E INTERNACIONALES
+    // CARGAR CANALES EN VIVO (CON CACHE)
     async function loadLiveChannels() {
+      if (appCache.channels) {
+        liveChannels = appCache.channels;
+        initTvCategoriesBar();
+        if (currentTab === 'TV en Vivo' || currentTab === 'Deportes') {
+          renderCurrentTab();
+        }
+        return;
+      }
+
       try {
         const res = await fetch('/api/streaming/live-channels');
         const data = await res.json();
         if (data.success && data.channels) {
           liveChannels = data.channels;
+          appCache.channels = data.channels;
           initTvCategoriesBar();
+          if (currentTab === 'TV en Vivo' || currentTab === 'Deportes') {
+            renderCurrentTab();
+          }
         }
       } catch (e) {
         console.error('Error al cargar canales:', e);
       }
     }
 
-    // CAMBIAR PESTAÑA
+    // CAMBIAR PESTAÑA (SINCRONIZA SIDEBAR, TABS SUPERIORES Y BOTTOM NAV)
     function switchTab(tab) {
       currentTab = tab;
+
+      // 1. Sincronizar pestañas superiores
       document.querySelectorAll('.tab-item').forEach(el => {
         el.classList.toggle('active', el.textContent.includes(tab));
       });
 
-      // Sincronizar barra de navegación inferior móvil
+      // 2. Sincronizar menú lateral Smart TV
+      const sbTabMap = {
+        'Todos': 'sbItemTodos',
+        'Películas': 'sbItemPeliculas',
+        'Series': 'sbItemSeries',
+        'TV en Vivo': 'sbItemTv',
+        'Deportes': 'sbItemDeportes',
+        'Mi Lista': 'sbItemLista'
+      };
+      document.querySelectorAll('.sidebar-item').forEach(b => b.classList.remove('active'));
+      const activeSbId = sbTabMap[tab];
+      if (activeSbId) {
+        const sbEl = document.getElementById(activeSbId);
+        if (sbEl) sbEl.classList.add('active');
+      }
+
+      // 3. Sincronizar barra de navegación inferior móvil
       const mobTabMap = {
         'Todos': 'mob-tab-home',
         'TV en Vivo': 'mob-tab-tv',
@@ -2207,6 +2862,14 @@
       if (activeMobId) {
         const mobEl = document.getElementById(activeMobId);
         if (mobEl) mobEl.classList.add('active');
+      }
+
+      // Limpiar preview HLS de EPG si salimos de TV en Vivo
+      if (tab !== 'TV en Vivo' && epgPreviewHls) {
+        try {
+          epgPreviewHls.destroy();
+          epgPreviewHls = null;
+        } catch (_) {}
       }
 
       const yearsBar = document.getElementById('yearsBar');
@@ -2232,7 +2895,7 @@
       renderCurrentTab();
     }
 
-    // SELECCIONAR AÑO
+    // SELECCIONAR AÑO (CON CACHE)
     async function selectYear(year) {
       selectedYear = year;
       initYearsBar();
@@ -2243,68 +2906,60 @@
         return;
       }
 
-      container.innerHTML = `<div style="text-align: center; padding: 40px;"><div class="loader"></div><p style="margin-top: 10px; color: #888;">Cargando colección completa del año ${year}...</p></div>`;
+      if (appCache.years[year]) {
+        renderMoviesYearGrid(year, appCache.years[year]);
+        return;
+      }
+
+      renderSkeletonGrid(`🎬 Colección Oficial del Año ${year}`);
 
       try {
         const res = await fetch(`/api/streaming/movies/by-year/${year}?page=1`);
         const data = await res.json();
         if (data.success && data.movies) {
-          let html = `<div class="section-title">🎬 Colección Oficial del Año ${year} (${data.movies.length} títulos)</div>`;
-          html += `<div class="grid-container">`;
-          data.movies.forEach(movie => {
-            html += renderCardHtml(movie);
-          });
-          html += `</div>`;
-          container.innerHTML = html;
+          appCache.years[year] = data.movies;
+          renderMoviesYearGrid(year, data.movies);
         }
       } catch (e) {
-        container.innerHTML = `<p style="text-align:center; padding: 40px; color: #888;">No fue posible cargar las películas del año ${year}.</p>`;
+        container.innerHTML = `<p style="text-align:center; padding: 40px; color: var(--text-muted);">No fue posible cargar las películas del año ${year}.</p>`;
       }
     }
 
-    // RENDERIZAR PESTAÑA ACTUAL (CATÁLOGO AMPLIO SIN REPETICIÓN)
+    function renderMoviesYearGrid(year, movies) {
+      const container = document.getElementById('contentRows');
+      let html = `<div class="section-title">🎬 Colección Oficial del Año ${year} (${movies.length} títulos)</div>`;
+      html += `<div class="grid-container">`;
+      movies.forEach(movie => {
+        html += renderCardHtml(movie);
+      });
+      html += `</div>`;
+      container.innerHTML = html;
+    }
+
+    // RENDERIZAR PESTAÑA ACTUAL
     function renderCurrentTab() {
-      if (!catalogData) return;
       const heroBanner = document.getElementById('heroBanner');
       const rows = document.getElementById('contentRows');
 
       if (currentTab === 'TV en Vivo') {
         heroBanner.style.display = 'none';
-        let filteredChannels = selectedTvCategory === 'Todos'
-          ? [...liveChannels]
-          : liveChannels.filter(c => c.category === selectedTvCategory);
+        renderLiveTvEpg();
+        return;
+      }
 
-        // Ordenar para que los canales peruanos principales salgan primero con su número tradicional
-        filteredChannels.sort((a, b) => {
-          const numA = PERU_CHANNELS_MAP[a.id]?.num || a.number || 999;
-          const numB = PERU_CHANNELS_MAP[b.id]?.num || b.number || 999;
-          return numA - numB;
-        });
+      if (currentTab === 'Deportes') {
+        renderSportsView();
+        return;
+      }
 
-        let html = `<div class="section-title">📡 Canales de TV en Vivo (${filteredChannels.length} disponibles)</div>`;
-        html += `<div class="grid-container">`;
-        filteredChannels.forEach(ch => {
-          const logo = ch.logoUrl || ch.logo || '';
-          const info = PERU_CHANNELS_MAP[ch.id];
-          const chNum = info ? info.num : (ch.number || null);
-          const chDisplay = info ? `${info.label} (Canal ${info.num})` : ch.name;
-          html += `
-            <div class="channel-card focusable" tabindex="0" onclick='playLiveChannel(${JSON.stringify(ch)})'>
-              ${chNum ? `<div class="channel-num-pill">CANAL ${chNum}</div>` : ''}
-              <img class="channel-logo" src="${logo}" alt="${ch.name}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 100 50\\'%3E%3Crect width=\\'100\\' height=\\'50\\' fill=\\'%23222\\'/ %3E%3Ctext x=\\'50%25\\' y=\\'60%25\\' text-anchor=\\'middle\\' font-size=\\'12\\' fill=\\'white\\'%3ETV%3C/text%3E%3C/svg%3E'">
-              <div class="channel-name">${chDisplay}</div>
-              <div class="channel-badge">● SEÑAL EN VIVO</div>
-            </div>
-          `;
-        });
-        html += `</div>`;
-        rows.innerHTML = html;
+      if (!catalogData) {
+        renderSkeletonCatalog();
         return;
       }
 
       heroBanner.style.display = 'flex';
 
-      // Configurar Hero Banner
+      // Configurar Hero Banner inicial
       let candidateHero = null;
       if (currentTab === 'Series' && catalogData.series && catalogData.series.length > 0) {
         candidateHero = catalogData.series[0];
@@ -2313,17 +2968,11 @@
       }
 
       if (candidateHero) {
-        heroItem = candidateHero;
-        document.getElementById('heroTitle').textContent = candidateHero.title;
-        document.getElementById('heroSynopsis').textContent = candidateHero.synopsis || 'Sin descripción disponible.';
-        if (candidateHero.backdrops?.original || candidateHero.posters?.original) {
-          heroBanner.style.backgroundImage = `url('${candidateHero.backdrops?.original || candidateHero.posters?.original}')`;
-        }
+        updateHeroPreview(candidateHero);
       }
 
       let contentHtml = '';
 
-      // CATÁLOGO AMPLIO MULTI-CATEGORÍA 100% DESDUPLICADO
       if (currentTab === 'Todos' || currentTab === 'Películas') {
         if (catalogData.nowPlaying && catalogData.nowPlaying.length > 0) {
           contentHtml += renderRow('🍿 Estrenos de Cine en Calidad Limpia', catalogData.nowPlaying);
@@ -2363,7 +3012,7 @@
       if (currentTab === 'Mi Lista') {
         heroBanner.style.display = 'none';
         if (savedList.length === 0) {
-          contentHtml = `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 40px; margin-bottom: 10px;">⭐</div><h3>Tu lista está vacía</h3><p style="color:#888; font-size:13px; margin-top:6px;">Agrega películas o series para verlas cuando quieras.</p></div>`;
+          contentHtml = `<div style="text-align: center; padding: 60px 20px;"><div style="font-size: 40px; margin-bottom: 10px;">⭐</div><h3>Tu lista está vacía</h3><p style="color:var(--text-muted); font-size:13px; margin-top:6px;">Agrega películas o series para verlas cuando quieras.</p></div>`;
         } else {
           contentHtml = `<div class="section-title">⭐ Mi Lista Guardada (${savedList.length})</div><div class="grid-container">`;
           savedList.forEach(m => { contentHtml += renderCardHtml(m); });
@@ -2374,6 +3023,249 @@
       rows.innerHTML = contentHtml;
     }
 
+    // ========================================================
+    // 3. GUÍA EPG EN VIVO (2 PANELES: LISTA + PREVIEW DE BUEN TAMAÑO)
+    // ========================================================
+    function renderLiveTvEpg() {
+      const rows = document.getElementById('contentRows');
+      if (!liveChannels || liveChannels.length === 0) {
+        renderSkeletonEpg();
+        return;
+      }
+
+      let filtered = selectedTvCategory === 'Todos'
+        ? [...liveChannels]
+        : liveChannels.filter(c => c.category === selectedTvCategory);
+
+      // Ordenar canales nacionales prioritarios primero
+      filtered.sort((a, b) => {
+        const numA = PERU_CHANNELS_MAP[a.id]?.num || a.number || 999;
+        const numB = PERU_CHANNELS_MAP[b.id]?.num || b.number || 999;
+        return numA - numB;
+      });
+
+      if (!activeEpgChannel && filtered.length > 0) {
+        activeEpgChannel = filtered[0];
+      }
+
+      let channelItemsHtml = '';
+      filtered.forEach((ch, idx) => {
+        const info = PERU_CHANNELS_MAP[ch.id];
+        const chNum = info ? info.num : (ch.number || idx + 1);
+        const chName = info ? `${info.label}` : ch.name;
+        const logo = ch.logoUrl || ch.logo || '';
+        const safeCh = encodeURIComponent(JSON.stringify(ch));
+        const isSelected = activeEpgChannel && activeEpgChannel.id === ch.id;
+
+        channelItemsHtml += `
+          <div class="epg-channel-row focusable ${isSelected ? 'active' : ''}"
+               tabindex="0"
+               data-channel="${safeCh}"
+               onfocus="previewEpgChannel('${safeCh}')"
+               onmouseenter="previewEpgChannel('${safeCh}')"
+               onclick="playLiveChannelFromEpg('${safeCh}')">
+            <div class="epg-row-num">${chNum}</div>
+            <div class="epg-row-logo-box">
+              <img class="epg-row-logo" src="${logo}" alt="${chName}" onerror="this.src='/favicon.ico'">
+            </div>
+            <div class="epg-row-info">
+              <div class="epg-row-name">${chName}</div>
+              <div class="epg-row-show">Transmitiendo en Vivo</div>
+            </div>
+            <div class="epg-row-live-indicator">
+              <span class="epg-live-dot"></span> EN VIVO
+            </div>
+          </div>
+        `;
+      });
+
+      const initialCh = activeEpgChannel || filtered[0];
+      const initialInfo = initialCh ? PERU_CHANNELS_MAP[initialCh.id] : null;
+      const initialNum = initialInfo ? `CANAL ${initialInfo.num}` : (initialCh?.number ? `CANAL ${initialCh.number}` : 'EN VIVO');
+      const initialName = initialInfo ? initialInfo.label : (initialCh ? initialCh.name : 'Selecciona un canal');
+
+      rows.innerHTML = `
+        <div class="epg-container">
+          <!-- PANEL IZQUIERDO: LISTA VERTICAL DE CANALES -->
+          <div class="epg-list-column" id="epgListColumn">
+            ${channelItemsHtml}
+          </div>
+
+          <!-- PANEL DERECHO: REPRODUCTOR PREVIEW + SINOPSIS -->
+          <div class="epg-preview-column" id="epgPreviewColumn">
+            <div class="epg-preview-card">
+              <div class="epg-preview-video-box">
+                <video id="epgPreviewVideo" muted playsinline autoplay></video>
+                <div class="epg-preview-overlay">
+                  <div class="epg-preview-badge-live">
+                    <span class="epg-live-dot"></span> EN VIVO
+                  </div>
+                  <button class="epg-fullscreen-btn focusable" id="epgFsBtn" onclick="launchCurrentEpgFullscreen()" tabindex="0">
+                    ▶ Pantalla Completa (OK)
+                  </button>
+                </div>
+              </div>
+              <div class="epg-preview-details">
+                <div class="epg-preview-meta-row">
+                  <span class="epg-meta-tag" id="epgDetailNum">${initialNum}</span>
+                  <span class="epg-meta-tag">1080p 60fps</span>
+                  <span class="epg-meta-tag">Audio Estéreo HQ</span>
+                </div>
+                <h2 class="epg-preview-title" id="epgDetailName">${initialName}</h2>
+                <p class="epg-preview-synopsis" id="epgDetailSynopsis">
+                  Señal oficial de televisión transmitida en alta definición y baja latencia a través de la infraestructura optimizada de TOM TV.
+                </p>
+                <div class="epg-next-box">
+                  <div class="epg-next-label">A CONTINUACIÓN</div>
+                  <div class="epg-next-title" id="epgDetailNext">
+                    Programación Estelar / Bloque en Directo (Próxima hora)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (initialCh) {
+        startEpgVideoPreview(initialCh);
+      }
+    }
+
+    function previewEpgChannel(safeCh) {
+      try {
+        const ch = JSON.parse(decodeURIComponent(safeCh));
+        activeEpgChannel = ch;
+
+        // Marcar row activa
+        document.querySelectorAll('.epg-channel-row').forEach(row => {
+          row.classList.remove('active');
+        });
+        if (event && event.currentTarget) {
+          event.currentTarget.classList.add('active');
+        }
+
+        const info = PERU_CHANNELS_MAP[ch.id];
+        const numText = info ? `CANAL ${info.num}` : (ch.number ? `CANAL ${ch.number}` : 'EN VIVO');
+        const nameText = info ? info.label : ch.name;
+
+        const numEl = document.getElementById('epgDetailNum');
+        const nameEl = document.getElementById('epgDetailName');
+        if (numEl) numEl.textContent = numText;
+        if (nameEl) nameEl.textContent = nameText;
+
+        startEpgVideoPreview(ch);
+      } catch (_) {}
+    }
+
+    function startEpgVideoPreview(ch) {
+      const video = document.getElementById('epgPreviewVideo');
+      if (!video) return;
+
+      const sources = (Array.isArray(ch.sources) && ch.sources.length > 0)
+        ? ch.sources
+        : (ch.streamUrl ? [ch.streamUrl] : (ch.url ? [ch.url] : []));
+
+      if (sources.length === 0) return;
+      const streamUrl = sources[0];
+
+      if (epgPreviewHls) {
+        try {
+          epgPreviewHls.destroy();
+          epgPreviewHls = null;
+        } catch (_) {}
+      }
+
+      if (Hls.isSupported()) {
+        epgPreviewHls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 30
+        });
+        epgPreviewHls.loadSource(streamUrl);
+        epgPreviewHls.attachMedia(video);
+        epgPreviewHls.on(Hls.Events.MANIFEST_PARSED, () => {
+          video.play().catch(() => {});
+        });
+        epgPreviewHls.on(Hls.Events.ERROR, (_, data) => {
+          if (data.fatal) {
+            try { epgPreviewHls.destroy(); } catch (_) {}
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.play().catch(() => {});
+      }
+    }
+
+    function playLiveChannelFromEpg(safeCh) {
+      try {
+        const ch = JSON.parse(decodeURIComponent(safeCh));
+        playLiveChannel(ch);
+      } catch (_) {}
+    }
+
+    function launchCurrentEpgFullscreen() {
+      if (activeEpgChannel) {
+        playLiveChannel(activeEpgChannel);
+      }
+    }
+
+    // ========================================================
+    // 5. VISTA DE DEPORTES CON CUADRÍCULA CARTESIANA 100% PREDECIBLE
+    // ========================================================
+    function renderSportsView() {
+      const heroBanner = document.getElementById('heroBanner');
+      const rows = document.getElementById('contentRows');
+
+      // Buscar canales deportivos (Liga 1 Max, ESPN, Fox, etc.)
+      const sportsChannels = (liveChannels || []).filter(c => {
+        const cat = (c.category || '').toLowerCase();
+        const name = (c.name || '').toLowerCase();
+        return cat.includes('deport') || name.includes('l1 max') || name.includes('espn') || name.includes('fox') || name.includes('tyc') || name.includes('golperu') || name.includes('dsports');
+      });
+
+      // Configurar Hero Banner deportivo
+      heroBanner.style.display = 'flex';
+      const heroTitle = document.getElementById('heroTitle');
+      const heroSynopsis = document.getElementById('heroSynopsis');
+      const heroBadges = document.getElementById('heroBadges');
+
+      if (heroTitle) heroTitle.textContent = 'FÚTBOL Y DEPORTES EN VIVO';
+      if (heroSynopsis) heroSynopsis.textContent = 'Transmisión exclusiva de los partidos de la Liga 1 Te Apuesto, Champions League, Premier League y torneos internacionales en 1080p 60fps.';
+      if (heroBadges) {
+        heroBadges.innerHTML = `
+          <span class="hero-tech-badge accent">1080P 60FPS</span>
+          <span class="hero-tech-badge">AUDIO ESTÉREO</span>
+          <span class="hero-tech-badge">LIGA 1 MAX</span>
+          <span class="hero-tech-badge">ESPN & FOX</span>
+        `;
+      }
+
+      let cardsHtml = '';
+      sportsChannels.forEach((ch, idx) => {
+        const logo = ch.logoUrl || ch.logo || '';
+        const safeCh = encodeURIComponent(JSON.stringify(ch));
+        cardsHtml += `
+          <div class="sports-card focusable" tabindex="0" onclick="playLiveChannelFromEpg('${safeCh}')">
+            <div class="sports-card-top">
+              <span class="sports-badge-live"><span class="epg-live-dot"></span> EN VIVO</span>
+              <img class="sports-channel-logo" src="${logo}" alt="${ch.name}" onerror="this.src='/favicon.ico'">
+            </div>
+            <div>
+              <div class="sports-match-title">${ch.name}</div>
+              <div class="sports-match-sub">Transmisión deportiva oficial</div>
+            </div>
+          </div>
+        `;
+      });
+
+      rows.innerHTML = `
+        <div class="section-title">⚽ Señales Deportivas y Eventos Principales (${sportsChannels.length})</div>
+        <div class="sports-grid">${cardsHtml}</div>
+      `;
+    }
+
     function renderRow(title, items) {
       if (!items || items.length === 0) return '';
       let html = `<div class="section-title">${title}</div><div class="media-scroll">`;
@@ -2382,19 +3274,19 @@
       return html;
     }
 
+    // ========================================================
+    // 2. TARJETAS LIMPIAS (SIN BADGES FIJOS ACUMULADOS EN PÓSTER)
+    // ========================================================
     function renderCardHtml(item) {
       const poster = item.posters?.medium || item.posters?.thumbnail || item.posters?.original || '';
-      const rating = item.rating ? Number(item.rating).toFixed(1) : '7.5';
-      const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || '');
       const safeItem = encodeURIComponent(JSON.stringify(item));
       return `
-        <div class="media-card focusable" tabindex="0" data-media="${safeItem}" onmouseenter="previewCardOnHover('${safeItem}')" onclick="openMediaDetail('${safeItem}')">
-          <div class="media-lang-badge">ESP</div>
-          <img class="media-poster" src="${poster}" alt="${item.title}" loading="lazy">
-          <div class="media-rating">★ ${rating}</div>
+        <div class="media-card focusable" tabindex="0" data-media="${safeItem}" onfocus="previewCardOnHover('${safeItem}')" onmouseenter="previewCardOnHover('${safeItem}')" onclick="openMediaDetail('${safeItem}')">
+          <div class="media-poster-box">
+            <img class="media-poster" src="${poster}" alt="${item.title}" loading="lazy" onerror="this.src='/favicon.ico'">
+          </div>
           <div class="media-info">
             <div class="media-title">${item.title}</div>
-            ${year ? `<div style="font-size: 11px; color: #8E8E93; margin-top: 3px;">${year}</div>` : ''}
           </div>
         </div>
       `;
@@ -2407,13 +3299,30 @@
       } catch (_) {}
     }
 
+    // METADATA TÉCNICA DINÁMICA SOLO EN HERO BANNER AL ENFOCAR
     function updateHeroPreview(item) {
       if (!item || currentTab === 'TV en Vivo') return;
       const heroBanner = document.getElementById('heroBanner');
       const heroTitle = document.getElementById('heroTitle');
       const heroSynopsis = document.getElementById('heroSynopsis');
+      const heroBadges = document.getElementById('heroBadges');
+
       if (heroTitle && item.title) heroTitle.textContent = item.title;
-      if (heroSynopsis) heroSynopsis.textContent = item.synopsis || (item.overview || 'Disponible en calidad 4K Ultra HD en TOM TV.');
+      if (heroSynopsis) heroSynopsis.textContent = item.synopsis || (item.overview || 'Disponible en alta definición 4K Ultra HD en los servidores de TOM TV.');
+
+      if (heroBadges) {
+        const year = item.releaseDate ? item.releaseDate.split('-')[0] : (item.year || '2025');
+        const rating = item.rating ? Number(item.rating).toFixed(1) : '8.2';
+        const typeLabel = item.mediaType === 'tv' ? 'SERIE DE TV' : 'PELÍCULA 4K';
+        heroBadges.innerHTML = `
+          <span class="hero-tech-badge accent">4K ULTRA HD</span>
+          <span class="hero-tech-badge">AUDIO LATINO</span>
+          <span class="hero-tech-badge">★ ${rating} IMDB</span>
+          <span class="hero-tech-badge">${year}</span>
+          <span class="hero-tech-badge">${typeLabel}</span>
+        `;
+      }
+
       const backdrop = item.backdrops?.original || item.backdrops?.large || item.posters?.original || item.posters?.medium;
       if (heroBanner && backdrop) {
         heroBanner.style.backgroundImage = `url('${backdrop}')`;
@@ -3116,7 +4025,7 @@
     }
 
     function handleSpatialDpad(e) {
-      const focusables = Array.from(document.querySelectorAll('.focusable, .tab-item, .channel-card, .media-card, .btn-play, .senior-action-card, .btn-demo-instant, .btn-whatsapp-act'))
+      const focusables = Array.from(document.querySelectorAll('.focusable, .tab-item, .channel-card, .media-card, .btn-play, .senior-action-card, .btn-demo-instant, .btn-whatsapp-act, .sidebar-item, .epg-channel-row, .sports-card, .tv-chip, .epg-fullscreen-btn'))
         .filter(el => {
           const rect = el.getBoundingClientRect();
           return rect.width > 0 && rect.height > 0 && el.offsetParent !== null;
@@ -3124,8 +4033,10 @@
 
       if (focusables.length === 0) return;
 
+      const sidebar = document.getElementById('appSidebar');
+
       if (!currentFocusedElement || !document.body.contains(currentFocusedElement)) {
-        currentFocusedElement = focusables[0];
+        currentFocusedElement = focusables.find(el => !el.closest('.app-sidebar')) || focusables[0];
         setFocusToElement(currentFocusedElement);
         e.preventDefault();
         return;
@@ -3139,16 +4050,47 @@
         y: currentRect.top + currentRect.height / 2
       };
 
-      let bestTarget = null;
-      let minDistance = Infinity;
-
       const isRight = key === 'ArrowRight' || code === 39 || code === 22;
       const isLeft = key === 'ArrowLeft' || code === 37 || code === 21;
       const isDown = key === 'ArrowDown' || code === 40 || code === 20;
       const isUp = key === 'ArrowUp' || code === 38 || code === 19;
 
+      const isCurrentlyInSidebar = Boolean(currentFocusedElement.closest('.app-sidebar'));
+
+      // CASO ESPECIAL: NAVEGANDO HACIA LA DERECHA DESDE EL SIDEBAR
+      if (isCurrentlyInSidebar && isRight) {
+        e.preventDefault();
+        if (sidebar) sidebar.classList.remove('expanded');
+        // Buscar el primer elemento enfocable en el contenido principal
+        const contentTarget = focusables.find(el => !el.closest('.app-sidebar') && el.getBoundingClientRect().top >= 0);
+        if (contentTarget) {
+          setFocusToElement(contentTarget);
+        }
+        return;
+      }
+
+      // CASO ESPECIAL: NAVEGANDO ARRIBA / ABAJO DENTRO DEL SIDEBAR
+      if (isCurrentlyInSidebar && (isUp || isDown)) {
+        const sidebarItems = Array.from(document.querySelectorAll('.sidebar-item.focusable')).filter(el => el.offsetParent !== null);
+        const curIdx = sidebarItems.indexOf(currentFocusedElement);
+        if (curIdx !== -1) {
+          e.preventDefault();
+          const nextIdx = isDown ? Math.min(sidebarItems.length - 1, curIdx + 1) : Math.max(0, curIdx - 1);
+          setFocusToElement(sidebarItems[nextIdx]);
+          return;
+        }
+      }
+
+      let bestTarget = null;
+      let minDistance = Infinity;
+
       focusables.forEach(el => {
         if (el === currentFocusedElement) return;
+
+        // Si estamos en el contenido, no considerar el sidebar en el barrido cartesiano ordinario
+        // a menos que alcancemos el borde izquierdo
+        if (!isCurrentlyInSidebar && el.closest('.app-sidebar') && !isLeft) return;
+
         const r = el.getBoundingClientRect();
         const center = {
           x: r.left + r.width / 2,
@@ -3176,16 +4118,27 @@
         }
       });
 
+      // SI VAMOS HACIA LA IZQUIERDA Y NO HAY MÁS ELEMENTOS EN EL CONTENIDO -> SALTO AL SIDEBAR
+      if (isLeft && (!bestTarget || bestTarget.closest('.app-sidebar') || currentRect.left <= 120)) {
+        const activeSbItem = document.querySelector('.sidebar-item.active') || document.querySelector('.sidebar-item');
+        if (activeSbItem && sidebar && window.innerWidth >= 769) {
+          e.preventDefault();
+          sidebar.classList.add('expanded');
+          setFocusToElement(activeSbItem);
+          return;
+        }
+      }
+
       if (bestTarget) {
         e.preventDefault();
         setFocusToElement(bestTarget);
-      } else if (isLeft) {
+      } else if (isLeft && !isCurrentlyInSidebar) {
         const idx = focusables.indexOf(currentFocusedElement);
         if (idx > 0) {
           e.preventDefault();
           setFocusToElement(focusables[idx - 1]);
         }
-      } else if (isRight) {
+      } else if (isRight && !isCurrentlyInSidebar) {
         const idx = focusables.indexOf(currentFocusedElement);
         if (idx >= 0 && idx < focusables.length - 1) {
           e.preventDefault();
@@ -3201,7 +4154,16 @@
       currentFocusedElement = el;
       currentFocusedElement.classList.add('tv-focused');
       currentFocusedElement.focus({ preventScroll: true });
-      currentFocusedElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+      const sidebar = document.getElementById('appSidebar');
+      if (el.closest('.app-sidebar')) {
+        if (sidebar) sidebar.classList.add('expanded');
+      } else {
+        if (sidebar && !sidebar.matches(':hover')) {
+          sidebar.classList.remove('expanded');
+        }
+        currentFocusedElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      }
 
       // Si se enfoca una película o serie con el control remoto, previsualizar en el Hero Banner
       if (el.classList.contains('media-card')) {
@@ -3211,6 +4173,14 @@
             const item = JSON.parse(decodeURIComponent(rawMedia));
             updateHeroPreview(item);
           } catch (_) {}
+        }
+      }
+
+      // Si se enfoca un canal en la guía EPG
+      if (el.classList.contains('epg-channel-row')) {
+        const rawCh = el.getAttribute('data-channel');
+        if (rawCh) {
+          previewEpgChannel(rawCh);
         }
       }
     }
