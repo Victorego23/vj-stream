@@ -578,10 +578,9 @@ class _LiveTvViewState extends State<LiveTvView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      Text(
                         _getCategoryIcon(cat),
-                        size: 13,
-                        color: isSelected || isFocused ? Colors.white : Colors.white70,
+                        style: const TextStyle(fontSize: 13),
                       ),
                       const SizedBox(width: 6),
                       Text(
