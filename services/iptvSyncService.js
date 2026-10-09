@@ -1,4 +1,3 @@
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
@@ -101,14 +100,14 @@ class IptvSyncService {
 
     for (const source of IPTV_SOURCES) {
       try {
-        const response = await axios.get(source.url, {
-          timeout: 25000,
+        const response = await fetch(source.url, {
           headers: {
             'User-Agent': 'VJ-STREAM-Backend/2.0.0'
-          }
+          },
+          signal: AbortSignal.timeout(25000)
         });
-
-        const lines = response.data.split('\n');
+        const textData = await response.text();
+        const lines = textData.split('\n');
         console.log(`[IptvSyncService] Procesando ${lines.length} líneas de ${source.label}...`);
 
         for (let i = 0; i < lines.length; i++) {
