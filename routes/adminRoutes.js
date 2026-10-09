@@ -848,7 +848,7 @@ router.get('/server-health', (req, res) => {
         heapTotal: (mem.heapTotal / (1024 * 1024)).toFixed(1) + ' MB'
       },
       apk: {
-        version: '3.5.0',
+        version: '4.3.1',
         exists: apkExists,
         size: apkSizeMb,
         endpoint: '/apk'

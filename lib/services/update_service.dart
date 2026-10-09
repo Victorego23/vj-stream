@@ -28,8 +28,8 @@ class AppUpdateInfo {
       notes = (json['releaseNotes'] as List).map((e) => e.toString()).toList();
     }
     return AppUpdateInfo(
-      latestVersion: json['latestVersion'] ?? '3.5.6',
-      versionCode: json['versionCode'] ?? 31,
+      latestVersion: json['latestVersion'] ?? '4.3.1',
+      versionCode: json['versionCode'] ?? 62,
       releaseNotes: notes,
       downloadUrl: json['downloadUrl'] ?? '/api/streaming/download-apk',
       forceUpdate: json['forceUpdate'] ?? false,
@@ -292,7 +292,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
 
       final totalBytes = (response.contentLength != null && response.contentLength! > 0)
           ? response.contentLength!
-          : 58284866; // 58 MB (TOM-TV-release.apk v3.5.0)
+          : 59646159; // ~59 MB (TOM-TV-release.apk v4.3.1)
       int receivedBytes = 0;
 
       // Guardar el APK en el almacenamiento temporal/caché local del dispositivo

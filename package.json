@@ -1,6 +1,6 @@
 {
   "name": "vj-stream-backend",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "description": "Servidor backend de streaming VJ STREAM con Real-Debrid y TMDB en español",
   "main": "server.js",
   "scripts": {
