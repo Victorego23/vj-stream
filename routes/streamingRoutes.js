@@ -1224,7 +1224,7 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
   latestVersion: '4.3.0',
-  versionCode: 56,
+  versionCode: 57,
   downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.3.0/TOM-TV-release.apk',
   releaseDate: '2026-10-09'
 };

@@ -40,10 +40,10 @@ class AppUpdateInfo {
 /// Servicio de actualización automática In-App (OTA) para TOM TV
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
-  static const String currentVersion = '4.2.9';
-  static const int currentVersionCode = 55;
-  static String currentInstalledVersionName = '4.2.9';
-  static int currentInstalledVersionCode = 55;
+  static const String currentVersion = '4.3.0';
+  static const int currentVersionCode = 57;
+  static String currentInstalledVersionName = '4.3.0';
+  static int currentInstalledVersionCode = 57;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;
@@ -203,6 +203,7 @@ class _UpdateDialogWidgetState extends State<_UpdateDialogWidget> {
         {'filePath': filePath},
       );
       if (success == true) {
+        await UpdateService.markDismissed(widget.updateInfo.versionCode);
         if (mounted) {
           setState(() {
             _downloadMessage = 'Abriendo instalador del sistema Android... Por favor confirma en pantalla.';

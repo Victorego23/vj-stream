@@ -117,9 +117,52 @@ class MainActivity : FlutterActivity() {
                         try {
                             val file = File(filePath).absoluteFile
                             if (file.exists()) {
-                                // En Android 8.0+, verificar si la app tiene permiso para instalar paquetes
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    if (!packageManager.canRequestPackageInstalls()) {
+                                // Preparar FileProvider y permisos de lectura
+                                val authority = "${applicationContext.packageName}.fileprovider"
+                                val uri: Uri = FileProvider.getUriForFile(
+                                    applicationContext,
+                                    authority,
+                                    file
+                                )
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    setDataAndType(uri, "application/vnd.android.package-archive")
+                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    clipData = android.content.ClipData.newRawUri("", uri)
+                                }
+
+                                // Otorgar permisos de lectura explícitos a todos los gestores de instalación conocidos
+                                val knownInstallers = listOf(
+                                    "com.google.android.packageinstaller",
+                                    "com.android.packageinstaller",
+                                    "com.amazon.venezia",
+                                    "com.miui.packageinstaller",
+                                    "com.samsung.android.packageinstaller"
+                                )
+                                for (pkg in knownInstallers) {
+                                    try {
+                                        grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    } catch (_: Exception) {}
+                                }
+
+                                try {
+                                    val resInfoList = packageManager.queryIntentActivities(intent, 0)
+                                    for (resolveInfo in resInfoList) {
+                                        grantUriPermission(
+                                            resolveInfo.activityInfo.packageName,
+                                            uri,
+                                            Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                        )
+                                    }
+                                } catch (_: Exception) {}
+
+                                // Si en Android 8.0+ no tiene permiso explícito pero podemos intentar lanzar el instalador
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !packageManager.canRequestPackageInstalls()) {
+                                    try {
+                                        startActivity(intent)
+                                        result.success(true)
+                                        return@setMethodCallHandler
+                                    } catch (se: SecurityException) {
                                         // Abrir la pantalla de ajustes con fallbacks para Android TV / Fire TV
                                         try {
                                             val settingsIntent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
@@ -146,44 +189,6 @@ class MainActivity : FlutterActivity() {
                                         return@setMethodCallHandler
                                     }
                                 }
-
-                                val authority = "${applicationContext.packageName}.fileprovider"
-                                val uri: Uri = FileProvider.getUriForFile(
-                                    applicationContext,
-                                    authority,
-                                    file
-                                )
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(uri, "application/vnd.android.package-archive")
-                                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                    clipData = android.content.ClipData.newRawUri("", uri)
-                                }
-
-                                // Otorgar permisos de lectura explícitos a todos los gestores de instalación de paquetes conocidos
-                                val knownInstallers = listOf(
-                                    "com.google.android.packageinstaller",
-                                    "com.android.packageinstaller",
-                                    "com.amazon.venezia",
-                                    "com.miui.packageinstaller",
-                                    "com.samsung.android.packageinstaller"
-                                )
-                                for (pkg in knownInstallers) {
-                                    try {
-                                        grantUriPermission(pkg, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                                    } catch (_: Exception) {}
-                                }
-
-                                try {
-                                    val resInfoList = packageManager.queryIntentActivities(intent, 0)
-                                    for (resolveInfo in resInfoList) {
-                                        grantUriPermission(
-                                            resolveInfo.activityInfo.packageName,
-                                            uri,
-                                            Intent.FLAG_GRANT_READ_URI_PERMISSION
-                                        )
-                                    }
-                                } catch (_: Exception) {}
 
                                 startActivity(intent)
                                 result.success(true)
