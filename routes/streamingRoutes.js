@@ -1223,9 +1223,9 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '4.3.0',
-  versionCode: 61,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.3.0/TOM-TV-release.apk',
+  latestVersion: '4.3.1',
+  versionCode: 62,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.3.1/TOM-TV-release.apk',
   releaseDate: '2026-10-09'
 };
 
@@ -1274,7 +1274,7 @@ router.get('/version', async (req, res) => {
     success: true,
     app: 'TOM TV',
     latestVersion: published.latestVersion,
-    versionCode: published.versionCode,
+    versionCode: Math.max(published.versionCode || 0, CURRENT_OFFICIAL_RELEASE.versionCode),
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
@@ -1287,7 +1287,7 @@ router.get('/version', async (req, res) => {
       '📡 Guía EPG en Vivo (2 Paneles): Pestañas superiores, lista vertical de canales y reproductor preview con sinopsis y horario.'
     ],
     downloadUrl: published.downloadUrl,
-    forceUpdate: false,
+    forceUpdate: true,
     announcement: accountService.getAnnouncement()
   });
 });
