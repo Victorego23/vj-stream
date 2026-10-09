@@ -7,7 +7,7 @@ class TomTokens {
   // ==========================================
   // PALETA DE COLORES (ROJO CARMESÍ & NEGRO CARBÓN)
   // ==========================================
-  static const Color backgroundMain = Color(0xFF0B0B0E); // Negro Carbón
+  static const Color backgroundMain = Color(0xFF0E0E10); // Negro Carbón Profundo Estándar Smart TV
   static const Color surfaceCard = Color(0xFF161720);    // Tarjetas de contenido, banners y modales
   static const Color primaryAccent = Color(0xFFE50914);  // Rojo Neón Carmesí para tabs activas, botones y reproductor
   static const Color primaryAccentGlow = Color(0xFFFF2A4D); // Resplandor Rojo Neón

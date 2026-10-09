@@ -133,26 +133,26 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
               color: const Color(0xFF13151D),
-              // Borde brillante rojo estilo cine y halo de neón cuando está enfocado
+              // Borde blanco de alto contraste con resplandor rojo TOM TV al hacer foco
               border: Border.all(
-                color: _isFocused ? const Color(0xFFE50914) : Colors.white.withValues(alpha: 0.08),
-                width: _isFocused ? 3.0 : 0.8,
+                color: _isFocused ? Colors.white : Colors.white.withValues(alpha: 0.08),
+                width: _isFocused ? 2.5 : 0.8,
               ),
               boxShadow: _isFocused
                   ? [
                       BoxShadow(
-                        color: const Color(0xFFE50914).withValues(alpha: 0.85),
-                        blurRadius: 28,
-                        spreadRadius: 3,
-                      ),
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.35),
-                        blurRadius: 8,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        blurRadius: 4,
                         spreadRadius: 1,
                       ),
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        blurRadius: 14,
+                        color: const Color(0xFFE50914).withValues(alpha: 0.65),
+                        blurRadius: 24,
+                        spreadRadius: 2,
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.8),
+                        blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
                     ]
@@ -169,21 +169,21 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Imagen del póster con fallback
+                  // Imagen del póster con fallback (100% limpia sin badges sobrepuestos)
                   _buildPosterImage(),
 
-                  // Degradado inferior cinematográfico para resaltar texto
+                  // Degradado inferior cinematográfico para resaltar texto del título
                   Positioned(
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    height: 85,
+                    height: 80,
                     child: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
-                          stops: [0.0, 0.45, 1.0],
+                          stops: [0.0, 0.5, 1.0],
                           colors: [
                             Color(0xF207080B),
                             Color(0x8807080B),
@@ -191,127 +191,6 @@ class _TvFocusableCardState extends State<TvFocusableCard> {
                           ],
                         ),
                       ),
-                    ),
-                  ),
-
-                  // Badges de calidad y audio en español o modo Tráiler Oficial
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: widget.item.isTrailerOnly
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                              ),
-                              borderRadius: BorderRadius.circular(4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFF59E0B).withValues(alpha: 0.4),
-                                  blurRadius: 4,
-                                ),
-                              ],
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.movie_creation_rounded, color: Colors.black, size: 10),
-                                SizedBox(width: 3),
-                                Text(
-                                  'TRÁILER',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 0.4,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : (widget.item.rating > 0
-                            ? Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xE60A0C14),
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: const Color(0x66F59E0B), width: 0.8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.4),
-                                      blurRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.star_rounded, color: Color(0xFFFBBF24), size: 12),
-                                    const SizedBox(width: 3),
-                                    Text(
-                                      widget.item.formattedRating,
-                                      style: const TextStyle(
-                                        color: Color(0xFFFBBF24),
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w900,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : const SizedBox.shrink()),
-                  ),
-
-                  // Insignia superior derecha 4K / Audio Latino
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFE50914), Color(0xFF990000)],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0x66E50914),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            '4K',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 0.4,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 3),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xCC0E1017),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0x6634D399), width: 0.6),
-                          ),
-                          child: const Text(
-                            'LAT',
-                            style: TextStyle(
-                              color: Color(0xFF34D399),
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
 

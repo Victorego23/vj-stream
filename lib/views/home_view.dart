@@ -1192,7 +1192,7 @@ class _HomeViewState extends State<HomeView> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF000000), // Negro absoluto OLED
+        backgroundColor: TomTokens.backgroundMain, // #0E0E10 Carbón profundo Smart TV
         bottomNavigationBar: isTv ? null : _buildMobileBottomBar(),
         body: _isLoading
             ? const Center(

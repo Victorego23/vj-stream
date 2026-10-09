@@ -424,18 +424,18 @@ class _LiveTvViewState extends State<LiveTvView> {
   }
 
   // ===========================================================================
-  // LAYOUT XUPER TV / MAGIS TV: GUÍA DE 3 COLUMNAS CON MINI-PLAYER EN TIEMPO REAL
-  // [ COLUMNA 1: CATEGORÍAS | COLUMNA 2: CANALES | COLUMNA 3: PREVIEW & EPG ]
+  // LAYOUT DE 2 PANELES ESTÁNDAR SMART TV / APPLE TV
+  // [ PANEL IZQUIERDO (410px): CATEGORÍAS + CANALES | PANEL DERECHO: PREVIEW & EPG ]
   // ===========================================================================
   Widget _buildTvLayout() {
     final channels = _filteredChannels;
 
     return Column(
       children: [
-        // 1. Barra Superior Xuper TV (Status, Categoría, Reloj Digital en Vivo y Volver)
+        // 1. Barra Superior (Status, Reloj Digital en Vivo y Volver)
         _buildTvTopBar(),
 
-        // 2. Guía Principal de 3 Columnas
+        // 2. Guía Principal de 2 Paneles
         Expanded(
           child: _isLoading
               ? const Center(
@@ -446,9 +446,9 @@ class _LiveTvViewState extends State<LiveTvView> {
                   : Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Columna 1: Panel de Categorías Verticales (~215px)
+                        // PANEL IZQUIERDO: Pestañas de categorías superiores + Lista vertical de canales
                         Container(
-                          width: 215,
+                          width: 410,
                           decoration: BoxDecoration(
                             color: const Color(0xFF0C0D14),
                             border: Border(
@@ -458,25 +458,19 @@ class _LiveTvViewState extends State<LiveTvView> {
                               ),
                             ),
                           ),
-                          child: _buildTvCategoriesColumn(),
-                        ),
-
-                        // Columna 2: Lista Vertical de Canales (~330px)
-                        Container(
-                          width: 330,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF0F1018),
-                            border: Border(
-                              right: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.08),
-                                width: 1.0,
+                          child: Column(
+                            children: [
+                              // Pestañas horizontales de categorías
+                              _buildHorizontalCategoriesBar(),
+                              // Lista vertical de canales
+                              Expanded(
+                                child: _buildTvChannelsListColumn(channels),
                               ),
-                            ),
+                            ],
                           ),
-                          child: _buildTvChannelsListColumn(channels),
                         ),
 
-                        // Columna 3: Mini-Player en Vivo + Ficha Técnica EPG (Flex 1)
+                        // PANEL DERECHO: Reproductor generoso en vivo + ficha EPG
                         Expanded(
                           child: Container(
                             color: const Color(0xFF08090F),
@@ -487,6 +481,134 @@ class _LiveTvViewState extends State<LiveTvView> {
                     ),
         ),
       ],
+    );
+  }
+
+  /// Barra horizontal superior de categorías con navegación D-Pad y táctil
+  Widget _buildHorizontalCategoriesBar() {
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C0D14),
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.08),
+            width: 1.0,
+          ),
+        ),
+      ),
+      child: ListView.separated(
+        controller: _categoriesScrollController,
+        scrollDirection: Axis.horizontal,
+        itemCount: _categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final cat = _categories[index];
+          final isSelected = _selectedCategory.toLowerCase() == cat.toLowerCase();
+          final count = _getCategoryCount(cat);
+
+          return Focus(
+            focusNode: _getCategoryFocusNode(cat),
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent) {
+                if (event.logicalKey == LogicalKeyboardKey.select ||
+                    event.logicalKey == LogicalKeyboardKey.enter ||
+                    event.logicalKey == LogicalKeyboardKey.space) {
+                  setState(() {
+                    _selectedCategory = cat;
+                  });
+                  final channels = _filteredChannels;
+                  if (channels.isNotEmpty) {
+                    _focusedChannelNotifier.value = channels.first;
+                    _triggerPreviewUpdate(channels.first);
+                  }
+                  return KeyEventResult.handled;
+                }
+                if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                  if (_filteredChannels.isNotEmpty) {
+                    final target = _focusedChannelNotifier.value ?? _filteredChannels.first;
+                    _getChannelFocusNode(target.id).requestFocus();
+                  }
+                  return KeyEventResult.handled;
+                }
+                if (event.logicalKey == LogicalKeyboardKey.arrowLeft && index == 0) {
+                  widget.onBackToMovies?.call();
+                  return KeyEventResult.handled;
+                }
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Builder(builder: (ctx) {
+              final isFocused = Focus.of(ctx).hasFocus;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedCategory = cat;
+                  });
+                  final channels = _filteredChannels;
+                  if (channels.isNotEmpty) {
+                    _focusedChannelNotifier.value = channels.first;
+                    _triggerPreviewUpdate(channels.first);
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFFE50914)
+                        : (isFocused ? Colors.white.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.06)),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isFocused
+                          ? Colors.white
+                          : (isSelected ? const Color(0xFFE50914) : Colors.white.withValues(alpha: 0.1)),
+                      width: isFocused ? 2.0 : 1.0,
+                    ),
+                    boxShadow: isFocused
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFE50914).withValues(alpha: 0.6),
+                              blurRadius: 12,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _getCategoryIcon(cat),
+                        size: 13,
+                        color: isSelected || isFocused ? Colors.white : Colors.white70,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        cat,
+                        style: TextStyle(
+                          color: isSelected || isFocused ? Colors.white : Colors.white70,
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '($count)',
+                        style: TextStyle(
+                          color: isSelected ? Colors.white70 : Colors.white38,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
     );
   }
 

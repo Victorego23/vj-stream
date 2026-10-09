@@ -43,26 +43,27 @@ class _TomLiveTvMobileState extends State<TomLiveTvMobile> {
   // Sub-tabs superiores: 'Categoría' y 'Favoritos'
   String _activeSubTab = 'Categoría';
 
-  // Chips de categorías según especificación
+  // Chips de categorías sincronizados 100% a la par con la versión TV
   final List<String> _chipFilters = [
-    'ChannelList',
-    'Vivo gratis',
-    'Deportes',
-    'Cine y Series',
-    'Más popular',
-    'Colombia',
-    'Venezuela',
-    'Ecuador',
-    'México',
+    'Todos',
+    'Favoritos',
     'Perú',
+    'Deportes',
+    'Cine & Series',
+    'Entretenimiento',
+    'Noticias',
+    'Infantil',
+    'Música',
+    'Cultural',
+    'Colombia',
+    'México',
+    'Argentina',
     'Chile',
-    'Bolivia',
-    'Uruguay',
+    'Ecuador',
     'España',
-    'Costa Rica',
     'Estados Unidos',
   ];
-  String _selectedChip = 'ChannelList';
+  String _selectedChip = 'Todos';
 
   // Control de carga al cambiar chips
   bool _isFiltering = false;
@@ -74,7 +75,7 @@ class _TomLiveTvMobileState extends State<TomLiveTvMobile> {
     if (widget.initialCategory != null && widget.initialCategory!.isNotEmpty) {
       final match = _chipFilters.firstWhere(
         (c) => c.toLowerCase() == widget.initialCategory!.toLowerCase(),
-        orElse: () => 'ChannelList',
+        orElse: () => 'Todos',
       );
       _selectedChip = match;
     }
@@ -161,11 +162,11 @@ class _TomLiveTvMobileState extends State<TomLiveTvMobile> {
   List<LiveChannel> _getFilteredChannels() {
     List<LiveChannel> list = widget.channels;
 
-    if (_activeSubTab == 'Favoritos') {
+    if (_activeSubTab == 'Favoritos' || _selectedChip == 'Favoritos') {
       return list.where((c) => widget.favoriteIds.contains(c.id)).toList();
     }
 
-    if (_selectedChip == 'ChannelList' || _selectedChip == 'Vivo gratis') {
+    if (_selectedChip == 'Todos') {
       return list;
     }
 
@@ -176,20 +177,47 @@ class _TomLiveTvMobileState extends State<TomLiveTvMobile> {
       final id = c.id.toLowerCase();
 
       if (query == 'deportes') {
-        return cat.contains('deporte') || cat.contains('sport') || name.contains('espn') || name.contains('fox') || name.contains('tyc') || name.contains('win');
+        return cat.contains('deporte') || cat.contains('sport') || name.contains('espn') || name.contains('fox') || name.contains('tyc') || name.contains('win') || name.contains('liga');
       }
-      if (query == 'cine y series') {
-        return cat.contains('cine') || cat.contains('película') || cat.contains('serie') || cat.contains('hbo') || name.contains('warner');
+      if (query == 'cine & series' || query == 'cine y series') {
+        return cat.contains('cine') || cat.contains('película') || cat.contains('serie') || cat.contains('hbo') || name.contains('warner') || name.contains('tnt');
       }
-      if (query == 'más popular') {
-        return c.order < 50;
+      if (query == 'infantil') {
+        return cat.contains('infantil') || cat.contains('niñ') || cat.contains('cartoon') || cat.contains('disney') || cat.contains('nickelodeon');
+      }
+      if (query == 'noticias') {
+        return cat.contains('noticia') || cat.contains('news') || name.contains('cnn') || name.contains('bbc') || name.contains('24 horas');
+      }
+      if (query == 'entretenimiento') {
+        return cat.contains('entretenimiento') || cat.contains('variedad');
+      }
+      if (query == 'música') {
+        return cat.contains('música') || cat.contains('music') || name.contains('mtv');
+      }
+      if (query == 'cultural') {
+        return cat.contains('cultural') || cat.contains('documental') || name.contains('discovery') || name.contains('history') || name.contains('nat geo');
       }
 
-      // Filtro por país
-      if (id.contains('_$query') || name.contains(query) || cat.contains(query)) {
+      // Filtro por país (Perú, Colombia, México, Argentina, Chile, Ecuador, España, Estados Unidos)
+      final countryCodes = {
+        'perú': 'pe',
+        'peru': 'pe',
+        'colombia': 'co',
+        'méxico': 'mx',
+        'mexico': 'mx',
+        'argentina': 'ar',
+        'chile': 'cl',
+        'ecuador': 'ec',
+        'españa': 'es',
+        'espana': 'es',
+        'estados unidos': 'us',
+      };
+      final code = countryCodes[query];
+      if (code != null && (id.endsWith('_$code') || id.contains('_$code') || cat.contains(query) || name.contains(query))) {
         return true;
       }
-      return false;
+
+      return id.contains('_$query') || name.contains(query) || cat.contains(query);
     }).toList();
   }
 
