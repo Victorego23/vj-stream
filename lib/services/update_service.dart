@@ -41,9 +41,9 @@ class AppUpdateInfo {
 class UpdateService {
   // Versión oficial instalada en la app sincronizada con pubspec.yaml
   static const String currentVersion = '4.3.0';
-  static const int currentVersionCode = 59;
+  static const int currentVersionCode = 60;
   static String currentInstalledVersionName = '4.3.0';
-  static int currentInstalledVersionCode = 59;
+  static int currentInstalledVersionCode = 60;
 
   static bool _hasCheckedThisSession = false;
   static bool _isDialogVisible = false;

@@ -1224,7 +1224,7 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
   latestVersion: '4.3.0',
-  versionCode: 59,
+  versionCode: 60,
   downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.3.0/TOM-TV-release.apk',
   releaseDate: '2026-10-09'
 };
@@ -1281,10 +1281,10 @@ router.get('/version', async (req, res) => {
       '✨ Nueva Interfaz Smart TV 10-foot UI: Experiencia cinematográfica estándar Netflix / Apple TV con paleta #0E0E10.',
       '🧭 Menú Lateral Colapsable Responsive: Expansión suave de 72px a 240px con D-Pad Left y repliegue al volver al contenido.',
       '🖼️ Tarjetas y Pósters Limpios: Carátulas sin badges amontonados con metadata técnica dinámica 4K UHD en la cabecera.',
-      '📡 Guía EPG en Vivo (2 Paneles): Pestañas superiores, lista vertical de canales y reproductor preview con sinopsis y horario del siguiente programa.',
+      '📡 Guía EPG en Vivo (2 Paneles): Pestañas superiores, lista vertical de canales y reproductor preview con sinopsis y horario.',
+      '🏆 Estadio TOM TV (2 Paneles): Lista vertical estructurada de canales/partidos, preview en directo y ficha técnica sin etiquetas 720p/1080p amontonadas.',
       '⚡ 2,000 Canales en Vivo Verificados: Calidad HLS fluida con auto-sanación de enlaces y cero pantallas negras.',
-      '💫 Shimmer Skeletons y Caché en Memoria: Transiciones instantáneas entre pestañas sin bloqueos ni pantallas en negro.',
-      '⚽ Cuadrícula Cartesiana Deportiva: Saltos de foco D-Pad 100% predecibles en canales de fútbol y eventos en directo.'
+      '💫 Transiciones D-Pad Inmediatas: Navegación fluida entre lista de canales, panel de control y menú principal.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,
