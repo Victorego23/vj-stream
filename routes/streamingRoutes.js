@@ -1223,10 +1223,10 @@ router.get(['/proxy', '/stream-proxy'], async (req, res) => {
  */
 let _publishedReleaseCache = { fetchedAt: 0, data: null };
 const CURRENT_OFFICIAL_RELEASE = {
-  latestVersion: '4.2.9',
-  versionCode: 55,
-  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.2.9/TOM-TV-release.apk',
-  releaseDate: '2026-10-08'
+  latestVersion: '4.3.0',
+  versionCode: 56,
+  downloadUrl: 'https://github.com/Victorego23/vj-stream/releases/download/v4.3.0/TOM-TV-release.apk',
+  releaseDate: '2026-10-09'
 };
 
 const RELEASE_CACHE_MS = 60 * 1000; // 1 minuto para reflejar nuevos lanzamientos de inmediato
@@ -1278,11 +1278,13 @@ router.get('/version', async (req, res) => {
     minSupportedVersion: '1.0.0',
     releaseDate: published.releaseDate,
     releaseNotes: [
-      '⚡ TV en Vivo Ultra-Precisa: Inicio instantáneo sin cuelgues ni pantallas molestas de cambio de señal.',
-      '🎯 Señales 100% Verificadas: Prioridad al enlace más veloz y activo en todos los canales de TV.',
-      '💾 Memoria de Señal Inteligente: La app recuerda automáticamente la mejor señal para cada canal.',
-      '🔇 Failover Silencioso: Conmutación transparente en segundo plano si una señal tiene problemas.',
-      '🎧 Selector Tri-Audio OSD para Smart TV: Acceso rápido con tecla Arriba (▲) para elegir Latino, Original o Castellano.'
+      '✨ Nueva Interfaz Smart TV 10-foot UI: Experiencia cinematográfica estándar Netflix / Apple TV con paleta #0E0E10.',
+      '🧭 Menú Lateral Colapsable Responsive: Expansión suave de 72px a 240px con D-Pad Left y repliegue al volver al contenido.',
+      '🖼️ Tarjetas y Pósters Limpios: Carátulas sin badges amontonados con metadata técnica dinámica 4K UHD en la cabecera.',
+      '📡 Guía EPG en Vivo (2 Paneles): Pestañas superiores, lista vertical de canales y reproductor preview con sinopsis y horario del siguiente programa.',
+      '⚡ 2,000 Canales en Vivo Verificados: Calidad HLS fluida con auto-sanación de enlaces y cero pantallas negras.',
+      '💫 Shimmer Skeletons y Caché en Memoria: Transiciones instantáneas entre pestañas sin bloqueos ni pantallas en negro.',
+      '⚽ Cuadrícula Cartesiana Deportiva: Saltos de foco D-Pad 100% predecibles en canales de fútbol y eventos en directo.'
     ],
     downloadUrl: published.downloadUrl,
     forceUpdate: false,
