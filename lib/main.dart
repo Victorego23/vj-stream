@@ -84,23 +84,30 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _checkAuthorization() async {
-    // Si ya existe una sesión guardada localmente válida, autorizamos de inmediato
+    // 1. Probar validación directa contra el servidor con token o sesión guardada
+    final licResult = await AuthService.verifyLicenseWithServer();
+    if (licResult.isValid && mounted) {
+      setState(() {
+        _isAuthorized = true;
+        _isChecking = false;
+      });
+      return;
+    }
+
+    // 2. Si no hay conexión o no hay sesión, comprobar sesión local
     final hasSession = await AuthService.hasValidSavedSession();
     if (hasSession && mounted) {
       setState(() {
         _isAuthorized = true;
         _isChecking = false;
       });
-      // Sincronizar silenciosamente en segundo plano sin interrumpir la experiencia
-      AuthService.registerOrCheckDevice();
       return;
     }
 
-    // Si es una primera instalación sin sesión previa, registrar ante el servidor
-    final info = await AuthService.registerOrCheckDevice();
+    // 3. Primera instalación o licencia no válida: mostrar pantalla de activación
     if (mounted) {
       setState(() {
-        _isAuthorized = info.isActive;
+        _isAuthorized = false;
         _isChecking = false;
       });
     }

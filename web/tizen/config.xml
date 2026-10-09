@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" 
+        xmlns:tizen="http://tizen.org/ns/tizen" 
+        id="http://tomtv.lat/tomtv" 
+        version="4.3.1" 
+        viewmodes="maximized">
+    <tizen:application id="t0mTV00001.TOMTV" 
+                       exec="index.html" 
+                       entry="index.html" 
+                       package="t0mTV00001" 
+                       type="web" 
+                       required_version="3.0"/>
+    <name>TOM TV</name>
+    <description>TOM TV - Plataforma de Streaming de Alta Calidad para Smart TV</description>
+    <icon src="icons/Icon-192.png"/>
+    
+    <!-- Privilegios requeridos para red, streaming y control remoto -->
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:privilege name="http://tizen.org/privilege/display"/>
+
+    <!-- Compatibilidad de resolución y pantallas 1080p / 4K -->
+    <feature name="http://tizen.org/feature/screen.size.all">true</feature>
+    <feature name="http://tizen.org/feature/network.internet">true</feature>
+
+    <tizen:profile name="tv"/>
+    <tizen:setting screen-orientation="landscape" context-menu="enable" background-support="disable" encryption="disable" install-location="auto"/>
+    <access origin="*" subdomains="true"/>
+</widget>

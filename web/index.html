@@ -1,46 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
-
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
-
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="TOM TV - Plataforma de Streaming de Alta Calidad para Smart TV, Web y Móvil">
 
-  <!-- iOS meta tags & icons -->
+  <!-- Smart TV / PWA Capabilities -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="vj_stream">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TOM TV">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>vj_stream</title>
+  <title>TOM TV - Smart TV & Web Streaming</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Samsung Tizen Web API (si se ejecuta dentro del runtime Tizen) -->
+  <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
+
+  <!-- LG webOS Web API (si se ejecuta dentro del runtime webOS) -->
+  <script type="text/javascript" src="webOSTVjs-1.2.4/webOSTV.js"></script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0E0E10;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    #loading-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #181924 0%, #08080A 100%);
+      z-index: 9999;
+      transition: opacity 0.4s ease-out;
+    }
+
+    .tv-logo {
+      font-size: 38px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: 4px;
+      padding: 8px 24px;
+      background: linear-gradient(135deg, #E50914, #990000);
+      border-radius: 10px;
+      box-shadow: 0 0 35px rgba(229, 9, 20, 0.45);
+      margin-bottom: 24px;
+    }
+
+    .tv-spinner {
+      width: 42px;
+      height: 42px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #E50914;
+      border-radius: 50%;
+      animation: spin 0.9s infinite linear;
+    }
+
+    .tv-status {
+      margin-top: 18px;
+      font-size: 15px;
+      color: #8F92A1;
+      letter-spacing: 0.5px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
+  <!-- Pantalla de bienvenida instantánea en TVs antes del bootstrap de Flutter -->
+  <div id="loading-container">
+    <div class="tv-logo">TOM TV</div>
+    <div class="tv-spinner"></div>
+    <div class="tv-status">Iniciando experiencia Smart TV...</div>
+  </div>
 
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <script>
+    // =========================================================================
+    // CONTROLADORES DE ENTRADA REMOTA (SAMSUNG TIZEN & LG webOS)
+    // =========================================================================
+
+    // 1. Registro de teclas en Samsung Tizen
+    function initSamsungTizenKeys() {
+      try {
+        if (window.tizen && window.tizen.tvinputdevice) {
+          var usedKeys = [
+            'MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop',
+            'MediaFastForward', 'MediaRewind',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+          ];
+          for (var i = 0; i < usedKeys.length; i++) {
+            try {
+              window.tizen.tvinputdevice.registerKey(usedKeys[i]);
+            } catch (_) {}
+          }
+          console.log('[TOM TV] Teclas Samsung Tizen registradas correctamente.');
+        }
+      } catch (err) {
+        console.warn('[TOM TV] No se pudo inicializar Tizen Keys:', err);
+      }
+    }
+
+    // 2. Mapeo universal de controles remotos (D-Pad, Enter, Back)
+    window.addEventListener('keydown', function(event) {
+      var keyCode = event.keyCode || event.which;
+
+      // Tecla Atrás (Back) en Samsung Tizen: 10009
+      // Tecla Atrás (Back) en LG webOS: 461
+      if (keyCode === 10009 || keyCode === 461) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // Enviar evento Escape sintético a Flutter para retroceder en navegación
+        var backEvt = new KeyboardEvent('keydown', {
+          key: 'Escape',
+          code: 'Escape',
+          keyCode: 27,
+          which: 27,
+          bubbles: true,
+          cancelable: true
+        });
+        window.dispatchEvent(backEvt);
+
+        // Si existe historial de ventana y no está en la raíz
+        if (window.history && window.history.length > 1) {
+          window.history.back();
+        }
+        return false;
+      }
+
+      // Prevenir desplazamiento por defecto del navegador en flechas D-pad
+      // Flechas: 37 (Left), 38 (Up), 39 (Right), 40 (Down)
+      if (keyCode >= 37 && keyCode <= 40) {
+        // Permitir que Flutter capture el foco sin mover el scroll del body
+      }
+    }, true);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initSamsungTizenKeys();
+    });
+
+    // Ocultar pantalla de carga cuando Flutter renderiza su primer frame
+    window.addEventListener('flutter-first-frame', function() {
+      var loader = document.getElementById('loading-container');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(function() {
+          loader.remove();
+        }, 400);
+      }
+    });
+  </script>
+
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

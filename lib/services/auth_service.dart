@@ -249,6 +249,96 @@ class AuthService {
     return registerOrCheckDevice(customCode: cleanCode);
   }
 
+  /// Verifica y activa la licencia contra el endpoint unificado /api/license/verify
+  static Future<LicenseVerificationResult> verifyLicenseWithServer({
+    String? code,
+    String? token,
+    String? username,
+    String? password,
+  }) async {
+    try {
+      final deviceId = await getDeviceId();
+      final prefs = await SharedPreferences.getInstance();
+      final effectiveToken = token ?? prefs.getString(_prefSessionTokenKey);
+      final effectiveCode = code != null && code.trim().isNotEmpty
+          ? code.trim().toUpperCase()
+          : (effectiveToken == null ? prefs.getString(_prefClientCodeKey) : null);
+
+      final origin = ApiService().serverOrigin;
+      final uri = Uri.parse('$origin/api/license/verify');
+
+      String modelDesc = 'Dispositivo TOM TV';
+      if (kIsWeb) {
+        modelDesc = 'Smart TV Web (Samsung Tizen / LG webOS)';
+      } else if (defaultTargetPlatform == TargetPlatform.android) {
+        modelDesc = 'Android TV / Móvil';
+      }
+
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'deviceId': deviceId,
+          'deviceModel': modelDesc,
+          'code': effectiveCode,
+          'token': effectiveToken,
+          'username': username,
+          'password': password,
+        }),
+      ).timeout(const Duration(seconds: 10));
+
+      final data = json.decode(utf8.decode(response.bodyBytes));
+
+      if (response.statusCode == 200 && data['valid'] == true) {
+        final client = data['client'] as Map<String, dynamic>?;
+        final resToken = data['token'] as String?;
+        final resExp = (data['expiresAt'] ?? client?['expiresAt'])?.toString();
+        final resCode = client?['code']?.toString() ?? effectiveCode;
+        final resName = client?['name']?.toString();
+
+        if (resToken != null && resToken.isNotEmpty) {
+          await prefs.setString(_prefSessionTokenKey, resToken);
+        }
+        if (resCode != null && resCode.isNotEmpty) {
+          await prefs.setString(_prefClientCodeKey, resCode);
+        }
+        if (resName != null && resName.isNotEmpty) {
+          await prefs.setString(_prefClientNameKey, resName);
+        }
+        if (resExp != null && resExp.isNotEmpty) {
+          await prefs.setString(_prefExpiresAtKey, resExp);
+        }
+        if (client?['id'] != null) {
+          await prefs.setString(_prefClientIdKey, client!['id'].toString());
+        }
+
+        return LicenseVerificationResult(
+          isValid: true,
+          token: resToken,
+          expiresAt: resExp,
+          daysRemaining: data['daysRemaining'] is int ? data['daysRemaining'] : 30,
+          minutesRemaining: data['minutesRemaining'] is int ? data['minutesRemaining'] : 0,
+          clientName: resName,
+          clientCode: resCode,
+          message: data['message'] ?? 'Licencia activada con éxito.',
+        );
+      } else {
+        return LicenseVerificationResult(
+          isValid: false,
+          reason: data['reason']?.toString() ?? 'invalid',
+          message: data['message'] ?? data['error'] ?? 'El código no es válido o ha expirado.',
+        );
+      }
+    } catch (e) {
+      debugPrint('[AuthService] Error verificando licencia: $e');
+      return LicenseVerificationResult(
+        isValid: false,
+        reason: 'network_error',
+        message: 'No fue posible conectar con el servidor de licencias. Revisa tu conexión a internet.',
+      );
+    }
+  }
+
   static Future<String> getClientName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_prefClientNameKey) ?? 'Cliente TOM TV';
@@ -257,6 +347,11 @@ class AuthService {
   static Future<String?> getSavedClientCode() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_prefClientCodeKey);
+  }
+
+  static Future<String?> getSavedToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_prefSessionTokenKey);
   }
 
   static Future<String?> getClientId() async {
@@ -283,4 +378,29 @@ class AuthService {
     await prefs.remove(_prefClientUsernameKey);
     await prefs.remove(_prefExpiresAtKey);
   }
+}
+
+/// Modelo con el resultado detallado de la verificación de licencia
+class LicenseVerificationResult {
+  final bool isValid;
+  final String? token;
+  final String? expiresAt;
+  final int daysRemaining;
+  final int minutesRemaining;
+  final String? clientName;
+  final String? clientCode;
+  final String? reason;
+  final String message;
+
+  LicenseVerificationResult({
+    required this.isValid,
+    this.token,
+    this.expiresAt,
+    this.daysRemaining = 0,
+    this.minutesRemaining = 0,
+    this.clientName,
+    this.clientCode,
+    this.reason,
+    required this.message,
+  });
 }

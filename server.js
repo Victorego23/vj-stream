@@ -6,6 +6,7 @@ const streamingRoutes = require('./routes/streamingRoutes');
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const resellerRoutes = require('./routes/resellerRoutes');
+const licenseRoutes = require('./routes/licenseRoutes');
 const catalogSyncService = require('./services/catalogSyncService');
 const channelService = require('./services/channelService');
 
@@ -208,6 +209,7 @@ app.get(['/mobile-preview', '/preview', '/celular', '/movil'], (req, res) => {
 
 // Rutas de autenticación de dispositivos y licencias
 app.use('/api/auth', authRoutes);
+app.use('/api/license', licenseRoutes);
 
 // Rutas del Panel de Administrador Master
 app.use('/api/admin', adminRoutes);

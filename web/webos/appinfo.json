@@ -1,0 +1,23 @@
+{
+  "id": "lat.tomtv.app",
+  "version": "4.3.1",
+  "vendor": "TOM TV Media Inc.",
+  "type": "web",
+  "main": "index.html",
+  "title": "TOM TV",
+  "icon": "icons/Icon-192.png",
+  "largeIcon": "icons/Icon-512.png",
+  "bgImage": "icons/Icon-512.png",
+  "splashBackground": "#0E0E10",
+  "resolution": "1920x1080",
+  "uiRevision": 2,
+  "requiredPermissions": [
+    "network"
+  ],
+  "accessibility": {
+    "supportsAudioGuidance": false
+  },
+  "supportGpu": true,
+  "disableBackHistoryFilter": true,
+  "handlesRelaunch": false
+}
