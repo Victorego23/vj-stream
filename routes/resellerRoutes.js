@@ -140,6 +140,33 @@ router.post('/clients', (req, res) => {
 });
 
 /**
+ * @route   POST /api/reseller/activate-code
+ * @desc    El revendedor aprueba un código VJ-XXXX de un televisor o cliente con sus créditos
+ */
+router.post('/activate-code', (req, res) => {
+  try {
+    const { code, name, planDays = 30, maxDevices = 1 } = req.body;
+    if (!code || !name) {
+      return res.status(400).json({ success: false, error: 'Código VJ y nombre de cliente requeridos.' });
+    }
+
+    const result = accountService.createClientForReseller(req.reseller.id, {
+      name,
+      planDays,
+      maxDevices,
+      customCode: code.trim().toUpperCase()
+    });
+
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message || 'Error al activar código para revendedor'
+    });
+  }
+});
+
+/**
  * @route   POST /api/reseller/clients/:id/renew
  * @desc    Renueva la suscripción de un cliente descontando créditos del revendedor
  */

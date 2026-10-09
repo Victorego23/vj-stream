@@ -2516,8 +2516,17 @@
       if (!currentClientData) return;
       document.getElementById('accClientName').textContent = currentClientData.name || 'Cliente';
       document.getElementById('accClientCode').textContent = currentClientData.code || 'VJ-XXXX';
-      document.getElementById('accClientDevice').textContent = getDeviceModel();
-      const expDate = currentClientData.expiresAt ? new Date(currentClientData.expiresAt).toLocaleDateString('es-ES') : 'Activo';
+      let expDate = 'Activo';
+      if (currentClientData.expiresAt) {
+        const d = new Date(currentClientData.expiresAt);
+        const diffMs = d - new Date();
+        const diffMins = Math.max(0, Math.ceil(diffMs / 60000));
+        if (currentClientData.isDemo || diffMins <= 120) {
+          expDate = `⚡ Demo 1 Hora (${diffMins} min restantes)`;
+        } else {
+          expDate = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+      }
       document.getElementById('accClientExp').textContent = expDate;
       modal.style.display = 'flex';
     }
@@ -4191,8 +4200,12 @@
       initGenresBar();
       loadCatalog();
       loadLiveChannels();
-      checkIosDevice();
-      initDeviceAuth();
+      initDeviceAuth().then(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('demo') === '1' && !isDeviceActive) {
+          setTimeout(requestTrialDemo, 300);
+        }
+      });
       initTvRemoteNavigation();
     });
   </script>

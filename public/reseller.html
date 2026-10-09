@@ -1053,20 +1053,24 @@
       }
 
       tbody.innerHTML = clients.map(c => {
+        const isDemo = c.isDemo || c.planHours === 1 || c.planDays === 0;
         let badgeClass = 'badge-active';
-        let statusText = `Activo (${c.daysRemaining}d)`;
+        let statusText = isDemo 
+          ? (c.diffMinutes <= 0 ? 'Demo Vencido' : `⚡ Demo (${c.diffMinutes || 60}m)`)
+          : `Activo (${c.daysRemaining}d)`;
+
         if (c.status === 'suspended') {
           badgeClass = 'badge-expired';
           statusText = 'Suspendido';
-        } else if (c.status === 'expired' || c.daysRemaining <= 0) {
+        } else if (c.status === 'expired' || (!isDemo && c.daysRemaining <= 0) || (isDemo && c.diffMinutes <= 0)) {
           badgeClass = 'badge-expired';
-          statusText = 'Vencido';
-        } else if (c.daysRemaining <= 3) {
+          statusText = isDemo ? 'Demo Vencido' : 'Vencido';
+        } else if (!isDemo && c.daysRemaining <= 3) {
           badgeClass = 'badge-pending';
           statusText = `Vence en ${c.daysRemaining}d`;
         }
 
-        const expDate = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        const expDate = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: isDemo ? '2-digit' : undefined, minute: isDemo ? '2-digit' : undefined });
 
         return `
           <tr>

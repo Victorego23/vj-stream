@@ -246,6 +246,14 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     // Habilitar pantalla completa inmersiva para streaming
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
+    // Habilitar giro dinámico automático del celular (acelerómetro y sensor de rotación)
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
     _initPipSupport();
     _initializePlayer();
   }
@@ -1281,6 +1289,29 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
     );
   }
 
+  bool _isLandscapeLocked = false;
+
+  void _toggleOrientation() {
+    setState(() {
+      _isLandscapeLocked = !_isLandscapeLocked;
+    });
+    if (_isLandscapeLocked) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      _showFeedbackIndicator('Pantalla: Horizontal Fijo');
+    } else {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      _showFeedbackIndicator('Pantalla: Giro Automático');
+    }
+  }
+
   void _showSettingsModal() {
     _hideControlsTimer?.cancel();
 
@@ -2016,8 +2047,14 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
       _controller!.dispose();
     }
 
-    // Restaurar barras del sistema al salir del reproductor
+    // Restaurar barras del sistema y orientaciones al salir del reproductor
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     super.dispose();
   }
 
@@ -3228,6 +3265,16 @@ class _VideoPlayerViewState extends State<VideoPlayerView> with WidgetsBindingOb
                     icon: const Icon(Icons.settings_rounded, color: Colors.white70, size: 22),
                     tooltip: 'Ajustes y Servidores',
                     onPressed: _showSettingsModal,
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: Icon(
+                      _isLandscapeLocked ? Icons.screen_lock_landscape_rounded : Icons.screen_rotation_rounded,
+                      color: _isLandscapeLocked ? const Color(0xFFE50914) : Colors.white70,
+                      size: 22,
+                    ),
+                    tooltip: 'Girar Pantalla (Auto-Giro / Horizontal)',
+                    onPressed: _toggleOrientation,
                   ),
                 ],
               ),

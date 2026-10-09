@@ -96,20 +96,22 @@ router.use(adminAuth);
  * @desc    Devuelve estadísticas generales, lista de clientes y pantallas pendientes
  */
 router.get('/overview', (req, res) => {
-  const clients = accountService.getClients();
+  const allClients = accountService.getClients();
+  const directClients = allClients.filter(c => !c.resellerId);
+  const resellerClients = allClients.filter(c => !!c.resellerId);
   const pending = accountService.getPendingActivations();
   const settings = accountService.getSettings();
   const db = accountService._readDb();
 
-  const totalClients = clients.length;
-  const activeClients = clients.filter(c => c.status === 'active').length;
-  const expiringSoon = clients.filter(c => c.status === 'active' && c.daysRemaining <= 3).length;
-  const expiredClients = clients.filter(c => c.status !== 'active').length;
+  const totalClients = directClients.length;
+  const activeClients = directClients.filter(c => c.status === 'active').length;
+  const expiringSoon = directClients.filter(c => c.status === 'active' && c.daysRemaining <= 3 && !c.isDemo).length;
+  const expiredClients = directClients.filter(c => c.status !== 'active').length;
 
   const resellers = accountService.getResellers();
   const totalResellers = resellers.length;
   const totalCredits = resellers.reduce((acc, r) => acc + (r.credits || 0), 0);
-  const resellerClientsCount = clients.filter(c => c.resellerId).length;
+  const resellerClientsCount = resellerClients.length;
 
   return res.json({
     success: true,
@@ -123,7 +125,8 @@ router.get('/overview', (req, res) => {
       totalCredits,
       resellerClientsCount
     },
-    clients,
+    clients: directClients,
+    resellerClients,
     pending,
     resellers,
     settings: {
@@ -210,6 +213,11 @@ const handleRenew = (req, res) => {
   const clientId = req.params.id || req.body.clientId;
   const days = req.body.additionalDays || req.body.days || 30;
 
+  const existing = accountService.getClientById(clientId);
+  if (existing && existing.resellerId) {
+    return res.status(403).json({ success: false, error: `Este cliente pertenece a la cartera del revendedor "${existing.resellerName || 'Revendedor'}". Solo puede ser modificado por dicho revendedor.` });
+  }
+
   const client = accountService.renewClient(clientId, parseInt(days, 10));
   if (!client) {
     return res.status(404).json({ success: false, error: 'Cliente no encontrado.' });
@@ -228,6 +236,11 @@ router.post(['/clients/:id/renew', '/client/:id/renew', '/renew'], handleRenew);
 const handleToggleStatus = (req, res) => {
   const clientId = req.params.id || req.body.clientId;
 
+  const existing = accountService.getClientById(clientId);
+  if (existing && existing.resellerId) {
+    return res.status(403).json({ success: false, error: `Este cliente pertenece a la cartera del revendedor "${existing.resellerName || 'Revendedor'}". Solo puede ser modificado por dicho revendedor.` });
+  }
+
   const client = accountService.toggleClientStatus(clientId);
   if (!client) {
     return res.status(404).json({ success: false, error: 'Cliente no encontrado.' });
@@ -245,6 +258,11 @@ router.post(['/clients/:id/toggle-status', '/client/:id/toggle-status', '/toggle
  */
 const handleResetDevices = (req, res) => {
   const clientId = req.params.id || req.body.clientId;
+
+  const existing = accountService.getClientById(clientId);
+  if (existing && existing.resellerId) {
+    return res.status(403).json({ success: false, error: `Este cliente pertenece a la cartera del revendedor "${existing.resellerName || 'Revendedor'}". Solo puede ser modificado por dicho revendedor.` });
+  }
 
   const client = accountService.resetClientDevices(clientId);
   if (!client) {
@@ -266,6 +284,11 @@ const handleDeleteClient = (req, res) => {
   const clientId = req.params.id || req.body.clientId || req.body.id;
   if (!clientId) {
     return res.status(400).json({ success: false, error: 'ID o código de cliente requerido.' });
+  }
+
+  const existing = accountService.getClientById(clientId);
+  if (existing && existing.resellerId) {
+    return res.status(403).json({ success: false, error: `Este cliente pertenece a la cartera del revendedor "${existing.resellerName || 'Revendedor'}". Solo puede ser modificado por dicho revendedor.` });
   }
 
   const deleted = accountService.deleteClient(clientId);
@@ -290,6 +313,11 @@ router.post(['/clients/:id/delete', '/client/:id/delete', '/delete-client'], han
 const handleUpdateClient = (req, res) => {
   try {
     const clientId = req.params.id || req.body.id;
+    const existing = accountService.getClientById(clientId);
+    if (existing && existing.resellerId) {
+      return res.status(403).json({ success: false, error: `Este cliente pertenece a la cartera del revendedor "${existing.resellerName || 'Revendedor'}". Solo puede ser modificado por dicho revendedor.` });
+    }
+
     const updated = accountService.updateClient(clientId, req.body);
     return res.json({
       success: true,

@@ -759,23 +759,32 @@ class AccountService {
         computedStatus = 'expired';
       }
 
-      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const isDemo = client.isDemo === true || client.planHours === 1 || client.planHours === 2 || client.planDays === '1h' || client.planDays === '2h' || client.planDays === 0;
       const diffMinutes = Math.max(0, Math.ceil(diffMs / (1000 * 60)));
       const diffHours = (diffMinutes / 60).toFixed(1);
-      const isDemo = client.isDemo === true || client.planHours === 1 || client.planHours === 2 || client.planDays === '1h' || client.planDays === '2h';
+      // Para demos de 1 hora, diffDays es 0 para no mostrar erróneamente "1 día"
+      const diffDays = isDemo ? 0 : Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const remainingLabel = isDemo 
+        ? (diffMinutes <= 0 ? 'Demo Finalizado' : `${diffMinutes} min restantes`) 
+        : (diffDays <= 0 ? 'Vencido' : `${diffDays} día${diffDays > 1 ? 's' : ''}`);
 
       return {
         ...client,
         isDemo,
         resellerId: client.resellerId || null,
-        resellerName: client.resellerName || 'Venta Directa (Admin)',
+        resellerName: client.resellerName || null,
         status: computedStatus,
         daysRemaining: isExpired ? 0 : diffDays,
         diffMinutes: isExpired ? 0 : diffMinutes,
         diffHours: isExpired ? 0 : diffHours,
+        remainingLabel,
         deviceCount: client.devices ? client.devices.length : 0
       };
     });
+  }
+
+  getDirectClients() {
+    return this.getClients().filter(c => !c.resellerId);
   }
 
   getClientById(id) {

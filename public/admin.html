@@ -2082,9 +2082,17 @@
 
       // Renderizado en Tabla (Desktop)
       tbody.innerHTML = list.map(c => {
-        const days = c.daysRemaining !== undefined ? c.daysRemaining : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+        const isDemo = c.isDemo || c.planHours === 1 || c.planDays === 0;
+        const days = c.daysRemaining !== undefined ? c.daysRemaining : (isDemo ? 0 : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)));
+        const minutes = c.diffMinutes !== undefined ? c.diffMinutes : Math.max(0, Math.ceil((new Date(c.expiresAt) - new Date()) / 60000));
         let badgeHtml = '';
-        if (days <= 0) {
+        if (isDemo) {
+          if (minutes <= 0) {
+            badgeHtml = '<span class="badge badge-expired">Demo Vencido</span>';
+          } else {
+            badgeHtml = `<span class="badge badge-warning" style="background: rgba(229, 9, 20, 0.2); border-color: #E50914; color: #fff;">⚡ Demo ${minutes}m</span>`;
+          }
+        } else if (days <= 0) {
           badgeHtml = '<span class="badge badge-expired">Vencido</span>';
         } else if (days <= 3) {
           badgeHtml = `<span class="badge badge-warning">Vence en ${days}d</span>`;
@@ -2092,7 +2100,7 @@
           badgeHtml = `<span class="badge badge-active">${days} días</span>`;
         }
 
-        const expFormatted = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        const expFormatted = new Date(c.expiresAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: isDemo ? '2-digit' : undefined, minute: isDemo ? '2-digit' : undefined });
         const origin = c.resellerName ? `<span style="color: var(--accent); font-size: 11px;">💼 ${escapeHtml(c.resellerName)}</span>` : '<span style="color: var(--text-subtle); font-size: 11px;">Admin Directo</span>';
 
         return `
@@ -2115,7 +2123,7 @@
             <td style="text-align: right;">
               <button class="btn btn-secondary btn-sm" onclick="openEditClientModal('${c.id}')" title="Modificar cliente">✏️ Editar</button>
               <button class="btn btn-success btn-sm" onclick="renewClient('${c.id}', 30)" title="Renovar +30 días">⚡ +30d</button>
-              <button class="btn btn-whatsapp btn-sm" onclick="openClientWhatsApp('${escapeJs(c.name)}', '${escapeJs(c.code)}', '${days}')" title="Enviar WhatsApp">📲</button>
+              <button class="btn btn-whatsapp btn-sm" onclick="openClientWhatsApp('${escapeJs(c.name)}', '${escapeJs(c.code)}', '${isDemo ? minutes + " min" : days + " días"}')" title="Enviar WhatsApp">📲</button>
               <button class="btn btn-secondary btn-sm" onclick="copyText('${escapeJs(c.code)}', '¡Código copiado!')" title="Copiar código">📋</button>
               <button class="btn btn-danger btn-sm" onclick="deleteClient('${c.id}', '${escapeJs(c.name)}')" title="Eliminar definitivamente">🗑️</button>
             </td>
@@ -2126,9 +2134,17 @@
       // Renderizado en Tarjetas Táctiles (Móviles)
       if (mobCards) {
         mobCards.innerHTML = list.map(c => {
-          const days = c.daysRemaining !== undefined ? c.daysRemaining : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+          const isDemo = c.isDemo || c.planHours === 1 || c.planDays === 0;
+          const days = c.daysRemaining !== undefined ? c.daysRemaining : (isDemo ? 0 : Math.ceil((new Date(c.expiresAt) - new Date()) / (1000 * 60 * 60 * 24)));
+          const minutes = c.diffMinutes !== undefined ? c.diffMinutes : Math.max(0, Math.ceil((new Date(c.expiresAt) - new Date()) / 60000));
           let badgeHtml = '';
-          if (days <= 0) {
+          if (isDemo) {
+            if (minutes <= 0) {
+              badgeHtml = '<span class="badge badge-expired">🔴 Demo Vencido</span>';
+            } else {
+              badgeHtml = `<span class="badge badge-warning" style="background: rgba(229, 9, 20, 0.2); border-color: #E50914; color: #fff;">⚡ Demo ${minutes}m</span>`;
+            }
+          } else if (days <= 0) {
             badgeHtml = '<span class="badge badge-expired">🔴 Vencido</span>';
           } else if (days <= 3) {
             badgeHtml = `<span class="badge badge-warning">🟡 Vence en ${days}d</span>`;
